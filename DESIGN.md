@@ -58,6 +58,15 @@ Dial: ENERGY 2 / RHYTHM 2 / MOTION 1
 --warna-teks-pudar: rgba(232,230,227,0.5);
 --warna-teks-invers: #1A1A1A;
 
+### Character Color Tokens (5 Sahabat CRSL)
+```css
+--karakter-odin: #10B981;   /* Dinosaurus Hijau Petualang */
+--karakter-chilo: #EC4899;  /* Kucing Pink Artistik */
+--karakter-pigko: #F472B6;  /* Babi Peach Ceria */
+--karakter-popo: #2D3748;   /* Panda Slate Bijak */
+--karakter-choco: #8B5A2B;  /* Beruang Cokelat Pelindung */
+```
+
 --warna-batas: rgba(255,255,255,0.12);
 ```
 Warna primer (`#E52027`) tetap sama di dark mode. Merah tetap merah.

@@ -1,6 +1,6 @@
 /* ==========================================================
    Menu Samping - Sidebar Drawer
-   Slide-in dari kiri, overlay, focus trap
+   Fit 1 Screen (100dvh), Bebas Scrollbar, Hover Refined
    ========================================================== */
 
 /* -- Overlay -- */
@@ -11,7 +11,9 @@
   background-color: var(--warna-latar-overlay);
   opacity: 0;
   visibility: hidden;
-  transition: opacity var(--transisi-normal), visibility var(--transisi-normal);
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
 .menu-samping__overlay.aktif {
@@ -19,7 +21,7 @@
   visibility: visible;
 }
 
-/* -- Drawer Panel -- */
+/* -- Drawer Panel (Fit 100dvh & No Scrollbar) -- */
 .menu-samping {
   position: fixed;
   top: 0;
@@ -28,13 +30,20 @@
   width: var(--lebar-drawer);
   max-width: var(--lebar-drawer-maks);
   height: 100dvh;
+  max-height: 100dvh;
   background-color: var(--warna-latar);
   transform: translateX(-100%);
-  transition: transform var(--transisi-normal);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  overflow: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  box-shadow: var(--bayangan-lg);
+}
+
+.menu-samping::-webkit-scrollbar {
+  display: none;
 }
 
 .menu-samping.aktif {
@@ -46,9 +55,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--jarak-md);
+  padding: var(--jarak-sm) var(--jarak-md);
   border-bottom: 1px solid var(--warna-batas);
   flex-shrink: 0;
+  min-height: 52px;
 }
 
 .menu-samping__tombol-cari,
@@ -63,7 +73,7 @@
   border-radius: var(--radius-penuh);
   color: var(--warna-teks);
   background: transparent;
-  transition: background-color var(--transisi-cepat);
+  transition: background-color var(--transisi-cepat), transform var(--transisi-cepat);
   cursor: pointer;
   border: none;
   padding: 0;
@@ -72,6 +82,7 @@
 .menu-samping__tombol-cari:hover,
 .menu-samping__tombol-tutup:hover {
   background-color: var(--warna-latar-sekunder);
+  transform: scale(1.05);
 }
 
 .menu-samping__tombol-cari:focus-visible,
@@ -87,32 +98,43 @@
   pointer-events: none;
 }
 
-/* -- Navigation list -- */
+/* -- Navigation list: Fit 1 screen -- */
 .menu-samping__daftar {
-  padding: var(--jarak-sm) 0;
+  padding: var(--jarak-xs) var(--jarak-xs);
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  overflow: hidden;
+  margin: 0;
+  list-style: none;
 }
 
 .menu-samping__item {
-  display: block;
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
 
 .menu-samping__tautan {
   display: flex;
   align-items: center;
-  gap: var(--jarak-sm);
-  padding: var(--jarak-md) var(--jarak-lg);
-  font-size: var(--teks-h4);
-  font-weight: 400;
+  gap: var(--jarak-xs);
+  padding: 0 var(--jarak-md);
+  font-size: clamp(0.85rem, 1.85vh, 0.98rem);
+  font-weight: 500;
   color: var(--warna-teks);
   text-decoration: none;
-  transition: background-color var(--transisi-cepat);
-  min-height: 44px;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.18s ease, transform 0.18s ease, color 0.18s ease, padding-left 0.18s ease;
 }
 
-.menu-samping__tautan:hover,
-.menu-samping__tautan:focus-visible {
+.menu-samping__tautan:hover {
   background-color: var(--warna-latar-sekunder);
+  transform: translateX(4px);
+  color: var(--warna-primer);
+  padding-left: var(--jarak-lg);
 }
 
 .menu-samping__tautan:focus-visible {
@@ -128,9 +150,14 @@
 /* Promo item with special color */
 .menu-samping__tautan--promo {
   color: var(--warna-primer);
-  font-weight: 500;
+  font-weight: 600;
+}
+
+.menu-samping__tautan--promo:hover {
+  background-color: rgba(229, 32, 39, 0.08);
 }
 
 .menu-samping__emoji {
-  font-size: 1.2em;
+  font-size: 1.15em;
+  line-height: 1;
 }

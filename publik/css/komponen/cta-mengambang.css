@@ -1,0 +1,354 @@
+/* ==========================================================
+   CTA Mengambang (Sticky Floating CTAs)
+   - WhatsApp Support Floating CTA (Kanan Bawah)
+   - Claim Voucher Bouncing CTA (Kanan Tengah - Homepage Only)
+   ========================================================== */
+
+/* ----------------------------------------------------------
+   1. WhatsApp Floating CTA (Kanan Bawah)
+   ---------------------------------------------------------- */
+.cta-wa-wadah {
+  position: fixed;
+  right: 20px;
+  bottom: 24px;
+  z-index: var(--z-sticky);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.cta-wa-tombol {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-penuh);
+  background-color: #25d366;
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease;
+  position: relative;
+}
+
+.cta-wa-tombol:hover {
+  transform: scale(1.08);
+  background-color: #20ba5a;
+}
+
+/* Ikon WA dan Ikon X bergantian */
+.cta-wa-ikon-wa,
+.cta-wa-ikon-tutup {
+  position: absolute;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.cta-wa-ikon-wa {
+  opacity: 1;
+  transform: rotate(0) scale(1);
+}
+
+.cta-wa-ikon-tutup {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.5);
+}
+
+.cta-wa-wadah.terbuka .cta-wa-tombol {
+  background-color: #333333;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.cta-wa-wadah.terbuka .cta-wa-ikon-wa {
+  opacity: 0;
+  transform: rotate(90deg) scale(0.5);
+}
+
+.cta-wa-wadah.terbuka .cta-wa-ikon-tutup {
+  opacity: 1;
+  transform: rotate(0) scale(1);
+}
+
+/* Pop-up Card "Chat Support" */
+.cta-wa-popup {
+  position: absolute;
+  bottom: 64px;
+  right: 0;
+  width: 280px;
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  padding: var(--jarak-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--jarak-sm);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px) scale(0.95);
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s ease;
+  pointer-events: none;
+}
+
+.cta-wa-wadah.terbuka .cta-wa-popup {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.cta-wa-popup__judul {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.cta-wa-popup__teks {
+  font-size: 0.85rem;
+  color: #666666;
+  margin: 0 0 var(--jarak-xs) 0;
+}
+
+.cta-wa-popup__tombol {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--jarak-sm);
+  padding: 10px 18px;
+  background-color: #25d366;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border-radius: var(--radius-penuh);
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.cta-wa-popup__tombol:hover {
+  background-color: #20ba5a;
+  transform: translateY(-1px);
+}
+
+/* ----------------------------------------------------------
+   2. Claim Voucher Bouncing CTA (Kanan Tengah - Homepage)
+   ---------------------------------------------------------- */
+.cta-voucher-tombol {
+  position: fixed;
+  right: 16px;
+  bottom: 96px;
+  z-index: var(--z-sticky);
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-penuh);
+  background-color: #8b1016;
+  color: #ffffff;
+  border: 2px solid #ffffff;
+  box-shadow: 0 4px 16px rgba(139, 16, 22, 0.4);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: memantul-lembut 2.5s ease-in-out infinite;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.cta-voucher-tombol:hover {
+  animation-play-state: paused;
+  transform: scale(1.12);
+  background-color: var(--warna-primer);
+}
+
+@keyframes memantul-lembut {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Modal Pop-up Available Voucher */
+.modal-voucher-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  background-color: var(--warna-latar-overlay);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--jarak-md);
+}
+
+.modal-voucher-overlay.aktif {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-voucher {
+  width: 100%;
+  max-width: 460px;
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  padding: var(--jarak-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--jarak-lg);
+  transform: scale(0.95) translateY(12px);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-voucher-overlay.aktif .modal-voucher {
+  transform: scale(1) translateY(0);
+}
+
+.modal-voucher__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+.modal-voucher__judul {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-align: center;
+  flex: 1;
+  margin: 0;
+}
+
+.modal-voucher__tutup {
+  position: absolute;
+  right: 0;
+  background: transparent;
+  border: none;
+  color: #444444;
+  width: 36px;
+  height: 36px;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: var(--radius-penuh);
+  font-size: 18px;
+  transition: background-color 0.15s ease;
+}
+
+.modal-voucher__tutup:hover {
+  background-color: #f2f2f2;
+}
+
+/* Card Desain Voucher (Border Putus-putus) */
+.modal-voucher__kartu {
+  border: 2px dashed var(--warna-primer);
+  border-radius: 12px;
+  padding: var(--jarak-md) var(--jarak-lg);
+  background-color: #fff9f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--jarak-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.modal-voucher__kartu-kiri {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.modal-voucher__diskon {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--warna-primer);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.modal-voucher__syarat {
+  font-size: 0.78rem;
+  color: #666666;
+  margin: 0;
+}
+
+.modal-voucher__kartu-kanan {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background-color: #ffe6e7;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #ffd0d2;
+}
+
+.modal-voucher__kartu-kanan svg {
+  width: 22px;
+  height: 22px;
+  stroke: var(--warna-primer);
+}
+
+.modal-voucher__label-ongkir {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--warna-primer);
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+/* Feedback voucher digunakan */
+.modal-voucher__feedback {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: center;
+  display: none;
+}
+
+.modal-voucher__feedback.aktif {
+  display: block;
+}
+
+/* Tombol Capsule Continue Shopping */
+.modal-voucher__tombol-aksi {
+  width: 100%;
+  padding: 12px 20px;
+  background-color: var(--warna-teks);
+  color: var(--warna-teks-invers);
+  border: none;
+  border-radius: var(--radius-penuh);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 48px;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.modal-voucher__tombol-aksi:hover {
+  background-color: var(--warna-primer);
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta-voucher-tombol {
+    animation: none;
+  }
+}

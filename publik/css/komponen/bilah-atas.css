@@ -1,7 +1,7 @@
 /* ==========================================================
-   Bilah Atas - Announcement Bar / Running Text
+   Bilah Atas - Announcement Bar / Text Rotator
    Warna: merah primer, teks putih
-   Animasi: marquee horizontal loop
+   Animasi: rotator dinamis 1 teks (masuk dari kiri, stay di tengah, keluar ke kiri)
    ========================================================== */
 
 .bilah-atas {
@@ -12,66 +12,72 @@
   height: var(--tinggi-bilah-atas);
   display: flex;
   align-items: center;
+  justify-content: center;
   overflow: hidden;
+  -webkit-user-select: none;
   user-select: none;
 }
 
-.bilah-atas__jalur {
+.bilah-atas__rotator {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  height: 100%;
   display: flex;
-  width: max-content;
-  animation: gulir-bilah 20s linear infinite;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .bilah-atas__pesan {
-  display: inline-flex;
-  align-items: center;
-  white-space: nowrap;
-  padding-inline: var(--jarak-xl);
+  position: absolute;
+  width: 100%;
+  text-align: center;
   font-size: var(--teks-caption);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+  color: var(--warna-teks-invers);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-inline: var(--jarak-md);
+  opacity: 0;
+  transform: translateX(-100%);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+  pointer-events: none;
 }
 
-/* Separator dot between messages */
-.bilah-atas__pesan::after {
-  content: '\2022';
-  margin-left: var(--jarak-xl);
-  opacity: 0.5;
+/* Teks aktif sedang tampil dan dibaca di tengah */
+.bilah-atas__pesan.aktif {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
 }
 
-@keyframes gulir-bilah {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
+/* Teks bergeser keluar ke arah kiri */
+.bilah-atas__pesan.keluar {
+  opacity: 0;
+  transform: translateX(-100%);
+  pointer-events: none;
 }
 
-/* Pause on hover - desktop only */
+/* Teks persiapan sebelum masuk dari kiri */
+.bilah-atas__pesan.siap-masuk {
+  opacity: 0;
+  transform: translateX(100%);
+  transition: none;
+}
+
 @media (min-width: 960px) {
-  .bilah-atas:hover .bilah-atas__jalur {
-    animation-play-state: paused;
-  }
-
   .bilah-atas__pesan {
     font-size: var(--teks-body);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bilah-atas__jalur {
-    animation: none;
-    justify-content: center;
-    width: 100%;
-  }
-
-  .bilah-atas__pesan:not(:first-child) {
-    display: none;
-  }
-
-  .bilah-atas__pesan::after {
-    display: none;
+  .bilah-atas__pesan {
+    transition: opacity 0.3s ease;
+    transform: none !important;
   }
 }

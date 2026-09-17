@@ -1,0 +1,605 @@
+/* ==========================================================
+   Keranjang - Cart Flow (Anatomi Gambar 1, 2, 3)
+   - Modal Pop-up "Add to Cart"
+   - Drawer Samping "Cart"
+   - Bar Melayang Bawah Layar "1 Items in My Cart"
+   ========================================================== */
+
+/* ----------------------------------------------------------
+   1. Modal Pop-up "Add to Cart" (Gambar 2)
+   ---------------------------------------------------------- */
+.modal-add-cart-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  background-color: var(--warna-latar-overlay);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--jarak-md);
+}
+
+.modal-add-cart-overlay.aktif {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-add-cart {
+  width: 100%;
+  max-width: 440px;
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  padding: var(--jarak-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--jarak-lg);
+  transform: scale(0.95) translateY(10px);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-add-cart-overlay.aktif .modal-add-cart {
+  transform: scale(1) translateY(0);
+}
+
+.modal-add-cart__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-add-cart__judul {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.modal-add-cart__tutup {
+  background: transparent;
+  border: none;
+  color: #333333;
+  width: 36px;
+  height: 36px;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: var(--radius-penuh);
+  font-size: 18px;
+  transition: background-color 0.15s ease;
+}
+
+.modal-add-cart__tutup:hover {
+  background-color: #f0f0f0;
+}
+
+/* Info produk ringkas di dalam box abu-abu */
+.modal-add-cart__produk-box {
+  display: flex;
+  align-items: center;
+  gap: var(--jarak-md);
+  background-color: #f7f8f9;
+  border-radius: 12px;
+  padding: var(--jarak-md);
+}
+
+.modal-add-cart__thumb {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  object-fit: cover;
+  background-color: #ffffff;
+  flex-shrink: 0;
+  border: 1px solid #eaeaea;
+}
+
+.modal-add-cart__produk-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+}
+
+.modal-add-cart__nama-produk {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #222222;
+  line-height: 1.35;
+  margin: 0;
+}
+
+/* Bagian Pilihan Warna */
+.modal-add-cart__varian-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 var(--jarak-sm) 0;
+}
+
+.modal-add-cart__varian-list {
+  display: flex;
+  gap: var(--jarak-md);
+}
+
+.modal-add-cart__varian-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.modal-add-cart__varian-thumb-wadah {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #f4f5f7;
+  border: 2px solid transparent;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-add-cart__varian-item.terpilih .modal-add-cart__varian-thumb-wadah {
+  border-color: var(--warna-primer);
+  box-shadow: 0 0 0 1px var(--warna-primer);
+}
+
+.modal-add-cart__varian-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.modal-add-cart__varian-nama {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #555555;
+  text-transform: uppercase;
+}
+
+.modal-add-cart__varian-item.terpilih .modal-add-cart__varian-nama {
+  color: var(--warna-primer);
+}
+
+/* Stepper Kuantitas Terpusat */
+.modal-add-cart__stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--jarak-md);
+  margin-inline: auto;
+  border: 1px solid #e0e2e6;
+  border-radius: var(--radius-md);
+  padding: 4px 16px;
+  width: fit-content;
+  min-height: 44px;
+}
+
+.modal-add-cart__stepper-tombol {
+  background: transparent;
+  border: none;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--warna-primer);
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.modal-add-cart__stepper-tombol:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.modal-add-cart__stepper-angka {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  min-width: 28px;
+  text-align: center;
+}
+
+/* Tombol Merah Add to Cart */
+.modal-add-cart__tombol-submit {
+  width: 100%;
+  padding: 14px 24px;
+  background-color: var(--warna-primer);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-penuh);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 48px;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.modal-add-cart__tombol-submit:hover {
+  background-color: var(--warna-primer-hover);
+  transform: translateY(-1px);
+}
+
+.modal-add-cart__tombol-submit:active {
+  transform: translateY(0);
+}
+
+/* ----------------------------------------------------------
+   2. Drawer Samping "Cart" (Gambar 3)
+   ---------------------------------------------------------- */
+.keranjang-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  background-color: var(--warna-latar-overlay);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.keranjang-drawer-overlay.aktif {
+  opacity: 1;
+  visibility: visible;
+}
+
+.keranjang-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: calc(var(--z-modal) + 1);
+  width: 100%;
+  max-width: 440px;
+  background-color: #ffffff;
+  transform: translateX(100%);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.keranjang-drawer.aktif {
+  transform: translateX(0);
+}
+
+.keranjang-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--jarak-md) var(--jarak-lg);
+  border-bottom: 1px solid #eeeeee;
+}
+
+.keranjang-drawer__judul {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.keranjang-drawer__tutup {
+  background: transparent;
+  border: none;
+  color: #444444;
+  width: 40px;
+  height: 40px;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: var(--radius-penuh);
+  font-size: 20px;
+  transition: background-color 0.15s ease;
+}
+
+.keranjang-drawer__tutup:hover {
+  background-color: #f2f2f2;
+}
+
+.keranjang-drawer__isi {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--jarak-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--jarak-lg);
+}
+
+/* Item dalam Keranjang */
+.keranjang-item {
+  display: flex;
+  gap: var(--jarak-md);
+  padding-bottom: var(--jarak-lg);
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.keranjang-item__thumb {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  object-fit: cover;
+  background-color: #f7f7f7;
+  flex-shrink: 0;
+  border: 1px solid #eeeeee;
+}
+
+.keranjang-item__rincian {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 4px;
+}
+
+.keranjang-item__nama {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.keranjang-item__varian {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #777777;
+  text-transform: uppercase;
+}
+
+.keranjang-item__badge-diskon {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px dashed var(--warna-primer);
+  color: var(--warna-primer);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.keranjang-item__harga-coret {
+  font-size: 0.75rem;
+  color: #999999;
+  text-decoration: line-through;
+  margin: 0;
+}
+
+.keranjang-item__harga-aktif {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.keranjang-item__aksi-baris {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.keranjang-item__hapus {
+  background: transparent;
+  border: none;
+  color: #444444;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.keranjang-item__hapus:hover {
+  color: var(--warna-primer);
+}
+
+.keranjang-item__stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #dddddd;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.keranjang-item__stepper-tombol {
+  background: #f9f9f9;
+  border: none;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--warna-primer);
+  transition: background-color 0.15s ease;
+}
+
+.keranjang-item__stepper-tombol:hover {
+  background: #eeeeee;
+}
+
+.keranjang-item__stepper-angka {
+  padding: 0 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+/* Footer Drawer Keranjang */
+.keranjang-drawer__footer {
+  padding: var(--jarak-lg);
+  border-top: 1px solid #eeeeee;
+  background-color: #fafafa;
+  display: flex;
+  flex-direction: column;
+  gap: var(--jarak-md);
+}
+
+.keranjang-drawer__total-baris {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.keranjang-drawer__total-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #444444;
+  margin: 0;
+}
+
+.keranjang-drawer__total-nilai {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.keranjang-drawer__hemat {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  font-size: 0.82rem;
+  color: #555555;
+  margin: -4px 0 0 0;
+}
+
+.keranjang-drawer__tombol-checkout {
+  width: 100%;
+  padding: 14px 20px;
+  background-color: var(--warna-primer);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-penuh);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 48px;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  text-decoration: none;
+  text-align: center;
+}
+
+.keranjang-drawer__tombol-checkout:hover {
+  background-color: var(--warna-primer-hover);
+  transform: translateY(-1px);
+}
+
+.keranjang-drawer__loyalty-note {
+  text-align: center;
+  font-size: 0.82rem;
+  color: #666666;
+  margin: 0;
+}
+
+.keranjang-drawer__loyalty-link {
+  color: #1a1a1a;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ----------------------------------------------------------
+   3. Bar Melayang Bawah Layar (Gambar 1)
+   ---------------------------------------------------------- */
+.keranjang-bar-bawah {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  z-index: var(--z-sticky-bar);
+  background-color: #8b1016;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--jarak-xl);
+  padding: 10px 20px;
+  border-radius: var(--radius-penuh);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  min-width: 280px;
+  max-width: 90vw;
+  opacity: 0;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+}
+
+.keranjang-bar-bawah.aktif {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.keranjang-bar-bawah__info {
+  display: flex;
+  flex-direction: column;
+}
+
+.keranjang-bar-bawah__label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+.keranjang-bar-bawah__harga {
+  font-size: 0.82rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.keranjang-bar-bawah__badge-ikon {
+  width: 38px;
+  height: 38px;
+  background-color: #b5151c;
+  border-radius: var(--radius-penuh);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.keranjang-bar-bawah__badge-ikon svg {
+  width: 20px;
+  height: 20px;
+  stroke: #ffffff;
+}
+
+.keranjang-bar-bawah__jumlah-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background-color: #ffffff;
+  color: var(--warna-primer);
+  font-size: 0.7rem;
+  font-weight: 800;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-penuh);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
