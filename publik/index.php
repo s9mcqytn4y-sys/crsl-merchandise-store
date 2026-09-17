@@ -101,6 +101,20 @@ if (preg_match('#^/(?:produk|products)/([a-zA-Z0-9_-]+)$#', $uri, $matches)) {
     exit;
 }
 
+// Dynamic Bundle routing: /bundle/{slug} atau /bundles/{id}/{slug} atau /bundles/{slug}
+if (preg_match('#^/(?:bundle|bundles)/(?:[0-9]+/)?([a-zA-Z0-9_-]+)$#', $uri, $matches)) {
+    $bundleSlug = $matches[1];
+    require_once __DIR__ . '/halaman/bundle-detail.php';
+    exit;
+}
+
+// Dynamic Invoice/Pesanan routing: /invoice/{id} atau /pesanan/{id}
+if (preg_match('#^/(?:invoice|pesanan)/([a-zA-Z0-9_-]+)$#', $uri, $matches)) {
+    $pesananId = $matches[1];
+    require_once __DIR__ . '/halaman/invoice.php';
+    exit;
+}
+
 // Routing
 switch ($uri) {
     case '/':
@@ -109,6 +123,10 @@ switch ($uri) {
 
     case '/akun':
         require_once __DIR__ . '/halaman/akun.php';
+        break;
+
+    case '/checkout':
+        require_once __DIR__ . '/halaman/checkout.php';
         break;
 
     default:

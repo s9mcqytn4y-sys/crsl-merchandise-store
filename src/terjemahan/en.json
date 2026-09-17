@@ -104,5 +104,43 @@
     "checkout": "Checkout with Discount",
     "kosong": "Your shopping cart is empty",
     "tambah_berhasil": "Product successfully added to cart"
+  },
+  "bundle": {
+    "judul_seksi": "BTS Must-Have Bundle",
+    "subjudul_seksi": "Most complete Back to School value bundle to accompany your days!",
+    "badge_hemat": "SAVE UP TO 15%",
+    "beli_paket": "Buy This Bundle",
+    "lihat_detail": "View Bundle Details",
+    "aturan_wajib": "Bundle packages must be purchased as a complete set (Bag + Accessories + Freebies).",
+    "pilih_produk_lagi": "Pick {n} more products to complete the bundle",
+    "bundle_lengkap": "Complete Bundle Set Ready to Add",
+    "tambah_keranjang": "Add 1 Bundle Set to Cart",
+    "isi_paket": "Special Package Contents",
+    "freebies_termasuk": "Includes Special Back to School Freebies"
+  },
+  "checkout": {
+    "judul": "Order Checkout",
+    "langkah1": "1. Address & Contact",
+    "langkah2": "2. Shipping Carrier",
+    "langkah3": "3. Payment Method",
+    "nama_lengkap": "Recipient Name",
+    "telepon": "WhatsApp Number (Active)",
+    "provinsi": "Province",
+    "kota": "City / Regency",
+    "kecamatan": "District",
+    "kodepos": "Postal Code (5 Digits)",
+    "alamat": "Complete Address & Street Landmarks",
+    "pilih_kurir": "Select Delivery Service",
+    "asuransi": "Shipping Insurance (+Rp 2,000)",
+    "asuransi_info": "Protects your package against damage or loss in transit",
+    "metode_bayar": "Select Payment Method",
+    "ringkasan": "Payment Summary",
+    "subtotal": "Products Subtotal",
+    "ongkir": "Shipping Fee",
+    "biaya_layanan": "Service & System Fee",
+    "total": "Total Amount",
+    "bayar_sekarang": "Pay Now",
+    "setuju_syarat": "By proceeding, you agree to CRSL official Terms & Conditions and Privacy Policy.",
+    "pesanan_sukses": "Your Order Has Been Created Successfully!"
   }
 }

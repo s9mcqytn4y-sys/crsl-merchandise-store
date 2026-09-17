@@ -85,6 +85,13 @@ const MenuSamping = (() => {
       setTimeout(() => Pencarian.buka(), 350);
     });
 
+    // Auto-close on anchor link click
+    drawer.querySelectorAll('a[href*="#"]').forEach(link => {
+      link.addEventListener('click', () => {
+        tutup();
+      });
+    });
+
     drawer.addEventListener('keydown', tanganiKeydown);
   }
 

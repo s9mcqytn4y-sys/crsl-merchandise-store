@@ -104,5 +104,43 @@
     "checkout": "Checkout dengan Diskon",
     "kosong": "Keranjang belanja Anda masih kosong",
     "tambah_berhasil": "Produk berhasil ditambahkan ke keranjang"
+  },
+  "bundle": {
+    "judul_seksi": "BTS Must-Have Bundle",
+    "subjudul_seksi": "Paket hemat Back to School terlengkap untuk menemanimu!",
+    "badge_hemat": "HEMAT HINGGA 15%",
+    "beli_paket": "Beli Paket Ini",
+    "lihat_detail": "Lihat Paket Bundle",
+    "aturan_wajib": "Produk bundle wajib dibeli 1 set lengkap (Tas + Aksesoris + Freebies).",
+    "pilih_produk_lagi": "Pilih {n} produk lagi untuk melengkapi bundle",
+    "bundle_lengkap": "Set Bundle Lengkap Siap Dimasukkan",
+    "tambah_keranjang": "Tambah 1 Set Bundle ke Keranjang",
+    "isi_paket": "Isi Paket Spesial",
+    "freebies_termasuk": "Termasuk Bonus Spesial Back to School"
+  },
+  "checkout": {
+    "judul": "Checkout Pesanan",
+    "langkah1": "1. Alamat & Kontak",
+    "langkah2": "2. Kurir Pengiriman",
+    "langkah3": "3. Metode Pembayaran",
+    "nama_lengkap": "Nama Penerima",
+    "telepon": "Nomor WhatsApp (Aktif)",
+    "provinsi": "Provinsi",
+    "kota": "Kota / Kabupaten",
+    "kecamatan": "Kecamatan",
+    "kodepos": "Kode Pos (5 Digit)",
+    "alamat": "Alamat Lengkap & Patokan Rumah",
+    "pilih_kurir": "Pilih Layanan Pengiriman",
+    "asuransi": "Asuransi Pengiriman (+Rp 2.000)",
+    "asuransi_info": "Melindungi paket dari kerusakan atau kehilangan selama transit",
+    "metode_bayar": "Pilih Metode Pembayaran",
+    "ringkasan": "Ringkasan Pembayaran",
+    "subtotal": "Subtotal Produk",
+    "ongkir": "Ongkos Kirim",
+    "biaya_layanan": "Biaya Layanan & Sistem",
+    "total": "Total Tagihan",
+    "bayar_sekarang": "Bayar Sekarang",
+    "setuju_syarat": "Dengan melanjutkan, Anda menyetujui Syarat & Ketentuan Transaksi serta Kebijakan Privasi resmi CRSL.",
+    "pesanan_sukses": "Pesanan Anda Berhasil Dibuat!"
   }
 }

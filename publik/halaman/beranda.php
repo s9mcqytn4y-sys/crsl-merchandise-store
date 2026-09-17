@@ -33,6 +33,8 @@ $apakahBeranda = true;
   <link rel="stylesheet" href="/css/komponen/otentikasi.css">
   <link rel="stylesheet" href="/css/komponen/hero-carousel.css">
   <link rel="stylesheet" href="/css/komponen/pre-order.css">
+  <link rel="stylesheet" href="/css/komponen/divider-bts.css">
+  <link rel="stylesheet" href="/css/komponen/bundle-section.css">
   <link rel="stylesheet" href="/css/komponen/karakter-showcase.css">
   <link rel="stylesheet" href="/css/komponen/produk-grid.css">
 </head>
@@ -176,13 +178,16 @@ $apakahBeranda = true;
     <!-- Nav list -->
     <ul class="menu-samping__daftar">
       <li class="menu-samping__item">
-        <a href="/#bts-collection" class="menu-samping__tautan">BTS Collection <span class="menu-samping__emoji">&#x1F392;</span></a>
+        <a href="#bundles" class="menu-samping__tautan">BTS Must-Have Bundle <span class="menu-samping__emoji">&#x1F392;</span></a>
       </li>
       <li class="menu-samping__item">
-        <a href="/#produk-unggulan" class="menu-samping__tautan">All Products</a>
+        <a href="#pre-order" class="menu-samping__tautan menu-samping__tautan--promo">Pre-Order Now <span class="menu-samping__emoji">&#x1F525;</span></a>
       </li>
       <li class="menu-samping__item">
-        <a href="/#promo" class="menu-samping__tautan menu-samping__tautan--promo">All Day Promo <span class="menu-samping__emoji">&#x1F525;</span></a>
+        <a href="#karakter-crsl" class="menu-samping__tautan">Karakter CRSL <span class="menu-samping__emoji">&#x1F43E;</span></a>
+      </li>
+      <li class="menu-samping__item">
+        <a href="#produk-unggulan" class="menu-samping__tautan">Katalog Produk <span class="menu-samping__emoji">&#x2728;</span></a>
       </li>
       <li class="menu-samping__item">
         <a href="/kategori/backpack-collection" class="menu-samping__tautan">Backpacks</a>
@@ -194,25 +199,7 @@ $apakahBeranda = true;
         <a href="/kategori/tumbler-collection" class="menu-samping__tautan">Tumbler Collection</a>
       </li>
       <li class="menu-samping__item">
-        <a href="/kategori/tops-collection" class="menu-samping__tautan">Tops</a>
-      </li>
-      <li class="menu-samping__item">
-        <a href="/kategori/bottoms-collection" class="menu-samping__tautan">Bottoms</a>
-      </li>
-      <li class="menu-samping__item">
-        <a href="/kategori/outerwears-collection" class="menu-samping__tautan">Outerwears</a>
-      </li>
-      <li class="menu-samping__item">
-        <a href="/kategori/footwear-collection" class="menu-samping__tautan">Footwears</a>
-      </li>
-      <li class="menu-samping__item">
-        <a href="/kategori/headwear-collection" class="menu-samping__tautan">Headwears</a>
-      </li>
-      <li class="menu-samping__item">
         <a href="/kategori/wallet-accessories" class="menu-samping__tautan">Wallet &amp; Accessories</a>
-      </li>
-      <li class="menu-samping__item">
-        <a href="/#whats-poppin" class="menu-samping__tautan">What's Poppin'</a>
       </li>
     </ul>
   </nav>
@@ -232,13 +219,19 @@ $apakahBeranda = true;
   <!-- ========== MODAL OTENTIKASI ========== -->
   <?php require_once PUBLIK_DIR . '/komponen/modal-otentikasi.php'; ?>
 
-  <!-- ========== KONTEN UTAMA: FASE 2 ========== -->
+  <!-- ========== KONTEN UTAMA: FASE 2 & BUNDLES ========== -->
   <main id="konten-utama">
     <!-- 1. Hero Banner Carousel (Fit 1 Layar / 100dvh) -->
     <?php require_once PUBLIK_DIR . '/komponen/hero-carousel.php'; ?>
 
     <!-- 1b. Pre-Order Now Section (crsl-store.id Official Flow) -->
     <?php require_once PUBLIK_DIR . '/komponen/pre-order.php'; ?>
+
+    <!-- 1c. Tartan Divider Banner BTS 2026 -->
+    <?php require_once PUBLIK_DIR . '/komponen/divider-bts.php'; ?>
+
+    <!-- 1d. Seksi 2-Kolom BTS Must-Have Bundle -->
+    <?php require_once PUBLIK_DIR . '/komponen/bundle-section.php'; ?>
 
     <!-- 2. Karakter Showcase CRSL (Odin, Chilo, Pigko, Popo, Choco) -->
     <?php require_once PUBLIK_DIR . '/komponen/karakter-showcase.php'; ?>

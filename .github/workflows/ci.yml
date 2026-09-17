@@ -117,6 +117,54 @@ jobs:
             }
           '
 
+          php -r '
+            define("APP_DIR", __DIR__);
+            define("PUBLIK_DIR", __DIR__ . "/publik");
+            define("SRC_DIR", __DIR__ . "/src");
+            define("APP_URL", "");
+            ob_start();
+            require "publik/halaman/checkout.php";
+            $html = ob_get_clean();
+            file_put_contents("dist/checkout.html", $html);
+            mkdir("dist/checkout", 0777, true);
+            file_put_contents("dist/checkout/index.html", $html);
+          '
+
+          php -r '
+            define("APP_DIR", __DIR__);
+            define("PUBLIK_DIR", __DIR__ . "/publik");
+            define("SRC_DIR", __DIR__ . "/src");
+            define("APP_URL", "");
+            
+            $bundles = ["back-to-school-with-miflo", "back-to-school-with-haru"];
+            foreach ($bundles as $bSlug) {
+              $bundleSlug = $bSlug;
+              ob_start();
+              require "publik/halaman/bundle-detail.php";
+              $html = ob_get_clean();
+
+              $dir = "dist/bundle/" . $bSlug;
+              if (!is_dir($dir)) mkdir($dir, 0777, true);
+              file_put_contents("dist/bundle/" . $bSlug . ".html", $html);
+              file_put_contents($dir . "/index.html", $html);
+              echo "Exported static Bundle PDP for: " . $bSlug . PHP_EOL;
+            }
+          '
+
+          php -r '
+            define("APP_DIR", __DIR__);
+            define("PUBLIK_DIR", __DIR__ . "/publik");
+            define("SRC_DIR", __DIR__ . "/src");
+            define("APP_URL", "");
+            $pesananId = "CRSL-ORD-DEMO";
+            ob_start();
+            require "publik/halaman/invoice.php";
+            $html = ob_get_clean();
+            file_put_contents("dist/invoice.html", $html);
+            mkdir("dist/invoice", 0777, true);
+            file_put_contents("dist/invoice/index.html", $html);
+          '
+
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

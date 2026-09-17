@@ -420,7 +420,7 @@
         </div>
 
         <!-- Empty state box (Gambar 4) -->
-        <div class="akun__kosong">
+        <div class="akun__kosong" id="akun-pesanan-kosong">
           <svg class="akun__kosong-ikon" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M32 6L54 18V46L32 58L10 46V18L32 6Z"/>
             <path d="M10 18L32 30L54 18"/>
@@ -430,17 +430,21 @@
           <h4 class="akun__kosong-judul">No Orders Found</h4>
           <p class="akun__kosong-subjudul">Place an order to see it listed here.</p>
         </div>
+
+        <!-- Wadah Daftar Pesanan Dinamis -->
+        <div id="akun-daftar-pesanan" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;"></div>
       </div>
 
       <!-- Tab Konten: Wishlist -->
       <div class="akun__tab-konten" id="panel-wishlist" role="tabpanel" aria-labelledby="tab-wishlist">
-        <div class="akun__kosong">
+        <div class="akun__kosong" id="akun-wishlist-kosong">
           <svg class="akun__kosong-ikon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
           </svg>
           <h4 class="akun__kosong-judul">Your Wishlist is Empty</h4>
           <p class="akun__kosong-subjudul">Explore our products and save your favorites here.</p>
         </div>
+        <div id="akun-daftar-wishlist" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;"></div>
       </div>
     </div>
   </main>
@@ -457,7 +461,7 @@
   <script src="/js/komponen/otentikasi.js"></script>
   <script src="/js/aplikasi.js"></script>
   <script>
-    // Tab switching for Orders / Wishlist
+    // Tab switching & Pesanan Renderer
     document.addEventListener('DOMContentLoaded', () => {
       const tabs = document.querySelectorAll('.akun__tab');
       const panels = document.querySelectorAll('.akun__tab-konten');
@@ -476,6 +480,96 @@
           target?.classList.add('aktif');
         });
       });
+
+      // Render Riwayat Pesanan dari LocalStorage
+      const pesananListEl = document.getElementById('akun-daftar-pesanan');
+      const pesananKosongEl = document.getElementById('akun-pesanan-kosong');
+      const pesananJudulEl = document.querySelector('.akun__pesanan-judul');
+      const statusSelectEl = document.querySelector('.akun__status-select');
+
+      let orders = [];
+      try {
+        orders = JSON.parse(localStorage.getItem('crsl_orders') || '[]');
+      } catch (e) {
+        orders = [];
+      }
+
+      function renderOrders(filterStatus = 'all') {
+        if (!pesananListEl) return;
+        pesananListEl.innerHTML = '';
+
+        const filtered = orders.filter(o => {
+          if (filterStatus === 'all') return true;
+          if (filterStatus === 'unpaid') return o.status === 'menunggu_pembayaran';
+          if (filterStatus === 'processing') return o.status === 'diproses';
+          if (filterStatus === 'shipped') return o.status === 'dikirim';
+          if (filterStatus === 'completed') return o.status === 'selesai';
+          if (filterStatus === 'cancelled') return o.status === 'dibatalkan';
+          return true;
+        });
+
+        if (pesananJudulEl) {
+          pesananJudulEl.textContent = `My Orders (${orders.length})`;
+        }
+
+        if (filtered.length === 0) {
+          pesananKosongEl.style.display = 'block';
+        } else {
+          pesananKosongEl.style.display = 'none';
+          filtered.forEach(o => {
+            const card = document.createElement('div');
+            card.style.cssText = 'background: #ffffff; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 1.25rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 0.75rem;';
+
+            let badgeWarna = '#d97706';
+            let badgeBg = '#fffbeb';
+            let badgeLabel = 'Menunggu Pembayaran';
+            if (o.status === 'diproses') { badgeWarna = '#2563eb'; badgeBg = '#eff6ff'; badgeLabel = 'Sedang Diproses'; }
+            if (o.status === 'dikirim') { badgeWarna = '#7c3aed'; badgeBg = '#f5f3ff'; badgeLabel = 'Dalam Pengiriman'; }
+            if (o.status === 'selesai') { badgeWarna = '#059669'; badgeBg = '#ecfdf5'; badgeLabel = 'Selesai'; }
+            if (o.status === 'dibatalkan') { badgeWarna = '#dc2626'; badgeBg = '#fef2f2'; badgeLabel = 'Dibatalkan'; }
+
+            card.innerHTML = `
+              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 0.5rem; font-size: 0.85rem;">
+                <div>
+                  <strong style="color: var(--warna-primer);">${o.id}</strong>
+                  <span style="color: var(--warna-teks-redup); margin-left: 0.5rem;">• ${o.tanggal}</span>
+                </div>
+                <span style="background: ${badgeBg}; color: ${badgeWarna}; padding: 0.2rem 0.6rem; border-radius: 9999px; font-weight: 700; font-size: 0.75rem;">
+                  ${badgeLabel}
+                </span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                ${(o.items || []).map(it => `
+                  <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem;">
+                    <img src="${it.gambar}" alt="${it.nama}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 6px; background: #f9f9f9;">
+                    <div style="flex-grow: 1;">
+                      <div style="font-weight: 700;">${it.nama}</div>
+                      <div style="font-size: 0.75rem; color: var(--warna-teks-redup);">${it.varian || 'Standar'} (x${it.jumlah})</div>
+                    </div>
+                    <div style="font-weight: 700;">Rp ${((it.harga || 0) * (it.jumlah || 1)).toLocaleString('id-ID')}</div>
+                  </div>
+                `).join('')}
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f0f0f0; padding-top: 0.75rem; margin-top: 0.25rem;">
+                <div style="font-size: 0.85rem;">
+                  <span style="color: var(--warna-teks-redup);">Total:</span>
+                  <strong style="color: var(--warna-primer); font-size: 1rem; margin-left: 0.25rem;">Rp ${(o.total || 0).toLocaleString('id-ID')}</strong>
+                </div>
+                <a href="/invoice/${o.id}" style="font-size: 0.85rem; font-weight: 700; color: var(--warna-primer); border: 1.5px solid var(--warna-primer); padding: 0.35rem 0.85rem; border-radius: 9999px; text-decoration: none;">
+                  Lihat Faktur →
+                </a>
+              </div>
+            `;
+            pesananListEl.appendChild(card);
+          });
+        }
+      }
+
+      statusSelectEl?.addEventListener('change', (e) => {
+        renderOrders(e.target.value);
+      });
+
+      renderOrders('all');
     });
   </script>
 </body>

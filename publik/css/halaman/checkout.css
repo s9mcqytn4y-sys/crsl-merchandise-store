@@ -1,0 +1,487 @@
+/* ==========================================================
+   CRSL Merchandise Store - Halaman Multi-Step Checkout
+   3-Step Guided Wizard, Ekspedisi Kurir, QRIS Dinamis, & VA
+   ========================================================== */
+
+.checkout-page {
+  padding-top: var(--jarak-md);
+  padding-bottom: var(--jarak-2xl);
+  min-height: 85dvh;
+  background-color: #fafafa;
+}
+
+.checkout-page__wadah {
+  max-width: var(--lebar-konten);
+  margin: 0 auto;
+  padding: 0 var(--jarak-md);
+}
+
+/* Header Checkout */
+.checkout-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--jarak-md);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  margin-bottom: var(--jarak-lg);
+}
+
+.checkout-header__kembali {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--warna-teks-redup);
+  font-size: 0.9rem;
+  transition: color var(--transisi-cepat);
+}
+
+.checkout-header__kembali:hover {
+  color: var(--warna-primer);
+}
+
+.checkout-header__badge-aman {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: #10b981;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--radius-lingkaran);
+}
+
+/* Stepper Bar */
+.checkout-stepper {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--jarak-sm);
+  margin-bottom: var(--jarak-xl);
+}
+
+.checkout-step {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  background: var(--warna-permukaan);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  transition: all var(--transisi-normal);
+}
+
+.checkout-step--aktif {
+  border-color: var(--warna-primer);
+  background-color: rgba(229, 32, 39, 0.04);
+  box-shadow: 0 4px 12px rgba(229, 32, 39, 0.08);
+}
+
+.checkout-step--selesai {
+  border-color: #10b981;
+  background-color: rgba(16, 185, 129, 0.04);
+}
+
+.checkout-step__nomor {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  color: #666666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.checkout-step--aktif .checkout-step__nomor {
+  background: var(--warna-primer);
+  color: #ffffff;
+}
+
+.checkout-step--selesai .checkout-step__nomor {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.checkout-step__label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--warna-teks);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Main Grid Layout */
+.checkout-layout {
+  display: grid;
+  grid-template-columns: 60% 40%;
+  gap: var(--jarak-xl);
+  align-items: start;
+}
+
+/* Panel Form Kiri */
+.checkout-panel {
+  background: var(--warna-permukaan);
+  border-radius: var(--radius-lg);
+  padding: var(--jarak-xl);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.checkout-panel__judul {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin-bottom: var(--jarak-lg);
+  color: var(--warna-teks);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Grup Form */
+.form-grup-baris {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--jarak-md);
+  margin-bottom: var(--jarak-md);
+}
+
+.form-kontrol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: var(--jarak-md);
+}
+
+.form-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--warna-teks);
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background-color: #ffffff;
+  color: var(--warna-teks);
+  transition: border-color var(--transisi-cepat), box-shadow var(--transisi-cepat);
+}
+
+.form-textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--warna-primer);
+  box-shadow: 0 0 0 3px rgba(229, 32, 39, 0.15);
+}
+
+.form-error-teks {
+  color: var(--warna-primer);
+  font-size: 0.75rem;
+  display: none;
+}
+
+/* Opsi Kurir */
+.opsi-kurir-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jarak-sm);
+}
+
+.opsi-kurir-kartu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border: 1.5px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  cursor: pointer;
+  transition: all var(--transisi-cepat);
+}
+
+.opsi-kurir-kartu:hover {
+  border-color: var(--warna-primer);
+  background-color: rgba(229, 32, 39, 0.02);
+}
+
+.opsi-kurir-kartu--terpilih {
+  border-color: var(--warna-primer);
+  background-color: rgba(229, 32, 39, 0.04);
+  box-shadow: 0 4px 12px rgba(229, 32, 39, 0.08);
+}
+
+.opsi-kurir-kartu__kiri {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.opsi-kurir-kartu__logo {
+  width: 48px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.opsi-kurir-kartu__nama {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.opsi-kurir-kartu__estimasi {
+  font-size: 0.8rem;
+  color: var(--warna-teks-redup);
+}
+
+.opsi-kurir-kartu__tarif {
+  font-weight: 800;
+  color: var(--warna-primer);
+}
+
+/* Opsi Pembayaran */
+.opsi-bayar-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jarak-sm);
+}
+
+.opsi-bayar-kartu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border: 1.5px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  cursor: pointer;
+  transition: all var(--transisi-cepat);
+}
+
+.opsi-bayar-kartu:hover {
+  border-color: var(--warna-primer);
+}
+
+.opsi-bayar-kartu--terpilih {
+  border-color: var(--warna-primer);
+  background-color: rgba(229, 32, 39, 0.04);
+}
+
+.opsi-bayar-kartu__kiri {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.opsi-bayar-kartu__nama {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.opsi-bayar-kartu__badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-lingkaran);
+  background: #ecfdf5;
+  color: #059669;
+}
+
+/* QRIS Display */
+.qris-display-box {
+  display: none;
+  text-align: center;
+  padding: 1.5rem;
+  background: #ffffff;
+  border: 1px dashed rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius-md);
+  margin-top: 1rem;
+}
+
+.qris-display-box.aktif {
+  display: block;
+}
+
+.qris-qrcode {
+  width: 180px;
+  height: 180px;
+  margin: 0 auto 1rem;
+  display: block;
+  border: 4px solid #ffffff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.qris-timer {
+  font-size: 0.9rem;
+  color: var(--warna-primer);
+  font-weight: 800;
+  margin-top: 0.5rem;
+}
+
+/* Panel Ringkasan Kanan */
+.checkout-ringkasan {
+  background: var(--warna-permukaan);
+  border-radius: var(--radius-lg);
+  padding: var(--jarak-xl);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 90px;
+}
+
+.checkout-ringkasan__judul {
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin-bottom: var(--jarak-md);
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.checkout-daftar-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 240px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  margin-bottom: var(--jarak-md);
+  padding-right: 0.25rem;
+}
+
+.checkout-item-ringkas {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.checkout-item-ringkas__thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.checkout-item-ringkas__info {
+  flex-grow: 1;
+}
+
+.checkout-item-ringkas__nama {
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.checkout-item-ringkas__varian {
+  font-size: 0.75rem;
+  color: var(--warna-teks-redup);
+}
+
+.checkout-item-ringkas__harga {
+  font-weight: 700;
+  color: var(--warna-teks);
+  flex-shrink: 0;
+}
+
+.checkout-kalkulasi {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: var(--jarak-md) 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  margin-bottom: var(--jarak-md);
+}
+
+.checkout-kalkulasi__baris {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: var(--warna-teks-redup);
+}
+
+.checkout-kalkulasi__baris--total {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--warna-primer);
+  padding-top: 0.5rem;
+}
+
+.checkout-tombol-navigasi {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: var(--jarak-lg);
+}
+
+.btn-checkout-lanjut {
+  width: 100%;
+  min-height: 52px;
+  border-radius: var(--radius-lingkaran);
+  background: var(--warna-primer);
+  color: #ffffff;
+  border: none;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 8px 24px rgba(229, 32, 39, 0.25);
+  transition: all var(--transisi-normal);
+}
+
+.btn-checkout-lanjut:hover {
+  background: var(--warna-primer-hover);
+  transform: translateY(-2px);
+}
+
+.btn-checkout-kembali-step {
+  min-height: 52px;
+  padding: 0 1.25rem;
+  border-radius: var(--radius-lingkaran);
+  background: transparent;
+  border: 1.5px solid rgba(0, 0, 0, 0.15);
+  font-weight: 700;
+  color: var(--warna-teks);
+  cursor: pointer;
+}
+
+.checkout-legal-notice {
+  font-size: 0.75rem;
+  color: var(--warna-teks-redup);
+  line-height: 1.4;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+/* Responsif Mobile */
+@media (max-width: 900px) {
+  .checkout-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .checkout-ringkasan {
+    position: static;
+    order: -1;
+  }
+
+  .form-grup-baris {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
