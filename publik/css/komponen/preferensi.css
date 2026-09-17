@@ -1,0 +1,128 @@
+/* ==========================================================
+   Preferensi - Localization / Currency / Language Modal
+   Dropdown di kanan atas
+   ========================================================== */
+
+.preferensi {
+  position: fixed;
+  top: calc(var(--tinggi-bilah-atas) + var(--tinggi-navigasi));
+  right: var(--jarak-md);
+  z-index: var(--z-modal);
+  width: 90vw;
+  max-width: 360px;
+  background-color: var(--warna-latar);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--bayangan-lg);
+  padding: var(--jarak-lg);
+  transform: translateY(-10px);
+  opacity: 0;
+  visibility: hidden;
+  transition: transform var(--transisi-normal), opacity var(--transisi-normal), visibility var(--transisi-normal);
+}
+
+.preferensi.aktif {
+  transform: translateY(0);
+  opacity: 1;
+  visibility: visible;
+}
+
+.preferensi__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-modal) - 1);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transisi-normal), visibility var(--transisi-normal);
+}
+
+.preferensi__overlay.aktif {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* -- Form group -- */
+.preferensi__grup {
+  margin-bottom: var(--jarak-md);
+}
+
+.preferensi__label {
+  display: block;
+  font-size: var(--teks-caption);
+  font-weight: 500;
+  color: var(--warna-teks-sekunder);
+  margin-bottom: var(--jarak-xs);
+}
+
+.preferensi__select {
+  width: 100%;
+  padding: var(--jarak-sm) var(--jarak-md);
+  border: 1px solid var(--warna-batas);
+  border-radius: var(--radius-md);
+  font-size: var(--teks-body);
+  color: var(--warna-teks);
+  background-color: var(--warna-latar);
+  min-height: 44px;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371757A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--jarak-md) center;
+  padding-right: var(--jarak-2xl);
+  transition: border-color var(--transisi-cepat);
+}
+
+.preferensi__select:hover {
+  border-color: var(--warna-teks-sekunder);
+}
+
+.preferensi__select:focus-visible {
+  outline: 2px solid var(--warna-batas-fokus);
+  outline-offset: 2px;
+}
+
+/* -- Select with flag icon prefix -- */
+.preferensi__select-wadah {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.preferensi__select-wadah .navigasi__bendera {
+  position: absolute;
+  left: var(--jarak-md);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.preferensi__select-wadah .preferensi__select {
+  padding-left: calc(var(--jarak-md) + 28px);
+}
+
+/* -- Tombol simpan -- */
+.preferensi__simpan {
+  width: 100%;
+  padding: var(--jarak-sm) var(--jarak-lg);
+  background-color: var(--warna-teks);
+  color: var(--warna-teks-invers);
+  border: none;
+  border-radius: var(--radius-penuh);
+  font-size: var(--teks-body);
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+  transition: background-color var(--transisi-cepat);
+  margin-top: var(--jarak-md);
+}
+
+.preferensi__simpan:hover {
+  background-color: var(--warna-primer);
+}
+
+.preferensi__simpan:focus-visible {
+  outline: 2px solid var(--warna-batas-fokus);
+  outline-offset: 2px;
+}
+
+.preferensi__simpan:active {
+  background-color: var(--warna-primer-aktif);
+}

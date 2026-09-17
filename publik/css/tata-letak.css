@@ -1,0 +1,52 @@
+/* ==========================================================
+   CRSL Merchandise Store - Layout Utilities
+   Container, flex helpers, grid
+   ========================================================== */
+
+.wadah {
+  width: 100%;
+  max-width: var(--lebar-maks);
+  margin-inline: auto;
+  padding-inline: var(--jarak-md);
+}
+
+/* -- Flex utilities -- */
+.flex { display: flex; }
+.flex-kolom { flex-direction: column; }
+.flex-baris { flex-direction: row; }
+.flex-bungkus { flex-wrap: wrap; }
+.flex-tengah { align-items: center; }
+.flex-atas { align-items: flex-start; }
+.flex-bawah { align-items: flex-end; }
+.flex-rentang { align-items: stretch; }
+.konten-tengah { justify-content: center; }
+.konten-antara { justify-content: space-between; }
+.konten-akhir { justify-content: flex-end; }
+.flex-1 { flex: 1; }
+.flex-shrink-0 { flex-shrink: 0; }
+
+/* -- Gap utilities -- */
+.gap-xs { gap: var(--jarak-xs); }
+.gap-sm { gap: var(--jarak-sm); }
+.gap-md { gap: var(--jarak-md); }
+.gap-lg { gap: var(--jarak-lg); }
+.gap-xl { gap: var(--jarak-xl); }
+
+/* -- Text utilities -- */
+.teks-tengah { text-align: center; }
+.teks-kanan { text-align: right; }
+.teks-kiri { text-align: left; }
+
+/* -- Display utilities -- */
+.sembunyikan { display: none; }
+.blok { display: block; }
+
+/* -- Position utilities -- */
+.relatif { position: relative; }
+.absolut { position: absolute; }
+.tetap { position: fixed; }
+.lengket { position: sticky; }
+
+/* -- Width/Height -- */
+.w-penuh { width: 100%; }
+.h-penuh { height: 100%; }

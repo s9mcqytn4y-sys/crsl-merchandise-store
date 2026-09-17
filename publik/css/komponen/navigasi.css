@@ -1,0 +1,149 @@
+/* ==========================================================
+   Navigasi - Header Navigation Bar
+   Sticky di bawah bilah atas, 3 cluster layout
+   ========================================================== */
+
+.navigasi {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-navigasi);
+  background-color: var(--warna-latar);
+  border-bottom: 1px solid var(--warna-batas);
+  height: var(--tinggi-navigasi);
+  transition: background-color var(--transisi-normal);
+}
+
+.navigasi__wadah {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  padding-inline: var(--jarak-md);
+  max-width: var(--lebar-maks);
+  margin-inline: auto;
+}
+
+/* -- Cluster Kiri -- */
+.navigasi__kiri {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+/* -- Cluster Tengah (Logo) -- */
+.navigasi__tengah {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.navigasi__logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.navigasi__logo-teks {
+  font-size: var(--teks-h2);
+  font-weight: 900;
+  color: var(--warna-teks);
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+/* -- Cluster Kanan -- */
+.navigasi__kanan {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1;
+  gap: var(--jarak-xs);
+}
+
+/* -- Tombol Ikon -- */
+.navigasi__tombol-ikon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: var(--radius-penuh);
+  color: var(--warna-teks);
+  background: transparent;
+  transition: background-color var(--transisi-cepat);
+  cursor: pointer;
+  border: none;
+  padding: 0;
+}
+
+.navigasi__tombol-ikon:hover {
+  background-color: var(--warna-latar-sekunder);
+}
+
+.navigasi__tombol-ikon:focus-visible {
+  outline: 2px solid var(--warna-batas-fokus);
+  outline-offset: 2px;
+}
+
+.navigasi__tombol-ikon svg {
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
+}
+
+/* -- Tombol Preferensi (Bendera + IDR) -- */
+.navigasi__preferensi {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--jarak-xs);
+  padding: var(--jarak-xs) var(--jarak-sm);
+  border-radius: var(--radius-penuh);
+  color: var(--warna-teks);
+  background: transparent;
+  cursor: pointer;
+  border: none;
+  font-size: var(--teks-body);
+  font-weight: 500;
+  min-height: 44px;
+  transition: background-color var(--transisi-cepat);
+}
+
+.navigasi__preferensi:hover {
+  background-color: var(--warna-latar-sekunder);
+}
+
+.navigasi__preferensi:focus-visible {
+  outline: 2px solid var(--warna-batas-fokus);
+  outline-offset: 2px;
+}
+
+.navigasi__bendera {
+  width: 20px;
+  height: 14px;
+  border-radius: 2px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.navigasi__mata-uang {
+  font-size: var(--teks-body);
+  font-weight: 500;
+}
+
+/* -- Desktop -- */
+@media (min-width: 960px) {
+  .navigasi__wadah {
+    padding-inline: var(--jarak-xl);
+  }
+
+  .navigasi__kanan {
+    gap: var(--jarak-sm);
+  }
+
+  .navigasi__logo-teks {
+    font-size: var(--teks-h1);
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "recommendations": [
+    "bmewburn.vscode-intelephense-client",
+    "devsense.phptools-vscode",
+    "ecmel.vscode-html-css",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "formulahendry.auto-rename-tag",
+    "ritwickdey.liveserver",
+    "alexcvzz.vscode-sqlite",
+    "mikestead.dotenv",
+    "bradlc.vscode-tailwindcss",
+    "naumovs.color-highlight",
+    "usernamehw.errorlens",
+    "streetsidesoftware.code-spell-checker",
+    "yzhang.markdown-all-in-one"
+  ]
+}

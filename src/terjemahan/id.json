@@ -1,0 +1,88 @@
+{
+  "situs": {
+    "nama": "CRSL",
+    "tagline": "Animals as your Bestfriends!"
+  },
+  "bilah_atas": {
+    "pesan": [
+      "GRATIS ONGKIR SELURUH INDONESIA",
+      "DISKON 10% ALL ITEM UNTUK NEW ADOPTER",
+      "BELANJA DI WEBSITE LEBIH MURAH"
+    ]
+  },
+  "navigasi": {
+    "menu": "Menu",
+    "cari": "Cari",
+    "akun": "Akun",
+    "cari_placeholder": "Cari produk kami",
+    "istilah_populer": "Istilah Pencarian Populer",
+    "daftar_menu": {
+      "koleksi_bts": "BTS Collection",
+      "semua_produk": "Semua Produk",
+      "promo": "All Day Promo",
+      "ransel": "Backpacks",
+      "slingbag": "Slingbags",
+      "tumbler": "Tumbler Collection",
+      "atasan": "Tops",
+      "bawahan": "Bottoms",
+      "jaket": "Outerwears",
+      "sepatu": "Footwears",
+      "topi": "Headwears",
+      "dompet": "Wallet & Accessories",
+      "terbaru": "What's Poppin'"
+    }
+  },
+  "preferensi": {
+    "kirim_ke": "Kirim ke",
+    "bahasa": "Bahasa",
+    "mata_uang": "Mata Uang",
+    "simpan": "Simpan",
+    "negara": {
+      "ID": "Indonesia",
+      "MY": "Malaysia",
+      "SG": "Singapore"
+    },
+    "bahasa_opsi": {
+      "id": "Bahasa Indonesia",
+      "en": "English"
+    },
+    "mata_uang_opsi": {
+      "IDR": "IDR - Rupiah Indonesia",
+      "USD": "USD - United States Dollar",
+      "SGD": "SGD - Singapore Dollar",
+      "MYR": "MYR - Malaysian Ringgit",
+      "THB": "THB - Thai Baht",
+      "EUR": "EUR - Euro"
+    }
+  },
+  "akun": {
+    "judul": "Akun Saya",
+    "ajakan_judul": "Bergabung sebagai member untuk lebih banyak keuntungan",
+    "ajakan_subjudul": "Sebagai member CRSL, nikmati benefit eksklusif, diskon, dan kumpulkan poin dengan mudah melalui program loyalitas gratis kami.",
+    "masuk": "Masuk",
+    "daftar": "Daftar",
+    "masuk_judul": "Masuk ke Akun",
+    "masuk_email": "Email atau Nomor Telepon",
+    "masuk_tombol": "Masuk",
+    "daftar_judul": "Buat Akun Baru",
+    "daftar_nama": "Nama Lengkap",
+    "daftar_email": "Email Anda",
+    "daftar_sandi": "Kata Sandi",
+    "daftar_lahir": "Tanggal Lahir",
+    "daftar_tombol": "Daftar",
+    "tab_pesanan": "Pesanan",
+    "tab_wishlist": "Wishlist",
+    "pesanan_saya": "Pesanan Saya",
+    "semua_status": "Semua Status",
+    "belum_bayar": "Belum Bayar",
+    "akan_dikirim": "Akan Dikirim",
+    "dikirim": "Dikirim",
+    "selesai": "Selesai",
+    "dibatalkan": "Dibatalkan",
+    "dikembalikan": "Dikembalikan",
+    "pesanan_kosong_judul": "Belum Ada Pesanan",
+    "pesanan_kosong_subjudul": "Buat pesanan untuk melihatnya tercantum di sini.",
+    "wishlist_kosong_judul": "Wishlist Anda Kosong",
+    "wishlist_kosong_subjudul": "Silakan cek kembali nanti untuk pembaruan."
+  }
+}

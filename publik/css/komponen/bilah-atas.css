@@ -1,0 +1,77 @@
+/* ==========================================================
+   Bilah Atas - Announcement Bar / Running Text
+   Warna: merah primer, teks putih
+   Animasi: marquee horizontal loop
+   ========================================================== */
+
+.bilah-atas {
+  position: relative;
+  z-index: var(--z-bilah-atas);
+  background-color: var(--warna-primer);
+  color: var(--warna-teks-invers);
+  height: var(--tinggi-bilah-atas);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  user-select: none;
+}
+
+.bilah-atas__jalur {
+  display: flex;
+  width: max-content;
+  animation: gulir-bilah 20s linear infinite;
+}
+
+.bilah-atas__pesan {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  padding-inline: var(--jarak-xl);
+  font-size: var(--teks-caption);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Separator dot between messages */
+.bilah-atas__pesan::after {
+  content: '\2022';
+  margin-left: var(--jarak-xl);
+  opacity: 0.5;
+}
+
+@keyframes gulir-bilah {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Pause on hover - desktop only */
+@media (min-width: 960px) {
+  .bilah-atas:hover .bilah-atas__jalur {
+    animation-play-state: paused;
+  }
+
+  .bilah-atas__pesan {
+    font-size: var(--teks-body);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bilah-atas__jalur {
+    animation: none;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .bilah-atas__pesan:not(:first-child) {
+    display: none;
+  }
+
+  .bilah-atas__pesan::after {
+    display: none;
+  }
+}

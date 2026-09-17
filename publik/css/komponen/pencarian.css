@@ -1,0 +1,178 @@
+/* ==========================================================
+   Pencarian - Search Overlay
+   Full-width overlay bar di bawah navigasi
+   ========================================================== */
+
+.pencarian {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-pencarian);
+  background-color: var(--warna-latar);
+  transform: translateY(-100%);
+  opacity: 0;
+  transition: transform var(--transisi-normal), opacity var(--transisi-normal);
+  box-shadow: var(--bayangan-lg);
+}
+
+.pencarian.aktif {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* -- Bar pencarian -- */
+.pencarian__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--jarak-sm);
+  padding: var(--jarak-sm) var(--jarak-md);
+  border-bottom: 1px solid var(--warna-batas);
+  /* Offset for announcement bar */
+  padding-top: calc(var(--tinggi-bilah-atas) + var(--jarak-sm));
+}
+
+.pencarian__input-wadah {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--warna-teks);
+  border-radius: var(--radius-md);
+  padding: var(--jarak-sm) var(--jarak-md);
+  gap: var(--jarak-sm);
+  transition: border-color var(--transisi-cepat);
+}
+
+.pencarian__input-wadah:focus-within {
+  border-color: var(--warna-batas-fokus);
+}
+
+.pencarian__input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: var(--teks-body);
+  color: var(--warna-teks);
+  min-height: 36px;
+}
+
+.pencarian__input::placeholder {
+  color: var(--warna-teks-pudar);
+}
+
+.pencarian__tombol-kirim {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  color: var(--warna-teks-sekunder);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+}
+
+.pencarian__tombol-kirim:hover {
+  color: var(--warna-teks);
+}
+
+.pencarian__tombol-kirim svg {
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+}
+
+.pencarian__tombol-tutup {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+  color: var(--warna-teks);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--radius-penuh);
+  transition: background-color var(--transisi-cepat);
+}
+
+.pencarian__tombol-tutup:hover {
+  background-color: var(--warna-latar-sekunder);
+}
+
+.pencarian__tombol-tutup:focus-visible {
+  outline: 2px solid var(--warna-batas-fokus);
+  outline-offset: 2px;
+}
+
+.pencarian__tombol-tutup svg {
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
+}
+
+/* -- Istilah populer -- */
+.pencarian__populer {
+  padding: var(--jarak-md);
+  background-color: var(--warna-latar-sekunder);
+}
+
+.pencarian__populer-judul {
+  font-size: var(--teks-caption);
+  font-weight: 500;
+  color: var(--warna-teks-sekunder);
+  margin-bottom: var(--jarak-sm);
+}
+
+.pencarian__tag-wadah {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--jarak-sm);
+}
+
+.pencarian__tag {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--jarak-xs) var(--jarak-md);
+  background-color: var(--warna-latar);
+  border: 1px solid var(--warna-batas);
+  border-radius: var(--radius-penuh);
+  font-size: var(--teks-caption);
+  color: var(--warna-teks-sekunder);
+  text-decoration: none;
+  transition: background-color var(--transisi-cepat), color var(--transisi-cepat);
+  min-height: 32px;
+  cursor: pointer;
+}
+
+.pencarian__tag:hover {
+  background-color: var(--warna-teks);
+  color: var(--warna-teks-invers);
+}
+
+.pencarian__tag:focus-visible {
+  outline: 2px solid var(--warna-batas-fokus);
+  outline-offset: 2px;
+}
+
+/* -- Overlay backdrop -- */
+.pencarian__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-pencarian) - 1);
+  background-color: var(--warna-latar-overlay);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transisi-normal), visibility var(--transisi-normal);
+}
+
+.pencarian__overlay.aktif {
+  opacity: 1;
+  visibility: visible;
+}

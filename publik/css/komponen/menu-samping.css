@@ -1,0 +1,136 @@
+/* ==========================================================
+   Menu Samping - Sidebar Drawer
+   Slide-in dari kiri, overlay, focus trap
+   ========================================================== */
+
+/* -- Overlay -- */
+.menu-samping__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background-color: var(--warna-latar-overlay);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transisi-normal), visibility var(--transisi-normal);
+}
+
+.menu-samping__overlay.aktif {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* -- Drawer Panel -- */
+.menu-samping {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: var(--z-drawer);
+  width: var(--lebar-drawer);
+  max-width: var(--lebar-drawer-maks);
+  height: 100dvh;
+  background-color: var(--warna-latar);
+  transform: translateX(-100%);
+  transition: transform var(--transisi-normal);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.menu-samping.aktif {
+  transform: translateX(0);
+}
+
+/* -- Header drawer -- */
+.menu-samping__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--jarak-md);
+  border-bottom: 1px solid var(--warna-batas);
+  flex-shrink: 0;
+}
+
+.menu-samping__tombol-cari,
+.menu-samping__tombol-tutup {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: var(--radius-penuh);
+  color: var(--warna-teks);
+  background: transparent;
+  transition: background-color var(--transisi-cepat);
+  cursor: pointer;
+  border: none;
+  padding: 0;
+}
+
+.menu-samping__tombol-cari:hover,
+.menu-samping__tombol-tutup:hover {
+  background-color: var(--warna-latar-sekunder);
+}
+
+.menu-samping__tombol-cari:focus-visible,
+.menu-samping__tombol-tutup:focus-visible {
+  outline: 2px solid var(--warna-batas-fokus);
+  outline-offset: 2px;
+}
+
+.menu-samping__tombol-cari svg,
+.menu-samping__tombol-tutup svg {
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
+}
+
+/* -- Navigation list -- */
+.menu-samping__daftar {
+  padding: var(--jarak-sm) 0;
+  flex: 1;
+}
+
+.menu-samping__item {
+  display: block;
+}
+
+.menu-samping__tautan {
+  display: flex;
+  align-items: center;
+  gap: var(--jarak-sm);
+  padding: var(--jarak-md) var(--jarak-lg);
+  font-size: var(--teks-h4);
+  font-weight: 400;
+  color: var(--warna-teks);
+  text-decoration: none;
+  transition: background-color var(--transisi-cepat);
+  min-height: 44px;
+}
+
+.menu-samping__tautan:hover,
+.menu-samping__tautan:focus-visible {
+  background-color: var(--warna-latar-sekunder);
+}
+
+.menu-samping__tautan:focus-visible {
+  outline: 2px solid var(--warna-batas-fokus);
+  outline-offset: -2px;
+}
+
+.menu-samping__tautan--aktif {
+  background-color: var(--warna-latar-sekunder);
+  font-weight: 600;
+}
+
+/* Promo item with special color */
+.menu-samping__tautan--promo {
+  color: var(--warna-primer);
+  font-weight: 500;
+}
+
+.menu-samping__emoji {
+  font-size: 1.2em;
+}

@@ -1,0 +1,27 @@
+{
+  "editor.formatOnSave": true,
+  "editor.tabSize": 2,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.wordWrap": "on",
+  "editor.linkedEditing": true,
+  "editor.bracketPairColorization.enabled": true,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.associations": {
+    "*.php": "php",
+    "*.css": "css"
+  },
+  "emmet.includeLanguages": {
+    "php": "html"
+  },
+  "[php]": {
+    "editor.defaultFormatter": "bmewburn.vscode-intelephense-client"
+  },
+  "css.validate": true,
+  "css.lint.unknownAtRules": "ignore",
+  "search.exclude": {
+    "**/data": true,
+    "**/vendor": true,
+    "**/node_modules": true
+  }
+}

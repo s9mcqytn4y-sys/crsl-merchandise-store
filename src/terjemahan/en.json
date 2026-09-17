@@ -1,0 +1,88 @@
+{
+  "situs": {
+    "nama": "CRSL",
+    "tagline": "Animals as your Bestfriends!"
+  },
+  "bilah_atas": {
+    "pesan": [
+      "FREE SHIPPING ALL OVER INDONESIA",
+      "10% OFF ALL ITEMS FOR NEW ADOPTERS",
+      "SHOP ON WEBSITE FOR BETTER PRICES"
+    ]
+  },
+  "navigasi": {
+    "menu": "Menu",
+    "cari": "Search",
+    "akun": "Account",
+    "cari_placeholder": "Search our products",
+    "istilah_populer": "Popular Search Terms",
+    "daftar_menu": {
+      "koleksi_bts": "BTS Collection",
+      "semua_produk": "All Products",
+      "promo": "All Day Promo",
+      "ransel": "Backpacks",
+      "slingbag": "Slingbags",
+      "tumbler": "Tumbler Collection",
+      "atasan": "Tops",
+      "bawahan": "Bottoms",
+      "jaket": "Outerwears",
+      "sepatu": "Footwears",
+      "topi": "Headwears",
+      "dompet": "Wallet & Accessories",
+      "terbaru": "What's Poppin'"
+    }
+  },
+  "preferensi": {
+    "kirim_ke": "Deliver to",
+    "bahasa": "Language",
+    "mata_uang": "Currency",
+    "simpan": "Save",
+    "negara": {
+      "ID": "Indonesia",
+      "MY": "Malaysia",
+      "SG": "Singapore"
+    },
+    "bahasa_opsi": {
+      "id": "Bahasa Indonesia",
+      "en": "English"
+    },
+    "mata_uang_opsi": {
+      "IDR": "IDR - Indonesian Rupiah",
+      "USD": "USD - United States Dollar",
+      "SGD": "SGD - Singapore Dollar",
+      "MYR": "MYR - Malaysian Ringgit",
+      "THB": "THB - Thai Baht",
+      "EUR": "EUR - Euro"
+    }
+  },
+  "akun": {
+    "judul": "My Account",
+    "ajakan_judul": "Join as a member to get more benefits",
+    "ajakan_subjudul": "As a CRSL member, enjoy exclusive benefits, discounts, and earn points effortlessly with our free loyalty program.",
+    "masuk": "Login",
+    "daftar": "Signup",
+    "masuk_judul": "Login to Account",
+    "masuk_email": "Email or Phone Number",
+    "masuk_tombol": "Login",
+    "daftar_judul": "Create New Account",
+    "daftar_nama": "Full Name",
+    "daftar_email": "Your Email",
+    "daftar_sandi": "Password",
+    "daftar_lahir": "Birthday Date",
+    "daftar_tombol": "Signup",
+    "tab_pesanan": "Orders",
+    "tab_wishlist": "Wishlist",
+    "pesanan_saya": "My Orders",
+    "semua_status": "All Status",
+    "belum_bayar": "Unpaid",
+    "akan_dikirim": "To Ship",
+    "dikirim": "Shipped",
+    "selesai": "Completed",
+    "dibatalkan": "Cancelled",
+    "dikembalikan": "Returned",
+    "pesanan_kosong_judul": "No Orders Found",
+    "pesanan_kosong_subjudul": "Place an order to see it listed here.",
+    "wishlist_kosong_judul": "Your Wishlist is Empty",
+    "wishlist_kosong_subjudul": "Please check back later for updates."
+  }
+}
