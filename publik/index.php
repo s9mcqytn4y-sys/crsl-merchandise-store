@@ -94,6 +94,13 @@ if (str_starts_with($uri, '/api/auth/')) {
     exit;
 }
 
+// Dynamic PDP routing: /produk/{slug} atau /products/{slug}
+if (preg_match('#^/(?:produk|products)/([a-zA-Z0-9_-]+)$#', $uri, $matches)) {
+    $produkSlug = $matches[1];
+    require_once __DIR__ . '/halaman/produk.php';
+    exit;
+}
+
 // Routing
 switch ($uri) {
     case '/':

@@ -114,14 +114,16 @@ if (empty($daftarProduk)) {
             <span class="produk-kartu__badge"><?= $diskonPersen ?>% OFF</span>
           <?php endif; ?>
 
-          <img
-            src="<?= htmlspecialchars($gambar) ?>"
-            alt="<?= htmlspecialchars($p['nama']) ?>"
-            class="produk-kartu__gambar"
-            loading="lazy"
-            width="300"
-            height="300"
-          >
+          <a href="/produk/<?= htmlspecialchars($p['slug'] ?? 'crsl-cassie-wallet') ?>" aria-label="Lihat detail <?= htmlspecialchars($p['nama']) ?>">
+            <img
+              src="<?= htmlspecialchars($gambar) ?>"
+              alt="<?= htmlspecialchars($p['nama']) ?>"
+              class="produk-kartu__gambar"
+              loading="lazy"
+              width="300"
+              height="300"
+            >
+          </a>
 
           <!-- Tombol Quick Add to Cart -->
           <button
@@ -147,7 +149,9 @@ if (empty($daftarProduk)) {
         <div class="produk-kartu__rincian">
           <span class="produk-kartu__kategori"><?= htmlspecialchars($kategoriNama) ?></span>
           <h3 class="produk-kartu__nama" title="<?= htmlspecialchars($p['nama']) ?>">
-            <?= htmlspecialchars($p['nama']) ?>
+            <a href="/produk/<?= htmlspecialchars($p['slug'] ?? 'crsl-cassie-wallet') ?>" style="color: inherit; text-decoration: none;">
+              <?= htmlspecialchars($p['nama']) ?>
+            </a>
           </h3>
 
           <div class="produk-kartu__harga-wadah">

@@ -6,6 +6,23 @@ CREATE TABLE gambar_produk (
   alt_teks TEXT,
   urutan INTEGER DEFAULT 0
 );
+INSERT INTO "gambar_produk" VALUES(1,1,'/aset/gambar/cassie-wallet.webp','CRSL Cassie Wallet Tampilan Depan',1);
+INSERT INTO "gambar_produk" VALUES(2,1,'/aset/gambar/banner-cassie.webp','CRSL Cassie Wallet Motif Plaid & Kompartemen',2);
+INSERT INTO "gambar_produk" VALUES(3,1,'/aset/gambar/banner-1.webp','CRSL Cassie Wallet Model Lifestyle',3);
+INSERT INTO "gambar_produk" VALUES(4,2,'/aset/gambar/banner-bts.webp','CRSL Odin Backpack Tampak Depan',1);
+INSERT INTO "gambar_produk" VALUES(5,2,'/aset/gambar/banner-2.webp','CRSL Odin Backpack Dipakai Model',2);
+INSERT INTO "gambar_produk" VALUES(6,2,'/aset/gambar/banner-1.webp','CRSL Odin Backpack Detail Resleting & Bahan',3);
+INSERT INTO "gambar_produk" VALUES(7,3,'/aset/gambar/cassie-wallet.webp','CRSL Chilo Slingbag Depan',1);
+INSERT INTO "gambar_produk" VALUES(8,3,'/aset/gambar/banner-2.webp','CRSL Chilo Slingbag Detail Tali Selempang',2);
+INSERT INTO "gambar_produk" VALUES(9,4,'/aset/gambar/banner-tumbler.webp','CRSL Popo Vacuum Tumbler 500ml',1);
+INSERT INTO "gambar_produk" VALUES(10,4,'/aset/gambar/drinke-tumblr.webp','CRSL Popo Vacuum Tumbler Detail Insulasi',2);
+INSERT INTO "gambar_produk" VALUES(11,5,'/aset/gambar/banner-1.webp','CRSL Choco Oversized Hoodie Tampilan Penuh',1);
+INSERT INTO "gambar_produk" VALUES(12,5,'/aset/gambar/banner-2.webp','CRSL Choco Hoodie Bordir Karakter',2);
+INSERT INTO "gambar_produk" VALUES(13,6,'/aset/gambar/banner-2.webp','CRSL Pigko Cap Tampak Depan',1);
+INSERT INTO "gambar_produk" VALUES(14,6,'/aset/gambar/banner-1.webp','CRSL Pigko Cap Strap Belakang',2);
+INSERT INTO "gambar_produk" VALUES(15,7,'/aset/gambar/drinke-tumblr.webp','CRSL Drinke Tumblr Series 5 Karakter',1);
+INSERT INTO "gambar_produk" VALUES(16,7,'/aset/gambar/banner-tumbler.webp','CRSL Drinke Tumblr Series Retensi Dingin 12 Jam',2);
+INSERT INTO "gambar_produk" VALUES(17,7,'/aset/gambar/banner-bts.webp','CRSL Drinke Tumblr Series Detail Silicone Straw',3);
 CREATE TABLE item_pesanan (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   pesanan_id INTEGER NOT NULL REFERENCES pesanan(id) ON DELETE CASCADE,
@@ -154,4 +171,5 @@ INSERT INTO "sqlite_sequence" VALUES('kategori',13);
 INSERT INTO "sqlite_sequence" VALUES('produk',7);
 INSERT INTO "sqlite_sequence" VALUES('produk_varian',17);
 INSERT INTO "sqlite_sequence" VALUES('produk_spesifikasi',15);
+INSERT INTO "sqlite_sequence" VALUES('gambar_produk',17);
 COMMIT;

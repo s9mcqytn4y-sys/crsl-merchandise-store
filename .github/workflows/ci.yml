@@ -62,6 +62,9 @@ jobs:
       - name: Build Static Site for GitHub Pages
         run: |
           mkdir -p dist
+          mkdir -p data
+          sqlite3 data/toko.db < data/schema.sql
+
           cp -r publik/css dist/
           cp -r publik/js dist/
           cp -r publik/aset dist/
@@ -89,6 +92,31 @@ jobs:
             $html = ob_get_clean();
             file_put_contents("dist/akun.html", $html);
           '
+
+          php -r '
+            define("APP_DIR", __DIR__);
+            define("PUBLIK_DIR", __DIR__ . "/publik");
+            define("SRC_DIR", __DIR__ . "/src");
+            define("APP_URL", "");
+            
+            $db = new PDO("sqlite:" . __DIR__ . "/data/toko.db");
+            $stmt = $db->query("SELECT slug FROM produk WHERE aktif = 1");
+            $slugs = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+            foreach ($slugs as $slug) {
+              $produkSlug = $slug;
+              ob_start();
+              require "publik/halaman/produk.php";
+              $html = ob_get_clean();
+
+              $dir = "dist/produk/" . $slug;
+              if (!is_dir($dir)) mkdir($dir, 0777, true);
+              file_put_contents("dist/produk/" . $slug . ".html", $html);
+              file_put_contents($dir . "/index.html", $html);
+              echo "Exported static PDP for: " . $slug . PHP_EOL;
+            }
+          '
+
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
