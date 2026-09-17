@@ -13,7 +13,7 @@ $uri = rtrim($uri, '/') ?: '/';
 
 // Static file serving for PHP built-in server
 if (php_sapi_name() === 'cli-server') {
-    $staticExtensions = ['css', 'js', 'svg', 'png', 'jpg', 'jpeg', 'gif', 'woff2', 'json', 'ico'];
+    $staticExtensions = ['css', 'js', 'svg', 'png', 'jpg', 'jpeg', 'gif', 'woff2', 'json', 'ico', 'webp'];
     $ext = pathinfo($uri, PATHINFO_EXTENSION);
 
     if (in_array($ext, $staticExtensions)) {
@@ -37,12 +37,61 @@ if (php_sapi_name() === 'cli-server') {
                 'woff2' => 'font/woff2',
                 'json' => 'application/json',
                 'ico' => 'image/x-icon',
+                'webp' => 'image/webp',
             ];
             header('Content-Type: ' . ($mimeTypes[$ext] ?? 'application/octet-stream'));
             readfile($rootPath);
             return;
         }
     }
+}
+
+// API routes
+if (str_starts_with($uri, '/api/auth/')) {
+    header('Content-Type: application/json; charset=utf-8');
+    require_once ROOT_DIR . '/src/basis-data/PengelolaDatabase.php';
+    require_once ROOT_DIR . '/src/otentikasi/PengelolaOtentikasi.php';
+
+    $db = \CRSL\BasisData\PengelolaDatabase::dapatkanKoneksi();
+    $auth = new \CRSL\Otentikasi\PengelolaOtentikasi($db);
+
+    $rawInput = file_get_contents('php://input');
+    $data = json_decode($rawInput, true) ?: $_POST;
+
+    if ($uri === '/api/auth/login') {
+        $res = $auth->login($data['identitas'] ?? '', $data['sandi'] ?? '');
+        http_response_code($res['status']);
+        echo json_encode($res);
+        exit;
+    }
+    if ($uri === '/api/auth/register') {
+        $res = $auth->register($data);
+        http_response_code($res['status']);
+        echo json_encode($res);
+        exit;
+    }
+    if ($uri === '/api/auth/verify') {
+        $res = $auth->verify($data['kode'] ?? '', $data['email'] ?? '');
+        http_response_code($res['status']);
+        echo json_encode($res);
+        exit;
+    }
+    if ($uri === '/api/auth/logout') {
+        $res = $auth->logout();
+        http_response_code($res['status']);
+        echo json_encode($res);
+        exit;
+    }
+    if ($uri === '/api/auth/me') {
+        $user = $auth->getActiveUser();
+        http_response_code($user ? 200 : 401);
+        echo json_encode(['sukses' => (bool)$user, 'data' => $user]);
+        exit;
+    }
+
+    http_response_code(404);
+    echo json_encode(['sukses' => false, 'pesan' => 'API endpoint tidak ditemukan.']);
+    exit;
 }
 
 // Routing

@@ -12,8 +12,8 @@
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease;
-  backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
 }
 
 .menu-samping__overlay.aktif {
@@ -37,8 +37,6 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
   box-shadow: var(--bayangan-lg);
 }
 

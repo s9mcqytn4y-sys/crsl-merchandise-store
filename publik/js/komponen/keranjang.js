@@ -244,13 +244,14 @@ const Keranjang = (() => {
     const totalLabel = document.getElementById('keranjang-total-label');
     const totalNilai = document.getElementById('keranjang-total-nilai');
     const hematEl = document.getElementById('keranjang-hemat-nilai');
+    const isID = typeof I18n !== 'undefined' ? I18n.bahasaAktif() === 'id' : true;
 
-    if (totalLabel) totalLabel.textContent = `Total Price (${total.totalItem})`;
+    if (totalLabel) totalLabel.textContent = isID ? `Total Harga (${total.totalItem})` : `Total Price (${total.totalItem})`;
     if (totalNilai) totalNilai.textContent = formatRupiah(total.totalHarga);
     if (hematEl) {
       if (total.totalHemat > 0) {
         hematEl.parentElement.style.display = 'flex';
-        hematEl.textContent = `Save ${formatRupiah(total.totalHemat)}`;
+        hematEl.textContent = isID ? `Hemat ${formatRupiah(total.totalHemat)}` : `Save ${formatRupiah(total.totalHemat)}`;
       } else {
         hematEl.parentElement.style.display = 'none';
       }
@@ -266,8 +267,9 @@ const Keranjang = (() => {
       const label = document.getElementById('bar-bawah-label');
       const harga = document.getElementById('bar-bawah-harga');
       const badge = document.getElementById('bar-bawah-badge');
+      const isID = typeof I18n !== 'undefined' ? I18n.bahasaAktif() === 'id' : true;
 
-      if (label) label.textContent = `${total.totalItem} Items in My Cart`;
+      if (label) label.textContent = isID ? `${total.totalItem} Barang di Keranjang` : `${total.totalItem} Items in My Cart`;
       if (harga) harga.textContent = formatRupiah(total.totalHarga);
       if (badge) badge.textContent = total.totalItem.toString();
     } else {

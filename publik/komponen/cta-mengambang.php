@@ -40,7 +40,7 @@ $apakahBeranda = $apakahBeranda ?? false;
 </div>
 
 <?php if ($apakahBeranda): ?>
-<!-- ========== CLAIM VOUCHER BOUNCING CTA (KHUSUS BERANDA) ========== -->
+<!-- ========== CLAIM VOUCHER FLOATING CTA (KHUSUS BERANDA) ========== -->
 <button
   type="button"
   id="cta-voucher-tombol"
@@ -48,9 +48,10 @@ $apakahBeranda = $apakahBeranda ?? false;
   aria-label="Klaim voucher diskon belanja"
   title="Available Voucher"
 >
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-    <line x1="7" y1="7" x2="7.01" y2="7"/>
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <line x1="19" y1="5" x2="5" y2="19"/>
+    <circle cx="7" cy="7" r="2.5"/>
+    <circle cx="17" cy="17" r="2.5"/>
   </svg>
 </button>
 

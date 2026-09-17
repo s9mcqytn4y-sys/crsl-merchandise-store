@@ -11,8 +11,9 @@ $banners = [
     'tag' => 'New Season',
     'judul' => 'Animals as your Bestfriends!',
     'subjudul' => 'Merchandise karakter hewan lucu & fungsional untuk menemani hari-harimu.',
-    'tombol' => 'Explore Collection',
-    'tautan' => '#produk-unggulan',
+    'tombol' => 'Adopt now',
+    'tautan' => 'https://crsl-store.id/products',
+    'target_eksternal' => true,
     'alt' => 'CRSL Koleksi Terbaru'
   ],
   [
@@ -32,6 +33,15 @@ $banners = [
     'tombol' => 'Pilih Tumbler',
     'tautan' => '/kategori/tumbler-collection',
     'alt' => 'CRSL Tumbler Collection'
+  ],
+  [
+    'gambar' => '/aset/gambar/banner-cassie.webp',
+    'tag' => 'Best Seller',
+    'judul' => 'Compact & Stylish Cassie Wallet',
+    'subjudul' => 'Dompet kanvas lipat wanita dengan motif plaid ikonik dan slot kartu lengkap.',
+    'tombol' => 'Beli Cassie Wallet',
+    'tautan' => '/kategori/wallet-accessories',
+    'alt' => 'CRSL Cassie Wallet'
   ],
   [
     'gambar' => '/aset/gambar/banner-2.webp',
@@ -64,7 +74,11 @@ $banners = [
           <span class="hero__tag"><?= htmlspecialchars($b['tag']) ?></span>
           <h2 class="hero__judul"><?= htmlspecialchars($b['judul']) ?></h2>
           <p class="hero__subjudul"><?= htmlspecialchars($b['subjudul']) ?></p>
-          <a href="<?= htmlspecialchars($b['tautan']) ?>" class="hero__cta">
+          <a
+            href="<?= htmlspecialchars($b['tautan']) ?>"
+            class="hero__cta"
+            <?= !empty($b['target_eksternal']) ? 'target="_blank" rel="noopener noreferrer"' : '' ?>
+          >
             <?= htmlspecialchars($b['tombol']) ?>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </a>

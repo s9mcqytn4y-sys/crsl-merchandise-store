@@ -84,5 +84,25 @@
     "pesanan_kosong_subjudul": "Buat pesanan untuk melihatnya tercantum di sini.",
     "wishlist_kosong_judul": "Wishlist Anda Kosong",
     "wishlist_kosong_subjudul": "Silakan cek kembali nanti untuk pembaruan."
+  },
+  "beranda": {
+    "preorder_tag": "EDISI SPESIAL PRE-ORDER",
+    "preorder_judul": "PRE-ORDER NOW!",
+    "preorder_deskripsi": "Miliki koleksi Drinke Tumblr Series 900ml eksklusif dengan 5 karakter sahabat CRSL. Menjaga suhu minuman tetap dingin hingga 12 jam, dirancang tahan bocor dan siap menemani petualangan harianmu.",
+    "preorder_fitur1": "Estimasi pengiriman 30 hari kerja",
+    "preorder_fitur2": "Material food-grade stainless steel 304",
+    "preorder_fitur3": "Termasuk bonus stiker pack karakter eksklusif",
+    "preorder_tautan": "Eksplor Koleksi Lainnya →",
+    "preorder_badge": "PRE ORDER",
+    "preorder_tombol_beli": "Beli Sekarang"
+  },
+  "keranjang": {
+    "judul": "Keranjang Belanja",
+    "kapsul_item": "Barang di Keranjang",
+    "total": "Total Harga",
+    "hemat": "Hemat",
+    "checkout": "Checkout dengan Diskon",
+    "kosong": "Keranjang belanja Anda masih kosong",
+    "tambah_berhasil": "Produk berhasil ditambahkan ke keranjang"
   }
 }

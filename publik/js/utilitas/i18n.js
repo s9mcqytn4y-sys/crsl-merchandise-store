@@ -1,6 +1,7 @@
 /**
  * i18n - Internationalization Module
  * Memuat terjemahan dari file JSON dan menyediakan fungsi t() untuk translate
+ * Otomatis memperbarui seluruh elemen ber-atribut [data-i18n] dan [data-i18n-placeholder]
  */
 
 const I18n = (() => {
@@ -18,6 +19,27 @@ const I18n = (() => {
   }
 
   /**
+   * Terjemahkan seluruh elemen pada DOM aktif
+   */
+  function terjemahkanHalaman() {
+    document.querySelectorAll('[data-i18n]').forEach((el) => {
+      const kunci = el.getAttribute('data-i18n');
+      const val = t(kunci);
+      if (val && typeof val === 'string' && val !== kunci) {
+        el.textContent = val;
+      }
+    });
+
+    document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
+      const kunci = el.getAttribute('data-i18n-placeholder');
+      const val = t(kunci);
+      if (val && typeof val === 'string' && val !== kunci) {
+        el.setAttribute('placeholder', val);
+      }
+    });
+  }
+
+  /**
    * Muat file terjemahan
    * @param {string} bahasa - kode bahasa ('id' atau 'en')
    */
@@ -29,6 +51,7 @@ const I18n = (() => {
       bahasaSaatIni = bahasa;
       localStorage.setItem('crsl_bahasa', bahasa);
       document.documentElement.lang = bahasa;
+      terjemahkanHalaman();
     } catch (err) {
       console.warn(`Gagal memuat terjemahan ${bahasa}:`, err);
     }
@@ -59,5 +82,5 @@ const I18n = (() => {
     await muat(tersimpan || 'id');
   }
 
-  return { init, muat, t, bahasaAktif };
+  return { init, muat, t, bahasaAktif, terjemahkanHalaman };
 })();

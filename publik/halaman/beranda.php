@@ -32,6 +32,7 @@ $apakahBeranda = true;
   <link rel="stylesheet" href="/css/komponen/cta-mengambang.css">
   <link rel="stylesheet" href="/css/komponen/otentikasi.css">
   <link rel="stylesheet" href="/css/komponen/hero-carousel.css">
+  <link rel="stylesheet" href="/css/komponen/pre-order.css">
   <link rel="stylesheet" href="/css/komponen/karakter-showcase.css">
   <link rel="stylesheet" href="/css/komponen/produk-grid.css">
 </head>
@@ -235,6 +236,9 @@ $apakahBeranda = true;
   <main id="konten-utama">
     <!-- 1. Hero Banner Carousel (Fit 1 Layar / 100dvh) -->
     <?php require_once PUBLIK_DIR . '/komponen/hero-carousel.php'; ?>
+
+    <!-- 1b. Pre-Order Now Section (crsl-store.id Official Flow) -->
+    <?php require_once PUBLIK_DIR . '/komponen/pre-order.php'; ?>
 
     <!-- 2. Karakter Showcase CRSL (Odin, Chilo, Pigko, Popo, Choco) -->
     <?php require_once PUBLIK_DIR . '/komponen/karakter-showcase.php'; ?>

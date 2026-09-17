@@ -70,6 +70,9 @@
   --z-dasar: 0;
   --z-konten: 10;
   --z-sticky: 100;
+  --z-cta-mengambang: 990;
+  --z-kapsul-keranjang: 995;
+  --z-sticky-bar: 995;
   --z-bilah-atas: 1000;
   --z-navigasi: 1006;
   --z-overlay: 1007;

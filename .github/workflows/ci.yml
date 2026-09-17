@@ -1,0 +1,103 @@
+name: CI & GitHub Pages Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  lint-and-test:
+    name: Code Quality & Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo, pdo_sqlite
+
+      - name: Validate PHP Syntax
+        run: |
+          echo "Linting all PHP files..."
+          find . -type f -name "*.php" -not -path "./vendor/*" -exec php -l {} \;
+
+      - name: Validate JSON Translation Files
+        run: |
+          php -r 'json_decode(file_get_contents("src/terjemahan/id.json"), true) ?: exit(1);'
+          php -r 'json_decode(file_get_contents("src/terjemahan/en.json"), true) ?: exit(1);'
+          echo "All JSON files are valid syntax."
+
+  deploy-pages:
+    name: Deploy to GitHub Pages
+    needs: lint-and-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo, pdo_sqlite
+
+      - name: Build Static Site for GitHub Pages
+        run: |
+          mkdir -p dist
+          cp -r publik/css dist/
+          cp -r publik/js dist/
+          cp -r publik/aset dist/
+          mkdir -p dist/src/terjemahan
+          cp src/terjemahan/*.json dist/src/terjemahan/
+          
+          php -r '
+            define("APP_DIR", __DIR__);
+            define("PUBLIK_DIR", __DIR__ . "/publik");
+            define("SRC_DIR", __DIR__ . "/src");
+            define("APP_URL", "");
+            ob_start();
+            require "publik/halaman/beranda.php";
+            $html = ob_get_clean();
+            file_put_contents("dist/index.html", $html);
+          '
+
+          php -r '
+            define("APP_DIR", __DIR__);
+            define("PUBLIK_DIR", __DIR__ . "/publik");
+            define("SRC_DIR", __DIR__ . "/src");
+            define("APP_URL", "");
+            ob_start();
+            require "publik/halaman/akun.php";
+            $html = ob_get_clean();
+            file_put_contents("dist/akun.html", $html);
+          '
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'dist'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

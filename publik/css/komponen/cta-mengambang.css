@@ -135,41 +135,31 @@
 }
 
 /* ----------------------------------------------------------
-   2. Claim Voucher Bouncing CTA (Kanan Tengah - Homepage)
+   2. Claim Voucher Floating CTA (Kanan Tengah - Homepage)
    ---------------------------------------------------------- */
 .cta-voucher-tombol {
   position: fixed;
-  right: 16px;
-  bottom: 96px;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: var(--z-sticky);
-  width: 48px;
+  width: 44px;
   height: 48px;
-  border-radius: var(--radius-penuh);
-  background-color: #8b1016;
+  border-radius: 12px 0 0 12px;
+  background-color: var(--warna-primer, #e52027);
   color: #ffffff;
-  border: 2px solid #ffffff;
-  box-shadow: 0 4px 16px rgba(139, 16, 22, 0.4);
+  border: none;
+  box-shadow: -3px 4px 16px rgba(229, 32, 39, 0.35);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  animation: memantul-lembut 2.5s ease-in-out infinite;
   transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
 .cta-voucher-tombol:hover {
-  animation-play-state: paused;
-  transform: scale(1.12);
-  background-color: var(--warna-primer);
-}
-
-@keyframes memantul-lembut {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+  transform: translateY(-50%) translateX(-4px);
+  background-color: var(--warna-primer-hover, #cc1c22);
 }
 
 /* Modal Pop-up Available Voucher */
@@ -181,8 +171,8 @@
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.25s ease, visibility 0.25s ease;
-  backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;

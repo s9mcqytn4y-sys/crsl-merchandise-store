@@ -86,7 +86,7 @@ if (empty($daftarProduk)) {
 }
 ?>
 
-<section class="produk-grid" id="produk-unggulan" aria-label="Produk Unggulan CRSL">
+<section class="produk-grid seksi-dinamis muncul-saat-scroll" id="produk-unggulan" aria-label="Produk Unggulan CRSL">
   <div class="produk-grid__header">
     <div class="produk-grid__header-kiri">
       <span class="produk-grid__tag">Best Sellers</span>

@@ -20,15 +20,19 @@
 /* Track slider */
 .hero__track {
   display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   width: 100%;
   height: 100%;
-  transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform;
 }
 
 /* Individual Slide */
 .hero__slide {
   flex: 0 0 100%;
+  min-width: 100%;
+  max-width: 100%;
   width: 100%;
   height: 100%;
   position: relative;
@@ -119,7 +123,7 @@
   gap: 8px;
   padding: 10px 24px;
   background-color: #ffffff;
-  color: var(--warna-teks-invers == #ffffff ? #1a1a1a : #111827);
+  color: #111827;
   font-size: 14px;
   font-weight: 700;
   border-radius: var(--radius-penuh);
@@ -134,7 +138,7 @@
   background-color: #f3f4f6;
 }
 
-/* Navigasi Panah Halus (Kiri & Kanan) */
+/* Navigasi Panah Halus (Kiri & Kanan - Blend Seamless) */
 .hero__panah {
   position: absolute;
   top: 50%;
@@ -143,24 +147,24 @@
   width: 44px;
   height: 44px;
   border-radius: var(--radius-penuh);
-  background-color: rgba(255, 255, 255, 0.35);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  color: #ffffff;
+  background: rgba(0, 0, 0, 0.2);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  border: none;
+  color: rgba(255, 255, 255, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color var(--transisi-cepat), transform var(--transisi-cepat);
-  opacity: 0.8;
+  transition: background-color var(--transisi-cepat), transform var(--transisi-cepat), color var(--transisi-cepat);
+  opacity: 0.85;
 }
 
 .hero__panah:hover {
-  background-color: rgba(255, 255, 255, 0.85);
-  color: #111827;
+  background: rgba(0, 0, 0, 0.5);
+  color: #ffffff;
   opacity: 1;
-  transform: translateY(-50%) scale(1.05);
+  transform: translateY(-50%) scale(1.06);
 }
 
 .hero__panah:focus-visible {

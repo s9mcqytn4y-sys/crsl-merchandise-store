@@ -50,3 +50,52 @@
 /* -- Width/Height -- */
 .w-penuh { width: 100%; }
 .h-penuh { height: 100%; }
+
+/* ==========================================================
+   Section Fit-Screen & Dynamic Height Utilities
+   Standardisasi ritme viewport: 75dvh - 100dvh
+   ========================================================== */
+
+.seksi-fit-layar {
+  min-height: calc(100dvh - var(--tinggi-bilah-atas) - var(--tinggi-navigasi));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.seksi-dinamis {
+  min-height: min(75dvh, 700px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-block: clamp(2.5rem, 6vh, 4.5rem);
+}
+
+/* -- Scroll Reveal (Lazy Reveal Animation) -- */
+.muncul-saat-scroll {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.muncul-saat-scroll.terlihat {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* -- Subtle Parallax Backdrop -- */
+.efek-paralaks {
+  background-attachment: scroll;
+}
+
+@media (min-width: 768px) {
+  .efek-paralaks {
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+}

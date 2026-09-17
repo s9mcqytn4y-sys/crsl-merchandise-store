@@ -95,5 +95,14 @@
         <p class="pencarian__harga-aktif">Rp 179,100</p>
       </div>
     </div>
+
+    <!-- 4. Live Search Results -->
+    <div id="pencarian-hasil" class="pencarian__hasil tersembunyi" aria-live="polite">
+      <div class="pencarian__riwayat-header">
+        <p class="pencarian__subjudul" id="pencarian-hasil-judul">Search Results</p>
+        <span id="pencarian-hasil-jumlah" class="pencarian__hasil-jumlah"></span>
+      </div>
+      <div id="pencarian-hasil-grid" class="pencarian__hasil-grid"></div>
+    </div>
   </div>
 </div>

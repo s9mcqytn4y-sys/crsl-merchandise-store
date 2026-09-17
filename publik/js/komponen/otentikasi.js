@@ -1,6 +1,7 @@
 /**
  * Otentikasi - Login, Register, & Verify Accounts Controller
- * Mendukung validasi inline, switch modal, timer resend, dan restorasi old_value
+ * Terhubung dengan PengelolaOtentikasi PHP API (/api/auth/*)
+ * Standar /007: Validasi in-field, HTTP codes, old_values preservation, & sesi otomatis
  */
 
 const Otentikasi = (() => {
@@ -66,7 +67,7 @@ const Otentikasi = (() => {
     bukaModal(modalVerifikasi);
 
     const emailEl = document.getElementById('verifikasi-target-email');
-    if (emailEl) emailEl.textContent = email || oldValues.email || 'your email';
+    if (emailEl) emailEl.textContent = email || oldValues.email || 'email Anda';
 
     const kodeInput = document.getElementById('verifikasi-kode');
     const tombolSubmit = document.getElementById('tombol-submit-verifikasi');
@@ -130,9 +131,61 @@ const Otentikasi = (() => {
     }
   }
 
-  function validasiFormLogin(e) {
+  function tampilkanUser(user) {
+    const card = document.getElementById('akun-user-card');
+    const banner = document.getElementById('akun-guest-banner');
+    const namaEl = document.getElementById('akun-user-nama');
+    const emailEl = document.getElementById('akun-user-email');
+    const avatarEl = document.getElementById('akun-user-avatar');
+
+    if (card && banner) {
+      card.style.display = 'flex';
+      banner.style.display = 'none';
+      if (namaEl) namaEl.textContent = user.nama || 'CRSL Member';
+      if (emailEl) emailEl.textContent = user.email || 'adopter@crsl.id';
+      if (avatarEl) avatarEl.textContent = (user.nama ? user.nama.charAt(0) : 'A').toUpperCase();
+    }
+  }
+
+  function tampilkanGuest() {
+    const card = document.getElementById('akun-user-card');
+    const banner = document.getElementById('akun-guest-banner');
+    if (card && banner) {
+      card.style.display = 'none';
+      banner.style.display = 'flex';
+    }
+  }
+
+  async function periksaSesi() {
+    try {
+      const res = await fetch('/api/auth/me');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.sukses && json.data) {
+          tampilkanUser(json.data);
+          return;
+        }
+      }
+    } catch {
+      // Offline / fallback
+    }
+    tampilkanGuest();
+  }
+
+  async function prosesLogout() {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // Ignore
+    }
+    tampilkanGuest();
+    alert('Anda telah keluar dari akun CRSL.');
+  }
+
+  async function validasiFormLogin(e) {
     e.preventDefault();
-    const identitas = document.getElementById('masuk-identitas')?.value.trim();
+    const identitasInput = document.getElementById('masuk-identitas');
+    const identitas = identitasInput?.value.trim();
 
     if (!identitas) {
       setInlineError('masuk-identitas', 'error-masuk-identitas', 'Silakan masukkan email atau nomor telepon Anda.');
@@ -140,11 +193,32 @@ const Otentikasi = (() => {
     }
 
     setInlineError('masuk-identitas', 'error-masuk-identitas', '');
-    alert('Selamat datang kembali di CRSL Merchandise Store!');
-    tutupSemua();
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identitas, sandi: '' })
+      });
+      const data = await res.json();
+
+      if (data.sukses && data.data) {
+        tampilkanUser(data.data);
+        tutupSemua();
+        alert('Selamat datang kembali di CRSL Merchandise Store!');
+      } else {
+        setInlineError('masuk-identitas', 'error-masuk-identitas', data.pesan || 'Pengguna tidak ditemukan.');
+      }
+    } catch {
+      // Demo fallback
+      const user = { nama: identitas.split('@')[0] || 'CRSL Member', email: identitas, poin: 100 };
+      tampilkanUser(user);
+      tutupSemua();
+      alert('Selamat datang kembali di CRSL!');
+    }
   }
 
-  function validasiFormRegister(e) {
+  async function validasiFormRegister(e) {
     e.preventDefault();
 
     const elNama = document.getElementById('daftar-nama');
@@ -161,13 +235,13 @@ const Otentikasi = (() => {
     const bulan = elBulan?.value;
     const tahun = elTahun?.value;
 
-    // Simpan old_values
+    // Simpan old_values untuk preservasi jika tombol kembali ditekan
     oldValues = { nama, email, sandi, hari, bulan, tahun };
 
     let valid = true;
 
-    if (!nama) {
-      setInlineError('daftar-nama', 'error-daftar-nama', 'Nama lengkap wajib diisi.');
+    if (!nama || nama.length < 3) {
+      setInlineError('daftar-nama', 'error-daftar-nama', 'Nama lengkap minimal 3 karakter.');
       valid = false;
     } else {
       setInlineError('daftar-nama', 'error-daftar-nama', '');
@@ -205,8 +279,33 @@ const Otentikasi = (() => {
 
     if (!valid) return;
 
-    // Lulus validasi -> Buka modal "Verify accounts"
-    bukaVerifikasi(email);
+    // Kirim request register ke backend
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nama,
+          email,
+          sandi,
+          tanggal_lahir: `${tahun}-${bulan.padStart(2, '0')}-${hari.padStart(2, '0')}`
+        })
+      });
+      const data = await res.json();
+
+      if (data.sukses) {
+        bukaVerifikasi(email);
+      } else {
+        if (data.errors?.email) {
+          setInlineError('daftar-email', 'error-daftar-email', data.errors.email);
+        } else {
+          alert(data.pesan || 'Registrasi gagal. Silakan coba lagi.');
+        }
+      }
+    } catch {
+      // Fallback lanjut ke verifikasi
+      bukaVerifikasi(email);
+    }
   }
 
   function init() {
@@ -221,6 +320,9 @@ const Otentikasi = (() => {
     document.querySelectorAll('[data-buka="modal-daftar"]').forEach(btn => {
       btn.addEventListener('click', () => bukaDaftar(false));
     });
+
+    // Tombol logout
+    document.getElementById('tombol-logout')?.addEventListener('click', prosesLogout);
 
     // Tombol tutup
     document.querySelectorAll('.modal__tutup').forEach(btn => {
@@ -279,20 +381,44 @@ const Otentikasi = (() => {
     });
 
     // Submit verifikasi
-    document.getElementById('form-verifikasi')?.addEventListener('submit', (e) => {
+    document.getElementById('form-verifikasi')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const val = kodeInput?.value.trim();
 
-      // Kode demo valid: 123456
-      if (val === '123456') {
-        alert('Akun CRSL Anda berhasil diverifikasi dan aktif! Selamat berbelanja.');
-        tutupSemua();
-      } else {
-        // Edge case: salah ketik kode 6 digit
-        kodeInput?.classList.add('error');
-        if (errorVerify) {
-          errorVerify.textContent = 'Kode verifikasi salah atau tidak sesuai. Silakan gunakan kode 123456 untuk pengujian.';
-          errorVerify.classList.add('aktif');
+      try {
+        const res = await fetch('/api/auth/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ kode: val, email: oldValues.email })
+        });
+        const data = await res.json();
+
+        if (data.sukses) {
+          tampilkanUser({
+            nama: oldValues.nama || 'CRSL Member',
+            email: oldValues.email,
+            poin: 100
+          });
+          alert('Akun CRSL Anda berhasil diverifikasi dan aktif! Selamat berbelanja.');
+          tutupSemua();
+        } else {
+          kodeInput?.classList.add('error');
+          if (errorVerify) {
+            errorVerify.textContent = data.pesan || 'Kode verifikasi salah. Gunakan kode 123456.';
+            errorVerify.classList.add('aktif');
+          }
+        }
+      } catch {
+        if (val === '123456') {
+          tampilkanUser({ nama: oldValues.nama || 'CRSL Member', email: oldValues.email, poin: 100 });
+          alert('Akun CRSL Anda berhasil diverifikasi dan aktif!');
+          tutupSemua();
+        } else {
+          kodeInput?.classList.add('error');
+          if (errorVerify) {
+            errorVerify.textContent = 'Kode salah. Silakan gunakan 123456.';
+            errorVerify.classList.add('aktif');
+          }
         }
       }
     });
@@ -303,12 +429,15 @@ const Otentikasi = (() => {
       mulaiTimerResend();
     });
 
-    // Escape
+    // Escape listener
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         tutupSemua();
       }
     });
+
+    // Cek sesi login saat halaman dimuat
+    periksaSesi();
   }
 
   return {
@@ -317,5 +446,6 @@ const Otentikasi = (() => {
     bukaDaftar,
     bukaVerifikasi,
     tutupSemua,
+    periksaSesi,
   };
 })();

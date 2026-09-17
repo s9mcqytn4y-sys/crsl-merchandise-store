@@ -1,9 +1,10 @@
 /**
  * Hero Banner Carousel - Vanilla JS
- * - 5 detik rotasi otomatis
- * - Progress bar kapsul animasi
- * - Auto-pause saat hover / sentuh
- * - Dukungan touch swipe di mobile
+ * Kepatuhan /web-design-guidelines:
+ * - Rotasi otomatis 5 detik per slide
+ * - Animasi progress bar kapsul indikator
+ * - Interaksi non-blocking: auto-resume setelah interaksi manual
+ * - Dukungan touch swipe & keyboard accessibility
  */
 
 const HeroCarousel = {
@@ -14,7 +15,8 @@ const HeroCarousel = {
   currentIndex: 0,
   durasi: 5000,
   timer: null,
-  isPaused: false,
+  resumeTimeout: null,
+  isInteracting: false,
   touchStartX: 0,
   touchEndX: 0,
 
@@ -28,38 +30,36 @@ const HeroCarousel = {
 
     if (this.slides.length === 0) return;
 
-    // Pasang event listener untuk tombol panah
+    // Pasang event listener tombol navigasi panah
     const btnKiri = this.container.querySelector('.hero__panah--kiri');
     const btnKanan = this.container.querySelector('.hero__panah--kanan');
 
     btnKiri?.addEventListener('click', () => {
       this.prev();
-      this.resetTimer();
+      this.handleUserInteraction();
     });
 
     btnKanan?.addEventListener('click', () => {
       this.next();
-      this.resetTimer();
+      this.handleUserInteraction();
     });
 
-    // Pasang event listener untuk dots
+    // Pasang event listener untuk dots indikator
     this.dots.forEach((dot, index) => {
       dot.addEventListener('click', () => {
         this.goTo(index);
-        this.resetTimer();
+        this.handleUserInteraction();
       });
     });
 
-    // Pause on hover
-    this.container.addEventListener('mouseenter', () => {
-      this.pause();
+    // Pause hanya saat hover di kontrol interaktif (CTA, tombol panah, atau dots)
+    const kontrolList = this.container.querySelectorAll('.hero__cta, .hero__panah, .hero__dots');
+    kontrolList.forEach((el) => {
+      el.addEventListener('mouseenter', () => this.pause());
+      el.addEventListener('mouseleave', () => this.resume());
     });
 
-    this.container.addEventListener('mouseleave', () => {
-      this.resume();
-    });
-
-    // Touch swipe di mobile
+    // Touch swipe gesture di perangkat seluler
     this.container.addEventListener('touchstart', (e) => {
       this.touchStartX = e.changedTouches[0].screenX;
       this.pause();
@@ -68,21 +68,21 @@ const HeroCarousel = {
     this.container.addEventListener('touchend', (e) => {
       this.touchEndX = e.changedTouches[0].screenX;
       this.handleSwipe();
-      this.resume();
+      this.handleUserInteraction();
     }, { passive: true });
 
-    // Keyboard navigation
+    // Navigasi Keyboard (Panah Kiri / Kanan)
     this.container.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft') {
         this.prev();
-        this.resetTimer();
+        this.handleUserInteraction();
       } else if (e.key === 'ArrowRight') {
         this.next();
-        this.resetTimer();
+        this.handleUserInteraction();
       }
     });
 
-    // Aktifkan slide pertama dan mulai timer
+    // Inisialisasi tampilan awal & mulai rotasi otomatis
     this.updateUI();
     this.startTimer();
   },
@@ -109,26 +109,28 @@ const HeroCarousel = {
   updateUI() {
     if (!this.track) return;
 
-    // Geser track horizontal
+    // Pergeseran horizontal 100% per slide
     this.track.style.transform = `translateX(-${this.currentIndex * 100}%)`;
 
-    // Perbarui status dots
+    // Perbarui status dots kapsul
     this.dots.forEach((dot, i) => {
+      const progress = dot.querySelector('.hero__dot-progress');
+
       if (i === this.currentIndex) {
         dot.classList.add('aktif');
-        dot.setAttribute('aria-current', 'true');
+        dot.setAttribute('aria-selected', 'true');
 
-        // Restart animasi progress bar kapsul
-        const progress = dot.querySelector('.hero__dot-progress');
         if (progress) {
           progress.style.animation = 'none';
-          // Force reflow
-          void progress.offsetWidth;
+          void progress.offsetWidth; // trigger reflow
           progress.style.animation = `hero-progress ${this.durasi / 1000}s linear forwards`;
         }
       } else {
         dot.classList.remove('aktif');
-        dot.removeAttribute('aria-current');
+        dot.setAttribute('aria-selected', 'false');
+        if (progress) {
+          progress.style.animation = 'none';
+        }
       }
     });
   },
@@ -136,7 +138,7 @@ const HeroCarousel = {
   startTimer() {
     this.clearTimer();
     this.timer = setInterval(() => {
-      if (!this.isPaused) {
+      if (!this.isInteracting) {
         this.next();
       }
     }, this.durasi);
@@ -149,34 +151,36 @@ const HeroCarousel = {
     }
   },
 
-  resetTimer() {
-    this.clearTimer();
-    this.startTimer();
-  },
-
   pause() {
-    this.isPaused = true;
+    this.isInteracting = true;
     this.container?.classList.add('berhenti');
   },
 
   resume() {
-    this.isPaused = false;
+    this.isInteracting = false;
     this.container?.classList.remove('berhenti');
   },
 
+  handleUserInteraction() {
+    this.pause();
+    if (this.resumeTimeout) clearTimeout(this.resumeTimeout);
+    // Lanjutkan kembali otomatis setelah 4 detik tidak ada interaksi
+    this.resumeTimeout = setTimeout(() => {
+      this.resume();
+      this.startTimer();
+    }, 4000);
+  },
+
   handleSwipe() {
-    const threshold = 40; // minimum jarak geser
+    const threshold = 40;
     const diff = this.touchStartX - this.touchEndX;
 
     if (Math.abs(diff) > threshold) {
       if (diff > 0) {
-        // Swipe ke kiri -> next slide
         this.next();
       } else {
-        // Swipe ke kanan -> prev slide
         this.prev();
       }
-      this.resetTimer();
     }
   }
 };

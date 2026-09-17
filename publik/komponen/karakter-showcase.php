@@ -66,7 +66,7 @@ $karakterList = [
   ]
 ];
 ?>
-<section class="karakter" id="karakter-showcase" aria-label="Showcase Karakter CRSL">
+<section class="karakter seksi-dinamis muncul-saat-scroll" id="karakter-showcase" aria-label="Showcase Karakter CRSL">
   <div class="karakter__header">
     <span class="karakter__tag">Meet The Bestfriends</span>
     <h2 class="karakter__judul">5 Sahabat Karakter CRSL</h2>

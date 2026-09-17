@@ -84,5 +84,25 @@
     "pesanan_kosong_subjudul": "Place an order to see it listed here.",
     "wishlist_kosong_judul": "Your Wishlist is Empty",
     "wishlist_kosong_subjudul": "Please check back later for updates."
+  },
+  "beranda": {
+    "preorder_tag": "SPECIAL PRE-ORDER EDITION",
+    "preorder_judul": "PRE-ORDER NOW!",
+    "preorder_deskripsi": "Own the exclusive 900ml Drinke Tumblr Series featuring 5 CRSL bestfriend characters. Keeps drinks icy cold up to 12 hours, engineered leak-proof and ready for daily adventures.",
+    "preorder_fitur1": "Estimated dispatch in 30 business days",
+    "preorder_fitur2": "Food-grade 304 stainless steel material",
+    "preorder_fitur3": "Includes exclusive character sticker pack",
+    "preorder_tautan": "Explore Other Collections →",
+    "preorder_badge": "PRE ORDER",
+    "preorder_tombol_beli": "Buy Now"
+  },
+  "keranjang": {
+    "judul": "Shopping Cart",
+    "kapsul_item": "Items in My Cart",
+    "total": "Total Price",
+    "hemat": "Save",
+    "checkout": "Checkout with Discount",
+    "kosong": "Your shopping cart is empty",
+    "tambah_berhasil": "Product successfully added to cart"
   }
 }

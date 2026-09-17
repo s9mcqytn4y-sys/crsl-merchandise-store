@@ -105,14 +105,83 @@
     }
 
     .akun__tombol--signup {
-      background-color: var(--warna-primer);
+      background-color: var(--warna-primer, #e52027);
       color: #ffffff;
-      border: 1px solid var(--warna-primer);
+      border: 1px solid var(--warna-primer, #e52027);
     }
 
     .akun__tombol--signup:hover {
-      background-color: var(--warna-primer-gelap);
-      border-color: var(--warna-primer-gelap);
+      background-color: var(--warna-primer-hover, #cc1c22);
+      border-color: var(--warna-primer-hover, #cc1c22);
+      color: #ffffff;
+    }
+
+    .akun__tombol--logout {
+      background-color: transparent;
+      color: var(--warna-error, #f5564a);
+      border: 1px solid var(--warna-error, #f5564a);
+      font-size: 13px;
+      padding: 6px 16px;
+      min-height: 36px;
+    }
+
+    .akun__tombol--logout:hover {
+      background-color: #fff1f2;
+    }
+
+    /* Logged in User Card */
+    .akun__user-card {
+      display: flex;
+      align-items: center;
+      gap: var(--jarak-md);
+      padding: var(--jarak-lg) var(--jarak-xl);
+      background-color: var(--warna-latar-sekunder);
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--jarak-2xl);
+      border: 1px solid var(--warna-batas);
+      flex-wrap: wrap;
+    }
+
+    .akun__user-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background-color: var(--warna-primer, #e52027);
+      color: #ffffff;
+      font-size: 22px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .akun__user-info {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .akun__user-nama {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--warna-teks);
+      margin-bottom: 2px;
+    }
+
+    .akun__user-email {
+      font-size: 13px;
+      color: var(--warna-teks-sekunder);
+      margin-bottom: 6px;
+    }
+
+    .akun__user-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      background-color: #fef3c7;
+      color: #92400e;
+      border-radius: var(--radius-penuh);
+      font-size: 12px;
+      font-weight: 700;
     }
 
     /* Tabs (Image 4) */
@@ -305,15 +374,26 @@
     <div class="akun">
       <h1 class="akun__judul">My Account</h1>
 
-      <!-- Banner CTA (Gambar 4) -->
-      <div class="akun__banner">
+      <!-- Logged In User Card (Aktif saat terotentikasi) -->
+      <div class="akun__user-card" id="akun-user-card" style="display: none;">
+        <div class="akun__user-avatar" id="akun-user-avatar">A</div>
+        <div class="akun__user-info">
+          <h2 class="akun__user-nama" id="akun-user-nama">Adopter CRSL</h2>
+          <p class="akun__user-email" id="akun-user-email">adopter@crsl.id</p>
+          <span class="akun__user-badge">⭐ Gold Member • 100 Poin</span>
+        </div>
+        <button type="button" class="akun__tombol akun__tombol--logout" id="tombol-logout">Logout</button>
+      </div>
+
+      <!-- Banner CTA (Gambar 4 - Aktif saat guest/belum login) -->
+      <div class="akun__banner" id="akun-guest-banner">
         <div class="akun__banner-teks">
           <h2 class="akun__banner-judul">Join as a member to get more benefits</h2>
           <p class="akun__banner-subjudul">As a CRSL member, enjoy exclusive benefits, discounts, and earn points effortlessly with our free loyalty program.</p>
         </div>
         <div class="akun__banner-aksi">
-          <button type="button" class="akun__tombol akun__tombol--login" id="tombol-buka-masuk">Login</button>
-          <button type="button" class="akun__tombol akun__tombol--signup" id="tombol-buka-daftar">Signup</button>
+          <button type="button" class="akun__tombol akun__tombol--login" id="tombol-buka-masuk" data-buka="modal-masuk">Login</button>
+          <button type="button" class="akun__tombol akun__tombol--signup" id="tombol-buka-daftar" data-buka="modal-daftar">Signup</button>
         </div>
       </div>
 
