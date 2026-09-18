@@ -132,6 +132,13 @@ const Otentikasi = (() => {
   }
 
   function tampilkanUser(user) {
+    if (user) {
+      try {
+        localStorage.setItem('crsl_user_session', JSON.stringify(user));
+      } catch (e) {
+        // Storage restricted
+      }
+    }
     const card = document.getElementById('akun-user-card');
     const banner = document.getElementById('akun-guest-banner');
     const namaEl = document.getElementById('akun-user-nama');
@@ -148,6 +155,11 @@ const Otentikasi = (() => {
   }
 
   function tampilkanGuest() {
+    try {
+      localStorage.removeItem('crsl_user_session');
+    } catch (e) {
+      // Storage restricted
+    }
     const card = document.getElementById('akun-user-card');
     const banner = document.getElementById('akun-guest-banner');
     if (card && banner) {
@@ -157,6 +169,20 @@ const Otentikasi = (() => {
   }
 
   async function periksaSesi() {
+    // 1. Cek cache lokal seketika untuk UX responsif
+    try {
+      const cached = localStorage.getItem('crsl_user_session');
+      if (cached) {
+        const u = JSON.parse(cached);
+        if (u && u.nama) {
+          tampilkanUser(u);
+        }
+      }
+    } catch (e) {
+      // Ignore
+    }
+
+    // 2. Verifikasi dengan backend
     try {
       const res = await fetch('/api/auth/me');
       if (res.ok) {
@@ -165,11 +191,12 @@ const Otentikasi = (() => {
           tampilkanUser(json.data);
           return;
         }
+      } else if (res.status === 401) {
+        tampilkanGuest();
       }
     } catch {
-      // Offline / fallback
+      // Offline fallback: tetap pertahankan sesi yang ada
     }
-    tampilkanGuest();
   }
 
   async function prosesLogout() {

@@ -481,27 +481,69 @@
         });
       });
 
-      // Render Riwayat Pesanan dari LocalStorage
+      // Render Riwayat Pesanan Sinkron SQLite & LocalStorage
       const pesananListEl = document.getElementById('akun-daftar-pesanan');
       const pesananKosongEl = document.getElementById('akun-pesanan-kosong');
       const pesananJudulEl = document.querySelector('.akun__pesanan-judul');
       const statusSelectEl = document.querySelector('.akun__status-select');
 
-      let orders = [];
-      try {
-        orders = JSON.parse(localStorage.getItem('crsl_orders') || '[]');
-      } catch (e) {
-        orders = [];
+      async function ambilSemuaPesanan(filterStatus = 'all') {
+        let liveOrders = [];
+        try {
+          const res = await fetch('/api/pesanan/daftar' + (filterStatus !== 'all' ? `?status=${filterStatus}` : ''));
+          if (res.ok) {
+            const json = await res.json();
+            if (json.sukses && Array.isArray(json.pesanan)) {
+              liveOrders = json.pesanan.map(p => ({
+                id: p.nomor_pesanan,
+                tanggal: p.dibuat_pada ? new Date(p.dibuat_pada).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Hari ini',
+                status: p.status,
+                kurir: p.kurir,
+                nomor_resi: p.nomor_resi,
+                total: p.total,
+                items: p.items || []
+              }));
+            }
+          }
+        } catch (e) {
+          console.warn('Gagal memuat pesanan live SQLite:', e);
+        }
+
+        // Ambil fallback local orders
+        let localOrders = [];
+        try {
+          localOrders = JSON.parse(localStorage.getItem('crsl_orders') || '[]');
+        } catch (e) {
+          localOrders = [];
+        }
+
+        // Gabungkan tanpa duplikasi ID
+        const map = new Map();
+        liveOrders.forEach(o => map.set(o.id, o));
+        localOrders.forEach(o => {
+          if (!map.has(o.id)) {
+            map.set(o.id, o);
+          }
+        });
+
+        return Array.from(map.values());
       }
 
-      function renderOrders(filterStatus = 'all') {
+      async function renderOrders(filterStatus = 'all') {
         if (!pesananListEl) return;
+        pesananListEl.innerHTML = `
+          <div style="text-align: center; padding: 2rem; color: var(--warna-teks-redup);">
+            <span>Memuat daftar pesanan...</span>
+          </div>
+        `;
+
+        const allOrders = await ambilSemuaPesanan(filterStatus);
         pesananListEl.innerHTML = '';
 
-        const filtered = orders.filter(o => {
+        const filtered = allOrders.filter(o => {
           if (filterStatus === 'all') return true;
-          if (filterStatus === 'unpaid') return o.status === 'menunggu_pembayaran';
-          if (filterStatus === 'processing') return o.status === 'diproses';
+          if (filterStatus === 'unpaid') return o.status === 'belum_bayar' || o.status === 'menunggu_pembayaran';
+          if (filterStatus === 'processing') return o.status === 'diproses' || o.status === 'akan_dikirim';
           if (filterStatus === 'shipped') return o.status === 'dikirim';
           if (filterStatus === 'completed') return o.status === 'selesai';
           if (filterStatus === 'cancelled') return o.status === 'dibatalkan';
@@ -509,7 +551,7 @@
         });
 
         if (pesananJudulEl) {
-          pesananJudulEl.textContent = `My Orders (${orders.length})`;
+          pesananJudulEl.textContent = `Pesanan Saya (${allOrders.length})`;
         }
 
         if (filtered.length === 0) {
@@ -518,45 +560,61 @@
           pesananKosongEl.style.display = 'none';
           filtered.forEach(o => {
             const card = document.createElement('div');
-            card.style.cssText = 'background: #ffffff; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 1.25rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 0.75rem;';
+            card.style.cssText = 'background: var(--warna-permukaan); border: 1px solid var(--warna-batas); border-radius: var(--radius-lg); padding: 1.25rem; box-shadow: var(--bayangan-sm); display: flex; flex-direction: column; gap: 0.75rem;';
 
             let badgeWarna = '#d97706';
             let badgeBg = '#fffbeb';
             let badgeLabel = 'Menunggu Pembayaran';
-            if (o.status === 'diproses') { badgeWarna = '#2563eb'; badgeBg = '#eff6ff'; badgeLabel = 'Sedang Diproses'; }
-            if (o.status === 'dikirim') { badgeWarna = '#7c3aed'; badgeBg = '#f5f3ff'; badgeLabel = 'Dalam Pengiriman'; }
-            if (o.status === 'selesai') { badgeWarna = '#059669'; badgeBg = '#ecfdf5'; badgeLabel = 'Selesai'; }
-            if (o.status === 'dibatalkan') { badgeWarna = '#dc2626'; badgeBg = '#fef2f2'; badgeLabel = 'Dibatalkan'; }
+            if (o.status === 'diproses' || o.status === 'akan_dikirim') {
+              badgeWarna = '#2563eb';
+              badgeBg = '#eff6ff';
+              badgeLabel = 'Sedang Diproses';
+            }
+            if (o.status === 'dikirim') {
+              badgeWarna = '#7c3aed';
+              badgeBg = '#f5f3ff';
+              badgeLabel = o.nomor_resi ? `Dikirim (Resi: ${o.nomor_resi})` : 'Dalam Pengiriman';
+            }
+            if (o.status === 'selesai') {
+              badgeWarna = '#059669';
+              badgeBg = '#ecfdf5';
+              badgeLabel = 'Selesai';
+            }
+            if (o.status === 'dibatalkan') {
+              badgeWarna = '#dc2626';
+              badgeBg = '#fef2f2';
+              badgeLabel = 'Dibatalkan';
+            }
 
             card.innerHTML = `
-              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 0.5rem; font-size: 0.85rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--warna-batas); padding-bottom: 0.5rem; font-size: 0.85rem;">
                 <div>
                   <strong style="color: var(--warna-primer);">${o.id}</strong>
                   <span style="color: var(--warna-teks-redup); margin-left: 0.5rem;">• ${o.tanggal}</span>
                 </div>
-                <span style="background: ${badgeBg}; color: ${badgeWarna}; padding: 0.2rem 0.6rem; border-radius: 9999px; font-weight: 700; font-size: 0.75rem;">
+                <span style="background: ${badgeBg}; color: ${badgeWarna}; padding: 0.2rem 0.6rem; border-radius: var(--radius-penuh); font-weight: 700; font-size: 0.75rem;">
                   ${badgeLabel}
                 </span>
               </div>
               <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                 ${(o.items || []).map(it => `
                   <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem;">
-                    <img src="${it.gambar}" alt="${it.nama}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 6px; background: #f9f9f9;">
+                    <img src="${it.gambar}" alt="${it.nama || it.nama_produk}" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-md); background: var(--warna-latar-sekunder);">
                     <div style="flex-grow: 1;">
-                      <div style="font-weight: 700;">${it.nama}</div>
-                      <div style="font-size: 0.75rem; color: var(--warna-teks-redup);">${it.varian || 'Standar'} (x${it.jumlah})</div>
+                      <div style="font-weight: 700; color: var(--warna-teks);">${it.nama || it.nama_produk}</div>
+                      <div style="font-size: 0.75rem; color: var(--warna-teks-redup);">${it.varian || it.ukuran || 'Standar'} (x${it.jumlah || 1})</div>
                     </div>
-                    <div style="font-weight: 700;">Rp ${((it.harga || 0) * (it.jumlah || 1)).toLocaleString('id-ID')}</div>
+                    <div style="font-weight: 700; color: var(--warna-teks);">Rp ${((it.harga || 0) * (it.jumlah || 1)).toLocaleString('id-ID')}</div>
                   </div>
                 `).join('')}
               </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f0f0f0; padding-top: 0.75rem; margin-top: 0.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--warna-batas); padding-top: 0.75rem; margin-top: 0.25rem;">
                 <div style="font-size: 0.85rem;">
                   <span style="color: var(--warna-teks-redup);">Total:</span>
                   <strong style="color: var(--warna-primer); font-size: 1rem; margin-left: 0.25rem;">Rp ${(o.total || 0).toLocaleString('id-ID')}</strong>
                 </div>
-                <a href="/invoice/${o.id}" style="font-size: 0.85rem; font-weight: 700; color: var(--warna-primer); border: 1.5px solid var(--warna-primer); padding: 0.35rem 0.85rem; border-radius: 9999px; text-decoration: none;">
-                  Lihat Faktur →
+                <a href="/invoice/${o.id}" style="font-size: 0.85rem; font-weight: 700; color: var(--warna-primer); border: 1.5px solid var(--warna-primer); padding: 0.35rem 0.85rem; border-radius: var(--radius-penuh); text-decoration: none;">
+                  Lihat Faktur
                 </a>
               </div>
             `;

@@ -1,115 +1,105 @@
 /**
  * Halaman Detail Produk (PDP) Controller - Vanilla JS
- * Kepatuhan /web-design-guidelines & /antislop-human
- * - Gallery Touch Swiper & Lightbox Zoom Modal
- * - Multi-Attribute Matrix (Karakter/Warna + Ukuran) & SKU Dynamic Tracker
- * - Exclusive Accordion (hanya 1 panel terbuka pada satu waktu)
- * - Integrasi Keranjang Belanja Global
+ * Standar /antislop-ui, /antislop-code, /baseline-ui, & /007
+ * - Thumbnail Gallery Switching dengan Animasi Geser Kanan-ke-Kiri
+ * - Smooth Cursor-Following Hardware Accelerated Zoom
+ * - Matriks SKU Dinamis, Auto-Mute Ukuran Habis, dan Notifikasi Restock
+ * - Modal Pop-up Kupon Diskon dengan Expandable T&C Accordion
+ * - Kalkulator Estimasi Ongkir Dinamis & WhatsApp CTA Integration
+ * - Baris [You Might Also Like] & [Recent Viewed] LocalStorage Tracking
  */
 
 const ProdukDetail = (() => {
-  let gambarList = [];
-  let gambarIndex = 0;
-  let varianData = [];
-  let varianTerpilih = null;
+  let produkData = {};
+  let varianList = [];
+  let semuaProdukLookup = [];
+
+  let warnaTerpilih = null;
   let ukuranTerpilih = null;
+  let varianAktif = null;
   let kuantitas = 1;
   let maxStok = 50;
-  let hargaDasar = 0;
-  let produkInfo = {};
-
-  // Swipe gesture variables
-  let touchStartX = 0;
-  let touchEndX = 0;
 
   function init() {
-    // Ambil data produk dari embedded JSON di halaman
+    // 1. Baca payload JSON produk dari embedded script tag
     const dataEl = document.getElementById('pdp-data-produk');
     if (dataEl) {
       try {
         const parsed = JSON.parse(dataEl.textContent);
-        produkInfo = parsed.produk || {};
-        varianData = parsed.varian || [];
-        hargaDasar = produkInfo.harga_diskon || produkInfo.harga || 0;
+        produkData = parsed.produk || {};
+        varianList = parsed.varian || [];
+        semuaProdukLookup = parsed.semuaProduk || [];
       } catch (err) {
-        console.warn('Gagal membaca data produk:', err);
+        console.warn('Gagal memproses data JSON produk:', err);
       }
     }
 
-    // Inisialisasi daftar gambar galeri
-    const thumbEls = document.querySelectorAll('.pdp__thumb-item');
-    gambarList = Array.from(thumbEls).map(btn => btn.dataset.url || '');
-    if (gambarList.length === 0 && produkInfo.gambar_utama) {
-      gambarList = [produkInfo.gambar_utama];
-    }
-
-    initGaleri();
-    initVarian();
+    // 2. Inisialisasi setiap modul komponen
+    initGaleriDanZoom();
+    initVarianDanSKU();
     initStepper();
-    initAccordion();
+    initDeskripsiViewMore();
+    initDeliveryEstimator();
+    initModalDiskon();
     initAksiBeli();
+    initCarouselNav();
+    initRecentViewed();
   }
 
   /* ==========================================================
-     1. Galeri Gambar & Lightbox Zoom
+     1. Galeri Thumbnail & Cursor Zoom (Kolom 1 & 2)
      ========================================================== */
-  function initGaleri() {
-    const mainImg = document.getElementById('pdp-gambar-utama');
-    const mainWadah = document.getElementById('pdp-gambar-viewport');
-    const thumbBtns = document.querySelectorAll('.pdp__thumb-item');
-    const zoomBtn = document.getElementById('pdp-tombol-zoom');
+  function initGaleriDanZoom() {
+    const thumbBtns = document.querySelectorAll('.pdp__thumb-btn');
+    const mainImg = document.getElementById('pdp-gambar-fokus');
+    const zoomViewport = document.getElementById('pdp-zoom-viewport');
+    const btnExpand = document.getElementById('pdp-btn-expand');
     const lightbox = document.getElementById('pdp-lightbox');
     const lightboxImg = document.getElementById('pdp-lightbox-img');
     const lightboxTutup = document.getElementById('pdp-lightbox-tutup');
 
-    function gantiGambar(index) {
-      if (index < 0 || index >= gambarList.length) return;
-      gambarIndex = index;
-      const targetUrl = gambarList[gambarIndex];
+    // Klik thumbnail ganti gambar dengan animasi kanan-ke-kiri
+    thumbBtns.forEach((btn, idx) => {
+      btn.addEventListener('click', () => {
+        const url = btn.dataset.url;
+        if (!url || !mainImg) return;
 
-      if (mainImg) {
-        mainImg.style.opacity = '0.5';
-        setTimeout(() => {
-          mainImg.src = targetUrl;
-          mainImg.style.opacity = '1';
-        }, 120);
-      }
+        thumbBtns.forEach(b => {
+          b.classList.remove('aktif');
+          b.setAttribute('aria-selected', 'false');
+        });
+        btn.classList.add('aktif');
+        btn.setAttribute('aria-selected', 'true');
 
-      thumbBtns.forEach((btn, i) => {
-        if (i === index) {
-          btn.classList.add('aktif');
-          btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-        } else {
-          btn.classList.remove('aktif');
-        }
+        // Picu animasi kanan ke kiri
+        mainImg.classList.remove('geser-kiri');
+        void mainImg.offsetWidth; // trigger reflow
+        mainImg.src = url;
+        mainImg.classList.add('geser-kiri');
+      });
+    });
+
+    // Smooth Cursor-Following Zoom pada Kolom 2
+    if (zoomViewport && mainImg) {
+      zoomViewport.addEventListener('mousemove', (e) => {
+        const rect = zoomViewport.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+        mainImg.style.transformOrigin = `${Math.min(100, Math.max(0, x))}% ${Math.min(100, Math.max(0, y))}%`;
+        mainImg.style.transform = 'scale(2.2)';
+      });
+
+      zoomViewport.addEventListener('mouseleave', () => {
+        mainImg.style.transform = 'scale(1)';
+        mainImg.style.transformOrigin = 'center center';
       });
     }
 
-    thumbBtns.forEach((btn, i) => {
-      btn.addEventListener('click', () => gantiGambar(i));
-    });
-
-    // Touch Swipe pada gambar utama
-    mainWadah?.addEventListener('touchstart', (e) => {
-      touchStartX = e.changedTouches[0].screenX;
-    }, { passive: true });
-
-    mainWadah?.addEventListener('touchend', (e) => {
-      touchEndX = e.changedTouches[0].screenX;
-      const diff = touchStartX - touchEndX;
-      if (Math.abs(diff) > 40) {
-        if (diff > 0 && gambarIndex < gambarList.length - 1) {
-          gantiGambar(gambarIndex + 1);
-        } else if (diff < 0 && gambarIndex > 0) {
-          gantiGambar(gambarIndex - 1);
-        }
-      }
-    }, { passive: true });
-
-    // Buka Lightbox Zoom
+    // Lightbox modal fullscreen
     function bukaLightbox() {
-      if (!lightbox || !lightboxImg) return;
-      lightboxImg.src = gambarList[gambarIndex] || mainImg?.src || '';
+      if (!lightbox || !lightboxImg || !mainImg) return;
+      lightboxImg.src = mainImg.src;
       lightbox.classList.add('aktif');
       document.body.style.overflow = 'hidden';
     }
@@ -120,8 +110,7 @@ const ProdukDetail = (() => {
       document.body.style.overflow = '';
     }
 
-    mainWadah?.addEventListener('click', bukaLightbox);
-    zoomBtn?.addEventListener('click', (e) => {
+    btnExpand?.addEventListener('click', (e) => {
       e.stopPropagation();
       bukaLightbox();
     });
@@ -139,179 +128,443 @@ const ProdukDetail = (() => {
   }
 
   /* ==========================================================
-     2. Matriks Variasi SKU & Atribut
+     2. Matriks Varian SKU, Warna & Ukuran (Kolom 3)
      ========================================================== */
-  function initVarian() {
-    const swatchBtns = document.querySelectorAll('.pdp__swatch-btn');
-    const ukuranBtns = document.querySelectorAll('.pdp__ukuran-btn');
-    const labelWarna = document.getElementById('pdp-varian-terpilih');
-    const skuEl = document.getElementById('pdp-sku');
-    const hargaAktifEl = document.getElementById('pdp-harga-aktif');
-    const hargaMobileEl = document.getElementById('pdp-mobile-harga-nilai');
+  function initVarianDanSKU() {
+    const swatchBtns = document.querySelectorAll('.pdp__swatch-box');
+    const ukuranBtns = document.querySelectorAll('.pdp__ukuran-kotak');
+    const warnaLabel = document.getElementById('pdp-warna-terpilih-nama');
+    const ukuranLabel = document.getElementById('pdp-ukuran-terpilih-nama');
+    const stokKeterangan = document.getElementById('pdp-stok-keterangan');
+    const restockNotif = document.getElementById('pdp-restock-notif');
+    const btnAddCart = document.getElementById('pdp-btn-add-cart');
+    const btnBuyNow = document.getElementById('pdp-btn-buy-now');
+    const mainImg = document.getElementById('pdp-gambar-fokus');
 
-    // Pilih default pertama
+    // Tentukan pilihan awal
     if (swatchBtns.length > 0) {
-      varianTerpilih = swatchBtns[0].dataset.varian || '';
+      const aktifSwatch = document.querySelector('.pdp__swatch-box.aktif') || swatchBtns[0];
+      warnaTerpilih = aktifSwatch.dataset.warna || null;
+      if (warnaLabel) warnaLabel.textContent = warnaTerpilih;
     }
+
     if (ukuranBtns.length > 0) {
-      ukuranTerpilih = ukuranBtns[0].dataset.ukuran || '';
-    }
-
-    function perbaruiSKUDanHarga() {
-      const matched = varianData.find(v => 
-        v.nama_varian.toUpperCase() === (varianTerpilih || '').toUpperCase()
-      ) || varianData[0];
-
-      if (matched) {
-        if (skuEl) skuEl.textContent = `SKU: ${matched.sku}`;
-        const hargaTotal = hargaDasar + (matched.harga_tambahan || 0);
-        const teksHarga = 'Rp ' + Number(hargaTotal).toLocaleString('id-ID');
-        if (hargaAktifEl) hargaAktifEl.textContent = teksHarga;
-        if (hargaMobileEl) hargaMobileEl.textContent = teksHarga;
-        maxStok = matched.stok || 50;
-
-        const stokInfoEl = document.getElementById('pdp-stok-info');
-        if (stokInfoEl) {
-          stokInfoEl.textContent = `Tersedia: ${maxStok} item`;
-        }
+      const aktifUkuran = document.querySelector('.pdp__ukuran-kotak.aktif:not(.habis)');
+      if (aktifUkuran) {
+        ukuranTerpilih = aktifUkuran.dataset.ukuran;
+        if (ukuranLabel) ukuranLabel.textContent = ukuranTerpilih;
       }
     }
 
+    function evaluasiKetersediaan() {
+      // Cari varian yang cocok di matriks
+      let matched = varianList.find(v => {
+        const wMatch = !warnaTerpilih || (v.warna || v.nama_varian).toUpperCase() === warnaTerpilih.toUpperCase();
+        const uMatch = !ukuranTerpilih || (v.ukuran || v.atribut_ukuran).toUpperCase() === ukuranTerpilih.toUpperCase();
+        return wMatch && uMatch;
+      });
+
+      if (!matched && varianList.length > 0) {
+        matched = varianList.find(v => (v.warna || v.nama_varian).toUpperCase() === (warnaTerpilih || '').toUpperCase()) || varianList[0];
+      }
+
+      varianAktif = matched;
+      maxStok = matched ? (parseInt(matched.stok, 10) || 0) : 50;
+
+      const habis = maxStok <= 0;
+
+      if (habis) {
+        if (stokKeterangan) {
+          stokKeterangan.textContent = 'Stok Habis';
+          stokKeterangan.style.color = '#dc2626';
+        }
+        if (restockNotif) restockNotif.style.display = 'flex';
+        if (btnAddCart) {
+          btnAddCart.disabled = true;
+          btnAddCart.textContent = 'Stok Habis';
+        }
+        if (btnBuyNow) {
+          btnBuyNow.disabled = true;
+        }
+      } else {
+        if (stokKeterangan) {
+          stokKeterangan.textContent = `Tersedia: ${maxStok} item`;
+          stokKeterangan.style.color = '#16a34a';
+        }
+        if (restockNotif) restockNotif.style.display = 'none';
+        if (btnAddCart) {
+          btnAddCart.disabled = false;
+          btnAddCart.textContent = 'Add to Cart';
+        }
+        if (btnBuyNow) {
+          btnBuyNow.disabled = false;
+        }
+      }
+
+      // Sesuaikan kuantitas jika melebihi stok
+      const stepInput = document.getElementById('pdp-step-input');
+      if (stepInput && kuantitas > maxStok && maxStok > 0) {
+        kuantitas = maxStok;
+        stepInput.value = kuantitas;
+      }
+    }
+
+    // Event listener pemilihan warna
     swatchBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        swatchBtns.forEach(b => b.classList.remove('aktif'));
+        swatchBtns.forEach(b => {
+          b.classList.remove('aktif');
+          b.setAttribute('aria-checked', 'false');
+        });
         btn.classList.add('aktif');
-        varianTerpilih = btn.dataset.varian;
-        if (labelWarna) labelWarna.textContent = varianTerpilih;
-        perbaruiSKUDanHarga();
+        btn.setAttribute('aria-checked', 'true');
+
+        warnaTerpilih = btn.dataset.warna;
+        if (warnaLabel) warnaLabel.textContent = warnaTerpilih;
+
+        // Ganti gambar fokus jika varian punya gambar tersendiri
+        const gbrVarian = btn.dataset.gambar;
+        if (gbrVarian && mainImg && mainImg.src !== gbrVarian) {
+          mainImg.src = gbrVarian;
+          mainImg.classList.remove('geser-kiri');
+          void mainImg.offsetWidth;
+          mainImg.classList.add('geser-kiri');
+        }
+
+        // Hapus pesan error jika ada
+        const errEl = document.getElementById('pdp-warna-error');
+        if (errEl) errEl.style.display = 'none';
+
+        evaluasiKetersediaan();
       });
     });
 
+    // Event listener pemilihan ukuran
     ukuranBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        if (btn.disabled) return;
-        ukuranBtns.forEach(b => b.classList.remove('aktif'));
+        if (btn.disabled || btn.classList.contains('habis')) return;
+
+        ukuranBtns.forEach(b => {
+          b.classList.remove('aktif');
+          b.setAttribute('aria-checked', 'false');
+        });
         btn.classList.add('aktif');
+        btn.setAttribute('aria-checked', 'true');
+
         ukuranTerpilih = btn.dataset.ukuran;
+        if (ukuranLabel) ukuranLabel.textContent = ukuranTerpilih;
+
+        evaluasiKetersediaan();
       });
     });
 
-    perbaruiSKUDanHarga();
+    // Tombol ingatkan restock
+    document.getElementById('pdp-btn-ingatkan')?.addEventListener('click', () => {
+      alert(`Kami akan mengirimkan notifikasi saat ukuran ${ukuranTerpilih || ''} varian ${warnaTerpilih || ''} kembali tersedia!`);
+    });
+
+    evaluasiKetersediaan();
   }
 
   /* ==========================================================
-     3. Kuantitas Stepper
+     3. Stepper Kuantitas
      ========================================================== */
   function initStepper() {
-    const minusBtn = document.getElementById('pdp-qty-minus');
-    const plusBtn = document.getElementById('pdp-qty-plus');
-    const inputQty = document.getElementById('pdp-qty-input');
+    const minusBtn = document.getElementById('pdp-step-minus');
+    const plusBtn = document.getElementById('pdp-step-plus');
+    const input = document.getElementById('pdp-step-input');
 
     minusBtn?.addEventListener('click', () => {
       if (kuantitas > 1) {
         kuantitas--;
-        if (inputQty) inputQty.value = kuantitas;
+        if (input) input.value = kuantitas;
       }
     });
 
     plusBtn?.addEventListener('click', () => {
       if (kuantitas < maxStok) {
         kuantitas++;
-        if (inputQty) inputQty.value = kuantitas;
+        if (input) input.value = kuantitas;
+      }
+    });
+  }
+
+  /* ==========================================================
+     4. Deskripsi Produk dengan UX "View more / View less"
+     ========================================================== */
+  function initDeskripsiViewMore() {
+    const btnToggle = document.getElementById('pdp-btn-view-more');
+    const konten = document.getElementById('pdp-desc-konten');
+
+    btnToggle?.addEventListener('click', () => {
+      const isCiut = konten?.classList.contains('ciut');
+      if (isCiut) {
+        konten?.classList.remove('ciut');
+        btnToggle.classList.add('terbuka');
+        btnToggle.querySelector('span').textContent = 'View less';
+        btnToggle.setAttribute('aria-expanded', 'true');
+      } else {
+        konten?.classList.add('ciut');
+        btnToggle.classList.remove('terbuka');
+        btnToggle.querySelector('span').textContent = 'View more';
+        btnToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
+  /* ==========================================================
+     5. Kalkulator Ongkir Pengiriman (Delivery Estimator)
+     ========================================================== */
+  function initDeliveryEstimator() {
+    const selectKota = document.getElementById('pdp-select-kota');
+    const tarifReguler = document.getElementById('pdp-tarif-reguler');
+    const tarifExpress = document.getElementById('pdp-tarif-express');
+
+    const daftarTarif = {
+      jogja: { reguler: 'Rp 0 (Gratis Ongkir)', express: 'Rp 8.000' },
+      jakarta: { reguler: 'Rp 10.000', express: 'Rp 18.000' },
+      bandung: { reguler: 'Rp 12.000', express: 'Rp 20.000' },
+      surabaya: { reguler: 'Rp 12.000', express: 'Rp 22.000' },
+      luarjawa: { reguler: 'Rp 28.000', express: 'Rp 45.000' }
+    };
+
+    selectKota?.addEventListener('change', () => {
+      const val = selectKota.value;
+      const data = daftarTarif[val] || daftarTarif.jakarta;
+      if (tarifReguler) tarifReguler.textContent = data.reguler;
+      if (tarifExpress) tarifExpress.textContent = data.express;
+    });
+  }
+
+  /* ==========================================================
+     6. Modal Kupon Diskon & T&C Accordion (Gambar 5)
+     ========================================================== */
+  function initModalDiskon() {
+    const triggerKupon = document.getElementById('pdp-buka-kupon');
+    const overlay = document.getElementById('pdp-modal-diskon-overlay');
+    const btnTutup = document.getElementById('pdp-btn-tutup-diskon');
+    const btnTcToggle = document.getElementById('pdp-btn-tc-toggle');
+    const tcIsi = document.getElementById('pdp-tc-isi');
+    const btnKlaim = document.getElementById('pdp-btn-klaim-kupon');
+
+    function bukaModal() {
+      if (!overlay) return;
+      overlay.classList.add('aktif');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function tutupModal() {
+      if (!overlay) return;
+      overlay.classList.remove('aktif');
+      document.body.style.overflow = '';
+    }
+
+    triggerKupon?.addEventListener('click', bukaModal);
+    triggerKupon?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        bukaModal();
       }
     });
 
-    inputQty?.addEventListener('change', () => {
-      let val = parseInt(inputQty.value, 10);
-      if (isNaN(val) || val < 1) val = 1;
-      if (val > maxStok) val = maxStok;
-      kuantitas = val;
-      inputQty.value = kuantitas;
+    btnTutup?.addEventListener('click', tutupModal);
+    overlay?.addEventListener('click', (e) => {
+      if (e.target === overlay) tutupModal();
+    });
+
+    btnTcToggle?.addEventListener('click', () => {
+      btnTcToggle.classList.toggle('terbuka');
+      tcIsi?.classList.toggle('terbuka');
+    });
+
+    btnKlaim?.addEventListener('click', () => {
+      try {
+        localStorage.setItem('crsl_active_coupon', JSON.stringify({
+          kode: 'SHIP10K',
+          potongan: 10000,
+          deskripsi: 'Potongan Ongkir Rp 10.000'
+        }));
+      } catch (e) {
+        // Storage restricted
+      }
+      alert('Kupon potongan ongkir Rp 10.000 berhasil diaktifkan untuk pesanan Anda!');
+      tutupModal();
     });
   }
 
   /* ==========================================================
-     4. Exclusive Accordion Component
-     ========================================================== */
-  function initAccordion() {
-    const items = document.querySelectorAll('.pdp__accordion-item');
-
-    items.forEach(item => {
-      const header = item.querySelector('.pdp__accordion-header');
-      header?.addEventListener('click', () => {
-        const isAktif = item.classList.contains('aktif');
-
-        // Tutup semua panel lain (Exclusive Accordion)
-        items.forEach(other => {
-          other.classList.remove('aktif');
-          other.querySelector('.pdp__accordion-header')?.setAttribute('aria-expanded', 'false');
-        });
-
-        // Toggle panel yang diklik
-        if (!isAktif) {
-          item.classList.add('aktif');
-          header.setAttribute('aria-expanded', 'true');
-        }
-      });
-    });
-  }
-
-  /* ==========================================================
-     5. Aksi Masukkan Keranjang & Checkout
+     7. Aksi Masukkan Keranjang & Checkout Langsung
      ========================================================== */
   function initAksiBeli() {
-    const btnKeranjangList = document.querySelectorAll('#pdp-btn-keranjang, #pdp-mobile-btn-cart');
-    const btnBeliList = document.querySelectorAll('#pdp-btn-beli, #pdp-mobile-btn-buy');
+    const btnCartList = document.querySelectorAll('#pdp-btn-add-cart, #pdp-mobile-btn-cart');
+    const btnBuyList = document.querySelectorAll('#pdp-btn-buy-now, #pdp-mobile-btn-buy');
 
-    function prosesTambahKeranjang(langsungCheckout = false) {
-      if (typeof Keranjang === 'undefined') return;
+    function prosesPemesanan(langsungCheckout = false) {
+      if (maxStok <= 0) {
+        alert('Maaf, varian produk ini sedang tidak tersedia.');
+        return;
+      }
 
-      const varianTeks = [varianTerpilih, ukuranTerpilih].filter(Boolean).join(' - ');
+      // Validasi pemilihan warna jika ada opsi
+      const swatchBtns = document.querySelectorAll('.pdp__swatch-box');
+      if (swatchBtns.length > 0 && !warnaTerpilih) {
+        const errEl = document.getElementById('pdp-warna-error');
+        if (errEl) errEl.style.display = 'block';
+        errEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      const mainImg = document.getElementById('pdp-gambar-fokus');
+      const varianLabelGabungan = [warnaTerpilih, ukuranTerpilih].filter(Boolean).join(' - ') || 'Default';
 
       const itemBaru = {
-        id: produkInfo.id || 'crsl-pdp',
-        nama: produkInfo.nama || 'CRSL Merchandise',
-        harga: produkInfo.harga_diskon || produkInfo.harga || 179100,
-        hargaCoret: produkInfo.harga || 199000,
-        gambar: gambarList[0] || produkInfo.gambar_utama || '/aset/gambar/cassie-wallet.webp',
-        varian: varianTeks || 'Default',
-        jumlah: kuantitas
+        id: produkData.id || 907117,
+        sku: varianAktif?.sku || `CRSL-${produkData.id || 'ITEM'}`,
+        nama: produkData.nama || 'CRSL Merchandise',
+        harga: produkData.harga_diskon || produkData.harga || 179100,
+        hargaCoret: produkData.harga || 199000,
+        gambar: mainImg?.src || produkData.gambar_utama || '/aset/gambar/cassie-wallet.webp',
+        varian: varianLabelGabungan,
+        jumlah: kuantitas,
+        tipe: produkData.tipe_produk || 'regular',
+        statusStok: produkData.status_stok || 'in_stock'
       };
 
-      const existingItems = Keranjang.ambilItems ? Keranjang.ambilItems() : [];
-      const idx = existingItems.findIndex(i => i.id === itemBaru.id && i.varian === itemBaru.varian);
-      if (idx > -1) {
-        existingItems[idx].jumlah += kuantitas;
-      } else {
-        existingItems.push(itemBaru);
-      }
+      if (typeof Keranjang !== 'undefined') {
+        const existing = Keranjang.ambilItems ? Keranjang.ambilItems() : [];
+        const idx = existing.findIndex(i => i.id === itemBaru.id && i.varian === itemBaru.varian);
+        if (idx > -1) {
+          existing[idx].jumlah += kuantitas;
+        } else {
+          existing.push(itemBaru);
+        }
 
-      if (Keranjang.simpanItems) {
-        Keranjang.simpanItems(existingItems);
-      }
+        if (Keranjang.simpanItems) {
+          Keranjang.simpanItems(existing);
+        }
 
-      if (langsungCheckout) {
-        window.location.href = '/checkout';
+        if (langsungCheckout) {
+          window.location.href = '/checkout';
+        } else {
+          if (Keranjang.bukaCart) {
+            Keranjang.bukaCart();
+          }
+        }
       } else {
-        if (Keranjang.bukaCart) {
-          Keranjang.bukaCart();
+        if (langsungCheckout) {
+          window.location.href = '/checkout';
         }
       }
     }
 
-    btnKeranjangList.forEach(btn => {
+    btnCartList.forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
-        prosesTambahKeranjang(false);
+        prosesPemesanan(false);
       });
     });
 
-    btnBeliList.forEach(btn => {
+    btnBuyList.forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
-        prosesTambahKeranjang(true);
+        prosesPemesanan(true);
       });
     });
+  }
+
+  /* ==========================================================
+     8. Navigasi Carousel Horizontal (< >)
+     ========================================================== */
+  function initCarouselNav() {
+    const setupTrack = (trackId, prevId, nextId) => {
+      const track = document.getElementById(trackId);
+      const prev = document.getElementById(prevId);
+      const next = document.getElementById(nextId);
+
+      prev?.addEventListener('click', () => {
+        track?.scrollBy({ left: -240, behavior: 'smooth' });
+      });
+
+      next?.addEventListener('click', () => {
+        track?.scrollBy({ left: 240, behavior: 'smooth' });
+      });
+    };
+
+    setupTrack('pdp-rekomendasi-track', 'pdp-rekomendasi-prev', 'pdp-rekomendasi-next');
+    setupTrack('pdp-recent-track', 'pdp-recent-prev', 'pdp-recent-next');
+  }
+
+  /* ==========================================================
+     9. Logika Riwayat Kunjungan [Recent Viewed] LocalStorage
+     ========================================================== */
+  function initRecentViewed() {
+    if (!produkData.id) return;
+
+    const STORAGE_KEY = 'crsl_recent_pdp_history';
+    let riwayat = [];
+
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) riwayat = JSON.parse(raw);
+    } catch {
+      riwayat = [];
+    }
+
+    // 1. Tambahkan produk saat ini ke daftar riwayat (tanpa duplikasi)
+    const produkItem = {
+      id: produkData.id,
+      nama: produkData.nama,
+      slug: produkData.slug,
+      harga: produkData.harga,
+      harga_diskon: produkData.harga_diskon,
+      gambar: produkData.gambar_utama || '/aset/gambar/cassie-wallet.webp',
+      tipe_produk: produkData.tipe_produk || 'regular',
+      kategori: produkData.nama_kategori || 'Merchandise'
+    };
+
+    riwayat = riwayat.filter(p => p.id !== produkItem.id);
+    riwayat.unshift(produkItem);
+    if (riwayat.length > 8) riwayat.pop();
+
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(riwayat));
+    } catch {
+      // Storage restricted
+    }
+
+    // 2. Render item yang sebelumnya dilihat ke track #pdp-recent-track
+    const recentSection = document.getElementById('pdp-recent-section');
+    const recentTrack = document.getElementById('pdp-recent-track');
+    const itemLain = riwayat.filter(p => p.id !== produkItem.id);
+
+    if (itemLain.length > 0 && recentTrack && recentSection) {
+      recentTrack.innerHTML = '';
+      itemLain.forEach(p => {
+        const hargaTampil = p.harga_diskon || p.harga;
+        const adaDiskon = p.harga_diskon && p.harga_diskon < p.harga;
+
+        const card = document.createElement('article');
+        card.className = 'pdp__card-katalog';
+        card.innerHTML = `
+          <a href="/products/${p.id}/${encodeURIComponent(p.slug)}" class="pdp__card-media">
+            <img src="${p.gambar}" alt="${p.nama}" loading="lazy" width="220" height="220">
+            ${adaDiskon ? `<span class="pdp__card-badge-diskon">${Math.round((1 - p.harga_diskon / p.harga) * 100)}% OFF</span>` : ''}
+          </a>
+          <div class="pdp__card-info">
+            <span class="pdp__card-kategori">${p.kategori || 'Merchandise'}</span>
+            <h3 class="pdp__card-nama">
+              <a href="/products/${p.id}/${encodeURIComponent(p.slug)}">${p.nama}</a>
+            </h3>
+            <div class="pdp__card-harga">
+              <span class="pdp__card-harga-aktif">Rp ${Number(hargaTampil).toLocaleString('id-ID')}</span>
+              ${adaDiskon ? `<span class="pdp__card-harga-coret">Rp ${Number(p.harga).toLocaleString('id-ID')}</span>` : ''}
+            </div>
+          </div>
+        `;
+        recentTrack.appendChild(card);
+      });
+      recentSection.style.display = 'block';
+    }
   }
 
   return { init };

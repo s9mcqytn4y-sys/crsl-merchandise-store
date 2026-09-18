@@ -129,40 +129,72 @@
 
 .bundle-pdp__harga-box {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.75rem;
 }
 
 .bundle-pdp__harga-paket {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 800;
-  color: var(--warna-primer);
+  color: #1a1a1a;
 }
 
-.bundle-pdp__harga-asli {
-  font-size: 1.1rem;
-  color: var(--warna-teks-redup);
-  text-decoration: line-through;
-}
-
-.bundle-pdp__hemat-tag {
-  background-color: rgba(229, 32, 39, 0.1);
-  color: var(--warna-primer);
-  font-size: 0.8rem;
+.bundle-pdp__tag-bundled {
+  display: inline-block;
+  padding: 4px 10px;
+  background-color: #4338ca;
+  color: #ffffff;
+  font-size: 11px;
   font-weight: 700;
-  padding: 0.25rem 0.6rem;
-  border-radius: var(--radius-lingkaran);
+  border-radius: 4px;
 }
 
-.bundle-pdp__peringatan {
-  padding: 0.85rem 1rem;
-  background-color: #fbfbfb;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-left: 4px solid var(--warna-primer);
-  border-radius: var(--radius-sm);
-  font-size: 0.85rem;
-  color: var(--warna-teks-redup);
+.bundle-pdp__deskripsi-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.45;
+}
+
+.bundle-pdp__desc-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.bundle-pdp__emoji-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.bundle-pdp__desc-item p {
+  margin: 2px 0 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.bundle-pdp__section-pilih-header {
+  margin-top: 4px;
+}
+
+.bundle-pdp__subjudul {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.bundle-pdp__caveat {
+  font-size: 11px;
+  color: #64748b;
   line-height: 1.4;
+  margin: 0;
 }
 
 /* Item List dalam Bundle */
@@ -170,20 +202,20 @@
   display: flex;
   flex-direction: column;
   gap: var(--jarak-md);
-  margin-top: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 .bundle-item-kartu {
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
   border-radius: var(--radius-md);
-  padding: 1rem;
+  padding: 0.85rem 1rem;
   background: var(--warna-permukaan);
   transition: border-color var(--transisi-cepat), box-shadow var(--transisi-cepat);
 }
 
-.bundle-item-kartu--terpilih {
-  border-color: var(--warna-primer);
-  background-color: rgba(229, 32, 39, 0.02);
+.bundle-item-kartu.terpilih {
+  border-color: #cbd5e1;
+  background-color: #ffffff;
 }
 
 .bundle-item-kartu__header {
@@ -202,8 +234,8 @@
 }
 
 .bundle-item-kartu__thumb {
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   border-radius: var(--radius-sm);
   object-fit: cover;
   background-color: #f5f5f5;
@@ -215,32 +247,43 @@
 }
 
 .bundle-item-kartu__nama {
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 0.88rem;
+  font-weight: 600;
   color: var(--warna-teks);
   margin-bottom: 0.25rem;
   line-height: 1.3;
 }
 
 .bundle-item-kartu__harga {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--warna-teks-redup);
 }
 
+.bundle-item-kartu__aksi-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bundle-item-kartu__chevron {
+  font-size: 18px;
+  color: #dc2626;
+  font-weight: 800;
+}
+
 .bundle-item-kartu__pilih-btn {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: #f0f0f0;
-  color: var(--warna-teks);
+  background: #3b82f6;
+  color: #ffffff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: none;
-  font-size: 1.25rem;
+  font-size: 1rem;
   cursor: pointer;
-  transition: all var(--transisi-cepat);
   flex-shrink: 0;
 }
 

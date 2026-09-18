@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="/css/tata-letak.css">
   <link rel="stylesheet" href="/css/komponen/bilah-atas.css">
   <link rel="stylesheet" href="/css/komponen/navigasi.css">
+  <link rel="stylesheet" href="/css/komponen/otentikasi.css">
   <link rel="stylesheet" href="/css/halaman/checkout.css">
 </head>
 <body class="checkout-body">
@@ -343,9 +344,47 @@
     </div>
   </main>
 
+  <!-- Modal Otentikasi Instan -->
+  <?php require_once PUBLIK_DIR . '/komponen/modal-otentikasi.php'; ?>
+
+  <!-- Modal Simulator Pembayaran QRIS / VA -->
+  <div class="modal-overlay" id="modal-simulator-bayar" aria-hidden="true" style="display: none;">
+    <div class="modal-wadah modal-wadah--sedang" style="text-align: center; padding: 2rem; max-width: 440px; margin: auto;">
+      <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">📱</div>
+      <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;" id="simulasi-judul">Menunggu Pembayaran QRIS</h3>
+      <p style="font-size: 0.85rem; color: var(--warna-teks-redup); margin-bottom: 1rem;" id="simulasi-instruksi">
+        Pindai kode QR menggunakan aplikasi e-wallet atau mobile banking apa pun.
+      </p>
+      <div style="display: inline-block; padding: 1rem; background: #ffffff; border-radius: var(--radius-lg); border: 1px solid var(--warna-batas); margin-bottom: 1rem;">
+        <svg width="180" height="180" viewBox="0 0 100 100" fill="none" style="display: block;">
+          <rect width="100" height="100" fill="#ffffff"/>
+          <path d="M10 10h30v30h-30z M60 10h30v30h-30z M10 60h30v30h-30z" fill="#000000"/>
+          <path d="M16 16h18v18h-18z M66 16h18v18h-18z M16 66h18v18h-18z" fill="#ffffff"/>
+          <path d="M22 22h6v6h-6z M72 22h6v6h-6z M22 72h6v6h-6z" fill="#000000"/>
+          <path d="M45 10h10v10h-10z M45 25h10v10h-10z M45 40h10v10h-10z M10 45h35v10h-35z M60 45h30v10h-30z M45 60h10v30h-10z M60 60h10v15h-10z M75 60h15v10h-15z M60 80h30v10h-30z" fill="#000000"/>
+        </svg>
+      </div>
+      <div style="font-weight: 700; font-size: 1.15rem; color: var(--warna-primer); margin-bottom: 0.25rem;" id="simulasi-total">
+        Rp 0
+      </div>
+      <div style="font-size: 0.85rem; color: var(--warna-peringatan); font-weight: 600; margin-bottom: 1.5rem;" id="simulasi-timer">
+        Waktu tersisa: 14:59
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+        <button type="button" id="btn-simulasi-sukses" class="checkout-step__tombol checkout-step__tombol--utama" style="width: 100%;">
+          Simulasi Pembayaran Berhasil
+        </button>
+        <button type="button" id="btn-tutup-simulasi" class="checkout-step__tombol" style="width: 100%; background: transparent; border: 1px solid var(--warna-batas); color: var(--warna-teks-redup);">
+          Bayar Nanti (Buka Faktur)
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- JS -->
   <script src="/js/utilitas/i18n.js"></script>
   <script src="/js/komponen/navigasi.js"></script>
+  <script src="/js/komponen/otentikasi.js"></script>
   <script src="/js/halaman/checkout.js"></script>
 </body>
 </html>

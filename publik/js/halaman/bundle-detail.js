@@ -1,6 +1,8 @@
 /**
  * CRSL Merchandise Store - Bundle Detail Controller
- * Logika pemilihan varian per item, validasi 1 set lengkap, & Add to Cart
+ * Standar /antislop-ui, /antislop-code, /baseline-ui, & /007
+ * - Logika pemilihan varian per item, validasi 1 set lengkap
+ * - Integrasi mulus dengan Keranjang Belanja & Drawer Cart
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -13,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!itemsContainer || !ctaBtn) return;
 
   const totalItems = parseInt(itemsContainer.getAttribute('data-total-items'), 10) || 2;
-  const bundleNama = itemsContainer.getAttribute('data-bundle-nama') || 'BTS Must-Have Bundle';
+  const bundleNama = itemsContainer.getAttribute('data-bundle-nama') || 'BACK TO SCHOOL with Miflo';
   const bundleHarga = parseInt(itemsContainer.getAttribute('data-bundle-harga'), 10) || 289000;
   const bundleGambar = itemsContainer.getAttribute('data-bundle-gambar') || '/aset/gambar/bundle-miflo-cover.webp';
 
@@ -44,7 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
       varian: defaultPill ? defaultPill.getAttribute('data-varian') : 'Default'
     };
 
-    // Tombol pill varian
     const pills = kartu.querySelectorAll('.bundle-item-kartu__varian-pill');
     pills.forEach(pill => {
       pill.addEventListener('click', () => {
@@ -57,32 +58,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 3. Tombol CTA Tambah ke Keranjang
   ctaBtn.addEventListener('click', () => {
-    const ringkasanVarian = Object.values(pilihanVarian).map(v => `${v.nama} (${v.varian})`).join(' + ');
+    const itemBundle = {
+      id: 'bundle-3516',
+      nama: bundleNama,
+      harga: bundleHarga,
+      hargaCoret: bundleHarga + 54100,
+      gambar: bundleGambar,
+      varian: 'Bundle Complete Set',
+      jumlah: 1,
+      tipe: 'bundle',
+      isBundle: true
+    };
 
-    // Tambah paket bundle ke modul Keranjang
-    if (window.Keranjang && typeof window.Keranjang.tambahItem === 'function') {
-      window.Keranjang.tambahItem({
-        id: 'bundle-' + Date.now(),
-        nama: `[BUNDLE] ${bundleNama}`,
-        harga: bundleHarga,
-        hargaNormal: bundleHarga + 54000,
-        gambar: bundleGambar,
-        varian: ringkasanVarian,
-        jumlah: 1
-      });
+    if (typeof Keranjang !== 'undefined') {
+      const items = Keranjang.ambilItems ? Keranjang.ambilItems() : [];
+      const idx = items.findIndex(i => i.id === itemBundle.id);
+      if (idx > -1) {
+        items[idx].jumlah += 1;
+      } else {
+        items.push(itemBundle);
+      }
+      if (Keranjang.simpanItems) {
+        Keranjang.simpanItems(items);
+      }
+      if (Keranjang.bukaCart) {
+        Keranjang.bukaCart();
+      }
     } else {
-      // Fallback localStorage
-      const cart = JSON.parse(localStorage.getItem('crsl_cart') || '[]');
-      cart.push({
-        id: 'bundle-' + Date.now(),
-        nama: `[BUNDLE] ${bundleNama}`,
-        harga: bundleHarga,
-        gambar: bundleGambar,
-        varian: ringkasanVarian,
-        jumlah: 1
-      });
-      localStorage.setItem('crsl_cart', JSON.stringify(cart));
-      window.location.reload();
+      window.location.href = '/checkout';
     }
   });
 });

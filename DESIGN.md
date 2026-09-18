@@ -218,6 +218,22 @@ Bayangan digunakan hanya pada: dropdown, modal, drawer. Bukan pada setiap card.
 - Min tinggi: 44px (tap target accessibility)
 - Teks: Sentence case
 
+### Halaman Detail Produk (PDP) 3-Kolom
+
+- **Kolom 1**: Galeri thumbnail vertikal (sticky desktop, lebar ~78px, scroll horizontal di mobile)
+- **Kolom 2**: Foto utama interaktif dengan animasi slide kanan-ke-kiri dan cursor zoom hardware-accelerated (`aspect-ratio: 1/1`)
+- **Kolom 3**: 11 sections interaktif (status badge, judul pola `|`, dynamic pricing, kupon modal pop-up, swatches warna, tombol ukuran dengan coret diagonal saat stok habis, stepper kuantitas, tombol aksi outline & solid, deskripsi dengan view more, delivery cek ongkir, tombol WhatsApp)
+- **Row Sections**: Carousel horizontal `[You Might Also Like]` dan `[Recent Viewed]` dengan tombol navigasi `<` dan `>`
+
+### Cart Drawer & Loyalty Flow
+
+- **Warning Stok**: Pill banner `Only 5 stocks left.` di atas list item
+- **Item Badges**: Tag `PRE ORDER` dan `BUNDLED PRODUCT` dengan breakdown sub-items
+- **Trust Badges**: Dua kolom `Secure payment` dan `Privacy protection`
+- **Recently Ordered**: Grid kartu produk di dalam drawer dengan circular cart button
+- **Loyalty Tier Progress**: Kartu progres `Spend Rp 200,000 more to reach New Freen`
+- **Checkout CTA**: Tombol merah `Checkout with Discount`
+
 ---
 
 ## Accessibility Standards

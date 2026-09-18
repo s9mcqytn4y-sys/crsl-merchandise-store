@@ -36,19 +36,37 @@ CREATE TABLE IF NOT EXISTS produk (
   harga INTEGER NOT NULL,
   harga_diskon INTEGER,
   stok INTEGER DEFAULT 0,
+  berat INTEGER DEFAULT 250,
+  tipe_produk TEXT DEFAULT 'regular' CHECK(tipe_produk IN ('regular', 'pre_order', 'bundle')),
+  estimasi_po TEXT,
+  status_stok TEXT DEFAULT 'in_stock' CHECK(status_stok IN ('in_stock', 'low_stock', 'sold_out')),
   gambar_utama TEXT,
   aktif INTEGER DEFAULT 1,
   dibuat_pada DATETIME DEFAULT CURRENT_TIMESTAMP,
   diperbarui_pada DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Gambar Produk
+-- Gambar Galeri Produk
 CREATE TABLE IF NOT EXISTS gambar_produk (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   produk_id INTEGER NOT NULL REFERENCES produk(id) ON DELETE CASCADE,
   url TEXT NOT NULL,
   alt_teks TEXT,
   urutan INTEGER DEFAULT 0
+);
+
+-- Varian SKU Produk (Warna, Ukuran, Stok)
+CREATE TABLE IF NOT EXISTS produk_varian (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  produk_id INTEGER NOT NULL REFERENCES produk(id) ON DELETE CASCADE,
+  sku TEXT UNIQUE NOT NULL,
+  warna TEXT,
+  warna_hex TEXT,
+  warna_gambar TEXT,
+  ukuran TEXT,
+  stok INTEGER DEFAULT 0,
+  harga_override INTEGER,
+  dibuat_pada DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Wishlist
@@ -69,10 +87,15 @@ CREATE TABLE IF NOT EXISTS pesanan (
     'belum_bayar', 'akan_dikirim', 'dikirim', 'selesai', 'dibatalkan', 'dikembalikan'
   )),
   total INTEGER NOT NULL,
+  ongkir INTEGER DEFAULT 0,
+  kurir TEXT,
+  nomor_resi TEXT,
   mata_uang TEXT DEFAULT 'IDR',
   alamat_kirim TEXT,
   metode_bayar TEXT,
   catatan TEXT,
+  item_json TEXT,
+  waktu_bayar DATETIME,
   dibuat_pada DATETIME DEFAULT CURRENT_TIMESTAMP,
   diperbarui_pada DATETIME DEFAULT CURRENT_TIMESTAMP
 );

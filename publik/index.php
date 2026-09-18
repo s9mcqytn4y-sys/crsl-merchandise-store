@@ -9,6 +9,7 @@ require_once __DIR__ . '/../src/konfigurasi/aplikasi.php';
 
 use CRSL\BasisData\PengelolaDatabase;
 use CRSL\Otentikasi\PengelolaOtentikasi;
+use CRSL\Pesanan\PengelolaPesanan;
 
 // Parse request URI
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -47,6 +48,17 @@ if (php_sapi_name() === 'cli-server') {
             return;
         }
     }
+}
+
+// Inisialisasi sesi persisten global
+if (session_status() === PHP_SESSION_NONE) {
+    session_set_cookie_params([
+        'lifetime' => 2592000,
+        'path' => '/',
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+    session_start();
 }
 
 // API routes
@@ -97,16 +109,86 @@ if (str_starts_with($uri, '/api/auth/')) {
     exit;
 }
 
-// Dynamic PDP routing: /produk/{slug} atau /products/{slug}
-if (preg_match('#^/(?:produk|products)/([a-zA-Z0-9_-]+)$#', $uri, $matches)) {
-    $produkSlug = $matches[1];
+// Pesanan API routes
+if (str_starts_with($uri, '/api/pesanan/')) {
+    header('Content-Type: application/json; charset=utf-8');
+    $db = PengelolaDatabase::dapatkanKoneksi();
+    $auth = new PengelolaOtentikasi($db);
+    $pengelolaPesanan = new PengelolaPesanan($db);
+
+    $user = $auth->getActiveUser();
+    $rawInput = file_get_contents('php://input');
+    $data = json_decode($rawInput, true) ?: $_POST;
+
+    if ($uri === '/api/pesanan/buat') {
+        if (!$user) {
+            http_response_code(401);
+            echo json_encode(['sukses' => false, 'pesan' => 'Silakan masuk ke akun Anda terlebih dahulu untuk menyelesaikan pesanan.']);
+            exit;
+        }
+        $res = $pengelolaPesanan->buatPesanan($data, (int)$user['id']);
+        http_response_code($res['status']);
+        echo json_encode($res);
+        exit;
+    }
+
+    if ($uri === '/api/pesanan/daftar') {
+        if (!$user) {
+            http_response_code(401);
+            echo json_encode(['sukses' => false, 'pesan' => 'Sesi login telah berakhir.']);
+            exit;
+        }
+        $statusFilter = $_GET['status'] ?? null;
+        $daftar = $pengelolaPesanan->ambilDaftarPesananPengguna((int)$user['id'], $statusFilter);
+        http_response_code(200);
+        echo json_encode(['sukses' => true, 'pesanan' => $daftar]);
+        exit;
+    }
+
+    if ($uri === '/api/pesanan/detail') {
+        $nomor = $_GET['nomor'] ?? '';
+        $pesanan = $pengelolaPesanan->ambilDetailPesanan($nomor, $user ? (int)$user['id'] : null);
+        if (!$pesanan) {
+            http_response_code(404);
+            echo json_encode(['sukses' => false, 'pesan' => 'Pesanan tidak ditemukan.']);
+            exit;
+        }
+        http_response_code(200);
+        echo json_encode(['sukses' => true, 'pesanan' => $pesanan]);
+        exit;
+    }
+
+    if ($uri === '/api/pesanan/bayar-simulasi') {
+        $nomor = $data['nomor_pesanan'] ?? '';
+        $res = $pengelolaPesanan->updateStatusPesanan($nomor, 'akan_dikirim');
+        http_response_code($res['status']);
+        echo json_encode($res);
+        exit;
+    }
+
+    http_response_code(404);
+    echo json_encode(['sukses' => false, 'pesan' => 'Endpoint pesanan tidak ditemukan.']);
+    exit;
+}
+
+// Dynamic PDP routing: /products/{id}/{slug}, /products/{slug}, /produk/{id}/{slug}, /produk/{slug}
+if (preg_match('#^/(?:produk|products)/(?:([0-9]+)/)?([^/]+)$#', $uri, $matches)) {
+    $produkIdParam = !empty($matches[1]) ? (int)$matches[1] : null;
+    $produkSlugRaw = urldecode($matches[2]);
+    // Ekstrak base slug
+    $produkSlug = explode('|', $produkSlugRaw)[0];
+    $produkSlug = trim(explode('(', $produkSlug)[0]);
+    $produkSlug = strtolower(preg_replace('/[^a-zA-Z0-9_-]+/', '-', trim($produkSlug)));
+    $produkSlug = trim($produkSlug, '-');
+
     require_once __DIR__ . '/halaman/produk.php';
     exit;
 }
 
-// Dynamic Bundle routing: /bundle/{slug} atau /bundles/{id}/{slug} atau /bundles/{slug}
-if (preg_match('#^/(?:bundle|bundles)/(?:[0-9]+/)?([a-zA-Z0-9_-]+)$#', $uri, $matches)) {
-    $bundleSlug = $matches[1];
+// Dynamic Bundle routing: /bundles/{id}/{slug}, /bundles/{slug}, /bundle/{slug}
+if (preg_match('#^/(?:bundle|bundles)/(?:([0-9]+)/)?([^/]+)$#', $uri, $matches)) {
+    $bundleIdParam = !empty($matches[1]) ? (int)$matches[1] : null;
+    $bundleSlug = urldecode($matches[2]);
     require_once __DIR__ . '/halaman/bundle-detail.php';
     exit;
 }

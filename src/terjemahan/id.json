@@ -142,5 +142,23 @@
     "bayar_sekarang": "Bayar Sekarang",
     "setuju_syarat": "Dengan melanjutkan, Anda menyetujui Syarat & Ketentuan Transaksi serta Kebijakan Privasi resmi CRSL.",
     "pesanan_sukses": "Pesanan Anda Berhasil Dibuat!"
+  },
+  "pdp": {
+    "in_stock": "In Stock",
+    "low_stock": "Low Stock",
+    "pre_order": "Pre Order",
+    "sold_out": "Sold out",
+    "color": "Warna",
+    "size": "Ukuran",
+    "add_to_cart": "Add to Cart",
+    "buy_now": "Buy It Now",
+    "view_more": "View more",
+    "view_less": "View less",
+    "shipping_est": "Estimasi Pengiriman",
+    "message_crsl": "Message CRSL",
+    "you_might_like": "You Might Also Like",
+    "recently_viewed": "Recently Viewed",
+    "discounts_title": "DISCOUNTS",
+    "apply_coupon": "Gunakan Kupon Ini"
   }
 }

@@ -247,43 +247,179 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1000);
   }
 
-  // Submit Pembayaran Final
-  btnBayar?.addEventListener('click', () => {
+  // Submit Pembayaran Final terhubung API SQLite & Simulator
+  const modalSimulasi = document.getElementById('modal-simulator-bayar');
+  const simulasiTotal = document.getElementById('simulasi-total');
+  const simulasiTimer = document.getElementById('simulasi-timer');
+  const btnSimulasiSukses = document.getElementById('btn-simulasi-sukses');
+  const btnTutupSimulasi = document.getElementById('btn-tutup-simulasi');
+
+  let activeNomorPesanan = null;
+
+  btnTutupSimulasi?.addEventListener('click', () => {
+    if (activeNomorPesanan) {
+      window.location.href = `/invoice/${activeNomorPesanan}`;
+    } else {
+      modalSimulasi.style.display = 'none';
+    }
+  });
+
+  btnSimulasiSukses?.addEventListener('click', async () => {
+    if (!activeNomorPesanan) return;
+    btnSimulasiSukses.disabled = true;
+    btnSimulasiSukses.textContent = 'Memverifikasi Pembayaran...';
+
+    try {
+      const res = await fetch('/api/pesanan/bayar-simulasi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nomor_pesanan: activeNomorPesanan })
+      });
+      const data = await res.json();
+      if (data.sukses) {
+        // Update local status pesanan juga jika ada
+        const localOrders = JSON.parse(localStorage.getItem('crsl_orders') || '[]');
+        const idx = localOrders.findIndex(o => o.id === activeNomorPesanan);
+        if (idx !== -1) {
+          localOrders[idx].status = 'akan_dikirim';
+          localStorage.setItem('crsl_orders', JSON.stringify(localOrders));
+        }
+
+        btnSimulasiSukses.textContent = '✓ Pembayaran Sukses! Mengalihkan...';
+        setTimeout(() => {
+          window.location.href = `/invoice/${activeNomorPesanan}`;
+        }, 800);
+      } else {
+        alert(data.pesan || 'Gagal memverifikasi pembayaran.');
+        btnSimulasiSukses.disabled = false;
+        btnSimulasiSukses.textContent = 'Coba Lagi';
+      }
+    } catch (e) {
+      alert('Koneksi bermasalah: ' + e.message);
+      btnSimulasiSukses.disabled = false;
+      btnSimulasiSukses.textContent = 'Coba Lagi';
+    }
+  });
+
+  btnBayar?.addEventListener('click', async () => {
     btnBayar.disabled = true;
     btnBayar.style.opacity = '0.7';
-    btnBayar.innerHTML = `<span>Memproses Pesanan...</span>`;
+    btnBayar.innerHTML = `<span>Memeriksa Akun...</span>`;
 
-    const nomorPesanan = 'CRSL-ORD-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + Math.floor(1000 + Math.random() * 9000);
+    // 1. Periksa apakah pengguna sudah login (Strict Account Rule)
+    let currentUser = null;
+    try {
+      const authRes = await fetch('/api/auth/me');
+      if (authRes.ok) {
+        const authData = await authRes.json();
+        if (authData.sukses && authData.data) {
+          currentUser = authData.data;
+        }
+      }
+    } catch (e) {
+      console.warn('Gagal cek auth:', e);
+    }
+
+    if (!currentUser) {
+      btnBayar.disabled = false;
+      btnBayar.style.opacity = '1';
+      btnBayar.innerHTML = `<span>Masuk untuk Menyelesaikan Pesanan</span>`;
+
+      // Buka modal login instan
+      if (typeof Otentikasi !== 'undefined' && Otentikasi.bukaMasuk) {
+        Otentikasi.bukaMasuk();
+      } else {
+        alert('Silakan login atau daftar akun terlebih dahulu.');
+        window.location.href = '/akun';
+      }
+      return;
+    }
+
+    btnBayar.innerHTML = `<span>Membuat Pesanan di Database...</span>`;
+
     const radioBayar = document.querySelector('input[name="metode_bayar"]:checked');
     const metode = radioBayar ? radioBayar.value : 'QRIS';
 
-    const pesananData = {
-      id: nomorPesanan,
-      tanggal: new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }),
-      nama: inputNama.value.trim() || 'Pelanggan CRSL',
+    const payloadPesanan = {
+      nama_lengkap: inputNama.value.trim() || currentUser.nama_lengkap,
       telepon: inputTelepon.value.trim() || '081234567890',
-      alamat: inputAlamat.value.trim() || 'Yogyakarta',
+      alamat_lengkap: inputAlamat.value.trim() || 'Jl. Seturan',
+      kota: 'Yogyakarta',
+      kode_pos: inputKodepos.value.trim() || '55281',
       kurir: ongkirNama,
       ongkir: ongkirTarif,
-      biayaLayanan: biayaLayanan,
-      subtotal: subtotal,
-      total: subtotal + ongkirTarif + biayaLayanan,
-      metode: metode,
-      status: metode === 'COD' ? 'diproses' : 'menunggu_pembayaran',
+      metode_bayar: metode,
       items: keranjang
     };
 
-    // Simpan pesanan ke daftar pesanan pengguna
-    const daftarPesanan = JSON.parse(localStorage.getItem('crsl_orders') || '[]');
-    daftarPesanan.unshift(pesananData);
-    localStorage.setItem('crsl_orders', JSON.stringify(daftarPesanan));
+    try {
+      const res = await fetch('/api/pesanan/buat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payloadPesanan)
+      });
 
-    // Kosongkan keranjang belanja
-    localStorage.removeItem('crsl_cart');
+      const data = await res.json();
 
-    // Arahkan ke Invoice / Bukti Pemesanan
-    setTimeout(() => {
-      window.location.href = `/invoice/${nomorPesanan}`;
-    }, 800);
+      if (data.sukses && data.pesanan) {
+        activeNomorPesanan = data.pesanan.nomor_pesanan;
+
+        // Simpan ke local backup
+        const localOrders = JSON.parse(localStorage.getItem('crsl_orders') || '[]');
+        localOrders.unshift({
+          id: activeNomorPesanan,
+          tanggal: new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }),
+          nama: payloadPesanan.nama_lengkap,
+          telepon: payloadPesanan.telepon,
+          alamat: payloadPesanan.alamat_lengkap,
+          kurir: ongkirNama,
+          ongkir: ongkirTarif,
+          subtotal: subtotal,
+          total: data.pesanan.total,
+          metode: metode,
+          status: 'menunggu_pembayaran',
+          items: keranjang
+        });
+        localStorage.setItem('crsl_orders', JSON.stringify(localOrders));
+
+        // Bersihkan keranjang belanja
+        localStorage.removeItem('crsl_cart');
+
+        // Buka modal simulator QRIS
+        if (modalSimulasi) {
+          if (simulasiTotal) {
+            simulasiTotal.textContent = `Total: Rp ${data.pesanan.total.toLocaleString('id-ID')}`;
+          }
+          modalSimulasi.style.display = 'flex';
+          modalSimulasi.classList.add('aktif');
+
+          // Mulai hitung mundur 15 menit
+          let countdown = 15 * 60;
+          const timerSimulasi = setInterval(() => {
+            countdown--;
+            if (countdown <= 0) {
+              clearInterval(timerSimulasi);
+              if (simulasiTimer) simulasiTimer.textContent = 'Masa pembayaran telah berakhir.';
+              return;
+            }
+            const m = String(Math.floor(countdown / 60)).padStart(2, '0');
+            const s = String(countdown % 60).padStart(2, '0');
+            if (simulasiTimer) simulasiTimer.textContent = `Waktu tersisa: ${m}:${s}`;
+          }, 1000);
+        } else {
+          window.location.href = `/invoice/${activeNomorPesanan}`;
+        }
+      } else {
+        alert(data.pesan || 'Terjadi kendala saat membuat pesanan.');
+        btnBayar.disabled = false;
+        btnBayar.style.opacity = '1';
+        btnBayar.innerHTML = `<span>Bayar Sekarang</span>`;
+      }
+    } catch (err) {
+      alert('Gagal menghubungi server pesanan: ' + err.message);
+      btnBayar.disabled = false;
+      btnBayar.style.opacity = '1';
+      btnBayar.innerHTML = `<span>Bayar Sekarang</span>`;
+    }
   });
 });

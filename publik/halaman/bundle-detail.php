@@ -202,23 +202,38 @@ $bundle = $bundleData[$slug] ?? $bundleData['back-to-school-with-miflo'];
           
           <div class="bundle-pdp__harga-box">
             <span class="bundle-pdp__harga-paket">Rp <?= number_format($bundle['harga_paket'], 0, ',', '.') ?></span>
-            <span class="bundle-pdp__harga-asli">Rp <?= number_format($bundle['harga_asli'], 0, ',', '.') ?></span>
-            <span class="bundle-pdp__hemat-tag"><?= htmlspecialchars($bundle['hemat']) ?></span>
+            <span class="bundle-pdp__tag-bundled">Bundled Product, Rp <?= number_format($bundle['harga_paket'], 0, ',', '.') ?></span>
           </div>
 
-          <!-- Peringatan Aturan Bundle -->
-          <div class="bundle-pdp__peringatan">
-            <strong>Aturan Paket:</strong> Products that are in waiting list or out of stock can't be ordered together with other products. Pelanggan wajib memilih 1 varian untuk setiap produk di dalam bundle.
+          <!-- Highlight Promo & Value Proposition (Gambar 3) -->
+          <div class="bundle-pdp__deskripsi-box">
+            <div class="bundle-pdp__desc-item">
+              <span class="bundle-pdp__emoji-icon">🛍️</span>
+              <div>
+                <strong><?= htmlspecialchars($bundle['judul']) ?></strong>
+                <p>Make your school days even cuter with Miflo Mini Backpack! ❤️</p>
+              </div>
+            </div>
+
+            <div class="bundle-pdp__desc-item">
+              <span class="bundle-pdp__emoji-icon">🎁</span>
+              <div>
+                <strong>Special BTS Offer</strong>
+                <p>Get a <strong>FREE Ropy Keychain</strong> with every purchase of Miflo Mini Backpack. The perfect duo to complete your everyday look. ✨ <em>Limited stock. While supplies last.</em></p>
+              </div>
+            </div>
           </div>
 
-          <p style="font-size: 0.85rem; color: #10b981; font-weight: 600;">
-            ✓ <?= htmlspecialchars($bundle['freebies']) ?>
-          </p>
+          <!-- Subtitle & Caveat Rule -->
+          <div class="bundle-pdp__section-pilih-header">
+            <h2 class="bundle-pdp__subjudul">Pick one product from each section</h2>
+            <p class="bundle-pdp__caveat">Products that are in waiting list or out of stock can't be ordered together with other products.</p>
+          </div>
 
           <!-- Daftar Item dalam Bundle -->
           <div class="bundle-pdp__daftar-item" id="bundle-items-list" data-total-items="<?= count($bundle['items']) ?>" data-bundle-nama="<?= htmlspecialchars($bundle['judul']) ?>" data-bundle-harga="<?= $bundle['harga_paket'] ?>" data-bundle-gambar="<?= htmlspecialchars($bundle['gambar_utama']) ?>">
             <?php foreach ($bundle['items'] as $idx => $item): ?>
-              <div class="bundle-item-kartu" data-item-index="<?= $idx ?>" data-item-id="<?= $item['id'] ?>" data-item-nama="<?= htmlspecialchars($item['nama']) ?>">
+              <div class="bundle-item-kartu terpilih" data-item-index="<?= $idx ?>" data-item-id="<?= $item['id'] ?>" data-item-nama="<?= htmlspecialchars($item['nama']) ?>">
                 <div class="bundle-item-kartu__header">Product <?= $idx + 1 ?></div>
                 <div class="bundle-item-kartu__body">
                   <img src="<?= htmlspecialchars($item['gambar']) ?>" alt="<?= htmlspecialchars($item['nama']) ?>" class="bundle-item-kartu__thumb">
@@ -226,9 +241,12 @@ $bundle = $bundleData[$slug] ?? $bundleData['back-to-school-with-miflo'];
                     <div class="bundle-item-kartu__nama"><?= htmlspecialchars($item['nama']) ?></div>
                     <div class="bundle-item-kartu__harga">Rp <?= number_format($item['harga'], 0, ',', '.') ?></div>
                   </div>
-                  <button type="button" class="bundle-item-kartu__pilih-btn" aria-label="Pilih opsi untuk <?= htmlspecialchars($item['nama']) ?>" data-action="toggle-item">
-                    +
-                  </button>
+                  <div class="bundle-item-kartu__aksi-group">
+                    <span class="bundle-item-kartu__chevron">&rsaquo;</span>
+                    <button type="button" class="bundle-item-kartu__pilih-btn aktif" aria-label="Status item <?= htmlspecialchars($item['nama']) ?>" data-action="toggle-item">
+                      ✓
+                    </button>
+                  </div>
                 </div>
                 <!-- Pilihan Varian -->
                 <div class="bundle-item-kartu__varian-box">
@@ -247,10 +265,9 @@ $bundle = $bundleData[$slug] ?? $bundleData['back-to-school-with-miflo'];
             <?php endforeach; ?>
           </div>
 
-          <!-- Tombol CTA Dinamis -->
+          <!-- Tombol CTA Dinamis (Gambar 3) -->
           <button type="button" id="bundle-cta-btn" class="bundle-pdp__tombol-cta bundle-pdp__tombol-cta--aktif">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-            <span id="bundle-cta-teks">Tambah 1 Set Bundle ke Keranjang (Rp <?= number_format($bundle['harga_paket'], 0, ',', '.') ?>)</span>
+            <span id="bundle-cta-teks">Add Bundle to Cart - Rp <?= number_format($bundle['harga_paket'], 0, ',', '.') ?></span>
           </button>
         </div>
       </div>

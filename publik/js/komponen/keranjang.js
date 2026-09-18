@@ -1,6 +1,11 @@
 /**
- * Keranjang Belanja - Cart State & Modals
- * Mendukung Add to Cart pop-up, Cart drawer, dan bar melayang bawah layar
+ * Keranjang Belanja - Cart State & Modals (Gambar 1, 2, 3, & 4)
+ * Standar /antislop-ui, /antislop-code, /baseline-ui, & /007
+ * - Drawer Samping Cart dengan Dukungan PRE ORDER & BUNDLED PRODUCT
+ * - Sub-item Bundle List & Exclusion Notice Banner
+ * - Trust Badges & Recently Ordered Quick-Add Carousel
+ * - Dynamic Loyalty Progress Tier & Checkout with Discount
+ * - Floating Bottom Capsule Bar dengan Live Badge Sync
  */
 
 const Keranjang = (() => {
@@ -29,12 +34,16 @@ const Keranjang = (() => {
 
   function simpanItems(items) {
     state.items = items;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    } catch (e) {
+      // Storage restricted
+    }
     render();
   }
 
   function formatRupiah(angka) {
-    return 'Rp ' + angka.toLocaleString('id-ID');
+    return 'Rp ' + Number(angka).toLocaleString('id-ID');
   }
 
   function hitungTotal() {
@@ -43,22 +52,27 @@ const Keranjang = (() => {
     let totalItem = 0;
 
     state.items.forEach(item => {
-      totalHarga += item.harga * item.jumlah;
-      totalHargaAsli += (item.hargaCoret || item.harga) * item.jumlah;
-      totalItem += item.jumlah;
+      const hrg = item.harga || 0;
+      const hrgAsli = item.hargaCoret || item.harga || 0;
+      const jlh = item.jumlah || 1;
+      totalHarga += hrg * jlh;
+      totalHargaAsli += hrgAsli * jlh;
+      totalItem += jlh;
     });
+
+    const totalHemat = Math.max(0, totalHargaAsli - totalHarga);
 
     return {
       totalHarga,
       totalHargaAsli,
-      totalHemat: totalHargaAsli - totalHarga,
+      totalHemat,
       totalItem,
     };
   }
 
   function bukaAddCart(produk) {
     state.produkAktif = produk || {
-      id: 'cassie-wallet',
+      id: 907117,
       nama: 'CRSL Cassie Wallet | Dompet Lipat Canvas Wanita Pattern Plaid | Compact & Stylish',
       harga: 179100,
       hargaCoret: 199000,
@@ -68,17 +82,30 @@ const Keranjang = (() => {
     state.varianAktif = state.produkAktif.varianPilihan ? state.produkAktif.varianPilihan[0] : 'CHILO PINK';
     state.qtyAktif = 1;
 
-    // Render data produk di modal
     const namaEl = document.getElementById('add-cart-nama');
     const thumbEl = document.getElementById('add-cart-thumb');
     const qtyEl = document.getElementById('add-cart-qty');
+    const varianListEl = document.getElementById('modal-add-cart-varian-list');
 
     if (namaEl) namaEl.textContent = state.produkAktif.nama;
     if (thumbEl) thumbEl.src = state.produkAktif.gambar;
     if (qtyEl) qtyEl.textContent = '1';
 
-    // Update active color pill
-    updateVarianUI();
+    if (varianListEl && state.produkAktif.varianPilihan) {
+      varianListEl.innerHTML = '';
+      state.produkAktif.varianPilihan.forEach((v, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `modal-add-cart__varian-item ${idx === 0 ? 'terpilih' : ''}`;
+        btn.setAttribute('data-varian', v);
+        btn.innerHTML = `<span>${v}</span>`;
+        btn.addEventListener('click', () => {
+          state.varianAktif = v;
+          updateVarianUI();
+        });
+        varianListEl.appendChild(btn);
+      });
+    }
 
     state.modalAddOverlay?.classList.add('aktif');
   }
@@ -127,21 +154,20 @@ const Keranjang = (() => {
         gambar: state.produkAktif.gambar,
         varian: state.varianAktif,
         jumlah: state.qtyAktif,
+        tipe: state.produkAktif.tipe || 'regular'
       });
     }
 
     simpanItems(items);
     tutupAddCart();
 
-    // Tutup overlay search jika terbuka
     if (typeof Pencarian !== 'undefined' && Pencarian.tutup) {
       Pencarian.tutup();
     }
 
-    // Buka Drawer Cart
     setTimeout(() => {
       bukaCart();
-    }, 200);
+    }, 150);
   }
 
   function bukaCart() {
@@ -181,9 +207,9 @@ const Keranjang = (() => {
 
     if (state.items.length === 0) {
       wadah.innerHTML = `
-        <div style="text-align: center; padding: 40px 20px; color: var(--warna-teks-sekunder);">
-          <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px;">Keranjang Masih Kosong</p>
-          <p style="font-size: 0.9rem;">Pilih merchandise favorit kamu dan tambahkan ke sini.</p>
+        <div style="text-align: center; padding: 48px 20px; color: #64748b;">
+          <p style="font-size: 1.1rem; font-weight: 700; color: #1e293b; margin-bottom: 6px;">Keranjang Anda Masih Kosong</p>
+          <p style="font-size: 0.88rem;">Pilih produk merchandise CRSL favorit Anda dan tambahkan ke sini.</p>
         </div>
       `;
       const footerEl = document.getElementById('keranjang-drawer-footer');
@@ -197,31 +223,70 @@ const Keranjang = (() => {
     state.items.forEach((item, index) => {
       const itemEl = document.createElement('div');
       itemEl.className = 'keranjang-item';
-      itemEl.innerHTML = `
-        <img src="${item.gambar}" alt="${item.nama}" class="keranjang-item__thumb">
-        <div class="keranjang-item__rincian">
-          <h4 class="keranjang-item__nama">${item.nama}</h4>
-          <span class="keranjang-item__varian">${item.varian}</span>
-          <span class="keranjang-item__badge-diskon">🏷️ 10% Off</span>
-          <div style="display: flex; gap: 8px; align-items: baseline; margin-top: 4px;">
-            ${item.hargaCoret ? `<p class="keranjang-item__harga-coret">${formatRupiah(item.hargaCoret)}</p>` : ''}
-            <p class="keranjang-item__harga-aktif">${formatRupiah(item.harga)}</p>
+
+      const isPO = (item.tipe === 'pre_order' || (item.nama && item.nama.toLowerCase().includes('po ')));
+      const isBundle = (item.tipe === 'bundle' || (item.nama && item.nama.toLowerCase().includes('bundle')) || item.isBundle);
+
+      let tagHtml = '';
+      if (isPO) {
+        tagHtml = `<span class="keranjang-item__tag">PRE ORDER</span>`;
+      } else if (isBundle) {
+        tagHtml = `<span class="keranjang-item__tag">BUNDLED PRODUCT</span>`;
+      }
+
+      let subItemsHtml = '';
+      if (isBundle) {
+        subItemsHtml = `
+          <div class="keranjang-bundle-subitems">
+            <div class="keranjang-bundle-subitem">
+              <img src="/aset/gambar/miflo-backpack-thumb.webp" class="keranjang-bundle-subitem__thumb" alt="Miflo Backpack">
+              <div class="keranjang-bundle-subitem__info">
+                <span class="keranjang-bundle-subitem__nama">CRSL Miflo Mini Backpack | Tas Gendong...</span>
+                <span class="keranjang-bundle-subitem__varian">Popo | Pink</span>
+              </div>
+            </div>
+            <div class="keranjang-bundle-subitem">
+              <img src="/aset/gambar/ropy-keychain-thumb.webp" class="keranjang-bundle-subitem__thumb" alt="Ropy Keychain">
+              <div class="keranjang-bundle-subitem__info">
+                <span class="keranjang-bundle-subitem__nama">CRSL Ropy Colorful Keychain | Accessories...</span>
+                <span class="keranjang-bundle-subitem__varian">Popo</span>
+              </div>
+            </div>
           </div>
-          <div class="keranjang-item__aksi-baris">
-            <button type="button" class="keranjang-item__hapus" data-index="${index}">Remove</button>
-            <div class="keranjang-item__stepper">
-              <button type="button" class="keranjang-item__stepper-tombol kurang" data-index="${index}">-</button>
-              <span class="keranjang-item__stepper-angka">${item.jumlah}</span>
-              <button type="button" class="keranjang-item__stepper-tombol tambah" data-index="${index}">+</button>
+          <div class="keranjang-bundle-banner">
+            Bundled Product will be excluded from all other discount &amp; discount conditions.
+          </div>
+        `;
+      }
+
+      itemEl.innerHTML = `
+        <div class="keranjang-item__atas">
+          <div class="keranjang-item__media-kolom">
+            <img src="${item.gambar}" alt="${item.nama}" class="keranjang-item__thumb">
+            <div class="keranjang-item__info">
+              ${tagHtml}
+              <h4 class="keranjang-item__nama">${item.nama}</h4>
+              <span class="keranjang-item__varian">${item.varian || 'Standard'}</span>
+              <span class="keranjang-item__harga">${formatRupiah(item.harga)}</span>
             </div>
           </div>
         </div>
+        ${subItemsHtml}
+        <div class="keranjang-item__bawah">
+          <button type="button" class="keranjang-item__hapus-btn" data-index="${index}">Remove</button>
+          <div class="keranjang-item__stepper">
+            <button type="button" class="keranjang-item__stepper-tombol kurang" data-index="${index}" aria-label="Kurangi kuantitas">&minus;</button>
+            <span class="keranjang-item__stepper-angka">${item.jumlah}</span>
+            <button type="button" class="keranjang-item__stepper-tombol tambah" data-index="${index}" aria-label="Tambah kuantitas">&plus;</button>
+          </div>
+        </div>
       `;
+
       wadah.appendChild(itemEl);
     });
 
-    // Event listeners tombol di dalam item
-    wadah.querySelectorAll('.keranjang-item__hapus').forEach(btn => {
+    // Pasang listeners hapus & stepper
+    wadah.querySelectorAll('.keranjang-item__hapus-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         hapusItem(parseInt(btn.getAttribute('data-index'), 10));
       });
@@ -239,22 +304,43 @@ const Keranjang = (() => {
       });
     });
 
-    // Update total footer
+    // Update total harga & baris hemat
     const total = hitungTotal();
     const totalLabel = document.getElementById('keranjang-total-label');
     const totalNilai = document.getElementById('keranjang-total-nilai');
-    const hematEl = document.getElementById('keranjang-hemat-nilai');
-    const isID = typeof I18n !== 'undefined' ? I18n.bahasaAktif() === 'id' : true;
+    const hematBaris = document.getElementById('keranjang-hemat-baris');
+    const hematNilai = document.getElementById('keranjang-hemat-nilai');
 
-    if (totalLabel) totalLabel.textContent = isID ? `Total Harga (${total.totalItem})` : `Total Price (${total.totalItem})`;
+    if (totalLabel) totalLabel.textContent = `Total Price (${total.totalItem})`;
     if (totalNilai) totalNilai.textContent = formatRupiah(total.totalHarga);
-    if (hematEl) {
+
+    if (hematBaris && hematNilai) {
       if (total.totalHemat > 0) {
-        hematEl.parentElement.style.display = 'flex';
-        hematEl.textContent = isID ? `Hemat ${formatRupiah(total.totalHemat)}` : `Save ${formatRupiah(total.totalHemat)}`;
+        hematBaris.style.display = 'flex';
+        hematNilai.textContent = `Save ${formatRupiah(total.totalHemat)}`;
       } else {
-        hematEl.parentElement.style.display = 'none';
+        hematBaris.style.display = 'none';
       }
+    }
+
+    // Update Progress Loyalitas (Gambar 4)
+    const TARGET_LOYALTI = 1000000; // Tier New Freen target Rp 1.000.000
+    const sisaLoyalti = Math.max(0, TARGET_LOYALTI - total.totalHarga);
+    const persentaseLoyalti = Math.min(100, Math.round((total.totalHarga / TARGET_LOYALTI) * 100));
+
+    const loyaltyDesc = document.getElementById('keranjang-loyalty-desc');
+    const loyaltyBar = document.getElementById('keranjang-loyalty-bar');
+
+    if (loyaltyDesc) {
+      if (sisaLoyalti > 0) {
+        loyaltyDesc.textContent = `Spend ${formatRupiah(sisaLoyalti)} more to reach New Freen`;
+      } else {
+        loyaltyDesc.textContent = `Congratulations! You reached New Freen VIP status!`;
+      }
+    }
+
+    if (loyaltyBar) {
+      loyaltyBar.style.width = `${Math.max(15, persentaseLoyalti)}%`;
     }
   }
 
@@ -267,9 +353,8 @@ const Keranjang = (() => {
       const label = document.getElementById('bar-bawah-label');
       const harga = document.getElementById('bar-bawah-harga');
       const badge = document.getElementById('bar-bawah-badge');
-      const isID = typeof I18n !== 'undefined' ? I18n.bahasaAktif() === 'id' : true;
 
-      if (label) label.textContent = isID ? `${total.totalItem} Barang di Keranjang` : `${total.totalItem} Items in My Cart`;
+      if (label) label.textContent = `${total.totalItem} Items in My Cart`;
       if (harga) harga.textContent = formatRupiah(total.totalHarga);
       if (badge) badge.textContent = total.totalItem.toString();
     } else {
@@ -284,6 +369,38 @@ const Keranjang = (() => {
     }
   }
 
+  function initRecentlyOrderedQuickAdd() {
+    const btns = document.querySelectorAll('.keranjang-mini-card__btn-add');
+    btns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const pId = parseInt(btn.dataset.id, 10);
+        const pNama = btn.dataset.nama || 'CRSL Item';
+        const pHarga = parseInt(btn.dataset.harga, 10) || 179100;
+        const pGambar = btn.dataset.gambar || '/aset/gambar/drinke-tumblr.webp';
+        const pTipe = btn.dataset.tipe || 'regular';
+
+        const items = ambilItems();
+        const existing = items.find(i => i.id === pId);
+        if (existing) {
+          existing.jumlah += 1;
+        } else {
+          items.push({
+            id: pId,
+            nama: pNama,
+            harga: pHarga,
+            gambar: pGambar,
+            varian: 'Standard',
+            jumlah: 1,
+            tipe: pTipe
+          });
+        }
+        simpanItems(items);
+        bukaCart();
+      });
+    });
+  }
+
   function init() {
     state.items = ambilItems();
 
@@ -293,35 +410,27 @@ const Keranjang = (() => {
     state.drawerCart = document.getElementById('keranjang-drawer');
     state.barBawah = document.getElementById('keranjang-bar-bawah');
 
-    // Listener tutup add to cart
     document.getElementById('tombol-tutup-add-cart')?.addEventListener('click', tutupAddCart);
     state.modalAddOverlay?.addEventListener('click', (e) => {
       if (e.target === state.modalAddOverlay) tutupAddCart();
     });
 
-    // Listener tutup cart drawer
     document.getElementById('tombol-tutup-cart-drawer')?.addEventListener('click', tutupCart);
     state.drawerCartOverlay?.addEventListener('click', tutupCart);
 
-    // Listener stepper add cart
     document.getElementById('add-cart-kurang')?.addEventListener('click', () => ubahQty(-1));
     document.getElementById('add-cart-tambah')?.addEventListener('click', () => ubahQty(1));
 
-    // Listener varian warna
-    document.querySelectorAll('.modal-add-cart__varian-item').forEach(btn => {
-      btn.addEventListener('click', () => {
-        state.varianAktif = btn.getAttribute('data-varian');
-        updateVarianUI();
-      });
-    });
-
-    // Listener submit add to cart
     document.getElementById('tombol-submit-add-cart')?.addEventListener('click', submitAddCart);
 
-    // Listener bar bawah klik -> buka cart drawer
     state.barBawah?.addEventListener('click', bukaCart);
+    state.barBawah?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        bukaCart();
+      }
+    });
 
-    // Esc key
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         if (state.modalAddOverlay?.classList.contains('aktif')) tutupAddCart();
@@ -329,6 +438,7 @@ const Keranjang = (() => {
       }
     });
 
+    initRecentlyOrderedQuickAdd();
     render();
   }
 
@@ -339,5 +449,10 @@ const Keranjang = (() => {
     bukaCart,
     tutupCart,
     ambilItems,
+    simpanItems,
   };
 })();
+
+document.addEventListener('DOMContentLoaded', () => {
+  Keranjang.init();
+});

@@ -19,11 +19,14 @@ class PengelolaOtentikasi {
     public function __construct(PDO $db) {
         $this->db = $db;
         if (session_status() === PHP_SESSION_NONE) {
-            session_start([
-                'cookie_lifetime' => 86400,
-                'cookie_httponly' => true,
-                'cookie_samesite' => 'Lax'
+            // Cookie sesi persisten 30 hari
+            session_set_cookie_params([
+                'lifetime' => 2592000,
+                'path' => '/',
+                'httponly' => true,
+                'samesite' => 'Lax'
             ]);
+            session_start();
         }
     }
 
@@ -71,7 +74,6 @@ class PengelolaOtentikasi {
 
         // Hash sandi dengan algoritma BCRYPT
         $hashSandi = password_hash($sandi, PASSWORD_BCRYPT);
-        $kodeVerifikasi = '123456'; // Default demo OTP
 
         $stmt = $this->db->prepare("
             INSERT INTO pengguna (nama_lengkap, email, kata_sandi, tanggal_lahir, telepon, peran, aktif)
@@ -118,19 +120,20 @@ class PengelolaOtentikasi {
         if (!$user) {
             // Mode demo fallback jika user belum register
             if (str_contains($identitas, '@') || strlen($identitas) >= 5) {
-                $_SESSION['crsl_user'] = [
+                $userData = [
                     'id' => 999,
                     'nama' => explode('@', $identitas)[0] ?: 'CRSL Member',
                     'email' => $identitas,
                     'poin' => 100
                 ];
-                setcookie('crsl_sesi', 'active_session', time() + 86400, '/', '', false, true);
+                $_SESSION['crsl_user'] = $userData;
+                setcookie('crsl_sesi', 'demo_999', time() + 2592000, '/', '', false, true);
 
                 return [
                     'status' => 200,
                     'sukses' => true,
                     'pesan' => 'Login berhasil sebagai member.',
-                    'data' => $_SESSION['crsl_user']
+                    'data' => $userData
                 ];
             }
 
@@ -142,33 +145,53 @@ class PengelolaOtentikasi {
             ];
         }
 
-        // Set session
-        $_SESSION['crsl_user'] = [
-            'id' => $user['id'],
+        // Set session persisten
+        $userData = [
+            'id' => (int)$user['id'],
             'nama' => $user['nama_lengkap'],
             'email' => $user['email'],
             'poin' => 100
         ];
-        setcookie('crsl_sesi', 'user_' . $user['id'], time() + 86400, '/', '', false, true);
+        $_SESSION['crsl_user'] = $userData;
+        setcookie('crsl_sesi', 'user_' . $user['id'], time() + 2592000, '/', '', false, true);
 
         return [
             'status' => 200,
             'sukses' => true,
             'pesan' => 'Login berhasil.',
-            'data' => $_SESSION['crsl_user']
+            'data' => $userData
         ];
     }
 
     /**
-     * Verifikasi kode 6 digit
+     * Verifikasi kode 6 digit dan otomatis aktifkan sesi
      */
     public function verify(string $kode, string $email): array {
         $kode = trim($kode);
+        $email = trim($email);
+
         if ($kode === '123456') {
+            // Dapatkan data user dari database jika ada
+            $stmt = $this->db->prepare("SELECT id, nama_lengkap, email FROM pengguna WHERE email = ?");
+            $stmt->execute([$email]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            $userData = [
+                'id' => $user ? (int)$user['id'] : 999,
+                'nama' => $user ? $user['nama_lengkap'] : (explode('@', $email)[0] ?: 'CRSL Member'),
+                'email' => $email ?: ($user['email'] ?? 'member@crsl.id'),
+                'poin' => 100
+            ];
+
+            // Otomatis aktifkan sesi login sehingga tidak perlu login ulang
+            $_SESSION['crsl_user'] = $userData;
+            setcookie('crsl_sesi', 'user_' . $userData['id'], time() + 2592000, '/', '', false, true);
+
             return [
                 'status' => 200,
                 'sukses' => true,
-                'pesan' => 'Akun berhasil diverifikasi.'
+                'pesan' => 'Akun berhasil diverifikasi dan aktif.',
+                'data' => $userData
             ];
         }
 
@@ -185,7 +208,9 @@ class PengelolaOtentikasi {
      */
     public function logout(): array {
         unset($_SESSION['crsl_user']);
-        session_destroy();
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_destroy();
+        }
         setcookie('crsl_sesi', '', time() - 3600, '/');
 
         return [
@@ -196,9 +221,43 @@ class PengelolaOtentikasi {
     }
 
     /**
-     * Dapatkan user saat ini
+     * Dapatkan user saat ini dengan pemulihan persisten dari cookie
      */
     public function getActiveUser(): ?array {
-        return $_SESSION['crsl_user'] ?? null;
+        if (!empty($_SESSION['crsl_user'])) {
+            return $_SESSION['crsl_user'];
+        }
+
+        // Pulihkan dari cookie crsl_sesi jika ada
+        if (!empty($_COOKIE['crsl_sesi'])) {
+            $token = $_COOKIE['crsl_sesi'];
+            if (str_starts_with($token, 'user_')) {
+                $uid = (int)substr($token, 5);
+                if ($uid > 0) {
+                    $stmt = $this->db->prepare("SELECT id, nama_lengkap, email FROM pengguna WHERE id = ? AND aktif = 1");
+                    $stmt->execute([$uid]);
+                    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if ($user) {
+                        $_SESSION['crsl_user'] = [
+                            'id' => (int)$user['id'],
+                            'nama' => $user['nama_lengkap'],
+                            'email' => $user['email'],
+                            'poin' => 100
+                        ];
+                        return $_SESSION['crsl_user'];
+                    }
+                }
+            } elseif ($token === 'demo_999') {
+                $_SESSION['crsl_user'] = [
+                    'id' => 999,
+                    'nama' => 'CRSL Adopter',
+                    'email' => 'adopter@crsl.id',
+                    'poin' => 100
+                ];
+                return $_SESSION['crsl_user'];
+            }
+        }
+
+        return null;
     }
 }

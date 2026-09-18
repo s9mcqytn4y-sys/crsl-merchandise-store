@@ -75,7 +75,7 @@
   max-width: 640px;
   z-index: 2;
   color: #ffffff;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 @media (min-width: 768px) {
@@ -98,6 +98,7 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: var(--jarak-sm);
+  text-shadow: none;
 }
 
 .hero__judul {
@@ -129,7 +130,8 @@
   border-radius: var(--radius-penuh);
   text-decoration: none;
   min-height: 44px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  text-shadow: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: transform var(--transisi-cepat), background-color var(--transisi-cepat);
 }
 

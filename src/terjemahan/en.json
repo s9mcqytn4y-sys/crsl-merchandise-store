@@ -140,7 +140,25 @@
     "biaya_layanan": "Service & System Fee",
     "total": "Total Amount",
     "bayar_sekarang": "Pay Now",
-    "setuju_syarat": "By proceeding, you agree to CRSL official Terms & Conditions and Privacy Policy.",
-    "pesanan_sukses": "Your Order Has Been Created Successfully!"
+    "setuju_syarat": "By proceeding, you agree to CRSL's official Terms & Conditions and Privacy Policy.",
+    "pesanan_sukses": "Your Order Has Been Placed Successfully!"
+  },
+  "pdp": {
+    "in_stock": "In Stock",
+    "low_stock": "Low Stock",
+    "pre_order": "Pre Order",
+    "sold_out": "Sold out",
+    "color": "Color",
+    "size": "Size",
+    "add_to_cart": "Add to Cart",
+    "buy_now": "Buy It Now",
+    "view_more": "View more",
+    "view_less": "View less",
+    "shipping_est": "Estimated Delivery",
+    "message_crsl": "Message CRSL",
+    "you_might_like": "You Might Also Like",
+    "recently_viewed": "Recently Viewed",
+    "discounts_title": "DISCOUNTS",
+    "apply_coupon": "Apply This Coupon"
   }
 }

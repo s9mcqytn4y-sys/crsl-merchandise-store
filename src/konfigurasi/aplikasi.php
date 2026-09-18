@@ -39,6 +39,7 @@ spl_autoload_register(function ($class) {
     $map = [
         'BasisData\\' => 'basis-data/',
         'Otentikasi\\' => 'otentikasi/',
+        'Pesanan\\' => 'pesanan/',
         'Konfigurasi\\' => 'konfigurasi/'
     ];
     foreach ($map as $ns => $dir) {
