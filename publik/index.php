@@ -111,9 +111,9 @@ if (preg_match('#^/(?:bundle|bundles)/(?:[0-9]+/)?([a-zA-Z0-9_-]+)$#', $uri, $ma
     exit;
 }
 
-// Dynamic Invoice/Pesanan routing: /invoice/{id} atau /pesanan/{id}
-if (preg_match('#^/(?:invoice|pesanan)/([a-zA-Z0-9_-]+)$#', $uri, $matches)) {
-    $pesananId = $matches[1];
+// Dynamic Invoice/Pesanan routing: /invoice atau /invoice/{id} atau /pesanan/{id}
+if ($uri === '/invoice' || preg_match('#^/(?:invoice|pesanan)/([a-zA-Z0-9_-]+)$#', $uri, $matches)) {
+    $pesananId = $matches[1] ?? null;
     require_once __DIR__ . '/halaman/invoice.php';
     exit;
 }
