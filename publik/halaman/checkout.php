@@ -31,8 +31,8 @@
         </a>
       </div>
       <div class="navigasi__tengah">
-        <a href="/" class="navigasi__logo">
-          <img src="/aset/gambar/logo-crsl.svg" alt="CRSL" width="90" height="26">
+        <a href="/" class="checkout-header__logo" aria-label="CRSL Beranda">
+          <img src="/aset/gambar/logo-crsl.png" alt="CRSL" width="90" height="26">
         </a>
       </div>
       <div class="navigasi__kanan" style="display: flex; align-items: center; gap: 0.75rem;">

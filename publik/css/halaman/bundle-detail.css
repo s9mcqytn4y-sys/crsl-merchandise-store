@@ -7,7 +7,7 @@
 .bundle-pdp {
   padding-top: var(--jarak-md);
   padding-bottom: var(--jarak-2xl);
-  min-height: 80dvh;
+  min-height: calc(100dvh - 120px);
 }
 
 .bundle-pdp__wadah {

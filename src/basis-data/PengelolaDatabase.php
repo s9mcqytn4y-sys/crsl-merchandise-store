@@ -40,13 +40,25 @@ class PengelolaDatabase
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false,
+                PDO::ATTR_TIMEOUT => 5,
             ]);
 
-            // Aktifkan foreign keys di SQLite
+            // Optimasi performa dan konkurensi SQLite
             self::$koneksi->exec('PRAGMA foreign_keys = ON;');
+            self::$koneksi->exec('PRAGMA journal_mode = WAL;');
+            self::$koneksi->exec('PRAGMA synchronous = NORMAL;');
+            self::$koneksi->exec('PRAGMA busy_timeout = 5000;');
         }
 
         return self::$koneksi;
+    }
+
+    /**
+     * Menutup koneksi database untuk mencegah memory leak
+     */
+    public static function tutupKoneksi(): void
+    {
+        self::$koneksi = null;
     }
 
     /**

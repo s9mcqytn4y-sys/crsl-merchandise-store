@@ -10,6 +10,7 @@
 .pdp {
   max-width: 1200px;
   margin-inline: auto;
+  min-height: calc(100dvh - 120px);
   padding: var(--jarak-md) var(--jarak-md) clamp(4rem, 8vh, 6rem);
 }
 

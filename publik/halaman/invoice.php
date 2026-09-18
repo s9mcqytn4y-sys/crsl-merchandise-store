@@ -31,8 +31,8 @@ $nomorPesanan = $pesananId ?? ('CRSL-ORD-' . date('Ymd') . '-8821');
         </a>
       </div>
       <div class="navigasi__tengah">
-        <a href="/" class="navigasi__logo">
-          <img src="/aset/gambar/logo-crsl.svg" alt="CRSL" width="90" height="26">
+        <a href="/" class="navigasi__logo" aria-label="CRSL Beranda">
+          <img src="/aset/gambar/logo-crsl.png" alt="CRSL" width="90" height="26">
         </a>
       </div>
       <div class="navigasi__kanan" style="display: flex; align-items: center; gap: 0.75rem;">
@@ -46,14 +46,15 @@ $nomorPesanan = $pesananId ?? ('CRSL-ORD-' . date('Ymd') . '-8821');
     </div>
   </header>
 
-  <main class="invoice-page">
-    <div class="invoice-container">
-      <div class="invoice-card" id="invoice-card-element">
-        <!-- Header Invoice -->
-        <div class="invoice-header">
-          <div class="invoice-header__brand">
-            <img src="/aset/gambar/logo-crsl.svg" alt="CRSL Official Store" width="120" height="34">
-            <p style="font-size: 0.8rem; color: var(--warna-teks-redup); margin-top: 0.25rem;">
+  <main class="invoice-halaman">
+    <div class="invoice-lembar" id="lembar-faktur">
+      <!-- Header Invoice -->
+      <div class="invoice-header">
+        <div class="invoice-header__brand">
+          <div class="invoice-logo">
+            <img src="/aset/gambar/logo-crsl.png" alt="CRSL Official Store" width="120" height="34">
+          </div>
+          <p style="font-size: 0.8rem; color: var(--warna-teks-redup); margin-top: 0.25rem;">
               PT Kreasi Hewan Sahabat (CRSL Official)<br>
               NPWP: 03.882.912.4-542.000<br>
               Jl. Seturan Raya, Caturtunggal, Depok, Sleman, DI Yogyakarta 55281

@@ -113,8 +113,8 @@ $bundle = $bundleData[$slug] ?? $bundleData['back-to-school-with-miflo'];
         </button>
       </div>
       <div class="navigasi__tengah">
-        <a href="/" class="navigasi__logo" aria-label="CRSL Beranda">
-          <img src="/aset/gambar/logo-crsl.svg" alt="CRSL Official" width="100" height="28" class="navigasi__logo-gambar">
+        <a href="/" class="navigasi__logo-link" aria-label="CRSL Official Store">
+          <img src="/aset/gambar/logo-crsl.png" alt="CRSL Official" width="100" height="28" class="navigasi__logo-gambar">
         </a>
       </div>
       <div class="navigasi__kanan">
