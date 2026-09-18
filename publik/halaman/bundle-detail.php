@@ -118,6 +118,9 @@ $bundle = $bundleData[$slug] ?? $bundleData['back-to-school-with-miflo'];
         </a>
       </div>
       <div class="navigasi__kanan">
+        <button type="button" id="tombol-tema" class="navigasi__tombol-ikon" aria-label="Ganti tema">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
         <button type="button" id="tombol-preferensi" class="navigasi__tombol-ikon" aria-label="Pengaturan negara dan bahasa">
           <span class="navigasi__bendera">🇮🇩</span><span class="navigasi__mata-uang-label">IDR</span>
         </button>

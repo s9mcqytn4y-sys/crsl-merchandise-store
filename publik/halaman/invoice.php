@@ -35,7 +35,10 @@ $nomorPesanan = $pesananId ?? ('CRSL-ORD-' . date('Ymd') . '-8821');
           <img src="/aset/gambar/logo-crsl.svg" alt="CRSL" width="90" height="26">
         </a>
       </div>
-      <div class="navigasi__kanan">
+      <div class="navigasi__kanan" style="display: flex; align-items: center; gap: 0.75rem;">
+        <button type="button" id="tombol-tema" class="navigasi__tombol-ikon" aria-label="Ganti tema">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
         <a href="/akun" style="font-weight: 600; font-size: 0.9rem; color: var(--warna-primer);">
           Akun Saya
         </a>
@@ -149,6 +152,7 @@ $nomorPesanan = $pesananId ?? ('CRSL-ORD-' . date('Ymd') . '-8821');
     </div>
   </main>
 
+  <script src="/js/komponen/navigasi.js"></script>
   <script>
   // Sinkronisasi data invoice dengan data pesanan lokal terakhir
   document.addEventListener('DOMContentLoaded', () => {

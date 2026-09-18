@@ -151,8 +151,14 @@
   align-items: center;
   gap: var(--jarak-sm);
   overflow-x: auto;
-  scrollbar-width: thin;
+  -ms-overflow-style: none;
   padding-bottom: 6px;
+}
+
+@supports (scrollbar-width: thin) {
+  .pdp__thumbnails {
+    scrollbar-width: thin;
+  }
 }
 
 .pdp__thumb-item {

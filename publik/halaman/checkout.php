@@ -35,7 +35,10 @@
           <img src="/aset/gambar/logo-crsl.svg" alt="CRSL" width="90" height="26">
         </a>
       </div>
-      <div class="navigasi__kanan">
+      <div class="navigasi__kanan" style="display: flex; align-items: center; gap: 0.75rem;">
+        <button type="button" id="tombol-tema" class="navigasi__tombol-ikon" aria-label="Ganti tema">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
         <span class="checkout-header__badge-aman">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           <span>Enkripsi 256-bit</span>
@@ -342,6 +345,7 @@
 
   <!-- JS -->
   <script src="/js/utilitas/i18n.js"></script>
+  <script src="/js/komponen/navigasi.js"></script>
   <script src="/js/halaman/checkout.js"></script>
 </body>
 </html>

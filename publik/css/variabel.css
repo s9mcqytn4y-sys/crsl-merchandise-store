@@ -16,11 +16,13 @@
   /* -- Warna Latar -- */
   --warna-latar: #FFFFFF;
   --warna-latar-sekunder: #F8F8F8;
+  --warna-permukaan: #FFFFFF;
   --warna-latar-overlay: rgba(0, 0, 0, 0.5);
 
   /* -- Warna Teks -- */
   --warna-teks: #444038;
   --warna-teks-sekunder: #71757A;
+  --warna-teks-redup: #71757A;
   --warna-teks-pudar: rgba(68, 64, 56, 0.6);
   --warna-teks-invers: #FFFFFF;
 
@@ -97,10 +99,12 @@
 [data-tema="gelap"] {
   --warna-latar: #1A1A1A;
   --warna-latar-sekunder: #242424;
+  --warna-permukaan: #242424;
   --warna-latar-overlay: rgba(0, 0, 0, 0.7);
 
   --warna-teks: #E8E6E3;
   --warna-teks-sekunder: #A0A0A0;
+  --warna-teks-redup: #A0A0A0;
   --warna-teks-pudar: rgba(232, 230, 227, 0.5);
   --warna-teks-invers: #1A1A1A;
 

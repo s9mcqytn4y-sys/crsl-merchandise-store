@@ -357,9 +357,19 @@
   gap: 0.75rem;
   max-height: 240px;
   overflow-y: auto;
-  scrollbar-width: none;
+  -ms-overflow-style: none;
   margin-bottom: var(--jarak-md);
   padding-right: 0.25rem;
+}
+
+.checkout-daftar-item::-webkit-scrollbar {
+  display: none;
+}
+
+@supports (scrollbar-width: none) {
+  .checkout-daftar-item {
+    scrollbar-width: none;
+  }
 }
 
 .checkout-item-ringkas {

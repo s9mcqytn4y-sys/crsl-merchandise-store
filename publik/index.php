@@ -7,6 +7,9 @@
 define('CRSL_APP', true);
 require_once __DIR__ . '/../src/konfigurasi/aplikasi.php';
 
+use CRSL\BasisData\PengelolaDatabase;
+use CRSL\Otentikasi\PengelolaOtentikasi;
+
 // Parse request URI
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $uri = rtrim($uri, '/') ?: '/';
@@ -52,8 +55,8 @@ if (str_starts_with($uri, '/api/auth/')) {
     require_once ROOT_DIR . '/src/basis-data/PengelolaDatabase.php';
     require_once ROOT_DIR . '/src/otentikasi/PengelolaOtentikasi.php';
 
-    $db = \CRSL\BasisData\PengelolaDatabase::dapatkanKoneksi();
-    $auth = new \CRSL\Otentikasi\PengelolaOtentikasi($db);
+    $db = PengelolaDatabase::dapatkanKoneksi();
+    $auth = new PengelolaOtentikasi($db);
 
     $rawInput = file_get_contents('php://input');
     $data = json_decode($rawInput, true) ?: $_POST;

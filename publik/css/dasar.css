@@ -15,9 +15,7 @@ html {
   font-size: 16px;
   -webkit-text-size-adjust: 100%;
   -moz-text-size-adjust: 100%;
-  text-size-adjust: 100%;
   scroll-behavior: smooth;
-  scrollbar-width: none;
   -ms-overflow-style: none;
   -webkit-tap-highlight-color: transparent;
 }
@@ -37,8 +35,14 @@ body {
   background-color: var(--warna-latar);
   min-height: 100dvh;
   overflow-x: hidden;
-  scrollbar-width: none;
   -ms-overflow-style: none;
+}
+
+@supports (scrollbar-width: none) {
+  html,
+  body {
+    scrollbar-width: none;
+  }
 }
 
 /* -- Tipografi dasar -- */

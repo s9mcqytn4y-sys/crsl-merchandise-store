@@ -76,7 +76,17 @@
   display: flex;
   gap: 0.75rem;
   overflow-x: auto;
-  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.bundle-pdp__thumbnails::-webkit-scrollbar {
+  display: none;
+}
+
+@supports (scrollbar-width: none) {
+  .bundle-pdp__thumbnails {
+    scrollbar-width: none;
+  }
 }
 
 .bundle-pdp__thumb-btn {

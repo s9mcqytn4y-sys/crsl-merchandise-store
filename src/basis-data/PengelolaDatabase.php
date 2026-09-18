@@ -4,6 +4,11 @@
  * Wrapper PDO untuk SQLite database
  */
 
+namespace CRSL\BasisData;
+
+use PDO;
+use PDOStatement;
+
 if (!defined('CRSL_APP')) {
     exit('Akses langsung tidak diizinkan.');
 }
@@ -11,6 +16,14 @@ if (!defined('CRSL_APP')) {
 class PengelolaDatabase
 {
     private static ?PDO $koneksi = null;
+
+    /**
+     * Alias method untuk dapatkanKoneksi
+     */
+    public static function dapatkanKoneksi(): PDO
+    {
+        return self::ambilKoneksi();
+    }
 
     /**
      * Dapatkan koneksi PDO singleton
@@ -71,3 +84,6 @@ class PengelolaDatabase
         return self::ambilKoneksi()->lastInsertId();
     }
 }
+
+class_alias(\CRSL\BasisData\PengelolaDatabase::class, 'PengelolaDatabase');
+
