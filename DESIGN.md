@@ -31,10 +31,12 @@ Dial: ENERGY 2 / RHYTHM 2 / MOTION 1
 
 --warna-latar: #FFFFFF;            /* Background utama */
 --warna-latar-sekunder: #F8F8F8;   /* Background section alternatif */
+--warna-permukaan: #FFFFFF;        /* Surface cards dan modal */
 --warna-latar-overlay: rgba(0,0,0,0.5); /* Overlay drawer/modal */
 
 --warna-teks: #444038;             /* Teks utama - coklat gelap */
 --warna-teks-sekunder: #71757A;    /* Teks sekunder */
+--warna-teks-redup: #71757A;       /* Teks redup konsisten */
 --warna-teks-pudar: rgba(68,64,56,0.6); /* Teks disabled/placeholder */
 --warna-teks-invers: #FFFFFF;      /* Teks di atas background gelap */
 
@@ -51,10 +53,12 @@ Dial: ENERGY 2 / RHYTHM 2 / MOTION 1
 ```css
 --warna-latar: #1A1A1A;
 --warna-latar-sekunder: #242424;
+--warna-permukaan: #242424;        /* Surface cards dan modal dark */
 --warna-latar-overlay: rgba(0,0,0,0.7);
 
 --warna-teks: #E8E6E3;
 --warna-teks-sekunder: #A0A0A0;
+--warna-teks-redup: #A0A0A0;       /* Teks redup dark mode */
 --warna-teks-pudar: rgba(232,230,227,0.5);
 --warna-teks-invers: #1A1A1A;
 

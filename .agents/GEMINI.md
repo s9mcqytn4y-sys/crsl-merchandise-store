@@ -56,11 +56,18 @@ Sebelum deliver UI, pastikan:
 
 <!-- antislop:start -->
 ## antislop
+Mode Operasi Aktif: **Mode 1 (DURING pengerjaan)**
+Dials: **ENERGY 2 / RHYTHM 2 / MOTION 2**
 Untuk UI, copy, people, mobile layout, atau code comments, baca `antislop.md` (core) dan skill yang relevan:
 - UI / visual: `skills/antislop-ui/SKILL.md`
 - Copy & text: `skills/antislop-copywriting/SKILL.md`
 - People: `skills/antislop-human/SKILL.md`
 - Mobile / responsive: `skills/antislop-layoutmobile/SKILL.md`
 - Code comments: `skills/antislop-code/SKILL.md`
-Sebelum mulai, tanya user kapan antislop diterapkan: saat pengerjaan, atau setelah selesai.
+
+## Standar Keandalan Sistem & Database (/007)
+1. **SQLite Concurrency**: Selalu aktifkan `PRAGMA journal_mode = WAL;`, `PRAGMA synchronous = NORMAL;`, dan `PRAGMA busy_timeout = 5000;` pada koneksi PDO.
+2. **Memory Leaks**: Panggil `PengelolaDatabase::tutupKoneksi()` pada script CLI atau saat akhir lifecycle permintaan berat.
+3. **Asset & SEO Hygiene**: Semua aset wajib WebP/SVG lokal dengan penamaan kebab-case deskriptif, atribut `alt`, `width`, dan `height`. Tidak boleh ada dead assets (404).
+4. **CSS Compatibility Baseline**: Bungkus properti scrollbar modern dalam `@supports (scrollbar-width: ...)` dan pastikan tidak ada vendor-prefix yatim tanpa padanan standar.
 <!-- antislop:end -->
