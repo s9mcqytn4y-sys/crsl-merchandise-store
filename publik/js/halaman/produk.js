@@ -221,6 +221,9 @@ const ProdukDetail = (() => {
         warnaTerpilih = btn.dataset.warna;
         if (warnaLabel) warnaLabel.textContent = warnaTerpilih;
 
+        // Hapus kelas shake-error jika ada
+        document.querySelector('.pdp__sec-warna')?.classList.remove('shake-error');
+
         // Ganti gambar fokus jika varian punya gambar tersendiri
         const gbrVarian = btn.dataset.gambar;
         if (gbrVarian && mainImg && mainImg.src !== gbrVarian) {
@@ -252,6 +255,9 @@ const ProdukDetail = (() => {
 
         ukuranTerpilih = btn.dataset.ukuran;
         if (ukuranLabel) ukuranLabel.textContent = ukuranTerpilih;
+
+        // Hapus kelas shake-error jika ada
+        document.querySelector('.pdp__sec-ukuran')?.classList.remove('shake-error');
 
         evaluasiKetersediaan();
       });
@@ -760,15 +766,14 @@ const ProdukDetail = (() => {
   }
 
   /* ==========================================================
-     6. Modal Kupon Diskon & T&C Accordion (Gambar 5)
+     6. Modal Kupon Diskon & T&C Accordion (Screenshot 1)
      ========================================================== */
   function initModalDiskon() {
-    const triggerKupon = document.getElementById('pdp-buka-kupon');
-    const overlay = document.getElementById('pdp-modal-diskon-overlay');
-    const btnTutup = document.getElementById('pdp-btn-tutup-diskon');
-    const btnTcToggle = document.getElementById('pdp-btn-tc-toggle');
-    const tcIsi = document.getElementById('pdp-tc-isi');
-    const btnKlaim = document.getElementById('pdp-btn-klaim-kupon');
+    const triggerKupon = document.getElementById('btn-buka-discounts') || document.getElementById('pdp-buka-kupon');
+    const overlay = document.getElementById('modal-discounts-overlay') || document.getElementById('pdp-modal-diskon-overlay');
+    const btnTutup = document.getElementById('btn-close-discounts') || document.getElementById('pdp-btn-tutup-diskon');
+    const tcToggle = document.getElementById('modal-discounts-tc-toggle') || document.getElementById('pdp-btn-tc-toggle');
+    const tcContent = document.getElementById('modal-discounts-tc-content') || document.getElementById('pdp-tc-isi');
 
     function bukaModal() {
       if (!overlay) return;
@@ -783,36 +788,39 @@ const ProdukDetail = (() => {
     }
 
     triggerKupon?.addEventListener('click', bukaModal);
-    triggerKupon?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        bukaModal();
-      }
-    });
-
     btnTutup?.addEventListener('click', tutupModal);
     overlay?.addEventListener('click', (e) => {
       if (e.target === overlay) tutupModal();
     });
 
-    btnTcToggle?.addEventListener('click', () => {
-      btnTcToggle.classList.toggle('terbuka');
-      tcIsi?.classList.toggle('terbuka');
+    tcToggle?.addEventListener('click', () => {
+      const isExpanded = tcToggle.getAttribute('aria-expanded') === 'true';
+      tcToggle.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
+      if (tcContent) {
+        tcContent.style.display = isExpanded ? 'none' : 'block';
+      }
     });
 
-    btnKlaim?.addEventListener('click', () => {
-      try {
-        localStorage.setItem('crsl_active_coupon', JSON.stringify({
-          kode: 'SHIP10K',
-          potongan: 10000,
-          deskripsi: 'Potongan Ongkir Rp 10.000'
-        }));
-      } catch (e) {
-        // Storage restricted
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && overlay?.classList.contains('aktif')) {
+        tutupModal();
       }
-      alert('Kupon potongan ongkir Rp 10.000 berhasil diaktifkan untuk pesanan Anda!');
-      tutupModal();
     });
+  }
+
+  /* Helper Toast Notifikasi PDP */
+  function tampilkanPdpToast(pesan) {
+    const toast = document.getElementById('pdp-toast');
+    if (!toast) {
+      alert(pesan);
+      return;
+    }
+    toast.textContent = pesan;
+    toast.classList.add('aktif');
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => {
+      toast.classList.remove('aktif');
+    }, 2800);
   }
 
   /* ==========================================================
@@ -824,16 +832,35 @@ const ProdukDetail = (() => {
 
     function prosesPemesanan(langsungCheckout = false) {
       if (maxStok <= 0) {
-        alert('Maaf, varian produk ini sedang tidak tersedia.');
+        tampilkanPdpToast('Maaf, varian produk ini sedang tidak tersedia.');
         return;
       }
 
-      // Validasi pemilihan warna jika ada opsi
+      // 1. Validasi Wajib Pilih Ukuran (jika produk punya opsi ukuran)
+      const ukuranBtns = document.querySelectorAll('.pdp__ukuran-kotak');
+      if (ukuranBtns.length > 0 && !ukuranTerpilih) {
+        const secUkuran = document.querySelector('.pdp__sec-ukuran');
+        if (secUkuran) {
+          secUkuran.classList.remove('shake-error');
+          void secUkuran.offsetWidth; // Reflow trigger
+          secUkuran.classList.add('shake-error');
+          secUkuran.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        tampilkanPdpToast('Silakan pilih Ukuran terlebih dahulu untuk melanjutkan.');
+        return;
+      }
+
+      // 2. Validasi Wajib Pilih Warna (jika produk punya opsi warna)
       const swatchBtns = document.querySelectorAll('.pdp__swatch-box');
       if (swatchBtns.length > 0 && !warnaTerpilih) {
-        const errEl = document.getElementById('pdp-warna-error');
-        if (errEl) errEl.style.display = 'block';
-        errEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const secWarna = document.querySelector('.pdp__sec-warna');
+        if (secWarna) {
+          secWarna.classList.remove('shake-error');
+          void secWarna.offsetWidth;
+          secWarna.classList.add('shake-error');
+          secWarna.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        tampilkanPdpToast('Silakan pilih Warna terlebih dahulu untuk melanjutkan.');
         return;
       }
 

@@ -321,6 +321,25 @@ const Keranjang = (() => {
       } else {
         hematBaris.style.display = 'none';
       }
+    // Otomatisasi Voucher "FREEONGKIR10K" (Min. Spend Rp 179.000) (Screenshot 1 & 2)
+    const MIN_VOUCHER_BELANJA = 179000;
+    const voucherRow = document.getElementById('keranjang-voucher-row');
+    const voucherNama = document.getElementById('keranjang-voucher-nama');
+    if (total.totalHarga >= MIN_VOUCHER_BELANJA) {
+      if (voucherRow) voucherRow.style.display = 'flex';
+      if (voucherNama) {
+        voucherNama.textContent = (typeof window.i18n !== 'undefined' && window.i18n.dapatkanBahasa && window.i18n.dapatkanBahasa() === 'en')
+          ? 'Shipping Voucher Rp 10,000 Off Applied'
+          : 'Voucher Diskon Ongkir Rp 10.000 Terpasang';
+      }
+      localStorage.setItem('crsl_applied_voucher', JSON.stringify({
+        kode: 'FREEONGKIR10K',
+        potongan: 10000,
+        judul: 'Shipping: Rp 10,000 off'
+      }));
+    } else {
+      if (voucherRow) voucherRow.style.display = 'none';
+      localStorage.removeItem('crsl_applied_voucher');
     }
 
     // Update Progress Loyalitas "Spend 200K to unlock loyalty rewards!"

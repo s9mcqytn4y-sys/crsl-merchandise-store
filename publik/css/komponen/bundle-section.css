@@ -89,6 +89,13 @@
   position: relative;
 }
 
+.bundle-kartu__gambar-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+}
+
 .bundle-kartu__gambar {
   width: 100%;
   height: 100%;

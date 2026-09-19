@@ -15,8 +15,8 @@ try {
       SELECT p.*, k.nama as nama_kategori
       FROM produk p
       LEFT JOIN kategori k ON p.kategori_id = k.id
-      WHERE p.aktif = 1
-      ORDER BY p.id ASC
+      WHERE p.aktif = 1 AND p.id > 100
+      ORDER BY p.id DESC
     ");
     $daftarProduk = $stmt->fetchAll(PDO::FETCH_ASSOC);
   }

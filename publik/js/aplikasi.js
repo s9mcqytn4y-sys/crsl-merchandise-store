@@ -56,5 +56,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   } else {
     revealElements.forEach((el) => el.classList.add('terlihat'));
   }
+
+  // 6. Advanced subtle Parallax effect (GPU accelerated translate3d)
+  const parallaxElements = document.querySelectorAll('[data-parallax]');
+  if (parallaxElements.length > 0 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          parallaxElements.forEach((el) => {
+            const speed = parseFloat(el.dataset.parallax) || 0.12;
+            const rect = el.getBoundingClientRect();
+            if (rect.top < window.innerHeight && rect.bottom > 0) {
+              const yOffset = (rect.top - window.innerHeight / 2) * speed;
+              el.style.transform = `translate3d(0, ${yOffset.toFixed(1)}px, 0)`;
+            }
+          });
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }, { passive: true });
+  }
 });
 

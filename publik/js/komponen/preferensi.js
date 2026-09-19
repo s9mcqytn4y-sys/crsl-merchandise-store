@@ -38,8 +38,10 @@ const Preferensi = (() => {
     // Update flag
     const bendera = document.getElementById('bendera-navigasi');
     if (bendera) {
-      const benderaMap = { 'ID': 'bendera-id', 'MY': 'bendera-my', 'SG': 'bendera-sg' };
-      bendera.src = `/aset/ikon/${benderaMap[preferensi.negara] || 'bendera-id'}.svg`;
+      const benderaMap = { 'ID': 'bendera-id', 'MY': 'bendera-my', 'SG': 'bendera-sg', 'US': 'bendera-en', 'EN': 'bendera-en' };
+      const namaFile = benderaMap[preferensi.negara] || (preferensi.bahasa === 'en' ? 'bendera-en' : 'bendera-id');
+      bendera.src = `/aset/ikon/${namaFile}.svg`;
+      bendera.alt = `Bendera ${preferensi.negara || 'Indonesia'}`;
     }
 
     // Switch language

@@ -186,11 +186,11 @@ const Pencarian = (() => {
     return 'Rp ' + Number(angka).toLocaleString('id-ID');
   }
 
-  function lakukanPencarian(query) {
+    let debounceTimer = null;
+  async function lakukanPencarian(query) {
     const q = (query || '').trim().toLowerCase();
 
     if (!q) {
-      // Tampilkan kembali elemen default jika query kosong
       if (hasilWadah) hasilWadah.classList.add('tersembunyi');
       if (populerWadah) populerWadah.classList.remove('tersembunyi');
       if (dilihatWadah) dilihatWadah.classList.remove('tersembunyi');
@@ -198,16 +198,43 @@ const Pencarian = (() => {
       return;
     }
 
-    // Sembunyikan default, tampilkan live search results
     if (populerWadah) populerWadah.classList.add('tersembunyi');
     if (dilihatWadah) dilihatWadah.classList.add('tersembunyi');
     if (hasilWadah) hasilWadah.classList.remove('tersembunyi');
 
-    const hasil = KATALOG_PRODUK.filter(p => {
-      return p.nama.toLowerCase().includes(q) ||
-             p.kategori.toLowerCase().includes(q) ||
-             p.kataKunci.toLowerCase().includes(q);
-    });
+    let hasil = [];
+    try {
+      const resp = await fetch(`/api/produk/cari?q=${encodeURIComponent(q)}`);
+      if (resp.ok) {
+        const json = await resp.json();
+        if (json.sukses && Array.isArray(json.produk)) {
+          hasil = json.produk.map(p => ({
+            id: p.id,
+            slug: p.slug,
+            nama: p.nama,
+            kategori: p.nama_kategori || 'Merchandise',
+            harga: Number(p.harga_diskon || p.harga),
+            hargaCoret: Number(p.harga_diskon ? p.harga : 0),
+            gambar: p.gambar_utama || '/aset/gambar/cassie-wallet.webp'
+          }));
+        }
+      }
+    } catch (e) {
+      // Fallback ke KATALOG_PRODUK lokal
+      hasil = KATALOG_PRODUK.filter(p => {
+        return p.nama.toLowerCase().includes(q) ||
+               p.kategori.toLowerCase().includes(q) ||
+               (p.kataKunci && p.kataKunci.toLowerCase().includes(q));
+      });
+    }
+
+    if (hasil.length === 0) {
+      hasil = KATALOG_PRODUK.filter(p => {
+        return p.nama.toLowerCase().includes(q) ||
+               p.kategori.toLowerCase().includes(q) ||
+               (p.kataKunci && p.kataKunci.toLowerCase().includes(q));
+      });
+    }
 
     if (hasilJumlah) {
       hasilJumlah.textContent = `(${hasil.length} item ditemukan)`;
@@ -220,7 +247,7 @@ const Pencarian = (() => {
       hasilGrid.innerHTML = `
         <div class="pencarian__hasil-kosong" style="grid-column: 1 / -1;">
           <p>Tidak ada produk yang cocok dengan "<strong>${q}</strong>".</p>
-          <p style="margin-top: 4px; font-size: 12px;">Coba gunakan kata kunci lain seperti <em>slingbag, wallet, atau tumbler</em>.</p>
+          <p style="margin-top: 4px; font-size: 12px;">Coba gunakan kata kunci lain seperti <em>backpack, slingbag, wallet, atau tumbler</em>.</p>
         </div>
       `;
       return;
@@ -231,7 +258,9 @@ const Pencarian = (() => {
       kartu.className = 'pencarian__kartu-produk';
       kartu.innerHTML = `
         <div class="pencarian__gambar-wadah">
-          <img src="${prod.gambar}" alt="${prod.nama}" class="pencarian__gambar" loading="lazy">
+          <a href="/produk/${prod.slug || prod.id}" aria-label="${prod.nama}">
+            <img src="${prod.gambar}" alt="${prod.nama}" class="pencarian__gambar" loading="lazy">
+          </a>
           <button type="button" class="pencarian__tombol-keranjang-cepat" aria-label="Tambah ${prod.nama} ke keranjang" title="Add to Cart">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
@@ -240,12 +269,15 @@ const Pencarian = (() => {
             </svg>
           </button>
         </div>
-        <p class="pencarian__nama-produk" title="${prod.nama}">${prod.nama}</p>
+        <a href="/produk/${prod.slug || prod.id}" style="text-decoration:none; color:inherit; display:block;">
+          <p class="pencarian__nama-produk" title="${prod.nama}">${prod.nama}</p>
+        </a>
         ${prod.hargaCoret && prod.hargaCoret > prod.harga ? `<p class="pencarian__harga-coret">${formatRupiah(prod.hargaCoret)}</p>` : ''}
         <p class="pencarian__harga-aktif">${formatRupiah(prod.harga)}</p>
       `;
 
       kartu.querySelector('.pencarian__tombol-keranjang-cepat')?.addEventListener('click', (e) => {
+        e.preventDefault();
         e.stopPropagation();
         if (typeof Keranjang !== 'undefined' && Keranjang.bukaAddCart) {
           Keranjang.bukaAddCart({
@@ -253,8 +285,7 @@ const Pencarian = (() => {
             nama: prod.nama,
             harga: prod.harga,
             hargaCoret: prod.hargaCoret,
-            gambar: prod.gambar,
-            varianPilihan: prod.varianPilihan
+            gambar: prod.gambar
           });
         }
       });

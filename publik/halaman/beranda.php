@@ -181,10 +181,10 @@ $apakahBeranda = true;
         <a href="#bundles" class="menu-samping__tautan">BTS Must-Have Bundle <span class="menu-samping__emoji">&#x1F392;</span></a>
       </li>
       <li class="menu-samping__item">
-        <a href="#pre-order" class="menu-samping__tautan menu-samping__tautan--promo">Pre-Order Now <span class="menu-samping__emoji">&#x1F525;</span></a>
+        <a href="#pre-order-section" class="menu-samping__tautan menu-samping__tautan--promo">Pre-Order Now <span class="menu-samping__emoji">&#x1F525;</span></a>
       </li>
       <li class="menu-samping__item">
-        <a href="#karakter-crsl" class="menu-samping__tautan">Karakter CRSL <span class="menu-samping__emoji">&#x1F43E;</span></a>
+        <a href="#karakter-showcase" class="menu-samping__tautan">Karakter CRSL <span class="menu-samping__emoji">&#x1F43E;</span></a>
       </li>
       <li class="menu-samping__item">
         <a href="#produk-unggulan" class="menu-samping__tautan">Katalog Produk <span class="menu-samping__emoji">&#x2728;</span></a>

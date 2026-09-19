@@ -39,8 +39,7 @@ $apakahBeranda = $apakahBeranda ?? false;
   </button>
 </div>
 
-<?php if ($apakahBeranda): ?>
-<!-- ========== CLAIM VOUCHER FLOATING CTA (KHUSUS BERANDA) ========== -->
+<!-- ========== CLAIM VOUCHER FLOATING CTA (Screenshot 2) ========== -->
 <button
   type="button"
   id="cta-voucher-tombol"
@@ -55,7 +54,7 @@ $apakahBeranda = $apakahBeranda ?? false;
   </svg>
 </button>
 
-<!-- Modal Available Voucher -->
+<!-- Modal Available Voucher (Screenshot 2) -->
 <div id="modal-voucher-overlay" class="modal-voucher-overlay" aria-hidden="true">
   <div class="modal-voucher" role="dialog" aria-modal="true" aria-labelledby="voucher-judul">
     <div class="modal-voucher__header">
@@ -65,32 +64,31 @@ $apakahBeranda = $apakahBeranda ?? false;
       </button>
     </div>
 
-    <!-- Desain Kartu Voucher dengan Border Putus-putus -->
+    <!-- Desain Kartu Voucher dengan Border Putus-putus (Screenshot 2) -->
     <div class="modal-voucher__kartu">
       <div class="modal-voucher__kartu-kiri">
-        <p class="modal-voucher__diskon">Rp 10.000 Off</p>
-        <p class="modal-voucher__syarat">Min. Spend Rp 150.000</p>
+        <p class="modal-voucher__diskon">Rp 10,000 Off</p>
+        <p class="modal-voucher__syarat">Min. Spend Rp 179,000</p>
       </div>
       <div class="modal-voucher__kartu-kanan">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="28" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <rect x="1" y="3" width="15" height="13"/>
           <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
           <circle cx="5.5" cy="18.5" r="2.5"/>
           <circle cx="18.5" cy="18.5" r="2.5"/>
         </svg>
-        <span class="modal-voucher__label-ongkir">FREE ONGKIR</span>
+        <span class="modal-voucher__label-ongkir">FREEONGKIR</span>
       </div>
     </div>
 
     <!-- Feedback Voucher Status -->
     <div id="modal-voucher-feedback" class="modal-voucher__feedback">
-      Kupon Diskon 10% &amp; Gratis Ongkir berhasil diterapkan!
+      Voucher diskon ongkir Rp 10.000 otomatis aktif saat belanja minimal Rp 179.000!
     </div>
 
-    <!-- Tombol Kapsul Aksi -->
+    <!-- Tombol Kapsul Aksi: Continue Shopping (Screenshot 2) -->
     <button type="button" id="modal-voucher-aksi" class="modal-voucher__tombol-aksi">
       Continue Shopping
     </button>
   </div>
 </div>
-<?php endif; ?>

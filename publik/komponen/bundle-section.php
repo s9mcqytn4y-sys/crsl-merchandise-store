@@ -21,24 +21,28 @@
         <span class="bundle-kartu__badge">BUNDLE SPECIAL</span>
         <div class="bundle-kartu__track" id="bundle-track-3516">
           <div class="bundle-kartu__slide">
-            <img 
-              src="/aset/gambar/bundle-miflo-cover.webp" 
-              alt="BACK TO SCHOOL with Miflo - Lifestyle Model" 
-              class="bundle-kartu__gambar"
-              loading="lazy"
-              width="600"
-              height="600"
-            >
+            <a href="/bundle/back-to-school-with-miflo" class="bundle-kartu__gambar-link" aria-label="Lihat paket BACK TO SCHOOL with Miflo">
+              <img 
+                src="/aset/gambar/bundle-miflo-cover.webp" 
+                alt="BACK TO SCHOOL with Miflo - Lifestyle Model" 
+                class="bundle-kartu__gambar"
+                loading="lazy"
+                width="600"
+                height="600"
+              >
+            </a>
           </div>
           <div class="bundle-kartu__slide">
-            <img 
-              src="/aset/gambar/bundle-miflo-freebies.webp" 
-              alt="BACK TO SCHOOL with Miflo - Freebies Pack" 
-              class="bundle-kartu__gambar"
-              loading="lazy"
-              width="600"
-              height="600"
-            >
+            <a href="/bundle/back-to-school-with-miflo" class="bundle-kartu__gambar-link" aria-label="Lihat paket BACK TO SCHOOL with Miflo">
+              <img 
+                src="/aset/gambar/bundle-miflo-freebies.webp" 
+                alt="BACK TO SCHOOL with Miflo - Freebies Pack" 
+                class="bundle-kartu__gambar"
+                loading="lazy"
+                width="600"
+                height="600"
+              >
+            </a>
           </div>
         </div>
         <div class="bundle-kartu__dots">
@@ -69,24 +73,28 @@
         <span class="bundle-kartu__badge">BUNDLE SPECIAL</span>
         <div class="bundle-kartu__track" id="bundle-track-2188">
           <div class="bundle-kartu__slide">
-            <img 
-              src="/aset/gambar/bundle-haru-cover.webp" 
-              alt="BACK TO SCHOOL WITH HARU! - Lifestyle Model" 
-              class="bundle-kartu__gambar"
-              loading="lazy"
-              width="600"
-              height="600"
-            >
+            <a href="/bundle/back-to-school-with-haru" class="bundle-kartu__gambar-link" aria-label="Lihat paket BACK TO SCHOOL WITH HARU!">
+              <img 
+                src="/aset/gambar/bundle-haru-cover.webp" 
+                alt="BACK TO SCHOOL WITH HARU! - Lifestyle Model" 
+                class="bundle-kartu__gambar"
+                loading="lazy"
+                width="600"
+                height="600"
+              >
+            </a>
           </div>
           <div class="bundle-kartu__slide">
-            <img 
-              src="/aset/gambar/bundle-haru-freebies.webp" 
-              alt="BACK TO SCHOOL WITH HARU! - Freebies Pack" 
-              class="bundle-kartu__gambar"
-              loading="lazy"
-              width="600"
-              height="600"
-            >
+            <a href="/bundle/back-to-school-with-haru" class="bundle-kartu__gambar-link" aria-label="Lihat paket BACK TO SCHOOL WITH HARU!">
+              <img 
+                src="/aset/gambar/bundle-haru-freebies.webp" 
+                alt="BACK TO SCHOOL WITH HARU! - Freebies Pack" 
+                class="bundle-kartu__gambar"
+                loading="lazy"
+                width="600"
+                height="600"
+              >
+            </a>
           </div>
         </div>
         <div class="bundle-kartu__dots">

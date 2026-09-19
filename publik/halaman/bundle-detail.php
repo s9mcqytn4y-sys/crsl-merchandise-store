@@ -61,7 +61,7 @@ $bundleData = [
         'id' => 202,
         'nama' => 'CRSL Character Pin Badge Set | 5 Karakter Enamel',
         'harga' => 50000,
-        'gambar' => '/aset/gambar/banner-bts.webp',
+        'gambar' => '/aset/gambar/ropy-keychain-thumb.webp',
         'varian' => ['Squad 5 Karakter', 'Duo Besties']
       ]
     ],

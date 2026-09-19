@@ -17,7 +17,7 @@ $banners = [
     'alt' => 'CRSL Koleksi Terbaru'
   ],
   [
-    'gambar' => '/aset/gambar/banner-bts.webp',
+    'gambar' => '/aset/gambar/banner-hero-main.webp',
     'tag' => 'BTS Essentials',
     'judul' => 'Back to School with Odin & Friends',
     'subjudul' => 'Ransel water-repellent, kapasitas laptop 14 inci, dan kompartemen lengkap.',

@@ -449,7 +449,7 @@ if (($produk['tipe_produk'] ?? '') === 'pre_order') {
 
               foreach ($daftarUkuranUnik as $uNama => $uStok):
                 $isKosong = ($uStok <= 0);
-                $isTerpilih = ($uNama === $pertamaTersedia && !$isKosong);
+                $isTerpilih = false;
             ?>
               <button
                 type="button"
@@ -513,6 +513,17 @@ if (($produk['tipe_produk'] ?? '') === 'pre_order') {
           <button type="button" class="pdp__btn-view-more" id="pdp-btn-view-more" aria-expanded="false">
             <span>View more</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+
+        <!-- Section DISCOUNTS Trigger (Screenshot 1) -->
+        <div class="pdp__sec-diskon" id="pdp-sec-diskon">
+          <button type="button" class="pdp__diskon-preview-btn" id="btn-buka-discounts" aria-haspopup="dialog" aria-expanded="false" aria-controls="modal-discounts-overlay">
+            <div class="pdp__diskon-preview-left">
+              <span class="pdp__diskon-badge-tag">DISCOUNTS</span>
+              <span class="pdp__diskon-preview-title">Shipping: Rp 10,000 off</span>
+            </div>
+            <svg class="pdp__diskon-preview-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
         </div>
 
@@ -721,6 +732,45 @@ if (($produk['tipe_produk'] ?? '') === 'pre_order') {
 
       </div>
     </div>
+
+    <!-- ========== MODAL DISCOUNTS (Screenshot 1) ========== -->
+    <div id="modal-discounts-overlay" class="modal-discounts-overlay" role="dialog" aria-modal="true" aria-labelledby="discounts-modal-title">
+      <div class="modal-discounts-card">
+        <div class="modal-discounts-header">
+          <h3 class="modal-discounts-title" id="discounts-modal-title">DISCOUNTS</h3>
+          <button type="button" class="modal-discounts-close" id="btn-close-discounts" aria-label="Tutup modal diskon">✕</button>
+        </div>
+        <div class="modal-discounts-body">
+          <!-- Dashed Ticket Card (Screenshot 1) -->
+          <div class="modal-discounts-ticket">
+            <div class="modal-discounts-ticket-icon-col" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="1" y="3" width="15" height="13"/>
+                <polygon points="16 8 20 8 23 11 23 16 16 16 8"/>
+                <circle cx="5.5" cy="18.5" r="2.5"/>
+                <circle cx="18.5" cy="18.5" r="2.5"/>
+              </svg>
+            </div>
+            <div class="modal-discounts-ticket-info-col">
+              <div class="modal-discounts-ticket-title">Shipping: Rp 10,000 off</div>
+              <button type="button" class="modal-discounts-ticket-tc-toggle" id="modal-discounts-tc-toggle" aria-expanded="true">
+                <span>T&C</span>
+                <svg class="modal-discounts-tc-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+              </button>
+              <div class="modal-discounts-ticket-tc-content" id="modal-discounts-tc-content">
+                <ul>
+                  <li>Min. order Rp 179,000.</li>
+                  <li>Limited couriers</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification untuk Validasi Varian & Aksi -->
+    <div id="pdp-toast" class="pdp-toast" role="alert" aria-live="polite"></div>
 
   </main>
 

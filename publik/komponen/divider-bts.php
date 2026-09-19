@@ -9,6 +9,7 @@
       src="/aset/gambar/banner-bts-divider.webp" 
       alt="Back to School 2026 CRSL Collection - Tartan Banner" 
       class="divider-bts__gambar"
+      data-parallax="0.12"
       loading="lazy"
       width="2048"
       height="180"

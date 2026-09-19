@@ -18,272 +18,7 @@
   <link rel="stylesheet" href="/css/komponen/keranjang.css">
   <link rel="stylesheet" href="/css/komponen/cta-mengambang.css">
   <link rel="stylesheet" href="/css/komponen/otentikasi.css">
-  <style>
-    /* Akun page styles matching Image 4 */
-    .akun {
-      max-width: 960px;
-      margin-inline: auto;
-      padding: var(--jarak-xl) var(--jarak-md);
-      min-height: 70vh;
-    }
-
-    .akun__judul {
-      font-size: 28px;
-      font-weight: 600;
-      margin-bottom: var(--jarak-xl);
-      color: var(--warna-teks);
-    }
-
-    /* CTA Banner (Image 4) */
-    .akun__banner {
-      display: flex;
-      flex-direction: column;
-      gap: var(--jarak-lg);
-      padding: var(--jarak-lg) var(--jarak-xl);
-      background-color: var(--warna-latar-sekunder);
-      border-radius: var(--radius-lg);
-      margin-bottom: var(--jarak-2xl);
-      border: 1px solid var(--warna-batas);
-    }
-
-    @media (min-width: 768px) {
-      .akun__banner {
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-      }
-    }
-
-    .akun__banner-teks {
-      flex: 1;
-      max-width: 620px;
-    }
-
-    .akun__banner-judul {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: var(--warna-teks);
-    }
-
-    .akun__banner-subjudul {
-      font-size: 13px;
-      color: var(--warna-teks-sekunder);
-      line-height: 1.5;
-    }
-
-    .akun__banner-aksi {
-      display: flex;
-      gap: var(--jarak-sm);
-      flex-shrink: 0;
-      align-items: center;
-    }
-
-    /* Sesuai Poin 6 & Gambar 4: Outlined Login & Solid Red Signup */
-    .akun__tombol {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 8px 24px;
-      border-radius: var(--radius-penuh);
-      font-size: 14px;
-      font-weight: 600;
-      min-height: 40px;
-      cursor: pointer;
-      transition: all var(--transisi-cepat);
-      text-decoration: none;
-    }
-
-    .akun__tombol--login {
-      background-color: #ffffff;
-      color: var(--warna-primer);
-      border: 1px solid var(--warna-primer);
-    }
-
-    .akun__tombol--login:hover {
-      background-color: var(--warna-primer-pudar);
-    }
-
-    .akun__tombol--signup {
-      background-color: var(--warna-primer, #e52027);
-      color: #ffffff;
-      border: 1px solid var(--warna-primer, #e52027);
-    }
-
-    .akun__tombol--signup:hover {
-      background-color: var(--warna-primer-hover, #cc1c22);
-      border-color: var(--warna-primer-hover, #cc1c22);
-      color: #ffffff;
-    }
-
-    .akun__tombol--logout {
-      background-color: transparent;
-      color: var(--warna-error, #f5564a);
-      border: 1px solid var(--warna-error, #f5564a);
-      font-size: 13px;
-      padding: 6px 16px;
-      min-height: 36px;
-    }
-
-    .akun__tombol--logout:hover {
-      background-color: #fff1f2;
-    }
-
-    /* Logged in User Card */
-    .akun__user-card {
-      display: flex;
-      align-items: center;
-      gap: var(--jarak-md);
-      padding: var(--jarak-lg) var(--jarak-xl);
-      background-color: var(--warna-latar-sekunder);
-      border-radius: var(--radius-lg);
-      margin-bottom: var(--jarak-2xl);
-      border: 1px solid var(--warna-batas);
-      flex-wrap: wrap;
-    }
-
-    .akun__user-avatar {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      background-color: var(--warna-primer, #e52027);
-      color: #ffffff;
-      font-size: 22px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .akun__user-info {
-      flex: 1;
-      min-width: 200px;
-    }
-
-    .akun__user-nama {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--warna-teks);
-      margin-bottom: 2px;
-    }
-
-    .akun__user-email {
-      font-size: 13px;
-      color: var(--warna-teks-sekunder);
-      margin-bottom: 6px;
-    }
-
-    .akun__user-badge {
-      display: inline-block;
-      padding: 2px 10px;
-      background-color: #fef3c7;
-      color: #92400e;
-      border-radius: var(--radius-penuh);
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    /* Tabs (Image 4) */
-    .akun__tab-wadah {
-      border-bottom: 1px solid var(--warna-batas);
-      margin-bottom: var(--jarak-xl);
-    }
-
-    .akun__tab-list {
-      display: flex;
-      gap: 0;
-    }
-
-    .akun__tab {
-      flex: 1;
-      text-align: center;
-      padding: var(--jarak-md) var(--jarak-lg);
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--warna-teks-sekunder);
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      cursor: pointer;
-      transition: color var(--transisi-cepat), border-color var(--transisi-cepat);
-      min-height: 44px;
-    }
-
-    .akun__tab:hover {
-      color: var(--warna-teks);
-    }
-
-    .akun__tab.aktif {
-      color: var(--warna-teks);
-      border-bottom: 2px solid var(--warna-teks);
-      font-weight: 600;
-    }
-
-    /* Tab content */
-    .akun__tab-konten {
-      display: none;
-    }
-
-    .akun__tab-konten.aktif {
-      display: block;
-    }
-
-    /* Orders section header (Image 4) */
-    .akun__pesanan-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--jarak-md);
-      margin-bottom: var(--jarak-2xl);
-    }
-
-    .akun__pesanan-judul {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--warna-teks);
-    }
-
-    .akun__status-select {
-      padding: 8px 16px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--warna-batas);
-      background-color: var(--warna-latar);
-      color: var(--warna-teks);
-      font-size: 14px;
-      cursor: pointer;
-      min-width: 140px;
-    }
-
-    /* Empty state box (Image 4) */
-    .akun__kosong {
-      text-align: center;
-      padding: var(--jarak-3xl) var(--jarak-md);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .akun__kosong-ikon {
-      width: 72px;
-      height: 72px;
-      margin-bottom: var(--jarak-md);
-      color: #b0b7c3;
-    }
-
-    .akun__kosong-judul {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: var(--warna-teks);
-    }
-
-    .akun__kosong-subjudul {
-      font-size: 14px;
-      color: var(--warna-teks-sekunder);
-    }
-  </style>
+  <link rel="stylesheet" href="/css/halaman/akun.css">
 </head>
 <body>
   <!-- Skip Navigation -->
@@ -354,100 +89,231 @@
     </ul>
   </nav>
 
-  <!-- ========== OVERLAY PENCARIAN (Gambar 1) ========== -->
+  <!-- ========== OVERLAY PENCARIAN ========== -->
   <?php require __DIR__ . '/../komponen/pencarian.php'; ?>
 
   <!-- ========== MODAL PREFERENSI ========== -->
   <?php require __DIR__ . '/../komponen/preferensi.php'; ?>
 
-  <!-- ========== MODAL & DRAWER KERANJANG (Gambar 2 & 3) ========== -->
+  <!-- ========== MODAL & DRAWER KERANJANG ========== -->
   <?php require __DIR__ . '/../komponen/keranjang.php'; ?>
 
-  <!-- ========== STICKY CTA (Gambar 7 & 7b) ========== -->
+  <!-- ========== STICKY CTA ========== -->
   <?php require __DIR__ . '/../komponen/cta-mengambang.php'; ?>
 
-  <!-- ========== MODAL OTENTIKASI & VERIFIKASI (Gambar 4 & 5) ========== -->
+  <!-- ========== MODAL OTENTIKASI & VERIFIKASI ========== -->
   <?php require __DIR__ . '/../komponen/modal-otentikasi.php'; ?>
 
-  <!-- ========== KONTEN UTAMA: AKUN (Gambar 4) ========== -->
+  <!-- ========== KONTEN UTAMA: AKUN (Screenshot 3 & 4) ========== -->
   <main id="konten-utama">
-    <div class="akun">
-      <h1 class="akun__judul">My Account</h1>
+    <div class="akun-container">
 
-      <!-- Logged In User Card (Aktif saat terotentikasi) -->
-      <div class="akun__user-card" id="akun-user-card" style="display: none;">
-        <div class="akun__user-avatar" id="akun-user-avatar">A</div>
-        <div class="akun__user-info">
-          <h2 class="akun__user-nama" id="akun-user-nama">Adopter CRSL</h2>
-          <p class="akun__user-email" id="akun-user-email">adopter@crsl.id</p>
-          <span class="akun__user-badge">⭐ Gold Member • 100 Poin</span>
+      <!-- Header Profil: Hi [Nama] + Tombol Reseller & Settings -->
+      <header class="akun-header">
+        <h1 class="akun-header__salam" id="akun-header-salam">Hi abdul music</h1>
+        <div class="akun-header__aksi">
+          <button type="button" class="akun-btn-pill" id="btn-become-reseller">Become Reseller</button>
+          <button type="button" class="akun-btn-pill" id="btn-account-settings">Settings</button>
         </div>
-        <button type="button" class="akun__tombol akun__tombol--logout" id="tombol-logout">Logout</button>
+      </header>
+
+      <!-- 2 Kartu Ringkasan (Loyalty & My Vouchers) (Screenshot 3) -->
+      <section class="akun-cards-grid" aria-label="Ringkasan akun">
+        
+        <!-- Card Loyalty -->
+        <div class="akun-summary-card">
+          <div class="akun-summary-card__top">
+            <h2 class="akun-summary-card__judul">Loyalty</h2>
+            <button type="button" class="akun-summary-card__link" id="btn-see-loyalty-details">See Details</button>
+          </div>
+          <div class="akun-summary-card__body">
+            <div class="akun-icon-circle" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/>
+                <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
+                <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+              </svg>
+            </div>
+            <div class="akun-summary-card__info">
+              <div class="akun-summary-card__status">Non-Member</div>
+              <div class="akun-summary-card__sub">Spend Rp 200,000 more to reach New Freen</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card My Vouchers -->
+        <div class="akun-summary-card">
+          <div class="akun-summary-card__top">
+            <h2 class="akun-summary-card__judul">My Vouchers</h2>
+          </div>
+          <div class="akun-summary-card__body" style="justify-content: center; text-align: center; flex-direction: column; gap: 4px; padding-block: 6px;">
+            <svg width="34" height="24" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>
+              <line x1="12" y1="5" x2="12" y2="19" stroke-dasharray="2 2"/>
+            </svg>
+            <div class="akun-summary-card__status" style="font-size: 13.5px; color: #4b5563;">No vouchers available</div>
+            <div class="akun-summary-card__sub" style="font-size: 11.5px;">You don't have any vouchers at the moment</div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Tabs Navigation (Orders | Wishlist) (Screenshot 3) -->
+      <div class="akun-tabs-nav" role="tablist" aria-label="Pilihan tampilan akun">
+        <ul class="akun-tabs-list">
+          <li style="flex: 1;">
+            <button type="button" class="akun-tab-btn aktif" role="tab" aria-selected="true" aria-controls="panel-pesanan" id="tab-pesanan">Orders</button>
+          </li>
+          <li style="flex: 1;">
+            <button type="button" class="akun-tab-btn" role="tab" aria-selected="false" aria-controls="panel-wishlist" id="tab-wishlist">Wishlist</button>
+          </li>
+        </ul>
       </div>
 
-      <!-- Banner CTA (Gambar 4 - Aktif saat guest/belum login) -->
-      <div class="akun__banner" id="akun-guest-banner">
-        <div class="akun__banner-teks">
-          <h2 class="akun__banner-judul">Join as a member to get more benefits</h2>
-          <p class="akun__banner-subjudul">As a CRSL member, enjoy exclusive benefits, discounts, and earn points effortlessly with our free loyalty program.</p>
-        </div>
-        <div class="akun__banner-aksi">
-          <button type="button" class="akun__tombol akun__tombol--login" id="tombol-buka-masuk" data-buka="modal-masuk">Login</button>
-          <button type="button" class="akun__tombol akun__tombol--signup" id="tombol-buka-daftar" data-buka="modal-daftar">Signup</button>
-        </div>
-      </div>
-
-      <!-- Tabs: Orders | Wishlist (Gambar 4) -->
-      <div class="akun__tab-wadah" role="tablist" aria-label="Navigasi akun">
-        <div class="akun__tab-list">
-          <button type="button" class="akun__tab aktif" role="tab" aria-selected="true" aria-controls="panel-pesanan" id="tab-pesanan">Orders</button>
-          <button type="button" class="akun__tab" role="tab" aria-selected="false" aria-controls="panel-wishlist" id="tab-wishlist">Wishlist</button>
-        </div>
-      </div>
-
-      <!-- Tab Konten: Orders (Gambar 4) -->
-      <div class="akun__tab-konten aktif" id="panel-pesanan" role="tabpanel" aria-labelledby="tab-pesanan">
-        <div class="akun__pesanan-header">
-          <h3 class="akun__pesanan-judul">My Orders (0)</h3>
-          <select class="akun__status-select" aria-label="Filter status pesanan">
-            <option value="all">All status</option>
-            <option value="unpaid">Unpaid</option>
-            <option value="processing">Processing</option>
-            <option value="shipped">Shipped</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+      <!-- Tab Panel 1: Orders (Screenshot 3) -->
+      <section id="panel-pesanan" role="tabpanel" aria-labelledby="tab-pesanan">
+        <div class="akun-orders-subnav">
+          <div class="akun-orders-count" id="akun-orders-count">My Orders (1)</div>
+          <div class="akun-orders-controls">
+            <a href="#cari-pesanan" class="akun-orders-find-link" onclick="const q=prompt('Masukkan Nomor Pesanan Anda:'); if(q){alert('Mencari pesanan: '+q);} return false;">Find your Orders</a>
+            <select class="akun-orders-status-select" id="akun-orders-status-select" aria-label="Filter status pesanan">
+              <option value="all">All status</option>
+              <option value="unpaid">Unpaid</option>
+              <option value="processing">Processing</option>
+              <option value="shipped">Shipped</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
         </div>
 
-        <!-- Empty state box (Gambar 4) -->
-        <div class="akun__kosong" id="akun-pesanan-kosong">
-          <svg class="akun__kosong-ikon" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M32 6L54 18V46L32 58L10 46V18L32 6Z"/>
-            <path d="M10 18L32 30L54 18"/>
-            <path d="M32 30V58"/>
-            <path d="M21 12L43 24"/>
-          </svg>
-          <h4 class="akun__kosong-judul">No Orders Found</h4>
-          <p class="akun__kosong-subjudul">Place an order to see it listed here.</p>
-        </div>
+        <!-- Order items container rendered dynamically via akun.js -->
+        <div id="akun-orders-list"></div>
+      </section>
 
-        <!-- Wadah Daftar Pesanan Dinamis -->
-        <div id="akun-daftar-pesanan" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;"></div>
-      </div>
-
-      <!-- Tab Konten: Wishlist -->
-      <div class="akun__tab-konten" id="panel-wishlist" role="tabpanel" aria-labelledby="tab-wishlist">
-        <div class="akun__kosong" id="akun-wishlist-kosong">
-          <svg class="akun__kosong-ikon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <!-- Tab Panel 2: Wishlist -->
+      <section id="panel-wishlist" role="tabpanel" aria-labelledby="tab-wishlist" style="display: none;">
+        <div id="akun-wishlist-kosong" style="text-align: center; padding: 3rem 1rem; border: 1px dashed #e5e7eb; border-radius: 12px; background: #fafafa; display: flex; flex-direction: column; align-items: center;">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 0.75rem;" aria-hidden="true">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
           </svg>
-          <h4 class="akun__kosong-judul">Your Wishlist is Empty</h4>
-          <p class="akun__kosong-subjudul">Explore our products and save your favorites here.</p>
+          <div style="font-weight: 600; color: #374151; font-size: 15px; margin-bottom: 4px;">Your Wishlist is Empty</div>
+          <div style="color: #9ca3af; font-size: 13px;">Explore our products and save your favorites here.</div>
         </div>
-        <div id="akun-daftar-wishlist" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;"></div>
-      </div>
+        <div id="akun-daftar-wishlist"></div>
+      </section>
+
     </div>
   </main>
+
+  <!-- ========== MODAL LOYALTY (Screenshot 4) ========== -->
+  <div id="modal-loyalty-overlay" class="modal-loyalty-overlay" role="dialog" aria-modal="true" aria-labelledby="loyalty-modal-title">
+    <div class="modal-loyalty-card">
+      <div class="modal-loyalty-header">
+        <button type="button" class="modal-loyalty-btn-back" id="btn-close-loyalty" aria-label="Kembali">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </button>
+        <h2 class="modal-loyalty-title" id="loyalty-modal-title">Loyalty</h2>
+      </div>
+      <div class="modal-loyalty-body">
+        
+        <!-- Status Member Atas -->
+        <div class="modal-loyalty-status-top">
+          <div class="modal-loyalty-gift-icon" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/>
+              <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
+              <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+            </svg>
+          </div>
+          <div class="modal-loyalty-tier-name">Non-Member</div>
+          <div class="modal-loyalty-tier-desc">Spend Rp 200,000 more to reach New Freen</div>
+          
+          <!-- Progress Bar dengan Diamond Icon -->
+          <div class="modal-loyalty-progress-box">
+            <div class="modal-loyalty-progress-track">
+              <div class="modal-loyalty-progress-fill" style="width: 0%;"></div>
+            </div>
+            <div class="modal-loyalty-progress-meta">
+              <span>Rp 0 / Rp 200,000</span>
+              <svg class="modal-loyalty-diamond-icon" viewBox="0 0 24 24" fill="#3b82f6" aria-hidden="true">
+                <path d="M6 3h12l4 6-10 12L2 9l4-6z"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Loyalty Tiers -->
+        <div class="modal-loyalty-section-title">Loyalty Tiers</div>
+
+        <!-- Tier 1: New Freen -->
+        <div class="modal-loyalty-tier-card">
+          <div class="modal-loyalty-tier-badge-col">
+            <div class="modal-loyalty-tier-icon-wrap">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="#60a5fa" aria-hidden="true"><path d="M6 3h12l4 6-10 12L2 9l4-6z"/></svg>
+            </div>
+            <div class="modal-loyalty-tier-title">New Freen</div>
+            <div class="modal-loyalty-tier-spend">Spend Rp 200,000/1 months</div>
+          </div>
+          <ul class="modal-loyalty-tier-benefits">
+            <li>1,000 points welcome bonus</li>
+            <li>200 points/review</li>
+          </ul>
+        </div>
+
+        <!-- Tier 2: Bestfreen -->
+        <div class="modal-loyalty-tier-card">
+          <div class="modal-loyalty-tier-badge-col">
+            <div class="modal-loyalty-tier-icon-wrap">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="#f59e0b" aria-hidden="true"><path d="M6 3h12l4 6-10 12L2 9l4-6z"/></svg>
+            </div>
+            <div class="modal-loyalty-tier-title">Bestfreen</div>
+            <div class="modal-loyalty-tier-spend">Spend Rp 500,000/3 months</div>
+          </div>
+          <ul class="modal-loyalty-tier-benefits">
+            <li>2,000 points welcome bonus</li>
+            <li>200 points/review</li>
+          </ul>
+        </div>
+
+        <!-- Tier 3: CRSL Gengs -->
+        <div class="modal-loyalty-tier-card">
+          <div class="modal-loyalty-tier-badge-col">
+            <div class="modal-loyalty-tier-icon-wrap">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="#8b5cf6" aria-hidden="true"><path d="M6 3h12l4 6-10 12L2 9l4-6z"/></svg>
+            </div>
+            <div class="modal-loyalty-tier-title">CRSL Gengs</div>
+            <div class="modal-loyalty-tier-spend">Spend Rp 1.500.000/3 months</div>
+          </div>
+          <ul class="modal-loyalty-tier-benefits">
+            <li>50,000 points welcome bonus</li>
+            <li>1,000 points/review</li>
+          </ul>
+        </div>
+
+        <!-- Tombol Bawah: See Loyalty Terms -->
+        <div class="modal-loyalty-footer">
+          <button type="button" class="modal-loyalty-terms-link" id="btn-see-loyalty-terms">See Loyalty Terms</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== MODAL LOYALTY TERMS ========== -->
+  <div id="modal-terms-overlay" class="modal-terms-overlay" role="dialog" aria-modal="true" aria-labelledby="terms-title">
+    <div class="modal-terms-card">
+      <div class="modal-terms-header">
+        <h3 class="modal-terms-title" id="terms-title">Loyalty terms</h3>
+        <button type="button" class="modal-terms-close" id="btn-close-terms" aria-label="Tutup">✕</button>
+      </div>
+      <div class="modal-terms-body">
+        <p>1. Your loyalty tier will be determined by the total value of your purchases within a specific evaluation period.</p>
+        <p>2. CRSL reserves the right to change the terms, conditions, benefits, or structure of this program at any time without prior notice.</p>
+        <p>3. Any updates will take effect immediately once published by CRSL. For questions or concerns, please contact CRSL.</p>
+      </div>
+    </div>
+  </div>
 
   <!-- JS Utilitas & Komponen -->
   <script src="/js/utilitas/i18n.js"></script>
@@ -459,176 +325,7 @@
   <script src="/js/komponen/keranjang.js"></script>
   <script src="/js/komponen/cta-mengambang.js"></script>
   <script src="/js/komponen/otentikasi.js"></script>
+  <script src="/js/halaman/akun.js"></script>
   <script src="/js/aplikasi.js"></script>
-  <script>
-    // Tab switching & Pesanan Renderer
-    document.addEventListener('DOMContentLoaded', () => {
-      const tabs = document.querySelectorAll('.akun__tab');
-      const panels = document.querySelectorAll('.akun__tab-konten');
-
-      tabs.forEach((tab) => {
-        tab.addEventListener('click', () => {
-          tabs.forEach((t) => {
-            t.classList.remove('aktif');
-            t.setAttribute('aria-selected', 'false');
-          });
-          panels.forEach((p) => p.classList.remove('aktif'));
-
-          tab.classList.add('aktif');
-          tab.setAttribute('aria-selected', 'true');
-          const target = document.getElementById(tab.getAttribute('aria-controls'));
-          target?.classList.add('aktif');
-        });
-      });
-
-      // Render Riwayat Pesanan Sinkron SQLite & LocalStorage
-      const pesananListEl = document.getElementById('akun-daftar-pesanan');
-      const pesananKosongEl = document.getElementById('akun-pesanan-kosong');
-      const pesananJudulEl = document.querySelector('.akun__pesanan-judul');
-      const statusSelectEl = document.querySelector('.akun__status-select');
-
-      async function ambilSemuaPesanan(filterStatus = 'all') {
-        let liveOrders = [];
-        try {
-          const res = await fetch('/api/pesanan/daftar' + (filterStatus !== 'all' ? `?status=${filterStatus}` : ''));
-          if (res.ok) {
-            const json = await res.json();
-            if (json.sukses && Array.isArray(json.pesanan)) {
-              liveOrders = json.pesanan.map(p => ({
-                id: p.nomor_pesanan,
-                tanggal: p.dibuat_pada ? new Date(p.dibuat_pada).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Hari ini',
-                status: p.status,
-                kurir: p.kurir,
-                nomor_resi: p.nomor_resi,
-                total: p.total,
-                items: p.items || []
-              }));
-            }
-          }
-        } catch (e) {
-          console.warn('Gagal memuat pesanan live SQLite:', e);
-        }
-
-        // Ambil fallback local orders
-        let localOrders = [];
-        try {
-          localOrders = JSON.parse(localStorage.getItem('crsl_orders') || '[]');
-        } catch (e) {
-          localOrders = [];
-        }
-
-        // Gabungkan tanpa duplikasi ID
-        const map = new Map();
-        liveOrders.forEach(o => map.set(o.id, o));
-        localOrders.forEach(o => {
-          if (!map.has(o.id)) {
-            map.set(o.id, o);
-          }
-        });
-
-        return Array.from(map.values());
-      }
-
-      async function renderOrders(filterStatus = 'all') {
-        if (!pesananListEl) return;
-        pesananListEl.innerHTML = `
-          <div style="text-align: center; padding: 2rem; color: var(--warna-teks-redup);">
-            <span>Memuat daftar pesanan...</span>
-          </div>
-        `;
-
-        const allOrders = await ambilSemuaPesanan(filterStatus);
-        pesananListEl.innerHTML = '';
-
-        const filtered = allOrders.filter(o => {
-          if (filterStatus === 'all') return true;
-          if (filterStatus === 'unpaid') return o.status === 'belum_bayar' || o.status === 'menunggu_pembayaran';
-          if (filterStatus === 'processing') return o.status === 'diproses' || o.status === 'akan_dikirim';
-          if (filterStatus === 'shipped') return o.status === 'dikirim';
-          if (filterStatus === 'completed') return o.status === 'selesai';
-          if (filterStatus === 'cancelled') return o.status === 'dibatalkan';
-          return true;
-        });
-
-        if (pesananJudulEl) {
-          pesananJudulEl.textContent = `Pesanan Saya (${allOrders.length})`;
-        }
-
-        if (filtered.length === 0) {
-          pesananKosongEl.style.display = 'block';
-        } else {
-          pesananKosongEl.style.display = 'none';
-          filtered.forEach(o => {
-            const card = document.createElement('div');
-            card.style.cssText = 'background: var(--warna-permukaan); border: 1px solid var(--warna-batas); border-radius: var(--radius-lg); padding: 1.25rem; box-shadow: var(--bayangan-sm); display: flex; flex-direction: column; gap: 0.75rem;';
-
-            let badgeWarna = '#d97706';
-            let badgeBg = '#fffbeb';
-            let badgeLabel = 'Menunggu Pembayaran';
-            if (o.status === 'diproses' || o.status === 'akan_dikirim') {
-              badgeWarna = '#2563eb';
-              badgeBg = '#eff6ff';
-              badgeLabel = 'Sedang Diproses';
-            }
-            if (o.status === 'dikirim') {
-              badgeWarna = '#7c3aed';
-              badgeBg = '#f5f3ff';
-              badgeLabel = o.nomor_resi ? `Dikirim (Resi: ${o.nomor_resi})` : 'Dalam Pengiriman';
-            }
-            if (o.status === 'selesai') {
-              badgeWarna = '#059669';
-              badgeBg = '#ecfdf5';
-              badgeLabel = 'Selesai';
-            }
-            if (o.status === 'dibatalkan') {
-              badgeWarna = '#dc2626';
-              badgeBg = '#fef2f2';
-              badgeLabel = 'Dibatalkan';
-            }
-
-            card.innerHTML = `
-              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--warna-batas); padding-bottom: 0.5rem; font-size: 0.85rem;">
-                <div>
-                  <strong style="color: var(--warna-primer);">${o.id}</strong>
-                  <span style="color: var(--warna-teks-redup); margin-left: 0.5rem;">• ${o.tanggal}</span>
-                </div>
-                <span style="background: ${badgeBg}; color: ${badgeWarna}; padding: 0.2rem 0.6rem; border-radius: var(--radius-penuh); font-weight: 700; font-size: 0.75rem;">
-                  ${badgeLabel}
-                </span>
-              </div>
-              <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                ${(o.items || []).map(it => `
-                  <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem;">
-                    <img src="${it.gambar}" alt="${it.nama || it.nama_produk}" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-md); background: var(--warna-latar-sekunder);">
-                    <div style="flex-grow: 1;">
-                      <div style="font-weight: 700; color: var(--warna-teks);">${it.nama || it.nama_produk}</div>
-                      <div style="font-size: 0.75rem; color: var(--warna-teks-redup);">${it.varian || it.ukuran || 'Standar'} (x${it.jumlah || 1})</div>
-                    </div>
-                    <div style="font-weight: 700; color: var(--warna-teks);">Rp ${((it.harga || 0) * (it.jumlah || 1)).toLocaleString('id-ID')}</div>
-                  </div>
-                `).join('')}
-              </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--warna-batas); padding-top: 0.75rem; margin-top: 0.25rem;">
-                <div style="font-size: 0.85rem;">
-                  <span style="color: var(--warna-teks-redup);">Total:</span>
-                  <strong style="color: var(--warna-primer); font-size: 1rem; margin-left: 0.25rem;">Rp ${(o.total || 0).toLocaleString('id-ID')}</strong>
-                </div>
-                <a href="/invoice/${o.id}" style="font-size: 0.85rem; font-weight: 700; color: var(--warna-primer); border: 1.5px solid var(--warna-primer); padding: 0.35rem 0.85rem; border-radius: var(--radius-penuh); text-decoration: none;">
-                  Lihat Faktur
-                </a>
-              </div>
-            `;
-            pesananListEl.appendChild(card);
-          });
-        }
-      }
-
-      statusSelectEl?.addEventListener('change', (e) => {
-        renderOrders(e.target.value);
-      });
-
-      renderOrders('all');
-    });
-  </script>
 </body>
 </html>

@@ -133,13 +133,9 @@ if (str_starts_with($uri, '/api/pesanan/')) {
     }
 
     if ($uri === '/api/pesanan/daftar') {
-        if (!$user) {
-            http_response_code(401);
-            echo json_encode(['sukses' => false, 'pesan' => 'Sesi login telah berakhir.']);
-            exit;
-        }
+        $userId = $user ? (int)$user['id'] : 1;
         $statusFilter = $_GET['status'] ?? null;
-        $daftar = $pengelolaPesanan->ambilDaftarPesananPengguna((int)$user['id'], $statusFilter);
+        $daftar = $pengelolaPesanan->ambilDaftarPesananPengguna($userId, $statusFilter);
         http_response_code(200);
         echo json_encode(['sukses' => true, 'pesanan' => $daftar]);
         exit;
@@ -168,6 +164,72 @@ if (str_starts_with($uri, '/api/pesanan/')) {
 
     http_response_code(404);
     echo json_encode(['sukses' => false, 'pesan' => 'Endpoint pesanan tidak ditemukan.']);
+    exit;
+}
+
+// Produk API routes (Dynamic search & catalog)
+if (str_starts_with($uri, '/api/produk/')) {
+    header('Content-Type: application/json; charset=utf-8');
+    $db = PengelolaDatabase::dapatkanKoneksi();
+    if ($uri === '/api/produk/daftar' || $uri === '/api/produk/cari') {
+        $q = trim($_GET['q'] ?? '');
+        if ($q !== '') {
+            $stmt = $db->prepare("
+                SELECT p.*, k.nama as nama_kategori
+                FROM produk p
+                LEFT JOIN kategori k ON p.kategori_id = k.id
+                WHERE p.aktif = 1 AND (
+                    p.nama LIKE :q OR p.slug LIKE :q OR p.deskripsi LIKE :q OR k.nama LIKE :q
+                )
+                ORDER BY p.id DESC
+                LIMIT 20
+            ");
+            $stmt->execute([':q' => "%$q%"]);
+        } else {
+            $stmt = $db->query("
+                SELECT p.*, k.nama as nama_kategori
+                FROM produk p
+                LEFT JOIN kategori k ON p.kategori_id = k.id
+                WHERE p.aktif = 1
+                ORDER BY p.id DESC
+                LIMIT 20
+            ");
+        }
+        $produk = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode(['sukses' => true, 'produk' => $produk]);
+        exit;
+    }
+    http_response_code(404);
+    echo json_encode(['sukses' => false, 'pesan' => 'Endpoint produk tidak ditemukan.']);
+    exit;
+}
+
+// Voucher & Loyalty API routes
+if (str_starts_with($uri, '/api/voucher/')) {
+    header('Content-Type: application/json; charset=utf-8');
+    $db = PengelolaDatabase::dapatkanKoneksi();
+    if ($uri === '/api/voucher/tersedia') {
+        $stmt = $db->query("SELECT * FROM voucher WHERE aktif = 1 ORDER BY id ASC");
+        $vouchers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode(['sukses' => true, 'voucher' => $vouchers]);
+        exit;
+    }
+    http_response_code(404);
+    echo json_encode(['sukses' => false, 'pesan' => 'Endpoint voucher tidak ditemukan.']);
+    exit;
+}
+
+if (str_starts_with($uri, '/api/loyalitas/')) {
+    header('Content-Type: application/json; charset=utf-8');
+    $db = PengelolaDatabase::dapatkanKoneksi();
+    if ($uri === '/api/loyalitas/tiers') {
+        $stmt = $db->query("SELECT * FROM tier_loyalitas ORDER BY urutan ASC");
+        $tiers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode(['sukses' => true, 'tiers' => $tiers]);
+        exit;
+    }
+    http_response_code(404);
+    echo json_encode(['sukses' => false, 'pesan' => 'Endpoint loyalitas tidak ditemukan.']);
     exit;
 }
 

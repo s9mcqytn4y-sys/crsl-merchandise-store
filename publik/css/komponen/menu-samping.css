@@ -96,35 +96,39 @@
   pointer-events: none;
 }
 
-/* -- Navigation list: Fit 1 screen -- */
+/* -- Navigation list: Clean tuned spacing without excessive gaps -- */
 .menu-samping__daftar {
-  padding: var(--jarak-xs) var(--jarak-xs);
-  flex: 1;
+  padding: var(--jarak-md) var(--jarak-sm);
   display: flex;
   flex-direction: column;
-  justify-content: space-evenly;
-  overflow: hidden;
+  gap: 0.35rem;
+  overflow-y: auto;
   margin: 0;
   list-style: none;
+  scrollbar-width: none;
+}
+
+.menu-samping__daftar::-webkit-scrollbar {
+  display: none;
 }
 
 .menu-samping__item {
   display: flex;
-  flex: 1;
-  min-height: 0;
+  width: 100%;
 }
 
 .menu-samping__tautan {
   display: flex;
   align-items: center;
-  gap: var(--jarak-xs);
-  padding: 0 var(--jarak-md);
-  font-size: clamp(0.85rem, 1.85vh, 0.98rem);
+  gap: var(--jarak-sm);
+  padding: 0.65rem var(--jarak-md);
+  min-height: 44px;
+  font-size: 0.95rem;
   font-weight: 500;
   color: var(--warna-teks);
   text-decoration: none;
   width: 100%;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   transition: background-color 0.18s ease, transform 0.18s ease, color 0.18s ease, padding-left 0.18s ease;
 }
 

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="16" viewBox="0 0 36 24">
+  <rect width="36" height="12" fill="#ED2939"/>
+  <rect y="12" width="36" height="12" fill="#FFFFFF"/>
+  <circle cx="8" cy="6" r="4.2" fill="#FFFFFF"/>
+  <circle cx="9.5" cy="6" r="3.7" fill="#ED2939"/>
+  <!-- 5 stars -->
+  <polygon points="10,3.5 10.3,4.4 11.2,4.4 10.5,5 10.7,5.8 10,5.3 9.3,5.8 9.5,5 8.8,4.4 9.7,4.4" fill="#FFFFFF"/>
+  <polygon points="12,5 12.3,5.9 13.2,5.9 12.5,6.5 12.7,7.3 12,6.8 11.3,7.3 11.5,6.5 10.8,5.9 11.7,5.9" fill="#FFFFFF"/>
+  <polygon points="11.5,8 11.8,8.9 12.7,8.9 12,9.5 12.2,10.3 11.5,9.8 10.8,10.3 11,9.5 10.3,8.9 11.2,8.9" fill="#FFFFFF"/>
+  <polygon points="8.5,8 8.8,8.9 9.7,8.9 9,9.5 9.2,10.3 8.5,9.8 7.8,10.3 8,9.5 7.3,8.9 8.2,8.9" fill="#FFFFFF"/>
+  <polygon points="8,5 8.3,5.9 9.2,5.9 8.5,6.5 8.7,7.3 8,6.8 7.3,7.3 7.5,6.5 6.8,5.9 7.7,5.9" fill="#FFFFFF"/>
+</svg>

@@ -190,6 +190,14 @@
         <span>🏷️</span>
         <span id="keranjang-hemat-nilai">Save Rp 0</span>
       </div>
+      <!-- Otomasi Voucher Diskon Ongkir (Screenshot 1 & 2) -->
+      <div class="keranjang-drawer__voucher-row" id="keranjang-voucher-row" style="display: none; align-items: center; justify-content: space-between; font-size: 13px; color: #16a34a; background: #f0fdf4; padding: 6px 10px; border-radius: 6px; border: 1px dashed #86efac; margin-top: 6px;">
+        <span style="display: flex; align-items: center; gap: 6px; font-weight: 600;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <span id="keranjang-voucher-nama">Voucher Ongkir Rp 10.000 Terpasang</span>
+        </span>
+        <span style="font-weight: 700;">-Rp 10.000</span>
+      </div>
     </div>
 
     <!-- Progress Loyalitas Eksklusif (Gambar 4) -->
