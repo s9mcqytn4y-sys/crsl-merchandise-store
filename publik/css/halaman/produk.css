@@ -276,8 +276,32 @@
 /* Section 1: Badge Status */
 .pdp__sec-status {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+}
+
+.pdp__badge-kategori {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  background-color: #475569;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pdp__badge-diskon {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  background-color: var(--warna-primer);
+  color: #ffffff;
+  letter-spacing: 0.02em;
 }
 
 .pdp__badge-status {
@@ -1239,12 +1263,12 @@
   font-weight: 600;
 }
 
-/* Section 11: Tombol WhatsApp "Message CRSL" */
+/* Section 11: Tombol "Message CRSL?" Outlined Brand */
 .pdp__sec-whatsapp {
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
-.pdp__btn-whatsapp {
+.pdp__btn-pesan-crsl {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1252,17 +1276,21 @@
   width: 100%;
   min-height: 44px;
   border-radius: var(--radius-penuh);
-  background-color: #25d366;
-  color: #ffffff;
+  background-color: #ffffff;
+  border: 1.5px solid var(--warna-primer);
+  color: var(--warna-primer);
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;
-  transition: opacity var(--transisi-cepat);
+  cursor: pointer;
+  transition: all var(--transisi-cepat);
 }
 
-.pdp__btn-whatsapp:hover {
-  opacity: 0.92;
+.pdp__btn-pesan-crsl:hover {
+  background-color: #fff5f5;
+  transform: translateY(-1px);
 }
+
 
 /* ==========================================================
    BAGIAN REKOMENDASI & RECENT VIEWED

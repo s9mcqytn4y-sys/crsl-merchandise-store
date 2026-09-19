@@ -334,8 +334,14 @@ if (($produk['tipe_produk'] ?? '') === 'pre_order') {
       <!-- KOLOM 3: Anatomi Informasi & Aksi Pembelian -->
       <section class="pdp__kolom-aksi" aria-label="Informasi dan Pembelian">
         
-        <!-- Section 1: Badge Kondisi / Status -->
+        <!-- Section 1: Row Kategori & Badge Status -->
         <div class="pdp__sec-status">
+          <?php if (!empty($produk['nama_kategori'])): ?>
+            <span class="pdp__badge-kategori"><?= htmlspecialchars($produk['nama_kategori']) ?></span>
+          <?php endif; ?>
+          <?php if ($apakahDiskon): ?>
+            <span class="pdp__badge-diskon"><?= $persenDiskon ?>% OFF</span>
+          <?php endif; ?>
           <span class="pdp__badge-status <?= strtolower(str_replace(' ', '-', $badgeStatus)) ?>" id="pdp-status-badge">
             <?= htmlspecialchars($badgeStatus) ?>
           </span>
@@ -381,41 +387,68 @@ if (($produk['tipe_produk'] ?? '') === 'pre_order') {
           <div class="pdp__kupon-panah" aria-hidden="true">&rsaquo;</div>
         </div>
 
-        <!-- Section 5: Pemilih Warna (Berdasarkan Image Box atau Dot Warna) -->
+        <!-- Section 5: Pemilih Warna Unik (Deduplikasi) -->
         <div class="pdp__sec-warna">
           <div class="pdp__label-baris">
             <span class="pdp__label-judul">Color</span>
             <span class="pdp__label-pilihan" id="pdp-warna-terpilih-nama"><?= htmlspecialchars($varianList[0]['warna'] ?? 'Default') ?></span>
           </div>
           <div class="pdp__swatch-container" id="pdp-swatch-container" role="radiogroup" aria-label="Pilih Warna">
-            <?php foreach ($varianList as $vIdx => $var): ?>
-              <?php 
-                $apakahHabis = ($var['stok'] ?? 1) <= 0;
-                $warnaGambar = $var['warna_gambar'] ?? $produk['gambar_utama'];
-                $warnaHex = $var['warna_hex'] ?? '#64748b';
-              ?>
+            <?php
+              $daftarWarnaUnik = [];
+              foreach ($varianList as $v) {
+                $w = $v['warna'] ?? $v['nama_varian'] ?? 'Default';
+                if (!isset($daftarWarnaUnik[$w])) {
+                  $daftarWarnaUnik[$w] = [
+                    'warna' => $w,
+                    'sku' => $v['sku'],
+                    'warna_gambar' => $v['warna_gambar'] ?? $produk['gambar_utama'],
+                    'warna_hex' => $v['warna_hex'] ?? '#64748b',
+                    'total_stok' => (int)$v['stok']
+                  ];
+                } else {
+                  $daftarWarnaUnik[$w]['total_stok'] += (int)$v['stok'];
+                }
+              }
+              if (empty($daftarWarnaUnik)) {
+                $daftarWarnaUnik['Default'] = [
+                  'warna' => 'Default',
+                  'sku' => 'DEF',
+                  'warna_gambar' => $produk['gambar_utama'],
+                  'warna_hex' => '#64748b',
+                  'total_stok' => 50
+                ];
+              }
+              $wIndex = 0;
+              foreach ($daftarWarnaUnik as $wNama => $wData):
+                $isHabis = $wData['total_stok'] <= 0;
+                $warnaGambar = $wData['warna_gambar'];
+                $warnaHex = $wData['warna_hex'];
+            ?>
               <button
                 type="button"
-                class="pdp__swatch-box <?= $vIdx === 0 ? 'aktif' : '' ?> <?= $apakahHabis ? 'habis' : '' ?>"
-                data-sku="<?= htmlspecialchars($var['sku']) ?>"
-                data-warna="<?= htmlspecialchars($var['warna'] ?? $var['nama_varian']) ?>"
-                data-stok="<?= (int)$var['stok'] ?>"
-                data-ukuran="<?= htmlspecialchars($var['ukuran'] ?? 'All Size') ?>"
+                class="pdp__swatch-box <?= $wIndex === 0 ? 'aktif' : '' ?> <?= $isHabis ? 'habis' : '' ?>"
+                data-sku="<?= htmlspecialchars($wData['sku']) ?>"
+                data-warna="<?= htmlspecialchars($wNama) ?>"
+                data-stok="<?= (int)$wData['total_stok'] ?>"
                 data-gambar="<?= htmlspecialchars($warnaGambar) ?>"
-                <?= $apakahHabis ? 'aria-disabled="true"' : '' ?>
+                <?= $isHabis ? 'aria-disabled="true"' : '' ?>
                 role="radio"
-                aria-checked="<?= $vIdx === 0 ? 'true' : 'false' ?>"
+                aria-checked="<?= $wIndex === 0 ? 'true' : 'false' ?>"
               >
                 <?php if (!empty($warnaGambar) && file_exists(ROOT_DIR . $warnaGambar)): ?>
                   <div class="pdp__swatch-img-wadah">
-                    <img src="<?= htmlspecialchars($warnaGambar) ?>" alt="<?= htmlspecialchars($var['warna'] ?? $var['nama_varian']) ?>" loading="lazy" width="46" height="46">
+                    <img src="<?= htmlspecialchars($warnaGambar) ?>" alt="<?= htmlspecialchars($wNama) ?>" loading="lazy" width="46" height="46">
                   </div>
                 <?php else: ?>
                   <span class="pdp__swatch-dot" style="background-color: <?= htmlspecialchars($warnaHex) ?>;"></span>
                 <?php endif; ?>
-                <span class="pdp__swatch-label"><?= htmlspecialchars($var['warna'] ?? $var['nama_varian']) ?></span>
+                <span class="pdp__swatch-label"><?= htmlspecialchars($wNama) ?></span>
               </button>
-            <?php endforeach; ?>
+            <?php
+                $wIndex++;
+              endforeach;
+            ?>
           </div>
           <div class="pdp__swatch-pesan-error" id="pdp-warna-error" role="alert" style="display:none;">
             Silakan pilih salah satu varian warna terlebih dahulu.
@@ -426,9 +459,6 @@ if (($produk['tipe_produk'] ?? '') === 'pre_order') {
         <div class="pdp__sec-ukuran">
           <div class="pdp__label-baris">
             <span class="pdp__label-judul">Size</span>
-            <span class="pdp__label-pilihan" id="pdp-ukuran-terpilih-nama"></span>
-          </div>
-          <div class="pdp__ukuran-container" id="pdp-ukuran-container" role="radiogroup" aria-label="Pilih Ukuran">
             <?php
               $daftarUkuranUnik = [];
               foreach ($varianList as $v) {
@@ -452,10 +482,14 @@ if (($produk['tipe_produk'] ?? '') === 'pre_order') {
               if ($pertamaTersedia === null) {
                 $pertamaTersedia = array_key_first($daftarUkuranUnik);
               }
-
+            ?>
+            <span class="pdp__label-pilihan" id="pdp-ukuran-terpilih-nama"><?= htmlspecialchars($pertamaTersedia ?? '') ?></span>
+          </div>
+          <div class="pdp__ukuran-container" id="pdp-ukuran-container" role="radiogroup" aria-label="Pilih Ukuran">
+            <?php
               foreach ($daftarUkuranUnik as $uNama => $uStok):
                 $isKosong = ($uStok <= 0);
-                $isTerpilih = false;
+                $isTerpilih = ($uNama === $pertamaTersedia);
             ?>
               <button
                 type="button"
@@ -477,6 +511,7 @@ if (($produk['tipe_produk'] ?? '') === 'pre_order') {
             <button type="button" class="pdp__btn-ingatkan" id="pdp-btn-ingatkan">Ingatkan Saya Saat Restock</button>
           </div>
         </div>
+
 
         <!-- Section 7: Stepper Input Kuantitas -->
         <div class="pdp__sec-stepper">
@@ -584,19 +619,19 @@ if (($produk['tipe_produk'] ?? '') === 'pre_order') {
           </div>
         </div>
 
-        <!-- Section 11: Tombol Chat "Message CRSL" (Modal Interaktif Gambar 5) -->
+        <!-- Section 11: Tombol Chat "Message CRSL" (Modal Interaktif) -->
         <div class="pdp__sec-whatsapp">
           <button
             type="button"
-            class="pdp__btn-whatsapp"
+            class="pdp__btn-pesan-crsl"
             id="pdp-btn-pesan-crsl"
             aria-haspopup="dialog"
             aria-expanded="false"
             aria-controls="modal-pesan-crsl-overlay"
             aria-label="Kirim pesan pertanyaan ke CRSL"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
             </svg>
             <span>Message CRSL?</span>
           </button>

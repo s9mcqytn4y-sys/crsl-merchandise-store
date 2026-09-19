@@ -1,7 +1,11 @@
 <?php
 /**
- * CRSL Merchandise Store - Halaman Multi-Step Checkout (Fase 4)
- * 3-Step Guided Wizard: Alamat -> Kurir -> Pembayaran & Konfirmasi
+ * CRSL Merchandise Store - Halaman Checkout Tunggal (Single-Page 2-Kolom)
+ * Kepatuhan penuh referensi resmi crsl-store.id/checkout/16923671
+ * - Tanpa sistem wizard bertingkat (Single Unified Flow)
+ * - Kolom Kiri: Alamat (Modal Pilih & Edit), Kurir (Modal + Asuransi 100%), Pembayaran (Modal Logo)
+ * - Kolom Kanan: Ringkasan Produk, Voucher, Koin, Rincian Biaya, Tombol Bayar
+ * - Stateful Back Navigation: Mengembalikan ke PDP terakhir dengan preservasi input
  */
 ?>
 <!DOCTYPE html>
@@ -11,6 +15,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Checkout Pesanan - CRSL Official Store</title>
   <meta name="description" content="Selesaikan pesanan merchandise resmi CRSL dengan aman, cepat, dan terpercaya.">
+  <link rel="icon" type="image/svg+xml" href="/aset/ikon/favicon.svg">
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="/css/variabel.css">
@@ -18,414 +23,419 @@
   <link rel="stylesheet" href="/css/tata-letak.css">
   <link rel="stylesheet" href="/css/komponen/bilah-atas.css">
   <link rel="stylesheet" href="/css/komponen/navigasi.css">
-  <link rel="stylesheet" href="/css/komponen/otentikasi.css">
+  <link rel="stylesheet" href="/css/komponen/footer.css">
   <link rel="stylesheet" href="/css/halaman/checkout.css">
 </head>
 <body class="checkout-body">
-  <!-- Minimalist Checkout Header -->
-  <header class="navigasi" role="banner" style="position: static;">
-    <div class="navigasi__wadah">
-      <div class="navigasi__kiri">
-        <a href="/" class="checkout-header__kembali" aria-label="Kembali ke belanja">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-          <span>Kembali</span>
+
+  <!-- Header Minimalis Checkout -->
+  <header class="checkout-header" role="banner">
+    <div class="checkout-header__wadah">
+      <div class="checkout-header__kiri">
+        <a href="javascript:void(0)" id="checkout-btn-back" class="checkout-header__btn-back" aria-label="Kembali ke halaman sebelumnya">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="19" y1="12" x2="5" y2="12"/>
+            <polyline points="12 19 5 12 12 5"/>
+          </svg>
         </a>
       </div>
-      <div class="navigasi__tengah">
+      <div class="checkout-header__tengah">
         <a href="/" class="checkout-header__logo" aria-label="CRSL Beranda">
-          <img src="/aset/gambar/logo-crsl.png" alt="CRSL" width="90" height="26">
+          <img src="/aset/gambar/logo-crsl.png" alt="CRSL" width="92" height="28">
         </a>
       </div>
-      <div class="navigasi__kanan" style="display: flex; align-items: center; gap: 0.75rem;">
-        <button type="button" id="tombol-tema" class="navigasi__tombol-ikon" aria-label="Ganti tema">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        </button>
-        <span class="checkout-header__badge-aman">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <div class="checkout-header__kanan">
+        <span class="checkout-header__badge-aman" title="Transaksi Terenkripsi Aman">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
           <span>Enkripsi 256-bit</span>
         </span>
       </div>
     </div>
   </header>
 
-  <main class="checkout-page" id="konten-utama">
-    <div class="checkout-page__wadah">
-      <!-- Stepper Progress Bar -->
-      <nav class="checkout-stepper" aria-label="Langkah checkout">
-        <div class="checkout-step checkout-step--aktif" id="stepper-tab-1">
-          <span class="checkout-step__nomor">1</span>
-          <span class="checkout-step__label" data-i18n="checkout.langkah1">1. Alamat &amp; Kontak</span>
-        </div>
-        <div class="checkout-step" id="stepper-tab-2">
-          <span class="checkout-step__nomor">2</span>
-          <span class="checkout-step__label" data-i18n="checkout.langkah2">2. Kurir Pengiriman</span>
-        </div>
-        <div class="checkout-step" id="stepper-tab-3">
-          <span class="checkout-step__nomor">3</span>
-          <span class="checkout-step__label" data-i18n="checkout.langkah3">3. Metode Pembayaran</span>
-        </div>
-      </nav>
+  <!-- Konten Utama Checkout 2-Kolom -->
+  <main class="checkout-main" id="konten-utama">
+    <div class="checkout-kontainer">
 
-      <!-- Grid Layout: Formulir Kiri + Ringkasan Kanan -->
-      <div class="checkout-layout">
-        <!-- Panel Langkah Kiri -->
-        <div class="checkout-panel">
-          <!-- STEP 1: ALAMAT & KONTAK -->
-          <section id="checkout-step-1" class="checkout-step-section">
-            <h2 class="checkout-panel__judul">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              Informasi Pengiriman &amp; Kontak
-            </h2>
+      <!-- ================= KOLOM KIRI ================= -->
+      <div class="checkout-kolom-kiri">
 
-            <form id="form-checkout-step-1" novalidate>
-              <div class="form-grup-baris">
-                <div class="form-kontrol">
-                  <label class="form-label" for="input-nama" data-i18n="checkout.nama_lengkap">Nama Penerima *</label>
-                  <input type="text" id="input-nama" class="form-input" placeholder="Contoh: Rina Anggraini" required minlength="3">
-                  <span class="form-error-teks" id="error-nama">Mohon masukkan nama lengkap minimal 3 huruf.</span>
-                </div>
-                <div class="form-kontrol">
-                  <label class="form-label" for="input-telepon" data-i18n="checkout.telepon">Nomor WhatsApp *</label>
-                  <input type="tel" id="input-telepon" class="form-input" placeholder="08xxxxxxxxxx" required pattern="^(\+62|62|0)8[0-9]{8,11}$">
-                  <span class="form-error-teks" id="error-telepon">Nomor WhatsApp harus valid (08xx).</span>
-                </div>
-              </div>
-
-              <div class="form-grup-baris">
-                <div class="form-kontrol">
-                  <label class="form-label" for="select-provinsi" data-i18n="checkout.provinsi">Provinsi *</label>
-                  <select id="select-provinsi" class="form-select" required>
-                    <option value="">Pilih Provinsi</option>
-                    <option value="DI Yogyakarta" selected>DI Yogyakarta</option>
-                    <option value="DKI Jakarta">DKI Jakarta</option>
-                    <option value="Jawa Barat">Jawa Barat</option>
-                    <option value="Jawa Tengah">Jawa Tengah</option>
-                    <option value="Jawa Timur">Jawa Timur</option>
-                    <option value="Banten">Banten</option>
-                    <option value="Bali">Bali</option>
-                    <option value="Sumatera Utara">Sumatera Utara</option>
-                  </select>
-                </div>
-                <div class="form-kontrol">
-                  <label class="form-label" for="input-kota" data-i18n="checkout.kota">Kota / Kabupaten *</label>
-                  <input type="text" id="input-kota" class="form-input" placeholder="Contoh: Sleman" value="Sleman" required>
-                </div>
-              </div>
-
-              <div class="form-grup-baris">
-                <div class="form-kontrol">
-                  <label class="form-label" for="input-kecamatan" data-i18n="checkout.kecamatan">Kecamatan *</label>
-                  <input type="text" id="input-kecamatan" class="form-input" placeholder="Contoh: Depok" value="Depok" required>
-                </div>
-                <div class="form-kontrol">
-                  <label class="form-label" for="input-kodepos" data-i18n="checkout.kodepos">Kode Pos (5 Digit) *</label>
-                  <input type="text" id="input-kodepos" class="form-input" placeholder="55281" value="55281" required pattern="^\d{5}$" maxlength="5">
-                  <span class="form-error-teks" id="error-kodepos">Kode pos harus terdiri dari 5 digit angka.</span>
-                </div>
-              </div>
-
-              <div class="form-kontrol">
-                <label class="form-label" for="input-alamat" data-i18n="checkout.alamat">Alamat Lengkap &amp; Patokan Rumah *</label>
-                <textarea id="input-alamat" class="form-textarea" placeholder="Nama jalan, nomor rumah, RT/RW, dan patokan sekitar" required>Jl. Seturan Raya No. 88, Caturtunggal (Samping Kafe Kopi)</textarea>
-                <span class="form-error-teks" id="error-alamat">Mohon tuliskan alamat lengkap.</span>
-              </div>
-
-              <button type="button" id="btn-ke-step-2" class="btn-checkout-lanjut">
-                <span>Lanjut ke Pilihan Kurir</span>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-              </button>
-            </form>
-          </section>
-
-          <!-- STEP 2: KURIR PENGIRIMAN -->
-          <section id="checkout-step-2" class="checkout-step-section" style="display: none;">
-            <h2 class="checkout-panel__judul">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-              Pilih Layanan Pengiriman
-            </h2>
-
-            <div class="opsi-kurir-grid" id="kurir-selector">
-              <!-- JNE Reguler -->
-              <label class="opsi-kurir-kartu opsi-kurir-kartu--terpilih">
-                <div class="opsi-kurir-kartu__kiri">
-                  <input type="radio" name="kurir" value="JNE-REG" data-nama="JNE Reguler" data-tarif="18000" data-estimasi="2-3 Hari Kerja" checked>
-                  <div>
-                    <div class="opsi-kurir-kartu__nama">JNE Reguler</div>
-                    <div class="opsi-kurir-kartu__estimasi">Estimasi tiba 2–3 hari kerja</div>
-                  </div>
-                </div>
-                <div class="opsi-kurir-kartu__tarif">Rp 18.000</div>
-              </label>
-
-              <!-- JNE YES -->
-              <label class="opsi-kurir-kartu">
-                <div class="opsi-kurir-kartu__kiri">
-                  <input type="radio" name="kurir" value="JNE-YES" data-nama="JNE YES (Yakin Esok Sampai)" data-tarif="32000" data-estimasi="1 Hari Kerja">
-                  <div>
-                    <div class="opsi-kurir-kartu__nama">JNE YES (Next Day)</div>
-                    <div class="opsi-kurir-kartu__estimasi">Estimasi tiba 1 hari kerja</div>
-                  </div>
-                </div>
-                <div class="opsi-kurir-kartu__tarif">Rp 32.000</div>
-              </label>
-
-              <!-- SiCepat REG -->
-              <label class="opsi-kurir-kartu">
-                <div class="opsi-kurir-kartu__kiri">
-                  <input type="radio" name="kurir" value="SICEPAT-REG" data-nama="SiCepat REG" data-tarif="17000" data-estimasi="2-3 Hari Kerja">
-                  <div>
-                    <div class="opsi-kurir-kartu__nama">SiCepat REG</div>
-                    <div class="opsi-kurir-kartu__estimasi">Estimasi tiba 2–3 hari kerja</div>
-                  </div>
-                </div>
-                <div class="opsi-kurir-kartu__tarif">Rp 17.000</div>
-              </label>
-
-              <!-- J&T Express -->
-              <label class="opsi-kurir-kartu">
-                <div class="opsi-kurir-kartu__kiri">
-                  <input type="radio" name="kurir" value="JNT-EZ" data-nama="J&T Express" data-tarif="19000" data-estimasi="2-3 Hari Kerja">
-                  <div>
-                    <div class="opsi-kurir-kartu__nama">J&amp;T Express</div>
-                    <div class="opsi-kurir-kartu__estimasi">Estimasi tiba 2–3 hari kerja</div>
-                  </div>
-                </div>
-                <div class="opsi-kurir-kartu__tarif">Rp 19.000</div>
-              </label>
+        <!-- 1. Address Details -->
+        <section class="checkout-seksi" aria-labelledby="judul-alamat">
+          <h2 id="judul-alamat" class="checkout-seksi__judul">Address Details</h2>
+          
+          <div class="checkout-card-alamat" id="checkout-card-alamat">
+            <div class="checkout-card-alamat__header">
+              <div class="checkout-card-alamat__nama" id="tampil-nama-penerima">abdul music</div>
+              <button type="button" class="checkout-btn-ubah" id="btn-buka-modal-pilih-alamat">Change</button>
             </div>
+            <div class="checkout-card-alamat__telepon" id="tampil-telepon-penerima">+628567060477</div>
+            <div class="checkout-card-alamat__detail" id="tampil-detail-alamat">Jakarta Pusat, Johar Baru, johar baru johar baru</div>
+          </div>
 
-            <!-- Asuransi Pengiriman -->
-            <div class="checkout-asuransi">
-              <label class="checkout-asuransi__label">
-                <input type="checkbox" id="check-asuransi" checked>
-                <div>
-                  <div class="checkout-asuransi__judul" data-i18n="checkout.asuransi">Asuransi Pengiriman (+Rp 2.000)</div>
-                  <div class="checkout-asuransi__info" data-i18n="checkout.asuransi_info">Melindungi paket dari kerusakan atau kehilangan fisik selama perjalanan</div>
-                </div>
-              </label>
-            </div>
+          <label class="checkout-dropship-wrap">
+            <input type="checkbox" id="checkout-is-dropship" class="checkout-checkbox">
+            <span class="checkout-dropship-label">Make as a dropship order</span>
+          </label>
+        </section>
 
-            <!-- Input Kode Voucher -->
-            <div class="checkout-voucher" id="voucher-section">
-              <div class="checkout-voucher__judul">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
-                <span>Kode Voucher / Diskon</span>
+        <!-- 2. Shipment Method -->
+        <section class="checkout-seksi" aria-labelledby="judul-kurir">
+          <h2 id="judul-kurir" class="checkout-seksi__judul">Shipment Method</h2>
+
+          <div class="checkout-card-interaktif" id="btn-buka-modal-kurir" role="button" tabindex="0" aria-label="Pilih metode pengiriman">
+            <div class="checkout-card-interaktif__kiri">
+              <img src="/aset/ikon/kurir-jne.svg" alt="JNE" class="checkout-card-interaktif__logo" id="tampil-kurir-logo" width="80" height="26">
+              <div class="checkout-card-interaktif__info">
+                <div class="checkout-card-interaktif__nama" id="tampil-kurir-nama">JNE Reguler (2 - 3 days)</div>
               </div>
-              <div class="checkout-voucher__baris">
-                <input type="text" id="input-voucher" class="checkout-voucher__input" placeholder="Contoh: NEWADOPTER10" autocomplete="off" autocapitalize="characters">
-                <button type="button" id="btn-terapkan-voucher" class="checkout-voucher__tombol">Terapkan</button>
-              </div>
-              <div id="voucher-feedback" class="checkout-voucher__feedback" aria-live="polite"></div>
             </div>
-
-            <div class="checkout-tombol-navigasi">
-              <button type="button" id="btn-kembali-step-1" class="btn-checkout-kembali-step">Kembali</button>
-              <button type="button" id="btn-ke-step-3" class="btn-checkout-lanjut">
-                <span>Lanjut ke Pembayaran</span>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-              </button>
-            </div>
-          </section>
-
-          <!-- STEP 3: METODE PEMBAYARAN -->
-          <section id="checkout-step-3" class="checkout-step-section" style="display: none;">
-            <h2 class="checkout-panel__judul">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-              Pilih Metode Pembayaran
-            </h2>
-
-            <!-- Konfirmasi Alamat Ringkas -->
-            <div class="checkout-konfirmasi-alamat" id="konfirmasi-alamat-box">
-              <div class="checkout-konfirmasi-alamat__label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                <span>Dikirim ke</span>
-              </div>
-              <div class="checkout-konfirmasi-alamat__isi" id="konfirmasi-alamat-teks">-</div>
-              <a href="#checkout-step-1" id="ubah-alamat-link" class="checkout-konfirmasi-alamat__ubah">Ubah</a>
-            </div>
-
-            <div class="opsi-bayar-grid" id="bayar-selector">
-              <!-- QRIS Dinamis -->
-              <label class="opsi-bayar-kartu opsi-bayar-kartu--terpilih">
-                <div class="opsi-bayar-kartu__kiri">
-                  <input type="radio" name="metode_bayar" value="QRIS" checked>
-                  <div>
-                    <div class="opsi-bayar-kartu__nama">QRIS Dinamis (Semua E-Wallet &amp; Mobile Banking)</div>
-                    <div style="font-size: 0.8rem; color: var(--warna-teks-redup);">BCA, Mandiri, BRI, BNI, GoPay, OVO, Dana, ShopeePay</div>
-                  </div>
-                </div>
-                <span class="opsi-bayar-kartu__badge">Instan</span>
-              </label>
-
-              <!-- BCA Virtual Account -->
-              <label class="opsi-bayar-kartu">
-                <div class="opsi-bayar-kartu__kiri">
-                  <input type="radio" name="metode_bayar" value="BCA-VA">
-                  <div>
-                    <div class="opsi-bayar-kartu__nama">BCA Virtual Account</div>
-                    <div style="font-size: 0.8rem; color: var(--warna-teks-redup);">Verifikasi otomatis 24 jam</div>
-                  </div>
-                </div>
-                <span class="opsi-bayar-kartu__badge">Otomatis</span>
-              </label>
-
-              <!-- COD -->
-              <label class="opsi-bayar-kartu">
-                <div class="opsi-bayar-kartu__kiri">
-                  <input type="radio" name="metode_bayar" value="COD">
-                  <div>
-                    <div class="opsi-bayar-kartu__nama">Cash on Delivery (COD)</div>
-                    <div style="font-size: 0.8rem; color: var(--warna-teks-redup);">Bayar tunai ke kurir saat paket diterima</div>
-                  </div>
-                </div>
-                <span style="font-size: 0.75rem; color: var(--warna-teks-redup);">Verifikasi SMS</span>
-              </label>
-            </div>
-
-            <!-- COD Warning -->
-            <div class="cod-warning" id="cod-warning" style="display:none;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <span>Siapkan uang pas saat kurir tiba. COD hanya tersedia di wilayah tertentu.</span>
-            </div>
-
-            <!-- QRIS Interactive Preview Box -->
-            <div class="qris-display-box aktif" id="qris-preview-box">
-              <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem;">Pindai QRIS untuk Menyelesaikan Pesanan</h3>
-              <!-- Simulasi SVG QR Code CRSL -->
-              <svg class="qris-qrcode" viewBox="0 0 100 100" fill="#000000">
-                <rect width="100" height="100" fill="#ffffff"/>
-                <!-- Corner 1 -->
-                <rect x="10" y="10" width="25" height="25" fill="#000000"/>
-                <rect x="15" y="15" width="15" height="15" fill="#ffffff"/>
-                <rect x="18" y="18" width="9" height="9" fill="#e52027"/>
-                <!-- Corner 2 -->
-                <rect x="65" y="10" width="25" height="25" fill="#000000"/>
-                <rect x="70" y="15" width="15" height="15" fill="#ffffff"/>
-                <rect x="73" y="18" width="9" height="9" fill="#e52027"/>
-                <!-- Corner 3 -->
-                <rect x="10" y="65" width="25" height="25" fill="#000000"/>
-                <rect x="15" y="70" width="15" height="15" fill="#ffffff"/>
-                <rect x="18" y="73" width="9" height="9" fill="#e52027"/>
-                <!-- Pixel Pattern -->
-                <rect x="42" y="12" width="6" height="6"/>
-                <rect x="52" y="18" width="6" height="6"/>
-                <rect x="42" y="28" width="6" height="6"/>
-                <rect x="48" y="38" width="10" height="10" fill="#e52027"/>
-                <rect x="65" y="45" width="6" height="6"/>
-                <rect x="75" y="55" width="6" height="6"/>
-                <rect x="40" y="65" width="6" height="6"/>
-                <rect x="50" y="75" width="6" height="6"/>
-                <rect x="65" y="80" width="6" height="6"/>
+            <div class="checkout-card-interaktif__kanan">
+              <span class="checkout-card-interaktif__harga" id="tampil-kurir-biaya">Rp 16,000</span>
+              <svg class="checkout-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="9 18 15 12 9 6"/>
               </svg>
-              <div class="qris-timer" id="qris-countdown">Waktu tersisa: 14:59</div>
-              <p style="font-size: 0.8rem; color: var(--warna-teks-redup); margin-top: 0.25rem;">
-                Mendukung BCA Mobile, Livin by Mandiri, GoPay, OVO, Dana, ShopeePay
-              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. Payment Method -->
+        <section class="checkout-seksi" aria-labelledby="judul-bayar">
+          <h2 id="judul-bayar" class="checkout-seksi__judul">Payment Method</h2>
+
+          <div class="checkout-card-interaktif" id="btn-buka-modal-bayar" role="button" tabindex="0" aria-label="Pilih metode pembayaran">
+            <div class="checkout-card-interaktif__kiri">
+              <img src="/aset/ikon/pembayaran-qris.svg" alt="QRIS" class="checkout-card-interaktif__logo" id="tampil-bayar-logo" width="75" height="26">
+              <div class="checkout-card-interaktif__info">
+                <div class="checkout-card-interaktif__nama" id="tampil-bayar-nama">QRIS</div>
+              </div>
+            </div>
+            <div class="checkout-card-interaktif__kanan">
+              <span class="checkout-card-interaktif__status" id="tampil-bayar-status">Instant</span>
+              <svg class="checkout-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ================= KOLOM KANAN ================= -->
+      <div class="checkout-kolom-kanan">
+
+        <div class="checkout-ringkasan-box">
+          <!-- Daftar Produk Pesanan -->
+          <div class="checkout-item-list" id="checkout-item-list">
+            <!-- Dinamis dirender dari localStorage / state -->
+          </div>
+
+          <!-- Opsi Tambahan -->
+          <div class="checkout-opsi-list">
+            <div class="checkout-opsi-row" id="btn-buka-catatan" role="button" tabindex="0">
+              <span>Leave a message for delivery (Optional)</span>
+              <svg class="checkout-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </div>
+            <div id="checkout-catatan-input-wrap" style="display:none; padding: 0 0.5rem 0.5rem;">
+              <input type="text" id="checkout-catatan-pengiriman" class="checkout-input-text" placeholder="Contoh: Titipkan di pos satpam jika tidak ada orang di rumah.">
             </div>
 
-            <div class="checkout-tombol-navigasi">
-              <button type="button" id="btn-kembali-step-2" class="btn-checkout-kembali-step">Kembali</button>
-              <button type="button" id="btn-bayar-sekarang" class="btn-checkout-lanjut">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
-                <span id="btn-bayar-label">Bayar Sekarang</span>
-              </button>
+            <div class="checkout-opsi-row" id="btn-buka-voucher" role="button" tabindex="0">
+              <div class="checkout-opsi-row__kiri">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>
+                </svg>
+                <span id="tampil-voucher-terpasang">Vouchers</span>
+              </div>
+              <svg class="checkout-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </div>
+            <div id="checkout-voucher-input-wrap" style="display:none; padding: 0 0.5rem 0.75rem; gap: 6px;">
+              <div style="display:flex; gap:6px;">
+                <input type="text" id="input-kode-voucher" class="checkout-input-text" placeholder="Ketik kode kupon (contoh: NEWADOPTER10)">
+                <button type="button" id="btn-apply-voucher" class="checkout-btn-voucher-apply">Apply</button>
+              </div>
+              <div id="pesan-feedback-voucher" style="font-size: 12px; margin-top: 4px; display: none;"></div>
             </div>
 
-            <p class="checkout-legal-notice" data-i18n="checkout.setuju_syarat">
-              Dengan melanjutkan, Anda menyetujui Syarat &amp; Ketentuan Transaksi serta Kebijakan Privasi resmi CRSL.
-            </p>
-          </section>
+            <label class="checkout-opsi-row checkout-opsi-row--loyalty">
+              <span>Use Loyalty Point (P 0)</span>
+              <input type="checkbox" id="checkout-use-points" class="checkout-checkbox" disabled>
+            </label>
+          </div>
+
+          <!-- Rincian Biaya Transparan -->
+          <div class="checkout-rincian-biaya">
+            <div class="checkout-rincian-baris">
+              <span id="label-subtotal-items">Subtotal &bull; 1 items</span>
+              <span class="checkout-rincian-val" id="val-subtotal">Rp 199.000</span>
+            </div>
+            <div class="checkout-rincian-baris checkout-rincian-baris--diskon">
+              <span>Product Discount</span>
+              <span class="checkout-rincian-val" id="val-diskon-produk">-Rp 19.900</span>
+            </div>
+            <div class="checkout-rincian-baris">
+              <span id="label-shipping-berat">Shipping &bull; 0.5kg</span>
+              <span class="checkout-rincian-val" id="val-ongkir">Rp 16.000</span>
+            </div>
+            <div class="checkout-rincian-sub">
+              Shipping might be charged by volumetric weight, based on parcel size rather than actual weight.
+            </div>
+            <div class="checkout-rincian-baris" id="baris-asuransi">
+              <span>Shipment Insurance Fee</span>
+              <span class="checkout-rincian-val" id="val-asuransi">Rp 2.500</span>
+            </div>
+
+            <div class="checkout-rincian-total">
+              <span class="checkout-total-label">Total Payment</span>
+              <span class="checkout-total-val" id="val-total-bayar">Rp 197.600</span>
+            </div>
+          </div>
+
+          <!-- Tombol Bayar Sekarang -->
+          <button type="button" class="checkout-btn-bayar" id="btn-proses-pesanan">
+            Bayar Sekarang
+          </button>
+
+          <!-- Security note -->
+          <div class="checkout-security-note">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <span>Secure Payment | Your payment is encrypted.</span>
+          </div>
+
         </div>
 
-        <!-- Panel Ringkasan Pembayaran Kanan -->
-        <aside class="checkout-ringkasan">
-          <h3 class="checkout-ringkasan__judul" data-i18n="checkout.ringkasan">Ringkasan Pesanan</h3>
-
-          <div class="checkout-daftar-item" id="checkout-daftar-item">
-            <!-- Diisi otomatis dari data keranjang -->
-          </div>
-
-          <div class="checkout-kalkulasi">
-            <div class="checkout-kalkulasi__baris checkout-kalkulasi__baris--info" id="baris-berat">
-              <span>Berat Total</span>
-              <span id="kalkulasi-berat">0 gram</span>
-            </div>
-            <div class="checkout-kalkulasi__baris">
-              <span data-i18n="checkout.subtotal">Subtotal Produk</span>
-              <span id="kalkulasi-subtotal">Rp 0</span>
-            </div>
-            <div class="checkout-kalkulasi__baris" id="baris-diskon" style="display:none;">
-              <span id="kalkulasi-diskon-label">Diskon Voucher</span>
-              <span id="kalkulasi-diskon" style="color: var(--warna-sukses, #10b981);">-Rp 0</span>
-            </div>
-            <div class="checkout-kalkulasi__baris">
-              <span data-i18n="checkout.ongkir">Ongkos Kirim (<span id="kalkulasi-kurir-label">JNE Reguler</span>)</span>
-              <span id="kalkulasi-ongkir">Rp 18.000</span>
-            </div>
-            <div class="checkout-kalkulasi__baris">
-              <span>Asuransi &amp; Biaya Layanan</span>
-              <span id="kalkulasi-layanan">Rp 3.000</span>
-            </div>
-            <div class="checkout-kalkulasi__baris" id="baris-estimasi">
-              <span>Estimasi Tiba</span>
-              <span id="kalkulasi-estimasi" style="font-size: 0.8rem;">-</span>
-            </div>
-            <div class="checkout-kalkulasi__baris checkout-kalkulasi__baris--total">
-              <span data-i18n="checkout.total">Total Tagihan</span>
-              <span id="kalkulasi-total">Rp 0</span>
-            </div>
-          </div>
-
-          <div style="font-size: 0.8rem; color: var(--warna-teks-redup); text-align: center; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
-            <span>🛡️</span>
-            <span>Jaminan 100% Produk Asli CRSL Animals as your Bestfriends!</span>
-          </div>
-        </aside>
       </div>
+
     </div>
   </main>
 
-  <!-- Modal Otentikasi Instan -->
-  <?php require_once PUBLIK_DIR . '/komponen/modal-otentikasi.php'; ?>
+  <!-- =======================================================
+       MODAL 1: SELECT DELIVERY INFORMATION (Screenshot 3)
+       ======================================================= -->
+  <div class="checkout-modal-overlay" id="modal-select-address-overlay" aria-hidden="true" style="display:none;">
+    <div class="checkout-modal-card" role="dialog" aria-modal="true" aria-labelledby="judul-modal-select-address">
+      <div class="checkout-modal-header">
+        <h3 id="judul-modal-select-address" class="checkout-modal-title">Select Delivery Information</h3>
+        <button type="button" class="checkout-modal-close" id="btn-tutup-modal-select-address" aria-label="Tutup modal">&times;</button>
+      </div>
+      <div class="checkout-modal-body">
+        <div class="checkout-alamat-list-pilihan" id="container-daftar-alamat-tersimpan">
+          <!-- Dinamis di-render oleh checkout.js -->
+        </div>
+        <div style="margin-top: 1.25rem; display: flex; justify-content: flex-end;">
+          <button type="button" class="checkout-btn-add-new-address" id="btn-buka-modal-tambah-alamat">
+            + Add New
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <!-- Modal Simulator Pembayaran QRIS / VA -->
-  <div class="modal-overlay" id="modal-simulator-bayar" aria-hidden="true" style="display: none;">
-    <div class="modal-wadah modal-wadah--sedang" style="text-align: center; padding: 2rem; max-width: 440px; margin: auto;">
-      <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">📱</div>
-      <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;" id="simulasi-judul">Menunggu Pembayaran QRIS</h3>
-      <p style="font-size: 0.85rem; color: var(--warna-teks-redup); margin-bottom: 1rem;" id="simulasi-instruksi">
-        Pindai kode QR menggunakan aplikasi e-wallet atau mobile banking apa pun.
-      </p>
-      <div style="display: inline-block; padding: 1rem; background: #ffffff; border-radius: var(--radius-lg); border: 1px solid var(--warna-batas); margin-bottom: 1rem;">
-        <svg width="180" height="180" viewBox="0 0 100 100" fill="none" style="display: block;">
-          <rect width="100" height="100" fill="#ffffff"/>
-          <path d="M10 10h30v30h-30z M60 10h30v30h-30z M10 60h30v30h-30z" fill="#000000"/>
-          <path d="M16 16h18v18h-18z M66 16h18v18h-18z M16 66h18v18h-18z" fill="#ffffff"/>
-          <path d="M22 22h6v6h-6z M72 22h6v6h-6z M22 72h6v6h-6z" fill="#000000"/>
-          <path d="M45 10h10v10h-10z M45 25h10v10h-10z M45 40h10v10h-10z M10 45h35v10h-35z M60 45h30v10h-30z M45 60h10v30h-10z M60 60h10v15h-10z M75 60h15v10h-15z M60 80h30v10h-30z" fill="#000000"/>
-        </svg>
+  <!-- =======================================================
+       MODAL 2: EDIT / TAMBAH DELIVERY INFORMATION (Screenshot 4)
+       ======================================================= -->
+  <div class="checkout-modal-overlay" id="modal-edit-address-overlay" aria-hidden="true" style="display:none;">
+    <div class="checkout-modal-card checkout-modal-card--form" role="dialog" aria-modal="true" aria-labelledby="judul-modal-edit-address">
+      <div class="checkout-modal-header">
+        <h3 id="judul-modal-edit-address" class="checkout-modal-title">Edit Delivery Information</h3>
+        <button type="button" class="checkout-modal-close" id="btn-tutup-modal-edit-address" aria-label="Tutup modal">&times;</button>
       </div>
-      <div style="font-weight: 700; font-size: 1.15rem; color: var(--warna-primer); margin-bottom: 0.25rem;" id="simulasi-total">
-        Rp 0
+      <form id="form-edit-alamat" class="checkout-modal-body checkout-form-alamat">
+        <div class="checkout-field-group">
+          <label for="input-alamat-email">Email*</label>
+          <input type="email" id="input-alamat-email" class="checkout-input-text" required value="abdulmusic543@gmail.com">
+          <span class="checkout-field-hint">We will send your order detail to your email</span>
+        </div>
+
+        <div class="checkout-field-group">
+          <label for="input-alamat-nama">Recipient Full Name</label>
+          <input type="text" id="input-alamat-nama" class="checkout-input-text" required value="abdul music">
+        </div>
+
+        <div class="checkout-field-group">
+          <label for="input-alamat-telepon">Recipient Phone Number</label>
+          <input type="tel" id="input-alamat-telepon" class="checkout-input-text" required value="08567060477">
+        </div>
+
+        <div class="checkout-field-group">
+          <label for="input-alamat-negara">Country</label>
+          <select id="input-alamat-negara" class="checkout-input-select">
+            <option value="Indonesia" selected>Indonesia</option>
+          </select>
+        </div>
+
+        <div class="checkout-field-group">
+          <label for="input-alamat-kota">Sub-district, District, City</label>
+          <div class="checkout-input-icon-wrap">
+            <input type="text" id="input-alamat-kota" class="checkout-input-text" required value="Johar Baru, Jakarta Pusat, DKI Jakarta">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="checkout-input-icon">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="checkout-field-group">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label for="input-alamat-detail">Address Details</label>
+            <span class="checkout-char-counter" id="alamat-char-count">21 / 250</span>
+          </div>
+          <textarea id="input-alamat-detail" class="checkout-input-textarea" rows="3" maxlength="250" required>johar baru johar baru</textarea>
+        </div>
+
+        <div class="checkout-form-actions">
+          <button type="button" class="checkout-btn-batal" id="btn-batal-edit-alamat">Cancel</button>
+          <button type="submit" class="checkout-btn-simpan">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =======================================================
+       MODAL 3: SHIPMENT METHOD (Screenshot 5)
+       ======================================================= -->
+  <div class="checkout-modal-overlay" id="modal-shipment-overlay" aria-hidden="true" style="display:none;">
+    <div class="checkout-modal-card" role="dialog" aria-modal="true" aria-labelledby="judul-modal-shipment">
+      <div class="checkout-modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="checkout-modal-back-btn" id="btn-kembali-modal-shipment" aria-label="Kembali">&larr;</button>
+          <h3 id="judul-modal-shipment" class="checkout-modal-title">Shipment Method</h3>
+        </div>
+        <button type="button" class="checkout-modal-close" id="btn-tutup-modal-shipment" aria-label="Tutup modal">&times;</button>
       </div>
-      <div style="font-size: 0.85rem; color: var(--warna-peringatan); font-weight: 600; margin-bottom: 1.5rem;" id="simulasi-timer">
-        Waktu tersisa: 14:59
-      </div>
-      <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-        <button type="button" id="btn-simulasi-sukses" class="checkout-step__tombol checkout-step__tombol--utama" style="width: 100%;">
-          Simulasi Pembayaran Berhasil
-        </button>
-        <button type="button" id="btn-tutup-simulasi" class="checkout-step__tombol" style="width: 100%; background: transparent; border: 1px solid var(--warna-batas); color: var(--warna-teks-redup);">
-          Bayar Nanti (Buka Faktur)
+      <div class="checkout-modal-body">
+        <p class="checkout-modal-subtitle">Recommended for you!</p>
+
+        <div class="checkout-opsi-kurir-group">
+          <!-- Opsi 1: JNE Reguler -->
+          <label class="checkout-radio-kurir-card" for="radio-kurir-reguler">
+            <div class="checkout-radio-kurir-kiri">
+              <input type="radio" name="pilihan_kurir" id="radio-kurir-reguler" value="jne_reg" checked>
+              <img src="/aset/ikon/kurir-jne.svg" alt="JNE" width="65" height="24">
+              <div>
+                <div class="checkout-kurir-nama-baris">
+                  <strong>JNE</strong>
+                  <span class="checkout-kurir-badge-chip">Cheapest</span>
+                </div>
+                <div class="checkout-kurir-estimasi-teks">Reguler (2 - 3 days)</div>
+              </div>
+            </div>
+            <div class="checkout-radio-kurir-kanan">
+              <strong>Rp 16,000</strong>
+            </div>
+          </label>
+          <div class="checkout-asuransi-subbox">
+            <label class="checkout-asuransi-label">
+              <input type="checkbox" id="checkbox-asuransi-pengiriman" checked>
+              <span>100% refund insurance <strong style="color:#e52027;">+Rp 2,500</strong></span>
+            </label>
+            <p class="checkout-asuransi-ket">Without insurance, loss refunds are limited to 10x shipping fee.</p>
+          </div>
+
+          <!-- Opsi 2: JNE YES -->
+          <label class="checkout-radio-kurir-card" for="radio-kurir-yes" style="margin-top: 1rem;">
+            <div class="checkout-radio-kurir-kiri">
+              <input type="radio" name="pilihan_kurir" id="radio-kurir-yes" value="jne_yes">
+              <img src="/aset/ikon/kurir-jne.svg" alt="JNE" width="65" height="24">
+              <div>
+                <div class="checkout-kurir-nama-baris">
+                  <strong>JNE</strong>
+                  <span class="checkout-kurir-badge-chip">Fastest</span>
+                </div>
+                <div class="checkout-kurir-estimasi-teks">YES (Yakin Esok Sampai) (1 days)</div>
+              </div>
+            </div>
+            <div class="checkout-radio-kurir-kanan">
+              <strong>Rp 39,000</strong>
+            </div>
+          </label>
+        </div>
+
+        <button type="button" class="checkout-btn-konfirmasi" id="btn-konfirmasi-kurir">
+          Confirm
         </button>
       </div>
     </div>
   </div>
 
-  <!-- JS -->
+  <!-- =======================================================
+       MODAL 4: PAYMENT METHOD SELECTOR
+       ======================================================= -->
+  <div class="checkout-modal-overlay" id="modal-payment-overlay" aria-hidden="true" style="display:none;">
+    <div class="checkout-modal-card" role="dialog" aria-modal="true" aria-labelledby="judul-modal-payment">
+      <div class="checkout-modal-header">
+        <h3 id="judul-modal-payment" class="checkout-modal-title">Select Payment Method</h3>
+        <button type="button" class="checkout-modal-close" id="btn-tutup-modal-payment" aria-label="Tutup modal">&times;</button>
+      </div>
+      <div class="checkout-modal-body">
+        <div class="checkout-pembayaran-list">
+          <label class="checkout-radio-metode-card">
+            <input type="radio" name="pilihan_metode_bayar" value="qris" checked>
+            <img src="/aset/ikon/pembayaran-qris.svg" alt="QRIS" width="70" height="24">
+            <div>
+              <div class="checkout-metode-nama">QRIS (Semua E-Wallet &amp; Mobile Banking)</div>
+              <div class="checkout-metode-sub">Verifikasi Otomatis Instan</div>
+            </div>
+          </label>
+
+          <label class="checkout-radio-metode-card">
+            <input type="radio" name="pilihan_metode_bayar" value="bca">
+            <img src="/aset/ikon/pembayaran-bca.svg" alt="BCA" width="70" height="24">
+            <div>
+              <div class="checkout-metode-nama">BCA Virtual Account</div>
+              <div class="checkout-metode-sub">Bayar dari m-BCA / KlikBCA</div>
+            </div>
+          </label>
+
+          <label class="checkout-radio-metode-card">
+            <input type="radio" name="pilihan_metode_bayar" value="mandiri">
+            <img src="/aset/ikon/pembayaran-mandiri.svg" alt="Mandiri" width="70" height="24">
+            <div>
+              <div class="checkout-metode-nama">Mandiri Virtual Account</div>
+              <div class="checkout-metode-sub">Bayar via Livin' by Mandiri</div>
+            </div>
+          </label>
+
+          <label class="checkout-radio-metode-card">
+            <input type="radio" name="pilihan_metode_bayar" value="gopay">
+            <img src="/aset/ikon/pembayaran-gopay.svg" alt="GoPay" width="70" height="24">
+            <div>
+              <div class="checkout-metode-nama">GoPay</div>
+              <div class="checkout-metode-sub">Scan QR GoPay / Pembayaran Aplikasi</div>
+            </div>
+          </label>
+
+          <label class="checkout-radio-metode-card">
+            <input type="radio" name="pilihan_metode_bayar" value="cod">
+            <div style="font-weight:900; color:#e52027; width:70px; text-align:center;">COD</div>
+            <div>
+              <div class="checkout-metode-nama">Cash on Delivery (Bayar di Tempat)</div>
+              <div class="checkout-metode-sub">Bayar tunai ke kurir saat barang tiba</div>
+            </div>
+          </label>
+        </div>
+
+        <button type="button" class="checkout-btn-konfirmasi" id="btn-konfirmasi-payment">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <?php require_once PUBLIK_DIR . '/komponen/footer.php'; ?>
+
+  <!-- Scripts -->
   <script src="/js/utilitas/i18n.js"></script>
-  <script src="/js/komponen/navigasi.js"></script>
-  <script src="/js/komponen/otentikasi.js"></script>
+  <script src="/js/komponen/keranjang.js"></script>
   <script src="/js/halaman/checkout.js"></script>
 </body>
 </html>

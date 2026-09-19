@@ -28,13 +28,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnQuick = e.target.closest('[data-aksi="quick-cart"]');
     if (btnQuick && typeof Keranjang !== 'undefined') {
       e.preventDefault();
+      let varianList = ['CHILO PINK', 'CHOCO BROWN'];
+      if (btnQuick.dataset.varian) {
+        try {
+          varianList = JSON.parse(btnQuick.dataset.varian);
+        } catch {
+          varianList = [btnQuick.dataset.varian];
+        }
+      }
+
       const produk = {
         id: btnQuick.dataset.id || 'crsl-product',
         nama: btnQuick.dataset.nama || 'CRSL Merchandise',
         harga: parseInt(btnQuick.dataset.harga, 10) || 179100,
         hargaCoret: parseInt(btnQuick.dataset.hargaCoret, 10) || 199000,
         gambar: btnQuick.dataset.gambar || '/aset/gambar/cassie-wallet.webp',
-        varianPilihan: ['CHILO PINK', 'CHOCO BROWN']
+        varianPilihan: varianList
       };
       Keranjang.bukaAddCart(produk);
     }

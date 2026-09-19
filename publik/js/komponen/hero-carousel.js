@@ -19,8 +19,10 @@ const HeroCarousel = {
   isInteracting: false,
   touchStartX: 0,
   touchEndX: 0,
+  initialized: false,
 
   init() {
+    if (this.initialized) return;
     this.container = document.querySelector('.hero');
     if (!this.container) return;
 
@@ -29,6 +31,7 @@ const HeroCarousel = {
     this.dots = Array.from(this.container.querySelectorAll('.hero__dot'));
 
     if (this.slides.length === 0) return;
+    this.initialized = true;
 
     // Pasang event listener tombol navigasi panah
     const btnKiri = this.container.querySelector('.hero__panah--kiri');

@@ -212,19 +212,28 @@ document.addEventListener('DOMContentLoaded', () => {
       isBundle: true
     };
 
+    const STORAGE_KEY = 'crsl_keranjang';
+    let items = [];
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) items = JSON.parse(raw);
+    } catch {}
+
+    items.push(itemBundle);
+
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    } catch {}
+
     if (typeof Keranjang !== 'undefined') {
-      const items = Keranjang.ambilItems ? Keranjang.ambilItems() : [];
-      items.push(itemBundle);
       if (Keranjang.simpanItems) {
         Keranjang.simpanItems(items);
       }
       if (Keranjang.bukaCart) {
         Keranjang.bukaCart();
       }
-      tampilkanToast('Bundle berhasil dimasukkan ke keranjang!');
-    } else {
-      window.location.href = '/checkout';
     }
+    tampilkanToast('Bundle berhasil dimasukkan ke keranjang!');
   }
 
   ctaBtn?.addEventListener('click', tambahBundleKeKeranjang);

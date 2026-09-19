@@ -1,15 +1,16 @@
 # CRSL Merchandise Store - Panduan Agen
 
 ## Identitas Proyek
+
 - **Nama**: CRSL Merchandise Store
 - **Deskripsi**: Re-build website e-commerce merchandise CRSL dengan pendekatan mobile-first
 - **Tech Stack**: HTML5, CSS3, Vanilla JS, PHP 8.5, SQLite 3.50
-- **Referensi**: https://crsl-store.id/
+- **Referensi**: [crsl-store.id](https://crsl-store.id/)
 
 ## Konvensi Penamaan
 
 | Konteks | Konvensi | Contoh |
-|:---|:---|:---|
+| :--- | :--- | :--- |
 | File & folder | snake_case | `bilah_atas.css`, `menu_samping.js` |
 | CSS class | kebab-case | `.bilah-atas`, `.menu-samping__item` |
 | CSS custom property | kebab-case | `--warna-primer`, `--jarak-sm` |
@@ -20,12 +21,14 @@
 | i18n key | dot notation | `navigasi.beranda`, `akun.masuk` |
 
 ## Bahasa
+
 - Kode (nama variabel, komentar): **Bahasa Indonesia** untuk domain/bisnis, English untuk technical terms
 - UI text: **Bahasa Indonesia** sebagai primary, English secondary (i18n)
 - Commit message: **Bahasa Indonesia**
 
 ## Struktur Folder
-```
+
+```text
 publik/          -> Document root (CSS, JS, halaman PHP)
 src/             -> Backend logic (konfigurasi, basis-data, terjemahan)
 aset/            -> Aset statis (gambar, ikon SVG, font)
@@ -34,6 +37,7 @@ data/            -> SQLite database file
 ```
 
 ## Arsitektur Agen & Toolkit Modular (.agents/)
+
 Toolkit `everything-claude-code` telah diadaptasi penuh untuk Antigravity / Gemini CLI (`agy`):
 
 1. **Panduan Alur Kerja**: Baca [.agents/WORKFLOWS.md](file:///c:/Projects/merchandise-store/.agents/WORKFLOWS.md) untuk cheatsheet perintah operasional.
@@ -68,7 +72,9 @@ Toolkit `everything-claude-code` telah diadaptasi penuh untuk Antigravity / Gemi
 7. **Semua button/link harus fungsional** atau dihapus. Tidak ada dead controls.
 
 ## Antislop Checklist
+
 Sebelum deliver UI, pastikan:
+
 - [ ] Tidak ada em dash di text
 - [ ] Mobile responsive tanpa horizontal overflow
 - [ ] Semua nav item punya destinasi real
@@ -81,9 +87,11 @@ Sebelum deliver UI, pastikan:
 
 <!-- antislop:start -->
 ## antislop
+
 Mode Operasi Aktif: **Mode 1 (DURING pengerjaan)**
 Dials: **ENERGY 2 / RHYTHM 2 / MOTION 2**
 Untuk UI, copy, people, mobile layout, atau code comments, baca `antislop.md` (core) dan skill yang relevan:
+
 - UI / visual: `skills/antislop-ui/SKILL.md`
 - Copy & text: `skills/antislop-copywriting/SKILL.md`
 - People: `skills/antislop-human/SKILL.md`
@@ -91,6 +99,7 @@ Untuk UI, copy, people, mobile layout, atau code comments, baca `antislop.md` (c
 - Code comments: `skills/antislop-code/SKILL.md`
 
 ## Standar Keandalan Sistem & Database (/007)
+
 1. **SQLite Concurrency**: Selalu aktifkan `PRAGMA journal_mode = WAL;`, `PRAGMA synchronous = NORMAL;`, dan `PRAGMA busy_timeout = 5000;` pada koneksi PDO.
 2. **Memory Leaks**: Panggil `PengelolaDatabase::tutupKoneksi()` pada script CLI atau saat akhir lifecycle permintaan berat.
 3. **Asset & SEO Hygiene**: Semua aset wajib WebP/SVG lokal dengan penamaan kebab-case deskriptif, atribut `alt`, `width`, dan `height`. Tidak boleh ada dead assets (404).

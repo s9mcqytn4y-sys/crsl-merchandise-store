@@ -151,23 +151,70 @@ const ProdukDetail = (() => {
     }
 
     if (ukuranBtns.length > 0) {
-      const aktifUkuran = document.querySelector('.pdp__ukuran-kotak.aktif:not(.habis)');
+      const aktifUkuran = document.querySelector('.pdp__ukuran-kotak.aktif:not(.habis)') || document.querySelector('.pdp__ukuran-kotak:not(.habis)') || ukuranBtns[0];
       if (aktifUkuran) {
+        ukuranBtns.forEach(b => b.classList.remove('aktif'));
+        aktifUkuran.classList.add('aktif');
         ukuranTerpilih = aktifUkuran.dataset.ukuran;
         if (ukuranLabel) ukuranLabel.textContent = ukuranTerpilih;
       }
     }
 
+    function perbaruiKetersediaanUkuranBerdasarkanWarna() {
+      if (!warnaTerpilih || ukuranBtns.length === 0) return;
+
+      let adaUkuranTersedia = null;
+
+      ukuranBtns.forEach(btn => {
+        const u = btn.dataset.ukuran;
+        // Cari varian spesifik (warna + ukuran)
+        const varianKombinasi = varianList.find(v => {
+          const wMatch = (v.warna || v.nama_varian || '').toUpperCase() === warnaTerpilih.toUpperCase();
+          const uMatch = (v.ukuran || v.atribut_ukuran || '').toUpperCase() === u.toUpperCase();
+          return wMatch && uMatch;
+        });
+
+        const stokKombinasi = varianKombinasi ? parseInt(varianKombinasi.stok, 10) : 0;
+        if (stokKombinasi <= 0) {
+          btn.classList.add('habis');
+          btn.disabled = true;
+          btn.setAttribute('aria-disabled', 'true');
+        } else {
+          btn.classList.remove('habis');
+          btn.disabled = false;
+          btn.removeAttribute('aria-disabled');
+          if (!adaUkuranTersedia) {
+            adaUkuranTersedia = btn;
+          }
+        }
+      });
+
+      // Jika ukuran terpilih saat ini habis pada warna yang baru dipilih, alihkan ke ukuran yang tersedia
+      const ukuranSaatIniHabis = document.querySelector(`.pdp__ukuran-kotak.aktif.habis`);
+      if (ukuranSaatIniHabis && adaUkuranTersedia) {
+        ukuranBtns.forEach(b => {
+          b.classList.remove('aktif');
+          b.setAttribute('aria-checked', 'false');
+        });
+        adaUkuranTersedia.classList.add('aktif');
+        adaUkuranTersedia.setAttribute('aria-checked', 'true');
+        ukuranTerpilih = adaUkuranTersedia.dataset.ukuran;
+        if (ukuranLabel) ukuranLabel.textContent = ukuranTerpilih;
+      }
+    }
+
     function evaluasiKetersediaan() {
+      perbaruiKetersediaanUkuranBerdasarkanWarna();
+
       // Cari varian yang cocok di matriks
       let matched = varianList.find(v => {
-        const wMatch = !warnaTerpilih || (v.warna || v.nama_varian).toUpperCase() === warnaTerpilih.toUpperCase();
-        const uMatch = !ukuranTerpilih || (v.ukuran || v.atribut_ukuran).toUpperCase() === ukuranTerpilih.toUpperCase();
+        const wMatch = !warnaTerpilih || (v.warna || v.nama_varian || '').toUpperCase() === warnaTerpilih.toUpperCase();
+        const uMatch = !ukuranTerpilih || (v.ukuran || v.atribut_ukuran || '').toUpperCase() === (ukuranTerpilih || '').toUpperCase();
         return wMatch && uMatch;
       });
 
       if (!matched && varianList.length > 0) {
-        matched = varianList.find(v => (v.warna || v.nama_varian).toUpperCase() === (warnaTerpilih || '').toUpperCase()) || varianList[0];
+        matched = varianList.find(v => (v.warna || v.nama_varian || '').toUpperCase() === (warnaTerpilih || '').toUpperCase()) || varianList[0];
       }
 
       varianAktif = matched;
@@ -190,7 +237,8 @@ const ProdukDetail = (() => {
         }
       } else {
         if (stokKeterangan) {
-          stokKeterangan.textContent = '';
+          stokKeterangan.textContent = maxStok < 10 ? `Sisa ${maxStok} item!` : '';
+          stokKeterangan.style.color = '#e52027';
         }
         if (restockNotif) restockNotif.style.display = 'none';
         if (btnAddCart) {
@@ -996,16 +1044,32 @@ const ProdukDetail = (() => {
           Keranjang.simpanItems(existing);
         }
 
+        try {
+          localStorage.setItem('crsl_terakhir_dilihat_url', window.location.pathname);
+        } catch {}
+
         if (langsungCheckout) {
+          try {
+            localStorage.setItem('crsl_buy_now_item', JSON.stringify(itemBaru));
+          } catch {}
           window.location.href = '/checkout';
         } else {
+          tampilkanPdpToast('Produk berhasil ditambahkan ke keranjang!');
           if (Keranjang.bukaCart) {
             Keranjang.bukaCart();
           }
         }
       } else {
+        try {
+          localStorage.setItem('crsl_terakhir_dilihat_url', window.location.pathname);
+          if (langsungCheckout) {
+            localStorage.setItem('crsl_buy_now_item', JSON.stringify(itemBaru));
+          }
+        } catch {}
         if (langsungCheckout) {
           window.location.href = '/checkout';
+        } else {
+          tampilkanPdpToast('Produk berhasil ditambahkan ke keranjang!');
         }
       }
     }
@@ -1085,6 +1149,7 @@ const ProdukDetail = (() => {
 
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(riwayat));
+      localStorage.setItem('crsl_terakhir_dilihat_url', window.location.pathname);
     } catch {
       // Storage restricted
     }
