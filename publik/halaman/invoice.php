@@ -1,11 +1,44 @@
 <?php
 /**
  * CRSL Merchandise Store - Halaman Invoice Digital / Bukti Pembelian
- * Sesuai Standar UU ITE & PP PSTE Republik Indonesia
+ * Sesuai Standar UU ITE No. 11 Tahun 2008 & PP PSTE No. 71 Tahun 2019
  */
 
-$nomorPesanan = $pesananId ?? ('CRSL-ORD-' . date('Ymd') . '-8821');
+// Coba ambil pesanan dari DB berdasarkan nomor dari URL
+$nomorPesananUrl = $nomorPesanan ?? null;
+$pesananDb = null;
+
+if ($nomorPesananUrl) {
+    try {
+        require_once ROOT_DIR . '/src/basis-data/PengelolaDatabase.php';
+        require_once ROOT_DIR . '/src/pesanan/PengelolaPesanan.php';
+        $dbInv = CRSL\BasisData\PengelolaDatabase::dapatkanKoneksi();
+        $pengelolaInv = new CRSL\Pesanan\PengelolaPesanan($dbInv);
+        $pesananDb = $pengelolaInv->ambilDetailPesanan($nomorPesananUrl);
+    } catch (Exception $e) {
+        $pesananDb = null;
+    }
+}
+
+$nomorTampil  = $pesananDb['nomor_pesanan'] ?? $nomorPesananUrl ?? ('INV/CRSL/' . date('Ymd') . '/DEMO1');
+$totalDb      = $pesananDb['total'] ?? 0;
+$subtotalDb   = 0;
+$ongkirDb     = $pesananDb['ongkir'] ?? 0;
+$diskonDb     = $pesananDb['diskon'] ?? 0;
+$kodeVoucher  = $pesananDb['kode_voucher'] ?? null;
+$kurirDb      = $pesananDb['kurir'] ?? 'JNE Reguler';
+$metodeBayar  = $pesananDb['metode_bayar'] ?? 'QRIS';
+$alamatDb     = $pesananDb['alamat_kirim'] ?? '';
+$itemsDb      = $pesananDb['items'] ?? [];
+$waktuBayar   = $pesananDb['waktu_bayar'] ?? $pesananDb['dibuat_pada'] ?? date('Y-m-d H:i:s');
+$statusDb     = $pesananDb['status'] ?? 'belum_bayar';
+
+// Hitung subtotal dari items
+foreach ($itemsDb as $it) {
+    $subtotalDb += (int)($it['harga'] ?? 0) * (int)($it['jumlah'] ?? 1);
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="id" data-tema="terang">
 <head>
@@ -60,31 +93,42 @@ $nomorPesanan = $pesananId ?? ('CRSL-ORD-' . date('Ymd') . '-8821');
               Jl. Seturan Raya, Caturtunggal, Depok, Sleman, DI Yogyakarta 55281
             </p>
           </div>
-          <div class="invoice-header__title-box">
-            <h1 class="invoice-title">FAKTUR PENJUALAN</h1>
-            <div class="invoice-nomor" id="inv-nomor"><?= htmlspecialchars($nomorPesanan) ?></div>
-            <div style="font-size: 0.85rem; color: var(--warna-teks-redup); margin-top: 0.2rem;" id="inv-tanggal">
-              Tanggal: <?= date('d F Y') ?>
+      <div class="invoice-header__title-box">
+              <h1 class="invoice-title">FAKTUR PENJUALAN</h1>
+              <div class="invoice-nomor" id="inv-nomor"><?= htmlspecialchars($nomorTampil) ?></div>
+              <div style="font-size: 0.85rem; color: var(--warna-teks-redup); margin-top: 0.2rem;" id="inv-tanggal">
+                Tanggal: <?= date('d F Y', strtotime($waktuBayar)) ?>
+              </div>
+              <?php
+              $statusLabelMap = [
+                'belum_bayar'  => ['BELUM DIBAYAR', '#f59e0b'],
+                'akan_dikirim' => ['LUNAS / DIPROSES', '#10b981'],
+                'dikirim'      => ['DALAM PENGIRIMAN', '#8b5cf6'],
+                'selesai'      => ['SELESAI', '#10b981'],
+                'kedaluwarsa'  => ['KEDALUWARSA', '#ef4444'],
+                'dibatalkan'   => ['DIBATALKAN', '#9ca3af'],
+              ];
+              $sl = $statusLabelMap[$statusDb] ?? ['TERKONFIRMASI', '#10b981'];
+              ?>
+              <span class="invoice-badge-status" style="background: <?= $sl[1] ?>20; color: <?= $sl[1] ?>; border: 1px solid <?= $sl[1] ?>40;" id="inv-status"><?= $sl[0] ?></span>
             </div>
-            <span class="invoice-badge-status invoice-badge-status--lunas" id="inv-status">LUNAS / BERHASIL DIBUAT</span>
-          </div>
         </div>
 
         <!-- Info Pihak Terlibat -->
         <div class="invoice-parties">
           <div class="invoice-parties__box">
             <h4>Tujuan Pengiriman:</h4>
-            <div style="font-weight: 700;" id="inv-nama-penerima">Rina Anggraini</div>
-            <div id="inv-telepon">WhatsApp: 081234567890</div>
+            <div style="font-weight: 700;" id="inv-nama-penerima"><?= htmlspecialchars(explode('(', $alamatDb)[0] ?? 'Pelanggan') ?></div>
+            <div id="inv-telepon">WhatsApp: -</div>
             <div id="inv-alamat" style="color: var(--warna-teks-redup); margin-top: 0.25rem;">
-              Jl. Seturan Raya No. 88, Caturtunggal, Depok, Sleman, DI Yogyakarta 55281
+              <?= htmlspecialchars($alamatDb) ?>
             </div>
           </div>
           <div class="invoice-parties__box">
             <h4>Metode Pengiriman &amp; Pembayaran:</h4>
-            <div>Kurir: <strong id="inv-kurir">JNE Reguler (Estimasi 2-3 Hari)</strong></div>
-            <div>Metode: <strong id="inv-metode">QRIS Dinamis Standar Nasional</strong></div>
-            <div>Status Transaksi: <strong style="color: #10b981;">Terkonfirmasi Otomatis</strong></div>
+            <div>Kurir: <strong id="inv-kurir"><?= htmlspecialchars($kurirDb) ?></strong></div>
+            <div>Metode: <strong id="inv-metode"><?= htmlspecialchars($metodeBayar) ?></strong></div>
+            <div>Status: <strong style="color: <?= $sl[1] ?>;"><?= $sl[0] ?></strong></div>
           </div>
         </div>
 
@@ -100,44 +144,70 @@ $nomorPesanan = $pesananId ?? ('CRSL-ORD-' . date('Ymd') . '-8821');
             </tr>
           </thead>
           <tbody id="inv-tabel-body">
+            <?php if (!empty($itemsDb)): ?>
+              <?php foreach ($itemsDb as $idx => $it): ?>
+              <tr>
+                <td><?= $idx + 1 ?></td>
+                <td>
+                  <strong><?= htmlspecialchars($it['nama_produk'] ?? $it['nama'] ?? 'Produk CRSL') ?></strong><br>
+                  <span style="font-size: 0.75rem; color: var(--warna-teks-redup);">
+                    <?= htmlspecialchars($it['ukuran'] ?? $it['varian'] ?? '-') ?>
+                    <?= !empty($it['tipe']) && $it['tipe'] === 'pre_order' ? '<span style="color: #e52027; font-weight: 700;"> [Pre-Order]</span>' : '' ?>
+                  </span>
+                </td>
+                <td>Rp <?= number_format((int)($it['harga'] ?? 0), 0, ',', '.') ?></td>
+                <td style="text-align: center;"><?= (int)($it['jumlah'] ?? 1) ?></td>
+                <td>Rp <?= number_format((int)($it['harga'] ?? 0) * (int)($it['jumlah'] ?? 1), 0, ',', '.') ?></td>
+              </tr>
+              <?php endforeach; ?>
+            <?php else: ?>
             <tr>
               <td>1</td>
-              <td>
-                <strong>CRSL Cassie Wallet | Dompet Lipat Canvas Wanita</strong><br>
-                <span style="font-size: 0.75rem; color: var(--warna-teks-redup);">Varian: CHILO PINK</span>
-              </td>
+              <td><strong>CRSL Cassie Wallet | Dompet Lipat Canvas Wanita</strong><br><span style="font-size: 0.75rem; color: var(--warna-teks-redup);">Varian: CHILO PINK</span></td>
               <td>Rp 179.100</td>
               <td style="text-align: center;">1</td>
               <td>Rp 179.100</td>
             </tr>
+            <?php endif; ?>
           </tbody>
         </table>
 
-        <!-- Ringkasan Kalkulasi -->
         <div class="invoice-summary">
           <div class="invoice-summary__table">
             <div class="invoice-summary__row">
               <span>Subtotal Produk</span>
-              <span id="inv-subtotal">Rp 179.100</span>
+              <span id="inv-subtotal">Rp <?= number_format($subtotalDb, 0, ',', '.') ?></span>
             </div>
+            <?php if ($diskonDb > 0): ?>
+            <div class="invoice-summary__row" style="color: #059669;">
+              <span>Diskon<?= $kodeVoucher ? ' (' . htmlspecialchars($kodeVoucher) . ')' : '' ?></span>
+              <span id="inv-diskon">-Rp <?= number_format($diskonDb, 0, ',', '.') ?></span>
+            </div>
+            <?php endif; ?>
             <div class="invoice-summary__row">
-              <span>Ongkos Kirim</span>
-              <span id="inv-ongkir">Rp 18.000</span>
+              <span>Ongkos Kirim (<?= htmlspecialchars($kurirDb) ?>)</span>
+              <span id="inv-ongkir">Rp <?= number_format($ongkirDb, 0, ',', '.') ?></span>
             </div>
             <div class="invoice-summary__row">
               <span>Asuransi &amp; Biaya Layanan</span>
-              <span id="inv-layanan">Rp 3.000</span>
+              <span id="inv-layanan">Rp <?= number_format(max(0, $totalDb - $subtotalDb - $ongkirDb + $diskonDb), 0, ',', '.') ?></span>
             </div>
             <div class="invoice-summary__row invoice-summary__row--total">
               <span>Total Pembayaran</span>
-              <span id="inv-total">Rp 200.100</span>
+              <span id="inv-total">Rp <?= number_format($totalDb, 0, ',', '.') ?></span>
             </div>
           </div>
         </div>
 
-        <p style="font-size: 0.75rem; color: var(--warna-teks-redup); text-align: center; border-top: 1px dashed #e5e7eb; padding-top: 1rem;">
-          Faktur ini sah dan diproses secara otomatis oleh sistem komputer CRSL Store sesuai dengan ketentuan UU ITE &amp; PP No. 71 Tahun 2019. Simpan bukti faktur ini untuk klaim garansi produk resmi 30 hari.
-        </p>
+        <!-- Legal Notice -->
+        <div style="font-size: 0.75rem; color: var(--warna-teks-redup); border-top: 1px dashed #e5e7eb; padding-top: 1rem; margin-top: 1rem; line-height: 1.6;">
+          <p style="font-weight: 700; margin-bottom: 0.4rem;">Ketentuan Hukum &amp; Garansi</p>
+          <p>Faktur ini merupakan dokumen transaksi elektronik yang sah berdasarkan <strong>UU ITE No. 11 Tahun 2008</strong> dan perubahannya, serta <strong>PP No. 71 Tahun 2019 tentang Penyelenggaraan Sistem dan Transaksi Elektronik (PP PSTE)</strong>. Dokumen ini diterbitkan secara otomatis oleh sistem komputer CRSL Official Store dan memiliki kekuatan hukum yang setara dengan dokumen tertulis.</p>
+          <p style="margin-top: 0.5rem;"><strong>Garansi Produk:</strong> Garansi resmi berlaku 30 (tiga puluh) hari sejak tanggal penerimaan barang. Klaim garansi wajib disertai faktur ini sebagai bukti pembelian sah. Kerusakan akibat kesalahan pengguna tidak termasuk dalam cakupan garansi.</p>
+          <p style="margin-top: 0.5rem;"><strong>Kebijakan Pengembalian:</strong> Pengembalian barang (retur) dapat dilakukan dalam 3 hari kerja sejak barang diterima, dengan syarat barang dalam kondisi semula dan disertai kemasan asli. Biaya pengiriman retur menjadi tanggung jawab pembeli kecuali terdapat cacat produksi.</p>
+          <p style="margin-top: 0.5rem;">Untuk informasi lebih lanjut, hubungi tim CS CRSL via WhatsApp: <strong>+62 812-2345-6789</strong> atau email: <strong>cs@crsl-store.id</strong></p>
+          <p style="margin-top: 0.5rem; opacity: 0.7;">Diterbitkan oleh sistem CRSL pada: <?= date('d F Y H:i', strtotime($waktuBayar)) ?> WIB &bull; ID Transaksi: <?= htmlspecialchars($nomorTampil) ?></p>
+        </div>
 
         <!-- Tombol Aksi -->
         <div class="invoice-actions">

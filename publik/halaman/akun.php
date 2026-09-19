@@ -1,9 +1,32 @@
+<?php
+/**
+ * CRSL Merchandise Store - Halaman Akun Pengguna
+ * Standar /antislop-ui, /antislop-layoutmobile, /baseline-ui, /007
+ */
+use CRSL\BasisData\PengelolaDatabase;
+
+$daftarVoucherAktif = [];
+$tierLoyalitasList = [];
+$namaUser = 'abdul music';
+
+try {
+    $db = PengelolaDatabase::dapatkanKoneksi();
+    $stmtVoucher = $db->query("SELECT * FROM voucher WHERE aktif = 1 ORDER BY id ASC");
+    $daftarVoucherAktif = $stmtVoucher->fetchAll(PDO::FETCH_ASSOC);
+
+    $stmtTiers = $db->query("SELECT * FROM tier_loyalitas ORDER BY urutan ASC");
+    $tierLoyalitasList = $stmtTiers->fetchAll(PDO::FETCH_ASSOC);
+} catch (\Exception $e) {
+    $daftarVoucherAktif = [];
+    $tierLoyalitasList = [];
+}
+?>
 <!DOCTYPE html>
 <html lang="id" data-tema="terang">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>My Account - CRSL</title>
+  <title>My Account - CRSL Official Store</title>
   <meta name="description" content="Kelola akun CRSL Anda. Lihat pesanan, wishlist, dan nikmati program loyalitas eksklusif.">
 
   <!-- CSS -->
@@ -156,18 +179,29 @@
           </div>
         </div>
 
-        <!-- Card My Vouchers -->
+        <!-- Card My Vouchers (Aktual Data dari Database) -->
         <div class="akun-summary-card">
           <div class="akun-summary-card__top">
             <h2 class="akun-summary-card__judul">My Vouchers</h2>
+            <span class="akun-summary-card__link" style="color: #10b981;"><?= count($daftarVoucherAktif) ?> Tersedia</span>
           </div>
-          <div class="akun-summary-card__body" style="justify-content: center; text-align: center; flex-direction: column; gap: 4px; padding-block: 6px;">
-            <svg width="34" height="24" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>
-              <line x1="12" y1="5" x2="12" y2="19" stroke-dasharray="2 2"/>
-            </svg>
-            <div class="akun-summary-card__status" style="font-size: 13.5px; color: #4b5563;">No vouchers available</div>
-            <div class="akun-summary-card__sub" style="font-size: 11.5px;">You don't have any vouchers at the moment</div>
+          <div class="akun-summary-card__body" style="flex-direction: column; gap: 8px; align-items: stretch;">
+            <?php if (!empty($daftarVoucherAktif)): ?>
+              <?php foreach ($daftarVoucherAktif as $voc): ?>
+                <div style="display: flex; align-items: center; justify-content: space-between; background: #f9fafb; border: 1px dashed #d1d5db; border-radius: 8px; padding: 8px 12px;">
+                  <div style="display: flex; flex-direction: column;">
+                    <span style="font-size: 12.5px; font-weight: 700; color: #1f2937;"><?= htmlspecialchars($voc['judul']) ?></span>
+                    <span style="font-size: 11px; color: #6b7280;">Min. Belanja Rp <?= number_format($voc['min_belanja'], 0, ',', '.') ?> &bull; Kode: <strong><?= htmlspecialchars($voc['kode']) ?></strong></span>
+                  </div>
+                  <span style="background: #e52027; color: #fff; font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">Klaim</span>
+                </div>
+              <?php endforeach; ?>
+            <?php else: ?>
+              <div style="text-align: center; padding-block: 6px;">
+                <div class="akun-summary-card__status" style="font-size: 13.5px; color: #4b5563;">No vouchers available</div>
+                <div class="akun-summary-card__sub" style="font-size: 11.5px;">You don't have any vouchers at the moment</div>
+              </div>
+            <?php endif; ?>
           </div>
         </div>
 
@@ -193,17 +227,17 @@
             <a href="#cari-pesanan" class="akun-orders-find-link" onclick="const q=prompt('Masukkan Nomor Pesanan Anda:'); if(q){alert('Mencari pesanan: '+q);} return false;">Find your Orders</a>
             <select class="akun-orders-status-select" id="akun-orders-status-select" aria-label="Filter status pesanan">
               <option value="all">All status</option>
-              <option value="unpaid">Unpaid</option>
-              <option value="processing">Processing</option>
-              <option value="shipped">Shipped</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
+              <option value="unpaid">Unpaid (Belum Bayar)</option>
+              <option value="processing">Processing (Diproses)</option>
+              <option value="shipped">Shipped (Dikirim)</option>
+              <option value="completed">Completed (Selesai)</option>
+              <option value="cancelled">Cancelled (Dibatalkan)</option>
             </select>
           </div>
         </div>
 
-        <!-- Order items container rendered dynamically via akun.js -->
-        <div id="akun-orders-list"></div>
+        <!-- Order items container bounded scrollable via akun-bounded-list -->
+        <div id="akun-orders-list" class="akun-bounded-list"></div>
       </section>
 
       <!-- Tab Panel 2: Wishlist -->
@@ -215,7 +249,7 @@
           <div style="font-weight: 600; color: #374151; font-size: 15px; margin-bottom: 4px;">Your Wishlist is Empty</div>
           <div style="color: #9ca3af; font-size: 13px;">Explore our products and save your favorites here.</div>
         </div>
-        <div id="akun-daftar-wishlist"></div>
+        <div id="akun-daftar-wishlist" class="akun-bounded-list"></div>
       </section>
 
     </div>

@@ -129,19 +129,22 @@ document.addEventListener('DOMContentLoaded', () => {
       let statusColor = '#9ca3af';
       const st = (o.status || '').toLowerCase();
       if (st === 'dibatalkan' || st === 'cancelled') {
-        statusLabel = 'Cancelled';
+        statusLabel = 'Dibatalkan';
         statusColor = '#9ca3af';
+      } else if (st === 'kedaluwarsa') {
+        statusLabel = 'Kedaluwarsa';
+        statusColor = '#ef4444';
       } else if (st === 'selesai' || st === 'completed') {
-        statusLabel = 'Completed';
+        statusLabel = 'Selesai';
         statusColor = '#10b981';
       } else if (st === 'dikirim' || st === 'shipped') {
-        statusLabel = 'Shipped';
+        statusLabel = 'Dalam Pengiriman';
         statusColor = '#8b5cf6';
       } else if (st === 'diproses' || st === 'akan_dikirim' || st === 'processing') {
-        statusLabel = 'Processing';
+        statusLabel = 'Diproses';
         statusColor = '#3b82f6';
       } else if (st === 'belum_bayar' || st === 'unpaid') {
-        statusLabel = 'Unpaid';
+        statusLabel = 'Belum Bayar';
         statusColor = '#f59e0b';
       }
 
@@ -160,47 +163,81 @@ document.addEventListener('DOMContentLoaded', () => {
         }];
       }
 
-      const orderNumber = o.nomor_pesanan || o.id || 'TLKCWU004';
-      const totalAmount = o.total || 197600;
+      const orderNumber = o.nomor_pesanan || o.id || '-';
+      const totalAmount = o.total || 0;
+      const diskonAmount = o.diskon || 0;
       const totalItemsCount = items.reduce((sum, it) => sum + (it.jumlah || 1), 0);
 
       const itemsHtml = items.map(it => {
-        const imgUrl = it.gambar || it.url_gambar || '/aset/gambar/crsl-cassie-wallet-main.jpg';
+        const imgUrl = it.gambar || it.url_gambar || '/aset/gambar/bundle-miflo-cover.webp';
         const title = it.nama || it.nama_produk || 'Produk CRSL';
-        const variant = it.varian || it.ukuran || 'CHOCO BROWN';
-        const price = it.harga || 199000;
+        const variant = it.varian || it.ukuran || '-';
+        const price = it.harga || 0;
         const qty = it.jumlah || 1;
 
         return `
           <div class="akun-order-card__item">
-            <img src="${imgUrl}" alt="${title}" class="akun-order-card__img" onerror="this.src='/aset/gambar/bundle-miflo-cover.webp'">
+            <img src="${imgUrl}" alt="${title}" class="akun-order-card__img" onerror="this.src='/aset/gambar/bundle-miflo-cover.webp'" loading="lazy">
             <div class="akun-order-card__details">
               <div class="akun-order-card__title">${title}</div>
               <div class="akun-order-card__variant">${variant}</div>
             </div>
             <div class="akun-order-card__price-col">
               <div class="akun-order-card__price">Rp ${price.toLocaleString('id-ID')}</div>
-              <div class="akun-order-card__qty">x${qty}</div>
+              <div class="akun-order-card__qty">&times;${qty}</div>
             </div>
           </div>
         `;
       }).join('');
 
+      // Tombol aksi berdasarkan status
+      const isKedaluwarsa = st === 'kedaluwarsa';
+      const isBelumBayar  = st === 'belum_bayar' || st === 'unpaid';
+      const sudahBisaRetry = isKedaluwarsa && !(o.catatan || '').includes('[RETRY]');
+
+      const footerAksi = isBelumBayar
+        ? `<a href="/checkout" class="akun-order-card__btn akun-order-card__btn--bayar">Selesaikan Pembayaran</a>`
+        : isKedaluwarsa && sudahBisaRetry
+          ? `<button class="akun-order-card__btn akun-order-card__btn--retry" data-nomor="${orderNumber}">Bayar Ulang</button>`
+          : `<a href="/invoice/${encodeURIComponent(orderNumber)}" class="akun-order-card__btn">Lihat Invoice</a>`;
+
+      const diskonHtml = diskonAmount > 0
+        ? `<div class="akun-order-card__diskon">Hemat Rp ${diskonAmount.toLocaleString('id-ID')}</div>`
+        : '';
+
+      const kurirInfo = o.kurir ? ` &bull; ${o.kurir}` : '';
+      const resiInfo  = o.nomor_resi ? ` &bull; Resi: <strong>${o.nomor_resi}</strong>` : '';
+
+      card.dataset.nomor = orderNumber;
+      card.dataset.status = st;
+
       card.innerHTML = `
         <div class="akun-order-card__header">
-          <div class="akun-order-card__id">Order #${orderNumber}</div>
-          <div class="akun-order-card__status" style="color: ${statusColor};">${statusLabel}</div>
+          <div class="akun-order-card__id">${orderNumber}</div>
+          <div class="akun-order-card__status" style="color: ${statusColor}; font-weight: 700;">${statusLabel}</div>
         </div>
-        <div class="akun-order-card__date">${dateStr}</div>
+        <div class="akun-order-card__meta">${dateStr}${kurirInfo}${resiInfo}</div>
         ${itemsHtml}
         <div class="akun-order-card__footer">
-          <span>${totalItemsCount} items: </span>
-          <span class="akun-order-card__total">Rp ${totalAmount.toLocaleString('id-ID')}</span>
+          <div>
+            <span class="akun-order-card__total">Rp ${totalAmount.toLocaleString('id-ID')}</span>
+            <span class="akun-order-card__item-count">(${totalItemsCount} item)</span>
+            ${diskonHtml}
+          </div>
+          ${footerAksi}
         </div>
       `;
 
       ordersListEl.appendChild(card);
     });
+
+    // Bind retry buttons
+    ordersListEl.querySelectorAll('.akun-order-card__btn--retry').forEach(btn => {
+      btn.addEventListener('click', () => retryBayar(btn.dataset.nomor, btn));
+    });
+
+    // Start polling untuk pesanan belum_bayar
+    pollStatusPesanan();
   }
 
   statusSelectEl?.addEventListener('change', (e) => {
@@ -209,6 +246,84 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial load
   loadOrders('all');
+
+  // -------------------------
+  // Retry Bayar
+  // -------------------------
+  async function retryBayar(nomorPesanan, btn) {
+    if (!nomorPesanan) return;
+    const origText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Memproses...';
+
+    try {
+      const res = await fetch('/api/pesanan/retry-bayar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nomor_pesanan: nomorPesanan })
+      });
+      const data = await res.json();
+      if (data.sukses) {
+        // Update localStorage
+        const local = JSON.parse(localStorage.getItem('crsl_orders') || '[]');
+        const idx = local.findIndex(o => (o.nomor_pesanan || o.id) === nomorPesanan);
+        if (idx !== -1) {
+          local[idx].status = 'belum_bayar';
+          local[idx].waktu_kedaluwarsa = data.waktu_kedaluwarsa;
+          localStorage.setItem('crsl_orders', JSON.stringify(local));
+        }
+        // Redirect ke checkout untuk bayar ulang
+        window.location.href = '/checkout';
+      } else {
+        alert(data.pesan || 'Gagal memproses retry pembayaran.');
+        btn.disabled = false;
+        btn.textContent = origText;
+      }
+    } catch (e) {
+      alert('Koneksi bermasalah. Coba lagi.');
+      btn.disabled = false;
+      btn.textContent = origText;
+    }
+  }
+
+  // -------------------------
+  // Polling Status Pesanan Belum Bayar
+  // -------------------------
+  let pollingInterval = null;
+
+  function pollStatusPesanan() {
+    if (pollingInterval) clearInterval(pollingInterval);
+
+    const pendingCards = ordersListEl
+      ? Array.from(ordersListEl.querySelectorAll('[data-status="belum_bayar"]'))
+      : [];
+
+    if (pendingCards.length === 0) return;
+
+    pollingInterval = setInterval(async () => {
+      for (const card of pendingCards) {
+        const nomor = card.dataset.nomor;
+        if (!nomor) continue;
+        try {
+          const res = await fetch(`/api/pesanan/status/${encodeURIComponent(nomor)}`);
+          if (!res.ok) continue;
+          const data = await res.json();
+          if (!data.sukses) continue;
+
+          const newStatus = data.pesanan?.status || '';
+          if (newStatus !== 'belum_bayar') {
+            // Status berubah, reload orders list
+            clearInterval(pollingInterval);
+            const currentFilter = statusSelectEl?.value || 'all';
+            loadOrders(currentFilter);
+            break;
+          }
+        } catch (e) {
+          // silent fail
+        }
+      }
+    }, 15000); // poll every 15 seconds
+  }
 
   // 3. Wishlist renderer
   function renderWishlist() {

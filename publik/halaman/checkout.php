@@ -195,14 +195,27 @@
             </div>
 
             <!-- Asuransi Pengiriman -->
-            <div style="margin-top: 1.25rem; padding: 1rem; background: #ffffff; border: 1px solid rgba(0,0,0,0.08); border-radius: var(--radius-md);">
-              <label style="display: flex; align-items: flex-start; gap: 0.6rem; cursor: pointer;">
-                <input type="checkbox" id="check-asuransi" checked style="margin-top: 0.25rem;">
+            <div class="checkout-asuransi">
+              <label class="checkout-asuransi__label">
+                <input type="checkbox" id="check-asuransi" checked>
                 <div>
-                  <div style="font-weight: 700; font-size: 0.9rem;" data-i18n="checkout.asuransi">Asuransi Pengiriman (+Rp 2.000)</div>
-                  <div style="font-size: 0.8rem; color: var(--warna-teks-redup);" data-i18n="checkout.asuransi_info">Melindungi paket dari kerusakan atau kehilangan fisik selama perjalanan</div>
+                  <div class="checkout-asuransi__judul" data-i18n="checkout.asuransi">Asuransi Pengiriman (+Rp 2.000)</div>
+                  <div class="checkout-asuransi__info" data-i18n="checkout.asuransi_info">Melindungi paket dari kerusakan atau kehilangan fisik selama perjalanan</div>
                 </div>
               </label>
+            </div>
+
+            <!-- Input Kode Voucher -->
+            <div class="checkout-voucher" id="voucher-section">
+              <div class="checkout-voucher__judul">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+                <span>Kode Voucher / Diskon</span>
+              </div>
+              <div class="checkout-voucher__baris">
+                <input type="text" id="input-voucher" class="checkout-voucher__input" placeholder="Contoh: NEWADOPTER10" autocomplete="off" autocapitalize="characters">
+                <button type="button" id="btn-terapkan-voucher" class="checkout-voucher__tombol">Terapkan</button>
+              </div>
+              <div id="voucher-feedback" class="checkout-voucher__feedback" aria-live="polite"></div>
             </div>
 
             <div class="checkout-tombol-navigasi">
@@ -220,6 +233,16 @@
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
               Pilih Metode Pembayaran
             </h2>
+
+            <!-- Konfirmasi Alamat Ringkas -->
+            <div class="checkout-konfirmasi-alamat" id="konfirmasi-alamat-box">
+              <div class="checkout-konfirmasi-alamat__label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span>Dikirim ke</span>
+              </div>
+              <div class="checkout-konfirmasi-alamat__isi" id="konfirmasi-alamat-teks">-</div>
+              <a href="#checkout-step-1" id="ubah-alamat-link" class="checkout-konfirmasi-alamat__ubah">Ubah</a>
+            </div>
 
             <div class="opsi-bayar-grid" id="bayar-selector">
               <!-- QRIS Dinamis -->
@@ -257,6 +280,12 @@
                 </div>
                 <span style="font-size: 0.75rem; color: var(--warna-teks-redup);">Verifikasi SMS</span>
               </label>
+            </div>
+
+            <!-- COD Warning -->
+            <div class="cod-warning" id="cod-warning" style="display:none;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span>Siapkan uang pas saat kurir tiba. COD hanya tersedia di wilayah tertentu.</span>
             </div>
 
             <!-- QRIS Interactive Preview Box -->
@@ -317,9 +346,17 @@
           </div>
 
           <div class="checkout-kalkulasi">
+            <div class="checkout-kalkulasi__baris checkout-kalkulasi__baris--info" id="baris-berat">
+              <span>Berat Total</span>
+              <span id="kalkulasi-berat">0 gram</span>
+            </div>
             <div class="checkout-kalkulasi__baris">
               <span data-i18n="checkout.subtotal">Subtotal Produk</span>
               <span id="kalkulasi-subtotal">Rp 0</span>
+            </div>
+            <div class="checkout-kalkulasi__baris" id="baris-diskon" style="display:none;">
+              <span id="kalkulasi-diskon-label">Diskon Voucher</span>
+              <span id="kalkulasi-diskon" style="color: var(--warna-sukses, #10b981);">-Rp 0</span>
             </div>
             <div class="checkout-kalkulasi__baris">
               <span data-i18n="checkout.ongkir">Ongkos Kirim (<span id="kalkulasi-kurir-label">JNE Reguler</span>)</span>
@@ -328,6 +365,10 @@
             <div class="checkout-kalkulasi__baris">
               <span>Asuransi &amp; Biaya Layanan</span>
               <span id="kalkulasi-layanan">Rp 3.000</span>
+            </div>
+            <div class="checkout-kalkulasi__baris" id="baris-estimasi">
+              <span>Estimasi Tiba</span>
+              <span id="kalkulasi-estimasi" style="font-size: 0.8rem;">-</span>
             </div>
             <div class="checkout-kalkulasi__baris checkout-kalkulasi__baris--total">
               <span data-i18n="checkout.total">Total Tagihan</span>

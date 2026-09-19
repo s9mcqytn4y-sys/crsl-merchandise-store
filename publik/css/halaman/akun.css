@@ -412,8 +412,27 @@
   margin-left: 4px;
 }
 
+/* Bounded Scrollable Container untuk Orders & Wishlist (Fit-to-Screen) */
+.akun-bounded-list {
+  max-height: 460px;
+  overflow-y: auto;
+  -ms-overflow-style: none;
+  padding-right: 2px;
+  margin-bottom: var(--jarak-md);
+}
+
+@supports (scrollbar-width: none) {
+  .akun-bounded-list {
+    scrollbar-width: none;
+  }
+}
+
+.akun-bounded-list::-webkit-scrollbar {
+  display: none;
+}
+
 /* ==========================================================================
-   MODAL LOYALTY (Screenshot 4)
+   MODAL LOYALTY (Screenshot 4) - Zero Scrollbar Visible
    ========================================================================== */
 .modal-loyalty-overlay {
   position: fixed;
@@ -440,13 +459,39 @@
   border-radius: 20px;
   width: 100%;
   max-width: 460px;
-  max-height: 90vh;
+  max-height: 88vh;
   overflow-y: auto;
+  -ms-overflow-style: none;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   transform: scale(0.96);
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
+}
+
+@supports (scrollbar-width: none) {
+  .modal-loyalty-card {
+    scrollbar-width: none;
+  }
+}
+
+.modal-loyalty-card::-webkit-scrollbar {
+  display: none;
+}
+
+.modal-loyalty-body {
+  overflow-y: auto;
+  -ms-overflow-style: none;
+}
+
+@supports (scrollbar-width: none) {
+  .modal-loyalty-body {
+    scrollbar-width: none;
+  }
+}
+
+.modal-loyalty-body::-webkit-scrollbar {
+  display: none;
 }
 
 .modal-loyalty-overlay.aktif .modal-loyalty-card {
@@ -741,3 +786,90 @@
 .modal-terms-body p {
   margin: 0;
 }
+
+/* ==========================================================================
+   ORDER CARD - Update Lifecycle & Action Buttons
+   ========================================================================== */
+.akun-order-card__meta {
+  font-size: 12px;
+  color: var(--warna-teks-sekunder, #6b7280);
+  margin-bottom: 0.5rem;
+}
+
+.akun-order-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  margin-top: 0.75rem;
+}
+
+.akun-order-card__item-count {
+  font-size: 12px;
+  color: var(--warna-teks-sekunder, #9ca3af);
+  margin-left: 0.25rem;
+}
+
+.akun-order-card__diskon {
+  font-size: 11px;
+  font-weight: 600;
+  color: #059669;
+  background: rgba(16, 185, 129, 0.08);
+  padding: 0.15em 0.5em;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 0.2rem;
+}
+
+/* Tombol aksi pada order card */
+.akun-order-card__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm, 8px);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  border: 1.5px solid rgba(0, 0, 0, 0.15);
+  background: transparent;
+  color: var(--warna-teks, #1f2937);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  min-height: 36px;
+}
+
+.akun-order-card__btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.akun-order-card__btn--bayar {
+  background: var(--warna-primer, #e52027);
+  color: #ffffff;
+  border-color: var(--warna-primer, #e52027);
+}
+
+.akun-order-card__btn--bayar:hover {
+  opacity: 0.88;
+  background: var(--warna-primer, #e52027);
+}
+
+.akun-order-card__btn--retry {
+  background: #f59e0b;
+  color: #ffffff;
+  border-color: #f59e0b;
+}
+
+.akun-order-card__btn--retry:hover {
+  opacity: 0.88;
+}
+
+.akun-order-card__btn--retry:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+

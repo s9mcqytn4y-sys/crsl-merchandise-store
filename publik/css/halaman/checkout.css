@@ -479,12 +479,214 @@
   text-align: center;
 }
 
+/* ========================
+   Asuransi Section
+   ======================== */
+.checkout-asuransi {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  background: var(--warna-permukaan, #ffffff);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: var(--radius-md);
+}
+
+.checkout-asuransi__label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  cursor: pointer;
+}
+
+.checkout-asuransi__judul {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.checkout-asuransi__info {
+  font-size: 0.8rem;
+  color: var(--warna-teks-redup);
+}
+
+/* ========================
+   Voucher Input Section
+   ======================== */
+.checkout-voucher {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  background: var(--warna-permukaan, #ffffff);
+  border: 1.5px dashed rgba(229, 32, 39, 0.3);
+  border-radius: var(--radius-md);
+}
+
+.checkout-voucher__judul {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 700;
+  font-size: 0.88rem;
+  margin-bottom: 0.75rem;
+  color: var(--warna-primer);
+}
+
+.checkout-voucher__baris {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.checkout-voucher__input {
+  flex: 1;
+  padding: 0.6rem 0.85rem;
+  border: 1.5px solid rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-family: inherit;
+  background: var(--warna-latar, #fff);
+  color: var(--warna-teks);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: border-color 0.2s;
+}
+
+.checkout-voucher__input:focus {
+  outline: none;
+  border-color: var(--warna-primer);
+}
+
+.checkout-voucher__tombol {
+  padding: 0.6rem 1.1rem;
+  background: var(--warna-primer);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+  min-height: 44px;
+}
+
+.checkout-voucher__tombol:hover {
+  opacity: 0.88;
+}
+
+.checkout-voucher__tombol:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.checkout-voucher__feedback {
+  font-size: 0.82rem;
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-sm);
+  display: none;
+}
+
+.checkout-voucher__feedback--sukses {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.checkout-voucher__feedback--gagal {
+  background: rgba(229, 32, 39, 0.08);
+  color: var(--warna-primer);
+  border: 1px solid rgba(229, 32, 39, 0.2);
+}
+
+/* ========================
+   Konfirmasi Alamat (Step 3)
+   ======================== */
+.checkout-konfirmasi-alamat {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  background: rgba(229, 32, 39, 0.05);
+  border-radius: var(--radius-md);
+  margin-bottom: 1.25rem;
+  border: 1px solid rgba(229, 32, 39, 0.15);
+}
+
+.checkout-konfirmasi-alamat__label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--warna-primer);
+  white-space: nowrap;
+  padding-top: 0.1rem;
+}
+
+.checkout-konfirmasi-alamat__isi {
+  flex: 1;
+  font-size: 0.82rem;
+  color: var(--warna-teks);
+  line-height: 1.4;
+}
+
+.checkout-konfirmasi-alamat__ubah {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--warna-primer);
+  white-space: nowrap;
+  text-decoration: underline;
+  padding-top: 0.1rem;
+}
+
+/* ========================
+   COD Warning
+   ======================== */
+.cod-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  color: #92400e;
+  font-weight: 500;
+  margin-top: 0.75rem;
+}
+
+/* ========================
+   Ringkasan - Baris Info
+   ======================== */
+.checkout-kalkulasi__baris--info {
+  opacity: 0.7;
+  font-size: 0.82rem;
+}
+
+/* Badge Pre-Order di ringkasan */
+.badge-po {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15em 0.45em;
+  background: rgba(229, 32, 39, 0.1);
+  color: var(--warna-primer);
+  border-radius: 3px;
+  letter-spacing: 0.03em;
+  vertical-align: middle;
+  margin-left: 0.25rem;
+}
+
+.checkout-item-ringkas__po-info {
+  font-size: 0.73rem;
+  color: var(--warna-teks-redup);
+  margin-top: 0.1rem;
+}
+
 /* Responsif Mobile */
 @media (max-width: 900px) {
   .checkout-layout {
     grid-template-columns: 1fr;
   }
-  
+
   .checkout-ringkasan {
     position: static;
     order: -1;
@@ -493,5 +695,9 @@
   .form-grup-baris {
     grid-template-columns: 1fr;
     gap: 0;
+  }
+
+  .checkout-voucher__baris {
+    flex-direction: column;
   }
 }

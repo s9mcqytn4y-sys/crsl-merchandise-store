@@ -112,13 +112,14 @@ if (str_starts_with($uri, '/api/auth/')) {
 // Pesanan API routes
 if (str_starts_with($uri, '/api/pesanan/')) {
     header('Content-Type: application/json; charset=utf-8');
+    require_once ROOT_DIR . '/src/pesanan/PengelolaPesanan.php';
     $db = PengelolaDatabase::dapatkanKoneksi();
     $auth = new PengelolaOtentikasi($db);
     $pengelolaPesanan = new PengelolaPesanan($db);
 
     $user = $auth->getActiveUser();
     $rawInput = file_get_contents('php://input');
-    $data = json_decode($rawInput, true) ?: $_POST;
+    $data = json_decode($rawInput, true) ?: [];
 
     if ($uri === '/api/pesanan/buat') {
         if (!$user) {
@@ -133,10 +134,10 @@ if (str_starts_with($uri, '/api/pesanan/')) {
     }
 
     if ($uri === '/api/pesanan/daftar') {
-        $userId = $user ? (int)$user['id'] : 1;
+        $userId = $user ? (int)$user['id'] : 0;
+        if (!$userId) { http_response_code(401); echo json_encode(['sukses' => false, 'pesan' => 'Login diperlukan.']); exit; }
         $statusFilter = $_GET['status'] ?? null;
         $daftar = $pengelolaPesanan->ambilDaftarPesananPengguna($userId, $statusFilter);
-        http_response_code(200);
         echo json_encode(['sukses' => true, 'pesanan' => $daftar]);
         exit;
     }
@@ -149,7 +150,6 @@ if (str_starts_with($uri, '/api/pesanan/')) {
             echo json_encode(['sukses' => false, 'pesan' => 'Pesanan tidak ditemukan.']);
             exit;
         }
-        http_response_code(200);
         echo json_encode(['sukses' => true, 'pesanan' => $pesanan]);
         exit;
     }
@@ -159,6 +159,26 @@ if (str_starts_with($uri, '/api/pesanan/')) {
         $res = $pengelolaPesanan->updateStatusPesanan($nomor, 'akan_dikirim');
         http_response_code($res['status']);
         echo json_encode($res);
+        exit;
+    }
+
+    // Retry pembayaran untuk pesanan kedaluwarsa
+    if ($uri === '/api/pesanan/retry-bayar') {
+        if (!$user) { http_response_code(401); echo json_encode(['sukses' => false, 'pesan' => 'Login diperlukan.']); exit; }
+        $nomor = $data['nomor_pesanan'] ?? '';
+        $res = $pengelolaPesanan->retryBayar($nomor, (int)$user['id']);
+        http_response_code($res['status']);
+        echo json_encode($res);
+        exit;
+    }
+
+    // Polling status pesanan tunggal
+    if (preg_match('#^/api/pesanan/status/(.+)$#', $uri, $mPesanan)) {
+        if (!$user) { http_response_code(401); echo json_encode(['sukses' => false, 'pesan' => 'Login diperlukan.']); exit; }
+        $nomor = urldecode($mPesanan[1]);
+        $detail = $pengelolaPesanan->statusPesanan($nomor, (int)$user['id']);
+        if (!$detail) { http_response_code(404); echo json_encode(['sukses' => false, 'pesan' => 'Pesanan tidak ditemukan.']); exit; }
+        echo json_encode(['sukses' => true, 'pesanan' => $detail]);
         exit;
     }
 
@@ -236,15 +256,106 @@ if ($uri === '/api/pesan/kirim') {
 // Voucher & Loyalty API routes
 if (str_starts_with($uri, '/api/voucher/')) {
     header('Content-Type: application/json; charset=utf-8');
+    require_once ROOT_DIR . '/src/pesanan/PengelolaPesanan.php';
     $db = PengelolaDatabase::dapatkanKoneksi();
+    $auth = new PengelolaOtentikasi($db);
+    $user = $auth->getActiveUser();
+    $rawInput = file_get_contents('php://input');
+    $vData = json_decode($rawInput, true) ?: [];
+
     if ($uri === '/api/voucher/tersedia') {
-        $stmt = $db->query("SELECT * FROM voucher WHERE aktif = 1 ORDER BY id ASC");
+        $stmt = $db->query("SELECT id, kode, judul, tipe, nilai, min_belanja, berlaku_sampai FROM voucher WHERE aktif = 1 ORDER BY id ASC");
         $vouchers = $stmt->fetchAll(PDO::FETCH_ASSOC);
         echo json_encode(['sukses' => true, 'voucher' => $vouchers]);
         exit;
     }
+
+    if ($uri === '/api/voucher/validasi') {
+        $kode    = trim($vData['kode'] ?? '');
+        $subtotal = (int)($vData['subtotal'] ?? 0);
+        $userId   = $user ? (int)$user['id'] : 0;
+        $pengelolaPesanan = new PengelolaPesanan($db);
+        $res = $pengelolaPesanan->validasiVoucher($kode, $subtotal, $userId);
+        http_response_code($res['status']);
+        echo json_encode($res);
+        exit;
+    }
+
     http_response_code(404);
     echo json_encode(['sukses' => false, 'pesan' => 'Endpoint voucher tidak ditemukan.']);
+    exit;
+}
+
+// Pesanan API routes (Checkout, Status, Bayar Simulasi, Retry)
+if (str_starts_with($uri, '/api/pesanan/')) {
+    header('Content-Type: application/json; charset=utf-8');
+    require_once ROOT_DIR . '/src/pesanan/PengelolaPesanan.php';
+    $db = PengelolaDatabase::dapatkanKoneksi();
+    $auth = new PengelolaOtentikasi($db);
+    $user = $auth->getActiveUser();
+    $pengelolaPesanan = new PengelolaPesanan($db);
+    $rawInput = file_get_contents('php://input');
+    $pData = json_decode($rawInput, true) ?: $_POST ?: [];
+
+    if ($uri === '/api/pesanan/buat') {
+        if (!$user) {
+            http_response_code(401);
+            echo json_encode(['sukses' => false, 'pesan' => 'Silakan masuk ke akun Anda terlebih dahulu untuk menyelesaikan pesanan.']);
+            exit;
+        }
+        $res = $pengelolaPesanan->buatPesanan($pData, (int)$user['id']);
+        http_response_code($res['status']);
+        echo json_encode($res);
+        exit;
+    }
+
+    if ($uri === '/api/pesanan/status') {
+        $nomor = trim($pData['nomor_pesanan'] ?? $_GET['nomor'] ?? '');
+        if (!$nomor) {
+            http_response_code(400);
+            echo json_encode(['sukses' => false, 'pesan' => 'Nomor pesanan harus dicantumkan.']);
+            exit;
+        }
+        $userId = $user ? (int)$user['id'] : 0;
+        $order = $pengelolaPesanan->statusPesanan($nomor, $userId);
+        if (!$order) {
+            http_response_code(404);
+            echo json_encode(['sukses' => false, 'pesan' => 'Pesanan tidak ditemukan.']);
+            exit;
+        }
+        echo json_encode(['sukses' => true, 'pesanan' => $order]);
+        exit;
+    }
+
+    if ($uri === '/api/pesanan/bayar-simulasi') {
+        $nomor = trim($pData['nomor_pesanan'] ?? '');
+        if (!$nomor) {
+            http_response_code(400);
+            echo json_encode(['sukses' => false, 'pesan' => 'Nomor pesanan harus dicantumkan.']);
+            exit;
+        }
+        $res = $pengelolaPesanan->bayarSimulasi($nomor);
+        http_response_code($res['status']);
+        echo json_encode($res);
+        exit;
+    }
+
+    if ($uri === '/api/pesanan/retry') {
+        $nomor = trim($pData['nomor_pesanan'] ?? '');
+        if (!$nomor) {
+            http_response_code(400);
+            echo json_encode(['sukses' => false, 'pesan' => 'Nomor pesanan harus dicantumkan.']);
+            exit;
+        }
+        $userId = $user ? (int)$user['id'] : 0;
+        $res = $pengelolaPesanan->retryBayar($nomor, $userId);
+        http_response_code($res['status']);
+        echo json_encode($res);
+        exit;
+    }
+
+    http_response_code(404);
+    echo json_encode(['sukses' => false, 'pesan' => 'Endpoint pesanan tidak ditemukan.']);
     exit;
 }
 
@@ -297,9 +408,9 @@ if (preg_match('#^/(?:bundle|bundles)/(?:([0-9]+)/)?([^/]+)$#', $uri, $matches))
     exit;
 }
 
-// Dynamic Invoice/Pesanan routing: /invoice atau /invoice/{id} atau /pesanan/{id}
-if ($uri === '/invoice' || preg_match('#^/(?:invoice|pesanan)/([a-zA-Z0-9_-]+)$#', $uri, $matches)) {
-    $pesananId = $matches[1] ?? null;
+// Dynamic Invoice/Pesanan routing: /invoice/{nomor} - support INV/CRSL/... format
+if ($uri === '/invoice' || preg_match('#^/(?:invoice|pesanan)/(.+)$#', $uri, $matches)) {
+    $nomorPesanan = isset($matches[1]) ? urldecode($matches[1]) : ($_GET['nomor'] ?? null);
     require_once __DIR__ . '/halaman/invoice.php';
     exit;
 }
