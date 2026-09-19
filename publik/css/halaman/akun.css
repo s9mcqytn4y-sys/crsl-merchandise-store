@@ -12,6 +12,80 @@
   font-family: inherit;
 }
 
+/* Breadcrumb Navigasi & Back Action */
+.akun__breadcrumb {
+  margin-bottom: var(--jarak-md);
+}
+
+.akun__breadcrumb-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.akun__breadcrumb-list {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--warna-teks-sekunder, #6b7280);
+}
+
+.akun__breadcrumb-item a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.akun__breadcrumb-item a:hover {
+  color: var(--warna-primer, #e52027);
+}
+
+.akun__breadcrumb-item.active {
+  color: var(--warna-teks, #1f2937);
+  font-weight: 600;
+}
+
+.akun__breadcrumb-pemisah {
+  color: #d1d5db;
+}
+
+.akun__btn-kembali {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid var(--warna-batas, #e5e7eb);
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--warna-teks-sekunder, #4b5563);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.akun__btn-kembali:hover {
+  border-color: var(--warna-primer, #e52027);
+  color: var(--warna-primer, #e52027);
+  background-color: rgba(229, 32, 39, 0.04);
+}
+
+[data-tema="gelap"] .akun__btn-kembali {
+  border-color: #374151;
+  color: #9ca3af;
+}
+
+[data-tema="gelap"] .akun__btn-kembali:hover {
+  color: #fca5a5;
+  border-color: #ef4444;
+}
+
 /* Header Profil: "Hi [Nama]" & Tombol Aksi */
 .akun-header {
   display: flex;
@@ -345,6 +419,7 @@
   position: fixed;
   inset: 0;
   background-color: rgba(0, 0, 0, 0.55);
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
   z-index: 1000;
   display: none;
@@ -592,6 +667,7 @@
   position: fixed;
   inset: 0;
   background-color: rgba(0, 0, 0, 0.6);
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
   z-index: 1100;
   display: none;

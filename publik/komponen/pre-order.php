@@ -52,20 +52,24 @@
       <article class="pre-order__kartu">
         <div class="pre-order__gambar-wadah">
           <span class="pre-order__badge" data-i18n="beranda.preorder_badge">PRE ORDER</span>
-          <img
-            src="/aset/gambar/drinke-tumblr.webp"
-            alt="CRSL Drinke Tumblr Series"
-            class="pre-order__gambar"
-            loading="lazy"
-            width="360"
-            height="360"
-          >
+          <a href="/produk/crsl-drinke-tumblr-series" aria-label="Lihat detail CRSL Drinke Tumblr Series">
+            <img
+              src="/aset/gambar/drinke-tumblr.webp"
+              alt="CRSL Drinke Tumblr Series"
+              class="pre-order__gambar"
+              loading="lazy"
+              width="360"
+              height="360"
+            >
+          </a>
         </div>
 
         <div class="pre-order__konten">
           <span class="pre-order__kategori">Tumbler Collection</span>
           <h3 class="pre-order__nama" title="CRSL Drinke Tumblr Series | Botol Tempat minum | Tumbler | Tumbler travel bottle stainless 900ml 32oz (po 30 hari)">
-            CRSL Drinke Tumblr Series | Botol Tempat Minum Stainless 900ml
+            <a href="/produk/crsl-drinke-tumblr-series" style="color: inherit; text-decoration: none;">
+              CRSL Drinke Tumblr Series | Botol Tempat Minum Stainless 900ml
+            </a>
           </h3>
 
           <div class="pre-order__harga-baris">

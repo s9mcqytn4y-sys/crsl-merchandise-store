@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Jalankan Server CRSL (PHP Built-in)",
+      "type": "shell",
+      "command": "php -S 127.0.0.1:8000 -t publik publik/index.php",
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Audit Integritas Basis Data & Aset",
+      "type": "shell",
+      "command": "python scratch/kelola_database.py",
+      "problemMatcher": [],
+      "group": "test"
+    }
+  ]
+}

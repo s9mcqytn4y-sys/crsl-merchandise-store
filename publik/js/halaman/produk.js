@@ -19,6 +19,7 @@ const ProdukDetail = (() => {
   let varianAktif = null;
   let kuantitas = 1;
   let maxStok = 50;
+  let perbaruiKalkulasiDeliveryRef = null;
 
   function init() {
     // 1. Baca payload JSON produk dari embedded script tag
@@ -41,6 +42,7 @@ const ProdukDetail = (() => {
     initDeskripsiViewMore();
     initDeliveryEstimator();
     initModalDiskon();
+    initModalPesanCrsl();
     initAksiBeli();
     initCarouselNav();
     initRecentViewed();
@@ -283,6 +285,9 @@ const ProdukDetail = (() => {
       if (kuantitas > 1) {
         kuantitas--;
         if (input) input.value = kuantitas;
+        if (typeof perbaruiKalkulasiDeliveryRef === 'function') {
+          perbaruiKalkulasiDeliveryRef();
+        }
       }
     });
 
@@ -290,6 +295,9 @@ const ProdukDetail = (() => {
       if (kuantitas < maxStok) {
         kuantitas++;
         if (input) input.value = kuantitas;
+        if (typeof perbaruiKalkulasiDeliveryRef === 'function') {
+          perbaruiKalkulasiDeliveryRef();
+        }
       }
     });
   }
@@ -400,51 +408,40 @@ const ProdukDetail = (() => {
 
     // State Pemilihan Alamat
     let activeStep = 1; // 1: Province, 2: City, 3: Area
-    let selectedProv = '';
-    let selectedCity = '';
-    let selectedArea = '';
+    // Default sesuai Screenshot 4 jika belum ada pilihan di localStorage
+    let selectedProv = 'DKI Jakarta';
+    let selectedCity = 'Kota Jakarta Pusat';
+    let selectedArea = 'Johar Baru';
     let selectedCourier = null;
 
     // Berat Produk Aktual dalam Gram (default 500g jika tidak tersedia)
     const beratProduk = parseInt(produkData.berat, 10) || 500;
-    const kgMultiplier = Math.max(1, Math.ceil(beratProduk / 1000));
+    let kgMultiplier = Math.max(1, Math.ceil((beratProduk * kuantitas) / 1000));
 
     // Ambil data alamat yang tersimpan sebelumnya (User Story: jika user sebelumnya sudah submit)
     const STORAGE_KEY_ADDR = 'crsl_shipping_destination';
     const STORAGE_KEY_COURIER = 'crsl_selected_courier';
 
-    function hitungTarifKurir(prov, city) {
+    function hitungTarifKurir(prov, city, multiplier = 1) {
       // Menghitung tarif pengiriman realistis berbasis zona tujuan dan berat
       let baseReg = 16000;
-      let baseFast = 28000;
-      let baseSicepat = 15000;
-      let baseJnt = 16000;
+      let baseYes = 39000;
 
       if (prov === 'DI Yogyakarta') {
         baseReg = 8000;
-        baseFast = 15000;
-        baseSicepat = 8000;
-        baseJnt = 9000;
+        baseYes = 22000;
       } else if (prov === 'DKI Jakarta') {
         baseReg = 16000;
-        baseFast = 28000;
-        baseSicepat = 15000;
-        baseJnt = 16000;
+        baseYes = 39000;
       } else if (prov === 'Banten' || prov === 'Jawa Barat') {
         baseReg = 14000;
-        baseFast = 24000;
-        baseSicepat = 14000;
-        baseJnt = 15000;
+        baseYes = 34000;
       } else if (prov === 'Jawa Tengah' || prov === 'Jawa Timur') {
         baseReg = 12000;
-        baseFast = 22000;
-        baseSicepat = 12000;
-        baseJnt = 13000;
+        baseYes = 28000;
       } else {
         baseReg = 28000;
-        baseFast = 48000;
-        baseSicepat = 27000;
-        baseJnt = 28000;
+        baseYes = 55000;
       }
 
       return [
@@ -452,33 +449,17 @@ const ProdukDetail = (() => {
           id: 'jne-reg',
           namaKurir: 'JNE',
           logo: '/aset/ikon/kurir-jne.svg',
-          layanan: 'Reguler (2-3 hari)',
-          tarif: baseReg * kgMultiplier,
-          badge: 'Rekomendasi'
+          layanan: '(Reguler) 2-3 Days',
+          tarif: baseReg * multiplier,
+          badge: 'Reguler'
         },
         {
           id: 'jne-yes',
           namaKurir: 'JNE',
           logo: '/aset/ikon/kurir-jne.svg',
-          layanan: 'YES (Yakin Esok Sampai) (1 hari)',
-          tarif: baseFast * kgMultiplier,
+          layanan: '(YES (Yakin Esok Sampai)) 1 Days',
+          tarif: baseYes * multiplier,
           badge: 'Express'
-        },
-        {
-          id: 'sicepat-reg',
-          namaKurir: 'SiCepat',
-          logo: '/aset/ikon/kurir-sicepat.svg',
-          layanan: 'Reguler (2-3 hari)',
-          tarif: baseSicepat * kgMultiplier,
-          badge: 'Hemat'
-        },
-        {
-          id: 'jnt-ez',
-          namaKurir: 'J&T',
-          logo: '/aset/ikon/kurir-jnt.svg',
-          layanan: 'EZ Reguler (2-3 hari)',
-          tarif: baseJnt * kgMultiplier,
-          badge: 'Cepat'
         }
       ];
     }
@@ -496,7 +477,7 @@ const ProdukDetail = (() => {
         card.setAttribute('aria-selected', isAktif ? 'true' : 'false');
         card.innerHTML = `
           <div class="pdp__kurir-logo-col">
-            <img src="${opt.logo}" alt="${opt.namaKurir}" width="72" height="28" loading="lazy">
+            <img src="${opt.logo}" alt="${opt.namaKurir}" width="64" height="24" loading="lazy">
           </div>
           <div class="pdp__kurir-info-col">
             <div class="pdp__kurir-baris-nominal">Rp ${opt.tarif.toLocaleString('id-ID')}</div>
@@ -522,25 +503,26 @@ const ProdukDetail = (() => {
     }
 
     function formatAlamatDisplay(kota, area) {
-      // Format ringkas sesuai screenshot: "Jakarta Pusat, Johar Baru ˅"
+      // Format ringkas sesuai screenshot: "Jakarta Pusat, Johar Baru"
       let cleanKota = kota.replace(/^Kota\s+|^Kab\.\s+/i, '');
       return `${cleanKota}, ${area}`;
     }
 
-    function perbaruiTampilanPDP() {
+    function perbaruiTampilanPDP(overrideMultiplier = null) {
+      const mult = overrideMultiplier !== null ? overrideMultiplier : kgMultiplier;
+
       if (selectedArea && selectedCity) {
         if (teksAlamatTujuan) {
           teksAlamatTujuan.textContent = formatAlamatDisplay(selectedCity, selectedArea);
         }
 
-        const options = hitungTarifKurir(selectedProv, selectedCity);
+        const options = hitungTarifKurir(selectedProv, selectedCity, mult);
         renderKurirOptions(options);
 
-        // Pilih opsi pertama (JNE Reguler) jika belum ada kurir terpilih
+        // Cari opsi kurir yang aktif atau default ke opsi pertama
         if (!selectedCourier) {
           selectedCourier = options[0];
         } else {
-          // Cari opsi yang setara
           const match = options.find(o => o.id === selectedCourier.id);
           selectedCourier = match || options[0];
         }
@@ -563,6 +545,17 @@ const ProdukDetail = (() => {
         }
       }
     }
+
+    // Expose fungsi update kalkulasi delivery saat kuantitas berubah
+    perbaruiKalkulasiDeliveryRef = function() {
+      const totalBerat = beratProduk * kuantitas;
+      const elBerat = document.getElementById('pdp-berat-produk');
+      if (elBerat) {
+        elBerat.textContent = `${totalBerat}g`;
+      }
+      kgMultiplier = Math.max(1, Math.ceil(totalBerat / 1000));
+      perbaruiTampilanPDP(kgMultiplier);
+    };
 
     // Cek data tersimpan di LocalStorage
     try {
@@ -821,6 +814,116 @@ const ProdukDetail = (() => {
     toast._timer = setTimeout(() => {
       toast.classList.remove('aktif');
     }, 2800);
+  }
+
+  /* ==========================================================
+     6.5. Modal Message CRSL Pop-up (Screenshot 5)
+     ========================================================== */
+  function initModalPesanCrsl() {
+    const btnPesan = document.getElementById('pdp-btn-pesan-crsl');
+    const overlay = document.getElementById('modal-pesan-crsl-overlay');
+    const btnClose = document.getElementById('btn-close-pesan');
+    const inputMsg = document.getElementById('pesan-crsl-input');
+    const btnKirim = document.getElementById('pesan-crsl-kirim');
+
+    if (!btnPesan || !overlay) return;
+
+    function bukaModal() {
+      overlay.style.display = 'flex';
+      void overlay.offsetWidth;
+      overlay.classList.add('aktif');
+      overlay.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      if (inputMsg) {
+        inputMsg.focus();
+        evaluasiTombol();
+      }
+    }
+
+    function tutupModal() {
+      overlay.classList.remove('aktif');
+      overlay.setAttribute('aria-hidden', 'true');
+      setTimeout(() => {
+        overlay.style.display = 'none';
+      }, 250);
+      document.body.style.overflow = '';
+    }
+
+    function evaluasiTombol() {
+      if (!inputMsg || !btnKirim) return;
+      const val = inputMsg.value.trim();
+      if (val.length > 0) {
+        btnKirim.disabled = false;
+        btnKirim.classList.add('aktif');
+      } else {
+        btnKirim.disabled = true;
+        btnKirim.classList.remove('aktif');
+      }
+    }
+
+    inputMsg?.addEventListener('input', evaluasiTombol);
+    btnPesan.addEventListener('click', bukaModal);
+    btnClose?.addEventListener('click', tutupModal);
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        tutupModal();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && overlay.classList.contains('aktif')) {
+        tutupModal();
+      }
+    });
+
+    btnKirim?.addEventListener('click', async () => {
+      const pesanTeks = inputMsg?.value.trim();
+      if (!pesanTeks) return;
+
+      btnKirim.disabled = true;
+      btnKirim.textContent = 'Sending...';
+
+      const varianTeks = [warnaTerpilih, ukuranTerpilih].filter(Boolean).join(' - ') || 'Default';
+      const payload = {
+        id_produk: produkData.id || 0,
+        nama_produk: produkData.nama || '',
+        varian: varianTeks,
+        pesan: pesanTeks
+      };
+
+      try {
+        // Simpan lokal di browser
+        try {
+          const riwayatPesan = JSON.parse(localStorage.getItem('crsl_pesan_inquiry') || '[]');
+          riwayatPesan.push({ ...payload, tanggal: new Date().toISOString() });
+          localStorage.setItem('crsl_pesan_inquiry', JSON.stringify(riwayatPesan));
+        } catch {}
+
+        // Kirim ke backend endpoint
+        const resp = await fetch('/api/pesan/kirim', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (resp.ok) {
+          tampilkanPdpToast('Pesan Anda berhasil dikirim ke CRSL!');
+          if (inputMsg) inputMsg.value = '';
+          evaluasiTombol();
+          tutupModal();
+        } else {
+          tampilkanPdpToast('Pesan tersimpan lokal. Tim CRSL akan merespons segera.');
+          tutupModal();
+        }
+      } catch (err) {
+        tampilkanPdpToast('Pesan tersimpan. Tim CRSL akan merespons segera.');
+        tutupModal();
+      } finally {
+        btnKirim.textContent = 'Send';
+        evaluasiTombol();
+      }
+    });
   }
 
   /* ==========================================================

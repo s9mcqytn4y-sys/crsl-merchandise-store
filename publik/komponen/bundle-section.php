@@ -45,24 +45,18 @@
             </a>
           </div>
         </div>
-        <div class="bundle-kartu__dots">
-          <span class="bundle-kartu__dot bundle-kartu__dot--aktif" data-idx="0"></span>
-          <span class="bundle-kartu__dot" data-idx="1"></span>
-        </div>
+        <!-- Dots disembunyikan sesuai arahan UX efisien -->
       </div>
       <div class="bundle-kartu__info">
         <a href="/bundle/back-to-school-with-miflo" class="bundle-kartu__judul-link">
           <h3 class="bundle-kartu__judul">BACK TO SCHOOL with Miflo</h3>
         </a>
-        <p style="font-size: 0.85rem; color: var(--warna-teks-redup);">1 Miflo Mini Backpack + 1 Ropy Keychain + Bonus Spesial</p>
         <div class="bundle-kartu__harga-box">
-          <div>
+          <div class="bundle-kartu__harga-wrap">
             <span class="bundle-kartu__harga">Rp 289,000</span>
             <span class="bundle-kartu__harga-coret">Rp 343,100</span>
           </div>
-          <a href="/bundle/back-to-school-with-miflo" class="bundle-kartu__cta-btn">
-            <span data-i18n="bundle.lihat_detail">Lihat Paket</span> →
-          </a>
+          <span class="bundle-kartu__diskon-badge">15% OFF</span>
         </div>
       </div>
     </article>
@@ -97,24 +91,18 @@
             </a>
           </div>
         </div>
-        <div class="bundle-kartu__dots">
-          <span class="bundle-kartu__dot bundle-kartu__dot--aktif" data-idx="0"></span>
-          <span class="bundle-kartu__dot" data-idx="1"></span>
-        </div>
+        <!-- Dots disembunyikan sesuai arahan UX efisien -->
       </div>
       <div class="bundle-kartu__info">
         <a href="/bundle/back-to-school-with-haru" class="bundle-kartu__judul-link">
           <h3 class="bundle-kartu__judul">BACK TO SCHOOL WITH HARU!</h3>
         </a>
-        <p style="font-size: 0.85rem; color: var(--warna-teks-redup);">1 Haru Tartan Backpack + 1 Character Pin Pack + Bonus Spesial</p>
         <div class="bundle-kartu__harga-box">
-          <div>
+          <div class="bundle-kartu__harga-wrap">
             <span class="bundle-kartu__harga">Rp 329,000</span>
             <span class="bundle-kartu__harga-coret">Rp 395,000</span>
           </div>
-          <a href="/bundle/back-to-school-with-haru" class="bundle-kartu__cta-btn">
-            <span data-i18n="bundle.lihat_detail">Lihat Paket</span> →
-          </a>
+          <span class="bundle-kartu__diskon-badge">16% OFF</span>
         </div>
       </div>
     </article>

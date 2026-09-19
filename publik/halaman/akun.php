@@ -108,6 +108,21 @@
   <main id="konten-utama">
     <div class="akun-container">
 
+      <!-- Breadcrumb Navigation & Quick Back Action -->
+      <nav class="akun__breadcrumb" aria-label="Jejak navigasi">
+        <div class="akun__breadcrumb-wrap">
+          <ol class="akun__breadcrumb-list">
+            <li class="akun__breadcrumb-item"><a href="/">Home</a></li>
+            <li class="akun__breadcrumb-pemisah" aria-hidden="true">/</li>
+            <li class="akun__breadcrumb-item active" aria-current="page">My Account</li>
+          </ol>
+          <button type="button" class="akun__btn-kembali" id="akun-btn-kembali" onclick="if(window.history.length > 1) { window.history.back(); } else { window.location.href='/'; }">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            <span>Kembali ke Halaman Sebelumnya</span>
+          </button>
+        </div>
+      </nav>
+
       <!-- Header Profil: Hi [Nama] + Tombol Reseller & Settings -->
       <header class="akun-header">
         <h1 class="akun-header__salam" id="akun-header-salam">Hi abdul music</h1>

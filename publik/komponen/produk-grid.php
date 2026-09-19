@@ -93,7 +93,7 @@ if (empty($daftarProduk)) {
       <h2 class="produk-grid__judul">Koleksi Produk Terpopuler</h2>
       <p class="produk-grid__subjudul">Pilihan merchandise favorit para Adopter dengan diskon spesial 10%.</p>
     </div>
-    <a href="/kategori/all-products" class="produk-grid__lihat-semua">
+    <a href="/products" class="produk-grid__lihat-semua">
       <span>Lihat Semua Produk</span>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
     </a>

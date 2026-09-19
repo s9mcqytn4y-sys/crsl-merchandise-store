@@ -578,20 +578,22 @@ if (($produk['tipe_produk'] ?? '') === 'pre_order') {
           </div>
         </div>
 
-        <!-- Section 11: Tombol Chat WhatsApp "Message CRSL" -->
+        <!-- Section 11: Tombol Chat "Message CRSL" (Modal Interaktif Gambar 5) -->
         <div class="pdp__sec-whatsapp">
-          <a
-            href="https://wa.me/6281234567890?text=Halo%20CRSL,%20saya%20tertarik%20dengan%20produk%20<?= urlencode($produk['nama']) ?>"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
             class="pdp__btn-whatsapp"
-            aria-label="Kirim pesan ke CRSL via WhatsApp"
+            id="pdp-btn-pesan-crsl"
+            aria-haspopup="dialog"
+            aria-expanded="false"
+            aria-controls="modal-pesan-crsl-overlay"
+            aria-label="Kirim pesan pertanyaan ke CRSL"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.174.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.173.231-.145.39-.086s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824z"/>
+              <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
             </svg>
-            <span>Message CRSL</span>
-          </a>
+            <span>Message CRSL?</span>
+          </button>
         </div>
 
       </section>
@@ -764,6 +766,36 @@ if (($produk['tipe_produk'] ?? '') === 'pre_order') {
                 </ul>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MODAL MESSAGE CRSL (Screenshot 5) ========== -->
+    <div class="modal-pesan-overlay" id="modal-pesan-crsl-overlay" style="display:none;" aria-hidden="true">
+      <div class="modal-pesan-card" role="dialog" aria-modal="true" aria-labelledby="modal-pesan-judul">
+        <div class="modal-pesan-header">
+          <div class="modal-pesan-produk-info">
+            <img src="<?= htmlspecialchars($gambarGaleri[0]['url'] ?? $produk['gambar_utama']) ?>" alt="<?= htmlspecialchars($produk['nama']) ?>" class="modal-pesan-thumb">
+            <div class="modal-pesan-produk-teks">
+              <h4 class="modal-pesan-produk-nama" title="<?= htmlspecialchars($produk['nama']) ?>">
+                <?= htmlspecialchars(mb_strimwidth($produk['nama'], 0, 50, '...')) ?>
+              </h4>
+              <span class="modal-pesan-produk-harga">Rp <?= number_format($hargaAktif, 0, ',', '.') ?></span>
+            </div>
+          </div>
+          <button type="button" class="modal-pesan-close" id="btn-close-pesan" aria-label="Tutup modal pesan">✕</button>
+        </div>
+        <div class="modal-pesan-body">
+          <div class="modal-pesan-instruksi">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <h3 id="modal-pesan-judul" class="modal-pesan-judul-teks">What would you like to ask about this product?</h3>
+          </div>
+          <div class="modal-pesan-form">
+            <textarea id="pesan-crsl-input" class="modal-pesan-textarea" placeholder="Type Message" rows="4"></textarea>
+            <button type="button" id="pesan-crsl-kirim" class="modal-pesan-btn-send" disabled>Send</button>
           </div>
         </div>
       </div>

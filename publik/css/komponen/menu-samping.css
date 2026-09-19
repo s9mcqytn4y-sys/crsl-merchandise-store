@@ -105,7 +105,12 @@
   overflow-y: auto;
   margin: 0;
   list-style: none;
-  scrollbar-width: none;
+}
+
+@supports (scrollbar-width: none) {
+  .menu-samping__daftar {
+    scrollbar-width: none;
+  }
 }
 
 .menu-samping__daftar::-webkit-scrollbar {

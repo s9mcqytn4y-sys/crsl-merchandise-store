@@ -204,6 +204,35 @@ if (str_starts_with($uri, '/api/produk/')) {
     exit;
 }
 
+// Pesan Produk API route (Inquiry pop-up Gambar 5)
+if ($uri === '/api/pesan/kirim') {
+    header('Content-Type: application/json; charset=utf-8');
+    $db = PengelolaDatabase::dapatkanKoneksi();
+    $rawInput = file_get_contents('php://input');
+    $data = json_decode($rawInput, true) ?: $_POST;
+
+    $produkId = (int)($data['produk_id'] ?? 0);
+    $pesan = trim($data['pesan'] ?? '');
+    $identitas = trim($data['identitas'] ?? 'Pelanggan');
+
+    if ($pesan === '') {
+        http_response_code(422);
+        echo json_encode(['sukses' => false, 'pesan' => 'Pesan tidak boleh kosong.']);
+        exit;
+    }
+
+    $stmt = $db->prepare("INSERT INTO pesan_produk (produk_id, identitas_pengguna, pesan) VALUES (:pid, :identitas, :pesan)");
+    $stmt->execute([
+        ':pid' => $produkId,
+        ':identitas' => $identitas,
+        ':pesan' => $pesan
+    ]);
+
+    http_response_code(200);
+    echo json_encode(['sukses' => true, 'pesan' => 'Pesan berhasil terkirim ke tim CRSL!']);
+    exit;
+}
+
 // Voucher & Loyalty API routes
 if (str_starts_with($uri, '/api/voucher/')) {
     header('Content-Type: application/json; charset=utf-8');
@@ -230,6 +259,19 @@ if (str_starts_with($uri, '/api/loyalitas/')) {
     }
     http_response_code(404);
     echo json_encode(['sukses' => false, 'pesan' => 'Endpoint loyalitas tidak ditemukan.']);
+    exit;
+}
+
+// Katalog All Products: /products, /produk, /katalog
+if ($uri === '/products' || $uri === '/produk' || $uri === '/katalog') {
+    require_once __DIR__ . '/halaman/katalog.php';
+    exit;
+}
+
+// Kategori Filter: /kategori/{slug}
+if (preg_match('#^/kategori/([^/]+)$#', $uri, $matches)) {
+    $kategoriSlugParam = urldecode($matches[1]);
+    require_once __DIR__ . '/halaman/katalog.php';
     exit;
 }
 

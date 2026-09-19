@@ -24,11 +24,10 @@
   height: auto;
   display: block;
   object-fit: cover;
-  transition: transform var(--transisi-normal);
-}
-
-.divider-bts:hover .divider-bts__gambar {
-  transform: scale(1.015);
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 @media (max-width: 768px) {

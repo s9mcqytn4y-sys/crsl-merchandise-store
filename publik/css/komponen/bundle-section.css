@@ -119,20 +119,25 @@
   letter-spacing: 0.04em;
 }
 
-/* Indikator dot slider bundle */
+/* Indikator dot slider bundle disembunyikan */
 .bundle-kartu__dots {
-  position: absolute;
-  bottom: 0.85rem;
-  left: 50%;
-  transform: translateX(-50%);
+  display: none !important;
+}
+
+.bundle-kartu__harga-wrap {
   display: flex;
-  gap: 0.4rem;
-  z-index: 3;
-  padding: 0.3rem 0.6rem;
-  background: rgba(0, 0, 0, 0.35);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  border-radius: var(--radius-lingkaran);
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.bundle-kartu__diskon-badge {
+  background-color: var(--warna-primer);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 0.25rem 0.55rem;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.04em;
 }
 
 .bundle-kartu__dot {
