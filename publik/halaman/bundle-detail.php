@@ -99,6 +99,9 @@ try {
   <meta property="og:image" content="<?= htmlspecialchars($bundle['gambar_utama']) ?>">
   <meta property="og:type" content="product.group">
 
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/aset/ikon/favicon.svg">
+
   <!-- Stylesheets -->
   <link rel="stylesheet" href="/css/variabel.css">
   <link rel="stylesheet" href="/css/dasar.css">
@@ -111,6 +114,7 @@ try {
   <link rel="stylesheet" href="/css/komponen/keranjang.css">
   <link rel="stylesheet" href="/css/komponen/cta-mengambang.css">
   <link rel="stylesheet" href="/css/komponen/otentikasi.css">
+  <link rel="stylesheet" href="/css/komponen/footer.css">
   <link rel="stylesheet" href="/css/halaman/bundle-detail.css">
 </head>
 <body>
@@ -167,11 +171,13 @@ try {
       </button>
     </div>
     <ul class="menu-samping__daftar">
-      <li class="menu-samping__item"><a href="/products" class="menu-samping__tautan">All Products <span class="menu-samping__emoji">🛍️</span></a></li>
-      <li class="menu-samping__item"><a href="/#bundles" class="menu-samping__tautan">BTS Must-Have Bundle <span class="menu-samping__emoji">🎒</span></a></li>
-      <li class="menu-samping__item"><a href="/#pre-order" class="menu-samping__tautan menu-samping__tautan--promo">Pre-Order Now <span class="menu-samping__emoji">🔥</span></a></li>
-      <li class="menu-samping__item"><a href="/#karakter-crsl" class="menu-samping__tautan">Karakter CRSL <span class="menu-samping__emoji">🐾</span></a></li>
-      <li class="menu-samping__item"><a href="/#produk-unggulan" class="menu-samping__tautan">Katalog Populer <span class="menu-samping__emoji">✨</span></a></li>
+      <li class="menu-samping__item"><a href="/products" class="menu-samping__tautan">All Products <span class="menu-samping__emoji">&#x1F6CD;&#xFE0F;</span></a></li>
+      <li class="menu-samping__item"><a href="/bundles/3516/back-to-school-with-miflo" class="menu-samping__tautan">BTS Collection <span class="menu-samping__emoji">&#x1F392;</span></a></li>
+      <li class="menu-samping__item"><a href="/#pre-order" class="menu-samping__tautan menu-samping__tautan--promo">Pre-Order Now <span class="menu-samping__emoji">&#x1F525;</span></a></li>
+      <li class="menu-samping__item"><a href="/kategori/backpack-collection" class="menu-samping__tautan">Backpacks</a></li>
+      <li class="menu-samping__item"><a href="/kategori/slingbag-collection" class="menu-samping__tautan">Slingbags</a></li>
+      <li class="menu-samping__item"><a href="/kategori/tumbler-collection" class="menu-samping__tautan">Tumbler Collection</a></li>
+      <li class="menu-samping__item"><a href="/kategori/wallet-accessories" class="menu-samping__tautan">Wallet &amp; Accessories</a></li>
     </ul>
   </nav>
 
@@ -223,6 +229,7 @@ try {
           <div class="bundle-pdp__viewport-zoom" id="bundle-zoom-viewport">
             <div class="bundle-pdp__gambar-badges">
               <span class="bundle-pdp__badge-tipe">Bundled Product</span>
+              <span class="bundle-pdp__badge-kategori">BTS Collection</span>
               <span class="bundle-pdp__badge-diskon"><?= $bundle['diskon_persen'] ?>% OFF</span>
             </div>
             <img
@@ -459,6 +466,9 @@ try {
     <div id="bundle-toast" class="bundle-toast" role="alert" aria-live="polite"></div>
 
   </main>
+
+  <!-- ========== FOOTER ========== -->
+  <?php require PUBLIK_DIR . '/komponen/footer.php'; ?>
 
   <!-- Sticky Bottom Action Bar Khusus Mobile -->
   <div class="bundle-pdp__mobile-bar" aria-label="Beli bundle cepat">

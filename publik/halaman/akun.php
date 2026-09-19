@@ -3,22 +3,69 @@
  * CRSL Merchandise Store - Halaman Akun Pengguna
  * Standar /antislop-ui, /antislop-layoutmobile, /baseline-ui, /007
  */
+require_once ROOT_DIR . '/src/otentikasi/PengelolaOtentikasi.php';
 use CRSL\BasisData\PengelolaDatabase;
+use CRSL\Otentikasi\PengelolaOtentikasi;
 
 $daftarVoucherAktif = [];
 $tierLoyalitasList = [];
+$totalBelanja = 0;
 $namaUser = 'abdul music';
+$penggunaId = 1;
 
 try {
     $db = PengelolaDatabase::dapatkanKoneksi();
+    $auth = new PengelolaOtentikasi($db);
+    $activeUser = $auth->getActiveUser();
+    if ($activeUser) {
+        $namaUser = $activeUser['nama_lengkap'];
+        $penggunaId = (int)$activeUser['id'];
+    }
+
     $stmtVoucher = $db->query("SELECT * FROM voucher WHERE aktif = 1 ORDER BY id ASC");
     $daftarVoucherAktif = $stmtVoucher->fetchAll(PDO::FETCH_ASSOC);
 
     $stmtTiers = $db->query("SELECT * FROM tier_loyalitas ORDER BY urutan ASC");
     $tierLoyalitasList = $stmtTiers->fetchAll(PDO::FETCH_ASSOC);
+
+    // Hitung total belanja riil dari pesanan yang sukses/dibayar
+    $stmtBelanja = $db->prepare("
+        SELECT COALESCE(SUM(total), 0) FROM pesanan 
+        WHERE pengguna_id = ? AND status IN ('akan_dikirim', 'sedang_dikirim', 'selesai')
+    ");
+    $stmtBelanja->execute([$penggunaId]);
+    $totalBelanja = (int)$stmtBelanja->fetchColumn();
 } catch (\Exception $e) {
     $daftarVoucherAktif = [];
     $tierLoyalitasList = [];
+    $totalBelanja = 0;
+}
+
+// Hitung Tier saat ini berdasarkan totalBelanja riil
+$tierSaatIni = 'Non-Member';
+$tierBerikutnya = 'New Freen';
+$targetBelanja = 200000;
+$sisaBelanja = max(0, $targetBelanja - $totalBelanja);
+$progresPersen = min(100, round(($totalBelanja / $targetBelanja) * 100));
+
+if ($totalBelanja >= 1500000) {
+    $tierSaatIni = 'CRSL Gengs';
+    $tierBerikutnya = null;
+    $targetBelanja = 1500000;
+    $sisaBelanja = 0;
+    $progresPersen = 100;
+} elseif ($totalBelanja >= 500000) {
+    $tierSaatIni = 'Bestfreen';
+    $tierBerikutnya = 'CRSL Gengs';
+    $targetBelanja = 1500000;
+    $sisaBelanja = max(0, $targetBelanja - $totalBelanja);
+    $progresPersen = min(100, round(($totalBelanja / $targetBelanja) * 100));
+} elseif ($totalBelanja >= 200000) {
+    $tierSaatIni = 'New Freen';
+    $tierBerikutnya = 'Bestfreen';
+    $targetBelanja = 500000;
+    $sisaBelanja = max(0, $targetBelanja - $totalBelanja);
+    $progresPersen = min(100, round(($totalBelanja / $targetBelanja) * 100));
 }
 ?>
 <!DOCTYPE html>
@@ -28,6 +75,9 @@ try {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>My Account - CRSL Official Store</title>
   <meta name="description" content="Kelola akun CRSL Anda. Lihat pesanan, wishlist, dan nikmati program loyalitas eksklusif.">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/aset/ikon/favicon.svg">
 
   <!-- CSS -->
   <link rel="stylesheet" href="/css/variabel.css">
@@ -41,6 +91,7 @@ try {
   <link rel="stylesheet" href="/css/komponen/keranjang.css">
   <link rel="stylesheet" href="/css/komponen/cta-mengambang.css">
   <link rel="stylesheet" href="/css/komponen/otentikasi.css">
+  <link rel="stylesheet" href="/css/komponen/footer.css">
   <link rel="stylesheet" href="/css/halaman/akun.css">
 </head>
 <body>
@@ -96,9 +147,9 @@ try {
       </button>
     </div>
     <ul class="menu-samping__daftar">
-      <li class="menu-samping__item"><a href="/#bts-collection" class="menu-samping__tautan">BTS Collection <span class="menu-samping__emoji">&#x1F392;</span></a></li>
-      <li class="menu-samping__item"><a href="/#produk-unggulan" class="menu-samping__tautan">All Products</a></li>
-      <li class="menu-samping__item"><a href="/#promo" class="menu-samping__tautan menu-samping__tautan--promo">All Day Promo <span class="menu-samping__emoji">&#x1F525;</span></a></li>
+      <li class="menu-samping__item"><a href="/products" class="menu-samping__tautan">All Products</a></li>
+      <li class="menu-samping__item"><a href="/products?kategori=bundle" class="menu-samping__tautan">BTS Collection <span class="menu-samping__emoji">&#x1F392;</span></a></li>
+      <li class="menu-samping__item"><a href="/products?diskon=1" class="menu-samping__tautan menu-samping__tautan--promo">All Day Promo <span class="menu-samping__emoji">&#x1F525;</span></a></li>
       <li class="menu-samping__item"><a href="/kategori/backpack-collection" class="menu-samping__tautan">Backpacks</a></li>
       <li class="menu-samping__item"><a href="/kategori/slingbag-collection" class="menu-samping__tautan">Slingbags</a></li>
       <li class="menu-samping__item"><a href="/kategori/tumbler-collection" class="menu-samping__tautan">Tumbler Collection</a></li>
@@ -108,7 +159,7 @@ try {
       <li class="menu-samping__item"><a href="/kategori/footwear-collection" class="menu-samping__tautan">Footwears</a></li>
       <li class="menu-samping__item"><a href="/kategori/headwear-collection" class="menu-samping__tautan">Headwears</a></li>
       <li class="menu-samping__item"><a href="/kategori/wallet-accessories" class="menu-samping__tautan">Wallet &amp; Accessories</a></li>
-      <li class="menu-samping__item"><a href="/#whats-poppin" class="menu-samping__tautan">What's Poppin'</a></li>
+      <li class="menu-samping__item"><a href="/products?status=baru" class="menu-samping__tautan">What's Poppin'</a></li>
     </ul>
   </nav>
 
@@ -148,7 +199,7 @@ try {
 
       <!-- Header Profil: Hi [Nama] + Tombol Reseller & Settings -->
       <header class="akun-header">
-        <h1 class="akun-header__salam" id="akun-header-salam">Hi abdul music</h1>
+        <h1 class="akun-header__salam" id="akun-header-salam">Hi <?= htmlspecialchars($namaUser) ?></h1>
         <div class="akun-header__aksi">
           <button type="button" class="akun-btn-pill" id="btn-become-reseller">Become Reseller</button>
           <button type="button" class="akun-btn-pill" id="btn-account-settings">Settings</button>
@@ -173,8 +224,14 @@ try {
               </svg>
             </div>
             <div class="akun-summary-card__info">
-              <div class="akun-summary-card__status">Non-Member</div>
-              <div class="akun-summary-card__sub">Spend Rp 200,000 more to reach New Freen</div>
+              <div class="akun-summary-card__status"><?= htmlspecialchars($tierSaatIni) ?></div>
+              <div class="akun-summary-card__sub">
+                <?php if ($tierBerikutnya): ?>
+                  Spend Rp <?= number_format($sisaBelanja, 0, ',', '.') ?> more to reach <?= htmlspecialchars($tierBerikutnya) ?>
+                <?php else: ?>
+                  Level tertinggi tercapai! Anda adalah member <?= htmlspecialchars($tierSaatIni) ?>.
+                <?php endif; ?>
+              </div>
             </div>
           </div>
         </div>
@@ -193,7 +250,7 @@ try {
                     <span style="font-size: 12.5px; font-weight: 700; color: #1f2937;"><?= htmlspecialchars($voc['judul']) ?></span>
                     <span style="font-size: 11px; color: #6b7280;">Min. Belanja Rp <?= number_format($voc['min_belanja'], 0, ',', '.') ?> &bull; Kode: <strong><?= htmlspecialchars($voc['kode']) ?></strong></span>
                   </div>
-                  <span style="background: #e52027; color: #fff; font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">Klaim</span>
+                  <button type="button" class="btn-salin-voucher" data-kode="<?= htmlspecialchars($voc['kode']) ?>">Salin</button>
                 </div>
               <?php endforeach; ?>
             <?php else: ?>
@@ -275,16 +332,22 @@ try {
               <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
             </svg>
           </div>
-          <div class="modal-loyalty-tier-name">Non-Member</div>
-          <div class="modal-loyalty-tier-desc">Spend Rp 200,000 more to reach New Freen</div>
+          <div class="modal-loyalty-tier-name"><?= htmlspecialchars($tierSaatIni) ?></div>
+          <div class="modal-loyalty-tier-desc">
+            <?php if ($tierBerikutnya): ?>
+              Spend Rp <?= number_format($sisaBelanja, 0, ',', '.') ?> more to reach <?= htmlspecialchars($tierBerikutnya) ?>
+            <?php else: ?>
+              Anda telah mencapai tier loyalitas tertinggi!
+            <?php endif; ?>
+          </div>
           
           <!-- Progress Bar dengan Diamond Icon -->
           <div class="modal-loyalty-progress-box">
             <div class="modal-loyalty-progress-track">
-              <div class="modal-loyalty-progress-fill" style="width: 0%;"></div>
+              <div class="modal-loyalty-progress-fill" style="width: <?= $progresPersen ?>%;"></div>
             </div>
             <div class="modal-loyalty-progress-meta">
-              <span>Rp 0 / Rp 200,000</span>
+              <span>Rp <?= number_format($totalBelanja, 0, ',', '.') ?> / Rp <?= number_format($targetBelanja, 0, ',', '.') ?></span>
               <svg class="modal-loyalty-diamond-icon" viewBox="0 0 24 24" fill="#3b82f6" aria-hidden="true">
                 <path d="M6 3h12l4 6-10 12L2 9l4-6z"/>
               </svg>
@@ -363,6 +426,9 @@ try {
       </div>
     </div>
   </div>
+
+  <!-- ========== FOOTER ========== -->
+  <?php require __DIR__ . '/../komponen/footer.php'; ?>
 
   <!-- JS Utilitas & Komponen -->
   <script src="/js/utilitas/i18n.js"></script>

@@ -31,6 +31,24 @@ try {
     $stmtProd = $db->query($sql);
     $daftarProduk = $stmtProd->fetchAll(PDO::FETCH_ASSOC);
 
+    // Ambil semua data varian untuk filter warna, ukuran, dan dynamic stock
+    $stmtVar = $db->query("SELECT produk_id, sku, warna, ukuran, stok, harga_tambahan FROM produk_varian");
+    $semuaVarian = $stmtVar->fetchAll(PDO::FETCH_ASSOC);
+    $varianPerProduk = [];
+    foreach ($semuaVarian as $v) {
+        $varianPerProduk[$v['produk_id']][] = $v;
+    }
+
+    foreach ($daftarProduk as &$p) {
+        $p['varian'] = $varianPerProduk[$p['id']] ?? [];
+        if (!empty($p['varian'])) {
+            $p['total_stok'] = (int)array_sum(array_column($p['varian'], 'stok'));
+        } else {
+            $p['total_stok'] = (int)($p['stok'] ?? 0);
+        }
+    }
+    unset($p);
+
 } catch (\Exception $e) {
     $daftarKategori = [];
     $daftarProduk = [];
@@ -43,6 +61,9 @@ try {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>All Products - CRSL Official Store</title>
   <meta name="description" content="Jelajahi seluruh katalog merchandise resmi CRSL. Pakaian, tas ransel, selempang, tumbler, topi, dan aksesoris orisinal karakter CRSL.">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/aset/ikon/favicon.svg">
 
   <!-- Open Graph -->
   <meta property="og:title" content="All Products - CRSL Official Store">
@@ -61,6 +82,7 @@ try {
   <link rel="stylesheet" href="/css/komponen/keranjang.css">
   <link rel="stylesheet" href="/css/komponen/cta-mengambang.css">
   <link rel="stylesheet" href="/css/komponen/otentikasi.css">
+  <link rel="stylesheet" href="/css/komponen/footer.css">
   <link rel="stylesheet" href="/css/halaman/katalog.css">
 </head>
 <body>
@@ -120,11 +142,19 @@ try {
       </button>
     </div>
     <ul class="menu-samping__daftar">
-      <li class="menu-samping__item"><a href="/products" class="menu-samping__tautan menu-samping__tautan--aktif">All Products <span class="menu-samping__emoji">🛍️</span></a></li>
-      <li class="menu-samping__item"><a href="/#bundles" class="menu-samping__tautan">BTS Must-Have Bundle <span class="menu-samping__emoji">🎒</span></a></li>
-      <li class="menu-samping__item"><a href="/#pre-order" class="menu-samping__tautan menu-samping__tautan--promo">Pre-Order Now <span class="menu-samping__emoji">🔥</span></a></li>
-      <li class="menu-samping__item"><a href="/#karakter-crsl" class="menu-samping__tautan">Karakter CRSL <span class="menu-samping__emoji">🐾</span></a></li>
-      <li class="menu-samping__item"><a href="/#produk-unggulan" class="menu-samping__tautan">Katalog Populer <span class="menu-samping__emoji">✨</span></a></li>
+      <li class="menu-samping__item"><a href="/products" class="menu-samping__tautan menu-samping__tautan--aktif">All Products <span class="menu-samping__emoji">&#x1F6CD;&#xFE0F;</span></a></li>
+      <li class="menu-samping__item"><a href="/products?kategori=bundle" class="menu-samping__tautan">BTS Collection <span class="menu-samping__emoji">&#x1F392;</span></a></li>
+      <li class="menu-samping__item"><a href="/products?tipe=pre_order" class="menu-samping__tautan menu-samping__tautan--promo">Pre-Order Now <span class="menu-samping__emoji">&#x1F525;</span></a></li>
+      <li class="menu-samping__item"><a href="/kategori/backpack-collection" class="menu-samping__tautan">Backpacks</a></li>
+      <li class="menu-samping__item"><a href="/kategori/slingbag-collection" class="menu-samping__tautan">Slingbags</a></li>
+      <li class="menu-samping__item"><a href="/kategori/tumbler-collection" class="menu-samping__tautan">Tumbler Collection</a></li>
+      <li class="menu-samping__item"><a href="/kategori/tops-collection" class="menu-samping__tautan">Tops</a></li>
+      <li class="menu-samping__item"><a href="/kategori/bottoms-collection" class="menu-samping__tautan">Bottoms</a></li>
+      <li class="menu-samping__item"><a href="/kategori/outerwears-collection" class="menu-samping__tautan">Outerwears</a></li>
+      <li class="menu-samping__item"><a href="/kategori/footwear-collection" class="menu-samping__tautan">Footwears</a></li>
+      <li class="menu-samping__item"><a href="/kategori/headwear-collection" class="menu-samping__tautan">Headwears</a></li>
+      <li class="menu-samping__item"><a href="/kategori/wallet-accessories" class="menu-samping__tautan">Wallet &amp; Accessories</a></li>
+      <li class="menu-samping__item"><a href="/products?status=baru" class="menu-samping__tautan">What's Poppin'</a></li>
     </ul>
   </nav>
 
@@ -294,19 +324,54 @@ try {
             </div>
           </div>
 
-          <!-- 3. Rentang Harga -->
+          <!-- 3. Rentang Harga dengan Quick Price Chips -->
           <div class="katalog-filter-group">
-            <h3 class="katalog-filter-group-title">Rentang Harga (IDR)</h3>
+            <h3 class="katalog-filter-group-title">Rentang Harga</h3>
+            <div class="katalog-price-chips">
+              <button type="button" class="katalog-chip-btn" data-min="0" data-max="100000">&lt; 100rb</button>
+              <button type="button" class="katalog-chip-btn" data-min="100000" data-max="250000">100rb - 250rb</button>
+              <button type="button" class="katalog-chip-btn" data-min="250000" data-max="500000">250rb - 500rb</button>
+              <button type="button" class="katalog-chip-btn" data-min="500000" data-max="0">&gt; 500rb</button>
+            </div>
             <div class="katalog-price-inputs">
               <div class="katalog-price-field">
                 <span class="katalog-price-prefix">Rp</span>
-                <input type="number" id="filter-harga-min" placeholder="Min" min="0" step="10000">
+                <input type="number" id="filter-harga-min" placeholder="Min" min="0" step="10000" aria-label="Harga minimum">
               </div>
               <span class="katalog-price-separator">-</span>
               <div class="katalog-price-field">
                 <span class="katalog-price-prefix">Rp</span>
-                <input type="number" id="filter-harga-max" placeholder="Max" min="0" step="10000">
+                <input type="number" id="filter-harga-max" placeholder="Max" min="0" step="10000" aria-label="Harga maksimum">
               </div>
+            </div>
+          </div>
+
+          <!-- 4. Pilihan Warna (Color Chips) -->
+          <div class="katalog-filter-group">
+            <h3 class="katalog-filter-group-title">Pilihan Warna</h3>
+            <div class="katalog-color-chips" id="katalog-color-chips-container">
+              <button type="button" class="katalog-color-chip" data-color="BLACK"><span class="katalog-color-dot" style="background:#111;"></span>Black</button>
+              <button type="button" class="katalog-color-chip" data-color="WHITE"><span class="katalog-color-dot" style="background:#fff;"></span>White</button>
+              <button type="button" class="katalog-color-chip" data-color="PINK"><span class="katalog-color-dot" style="background:#f472b6;"></span>Pink</button>
+              <button type="button" class="katalog-color-chip" data-color="BLUE"><span class="katalog-color-dot" style="background:#60a5fa;"></span>Blue</button>
+              <button type="button" class="katalog-color-chip" data-color="YELLOW"><span class="katalog-color-dot" style="background:#fde047;"></span>Yellow</button>
+              <button type="button" class="katalog-color-chip" data-color="BROWN"><span class="katalog-color-dot" style="background:#78350f;"></span>Brown</button>
+              <button type="button" class="katalog-color-chip" data-color="GREY"><span class="katalog-color-dot" style="background:#9ca3af;"></span>Grey</button>
+              <button type="button" class="katalog-color-chip" data-color="CREAM"><span class="katalog-color-dot" style="background:#fef3c7;"></span>Cream</button>
+              <button type="button" class="katalog-color-chip" data-color="GREEN"><span class="katalog-color-dot" style="background:#10b981;"></span>Green</button>
+            </div>
+          </div>
+
+          <!-- 5. Pilihan Ukuran (Size Chips) -->
+          <div class="katalog-filter-group">
+            <h3 class="katalog-filter-group-title">Pilihan Ukuran</h3>
+            <div class="katalog-size-chips" id="katalog-size-chips-container">
+              <button type="button" class="katalog-size-chip" data-size="ALL SIZE">All Size</button>
+              <button type="button" class="katalog-size-chip" data-size="S">S</button>
+              <button type="button" class="katalog-size-chip" data-size="M">M</button>
+              <button type="button" class="katalog-size-chip" data-size="L">L</button>
+              <button type="button" class="katalog-size-chip" data-size="XL">XL</button>
+              <button type="button" class="katalog-size-chip" data-size="XXL">XXL</button>
             </div>
           </div>
         </div>
@@ -324,6 +389,9 @@ try {
     <div id="katalog-toast" class="katalog-toast" role="alert" aria-live="polite"></div>
 
   </main>
+
+  <!-- ========== FOOTER ========== -->
+  <?php require PUBLIK_DIR . '/komponen/footer.php'; ?>
 
   <!-- Embedded JSON Data Produk dari Database -->
   <script type="application/json" id="katalog-payload-data">

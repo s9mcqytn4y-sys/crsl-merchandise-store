@@ -41,7 +41,7 @@
       </ul>
 
       <div class="pre-order__aksi-kiri">
-        <a href="#produk-unggulan" class="pre-order__tautan-koleksi" data-i18n="beranda.preorder_tautan">
+        <a href="/products" class="pre-order__tautan-koleksi" data-i18n="beranda.preorder_tautan">
           Eksplor Koleksi Lainnya &rarr;
         </a>
       </div>
@@ -74,7 +74,6 @@
 
           <div class="pre-order__harga-baris">
             <span class="pre-order__harga">Rp 289.000</span>
-            <span class="pre-order__poin-info">Dapatkan 28 Poin</span>
           </div>
 
           <button
@@ -89,7 +88,7 @@
             data-varian='["CHILO PINK", "POPO BLUE", "ODIN YELLOW", "CHOCO GREY", "PIGKO PEACH"]'
             aria-label="Pesan Pre-Order CRSL Drinke Tumblr Series"
           >
-            <span data-i18n="beranda.preorder_tombol_beli">Buy</span>
+            <span data-i18n="beranda.preorder_tombol_beli">Pre Order now</span>
           </button>
         </div>
       </article>

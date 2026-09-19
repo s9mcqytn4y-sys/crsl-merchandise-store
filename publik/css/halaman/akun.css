@@ -6,9 +6,11 @@
 
 .akun-container {
   max-width: 960px;
+  width: 100%;
   margin-inline: auto;
   padding: var(--jarak-xl) var(--jarak-md);
-  min-height: 75vh;
+  min-height: calc(100dvh - 120px);
+  box-sizing: border-box;
   font-family: inherit;
 }
 
@@ -872,4 +874,152 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ==========================================================================
+   BOUNDED SCROLL & OVERFLOW PROTECTION (Anti-slop / Mobile)
+   ========================================================================== */
+.akun-bounded-list {
+  max-height: 520px;
+  overflow-y: auto;
+  padding-right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@supports (scrollbar-width: thin) {
+  .akun-bounded-list {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.4) transparent;
+  }
+}
+
+.akun-bounded-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.akun-bounded-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.akun-bounded-list::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.4);
+  border-radius: 9999px;
+}
+
+/* Wishlist Grid */
+.akun-wishlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.akun-wishlist-card {
+  background-color: var(--warna-permukaan, #ffffff);
+  border: 1px solid var(--warna-batas, #e5e7eb);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.akun-wishlist-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.akun-wishlist-card__img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background-color: #f3f4f6;
+}
+
+.akun-wishlist-card__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--warna-teks, #1f2937);
+  margin-bottom: 4px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.akun-wishlist-card__price {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--warna-primer, #e52027);
+  margin-bottom: 10px;
+}
+
+.akun-wishlist-card__actions {
+  margin-top: auto;
+  display: flex;
+  gap: 6px;
+}
+
+.akun-wishlist-card__btn-view {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 6px;
+  background-color: var(--warna-primer, #e52027);
+  color: #ffffff;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.akun-wishlist-card__btn-view:hover {
+  opacity: 0.9;
+}
+
+.akun-wishlist-card__btn-remove {
+  background: none;
+  border: 1px solid var(--warna-batas, #e5e7eb);
+  color: var(--warna-teks-sekunder, #6b7280);
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.akun-wishlist-card__btn-remove:hover {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+/* Copy Voucher Button */
+.btn-salin-voucher {
+  background: var(--warna-primer, #e52027);
+  color: #ffffff;
+  border: none;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-salin-voucher:hover {
+  background-color: #cc1b21;
+}
+
+.btn-salin-voucher.tersalin {
+  background-color: #10b981;
+}
+
 

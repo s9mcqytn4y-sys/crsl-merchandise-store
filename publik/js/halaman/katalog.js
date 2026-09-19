@@ -19,6 +19,8 @@ const KatalogManager = (() => {
   let statusStokAktif = ['in_stock', 'pre_order']; // default tidak sertakan sold out kecuali dicentang
   let minHarga = null;
   let maxHarga = null;
+  let warnaAktif = null;
+  let ukuranAktif = null;
 
   // State Lazy Loading
   const BATCH_SIZE = 8;
@@ -147,7 +149,32 @@ const KatalogManager = (() => {
       });
     }
 
-    // 5. Sorting
+    // 5. Filter Pilihan Warna
+    if (warnaAktif) {
+      const wTarget = warnaAktif.toUpperCase();
+      hasil = hasil.filter(p => {
+        if (Array.isArray(p.varian) && p.varian.length > 0) {
+          return p.varian.some(v => (v.warna || '').toUpperCase().includes(wTarget));
+        }
+        return (p.nama || '').toUpperCase().includes(wTarget) || (p.deskripsi || '').toUpperCase().includes(wTarget);
+      });
+    }
+
+    // 6. Filter Pilihan Ukuran
+    if (ukuranAktif) {
+      const uTarget = ukuranAktif.toUpperCase();
+      hasil = hasil.filter(p => {
+        if (Array.isArray(p.varian) && p.varian.length > 0) {
+          return p.varian.some(v => {
+            const sz = (v.ukuran || '').toUpperCase();
+            return sz === uTarget || sz === 'ALL SIZE' || uTarget === 'ALL SIZE';
+          });
+        }
+        return true;
+      });
+    }
+
+    // 7. Sorting
     hasil.sort((a, b) => {
       const hargaA = a.harga_diskon || a.harga;
       const hargaB = b.harga_diskon || b.harga;
@@ -206,11 +233,21 @@ const KatalogManager = (() => {
       const hargaAktif = p.harga_diskon || p.harga;
       const adaDiskon = p.harga_diskon && p.harga_diskon < p.harga;
       const persenDiskon = adaDiskon ? Math.round(((p.harga - p.harga_diskon) / p.harga) * 100) : 0;
-      const isSoldOut = (p.status_stok === 'out_of_stock' || (p.stok !== null && p.stok <= 0));
+      const isSoldOut = (p.status_stok === 'out_of_stock' || (p.total_stok !== undefined && p.total_stok <= 0) || (p.stok !== null && p.stok <= 0));
       const isPreOrder = (p.tipe_produk === 'pre_order');
       const gambar = p.gambar_utama || '/aset/gambar/cassie-wallet.webp';
       const slug = p.slug || `produk-${p.id}`;
       const urlDetail = `/produk/${encodeURIComponent(slug)}`;
+
+      // Dynamic Stock Indicator
+      let stockTagHtml = '';
+      if (isSoldOut) {
+        stockTagHtml = `<span class="katalog-card__stock-tag katalog-card__stock-tag--out">Stok Habis</span>`;
+      } else if (p.total_stok !== undefined && p.total_stok > 0 && p.total_stok <= 5) {
+        stockTagHtml = `<span class="katalog-card__stock-tag katalog-card__stock-tag--low">Sisa ${p.total_stok} item</span>`;
+      } else if (Array.isArray(p.varian) && p.varian.length > 1) {
+        stockTagHtml = `<span class="katalog-card__stock-tag katalog-card__stock-tag--ready">${p.varian.length} Pilihan Varian</span>`;
+      }
 
       html += `
         <article class="katalog-card ${isSoldOut ? 'sold-out' : ''}" data-id="${p.id}">
@@ -219,6 +256,7 @@ const KatalogManager = (() => {
             <div class="katalog-card__badges">
               ${isSoldOut ? `<span class="katalog-badge-soldout">SOLD OUT</span>` : ''}
               ${!isSoldOut && isPreOrder ? `<span class="katalog-badge-po">PRE ORDER</span>` : ''}
+              ${p.nama_kategori ? `<span class="katalog-card__badge-kategori" style="background:#4b5563; color:#fff; font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px; text-transform:uppercase;">${escapeHtml(p.nama_kategori)}</span>` : ''}
             </div>
 
             ${adaDiskon ? `<span class="katalog-card__badge-diskon">${persenDiskon}% OFF</span>` : ''}
@@ -264,6 +302,7 @@ const KatalogManager = (() => {
               <span class="katalog-card__harga-aktif">Rp ${Number(hargaAktif).toLocaleString('id-ID')}</span>
               ${adaDiskon ? `<span class="katalog-card__harga-coret">Rp ${Number(p.harga).toLocaleString('id-ID')}</span>` : ''}
             </div>
+            ${stockTagHtml}
           </div>
         </article>
       `;
@@ -437,6 +476,57 @@ const KatalogManager = (() => {
       }
     });
 
+    // Quick Price Chips
+    document.querySelectorAll('.katalog-chip-btn').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const isAktif = chip.classList.contains('aktif');
+        document.querySelectorAll('.katalog-chip-btn').forEach(c => c.classList.remove('aktif'));
+        const inMin = document.getElementById('filter-harga-min');
+        const inMax = document.getElementById('filter-harga-max');
+
+        if (isAktif) {
+          if (inMin) inMin.value = '';
+          if (inMax) inMax.value = '';
+        } else {
+          chip.classList.add('aktif');
+          const min = chip.dataset.min;
+          const max = chip.dataset.max;
+          if (inMin) inMin.value = min !== '0' ? min : '';
+          if (inMax) inMax.value = max !== '0' ? max : '';
+        }
+      });
+    });
+
+    // Color Chips
+    document.querySelectorAll('.katalog-color-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const color = chip.dataset.color;
+        if (chip.classList.contains('aktif')) {
+          chip.classList.remove('aktif');
+          warnaAktif = null;
+        } else {
+          document.querySelectorAll('.katalog-color-chip').forEach(c => c.classList.remove('aktif'));
+          chip.classList.add('aktif');
+          warnaAktif = color;
+        }
+      });
+    });
+
+    // Size Chips
+    document.querySelectorAll('.katalog-size-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const sz = chip.dataset.size;
+        if (chip.classList.contains('aktif')) {
+          chip.classList.remove('aktif');
+          ukuranAktif = null;
+        } else {
+          document.querySelectorAll('.katalog-size-chip').forEach(c => c.classList.remove('aktif'));
+          chip.classList.add('aktif');
+          ukuranAktif = sz;
+        }
+      });
+    });
+
     // Apply Filter dari Drawer
     btnApplyDrawer?.addEventListener('click', () => {
       // 1. Sort radio
@@ -477,6 +567,8 @@ const KatalogManager = (() => {
     statusStokAktif = ['in_stock', 'pre_order'];
     minHarga = null;
     maxHarga = null;
+    warnaAktif = null;
+    ukuranAktif = null;
 
     if (searchInput) searchInput.value = '';
     if (searchClearBtn) searchClearBtn.style.display = 'none';
@@ -497,6 +589,11 @@ const KatalogManager = (() => {
     const inMax = document.getElementById('filter-harga-max');
     if (inMin) inMin.value = '';
     if (inMax) inMax.value = '';
+
+    // Reset chips
+    document.querySelectorAll('.katalog-chip-btn').forEach(c => c.classList.remove('aktif'));
+    document.querySelectorAll('.katalog-color-chip').forEach(c => c.classList.remove('aktif'));
+    document.querySelectorAll('.katalog-size-chip').forEach(c => c.classList.remove('aktif'));
 
     // Reset pills
     const pills = document.querySelectorAll('.katalog-kategori-pill');
@@ -521,6 +618,8 @@ const KatalogManager = (() => {
     if (statusStokAktif.includes('out_of_stock')) aktifCount++;
     if (!statusStokAktif.includes('in_stock') || !statusStokAktif.includes('pre_order')) aktifCount++;
     if (minHarga !== null || maxHarga !== null) aktifCount++;
+    if (warnaAktif) aktifCount++;
+    if (ukuranAktif) aktifCount++;
 
     if (aktifCount > 0) {
       filterBadge.textContent = aktifCount;

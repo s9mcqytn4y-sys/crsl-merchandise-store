@@ -6,33 +6,57 @@
  */
 $apakahBeranda = $apakahBeranda ?? false;
 ?>
-<!-- ========== WHATSAPP SUPPORT FLOATING CTA ========== -->
+<!-- ========== WHATSAPP & MESSAGE CRSL FLOATING CTA ========== -->
 <div id="cta-wa-wadah" class="cta-wa-wadah">
   <!-- Pop-up Chat Support Card -->
-  <div class="cta-wa-popup" role="dialog" aria-modal="false" aria-label="Bantuan WhatsApp">
-    <h4 class="cta-wa-popup__judul">Chat Support</h4>
-    <p class="cta-wa-popup__teks">We’re available on Whatsapp!</p>
-    <a
-      href="https://api.whatsapp.com/send?phone=6281234567890&amp;text=Halo%20CRSL%2C%20saya%20ingin%20bertanya%20tentang%20produk"
-      target="_blank"
-      rel="noopener noreferrer"
-      class="cta-wa-popup__tombol"
-    >
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-      </svg>
-      Chat us on Whatsapp
-    </a>
+  <div class="cta-wa-popup" role="dialog" aria-modal="false" aria-label="Bantuan Layanan Pelanggan CRSL">
+    <div class="cta-wa-popup__top">
+      <div class="cta-wa-popup__avatar">
+        <img src="/aset/gambar/logo-crsl.png" alt="CRSL Official" width="40" height="40" onerror="this.src='/aset/ikon/favicon.svg'">
+      </div>
+      <div>
+        <h4 class="cta-wa-popup__judul">Customer Care CRSL</h4>
+        <span class="cta-wa-popup__badge-online">Online</span>
+      </div>
+    </div>
+    <p class="cta-wa-popup__teks">Halo Freen! Ada yang bisa kami bantu seputar pesanan atau produk?</p>
+    
+    <div class="cta-wa-popup__actions">
+      <a
+        href="https://api.whatsapp.com/send?phone=6281234567890&amp;text=Halo%20CRSL,%20saya%20ingin%20bertanya%20seputar%20produk%20dan%20pesanan"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="cta-wa-popup__tombol cta-wa-popup__tombol--wa"
+        aria-label="Hubungi Customer Service via WhatsApp"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+        </svg>
+        <span>Chat via WhatsApp</span>
+      </a>
+
+      <a
+        href="mailto:support@crsl-store.id?subject=Tanya%20CRSL%20Store&amp;body=Halo%20Tim%20CRSL,%0A%0ASaya%20ingin%20menanyakan:"
+        class="cta-wa-popup__tombol cta-wa-popup__tombol--pesan"
+        aria-label="Kirim Pesan Langsung ke CS CRSL"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
+        <span>Message CRSL</span>
+      </a>
+    </div>
   </div>
 
-  <!-- Tombol Melayang WA (Ikon bertransformasi jadi X saat terbuka) -->
-  <button type="button" id="cta-wa-tombol" class="cta-wa-tombol" aria-label="Buka Chat WhatsApp">
-    <!-- Ikon WhatsApp -->
-    <svg class="cta-wa-ikon-wa" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+  <!-- Tombol Melayang Utama (Brand Theme) -->
+  <button type="button" id="cta-wa-tombol" class="cta-wa-tombol" aria-label="Buka Chat Layanan CRSL" aria-expanded="false">
+    <!-- Ikon Message & Chat -->
+    <svg class="cta-wa-ikon-wa" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
     </svg>
     <!-- Ikon Silang (X) -->
-    <svg class="cta-wa-ikon-tutup" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <svg class="cta-wa-ikon-tutup" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <line x1="18" y1="6" x2="6" y2="18"/>
       <line x1="6" y1="6" x2="18" y2="18"/>
     </svg>

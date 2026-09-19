@@ -19,6 +19,9 @@ $apakahBeranda = true;
   <meta property="og:type" content="website">
   <meta property="og:url" content="<?= APP_URL ?>">
 
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/aset/ikon/favicon.svg">
+
   <!-- CSS Core & Komponen -->
   <link rel="stylesheet" href="/css/variabel.css">
   <link rel="stylesheet" href="/css/dasar.css">
@@ -35,8 +38,7 @@ $apakahBeranda = true;
   <link rel="stylesheet" href="/css/komponen/pre-order.css">
   <link rel="stylesheet" href="/css/komponen/divider-bts.css">
   <link rel="stylesheet" href="/css/komponen/bundle-section.css">
-  <link rel="stylesheet" href="/css/komponen/karakter-showcase.css">
-  <link rel="stylesheet" href="/css/komponen/produk-grid.css">
+  <link rel="stylesheet" href="/css/komponen/footer.css">
 </head>
 <body>
   <!-- Skip Navigation -->
@@ -178,16 +180,13 @@ $apakahBeranda = true;
     <!-- Nav list -->
     <ul class="menu-samping__daftar">
       <li class="menu-samping__item">
+        <a href="/products" class="menu-samping__tautan">All Products <span class="menu-samping__emoji">&#x1F6CD;&#xFE0F;</span></a>
+      </li>
+      <li class="menu-samping__item">
         <a href="#bundles" class="menu-samping__tautan">BTS Must-Have Bundle <span class="menu-samping__emoji">&#x1F392;</span></a>
       </li>
       <li class="menu-samping__item">
-        <a href="#pre-order-section" class="menu-samping__tautan menu-samping__tautan--promo">Pre-Order Now <span class="menu-samping__emoji">&#x1F525;</span></a>
-      </li>
-      <li class="menu-samping__item">
-        <a href="#karakter-showcase" class="menu-samping__tautan">Karakter CRSL <span class="menu-samping__emoji">&#x1F43E;</span></a>
-      </li>
-      <li class="menu-samping__item">
-        <a href="#produk-unggulan" class="menu-samping__tautan">Katalog Produk <span class="menu-samping__emoji">&#x2728;</span></a>
+        <a href="/produk/crsl-drinke-tumblr-series" class="menu-samping__tautan menu-samping__tautan--promo">Pre-Order Now <span class="menu-samping__emoji">&#x1F525;</span></a>
       </li>
       <li class="menu-samping__item">
         <a href="/kategori/backpack-collection" class="menu-samping__tautan">Backpacks</a>
@@ -200,6 +199,9 @@ $apakahBeranda = true;
       </li>
       <li class="menu-samping__item">
         <a href="/kategori/wallet-accessories" class="menu-samping__tautan">Wallet &amp; Accessories</a>
+      </li>
+      <li class="menu-samping__item">
+        <a href="/akun" class="menu-samping__tautan">Akun Saya</a>
       </li>
     </ul>
   </nav>
@@ -232,13 +234,10 @@ $apakahBeranda = true;
 
     <!-- 1d. Seksi 2-Kolom BTS Must-Have Bundle -->
     <?php require_once PUBLIK_DIR . '/komponen/bundle-section.php'; ?>
-
-    <!-- 2. Karakter Showcase CRSL (Odin, Chilo, Pigko, Popo, Choco) -->
-    <?php require_once PUBLIK_DIR . '/komponen/karakter-showcase.php'; ?>
-
-    <!-- 3. Grid Produk Unggulan & Quick Cart -->
-    <?php require_once PUBLIK_DIR . '/komponen/produk-grid.php'; ?>
   </main>
+
+  <!-- ========== FOOTER TERPADU ========== -->
+  <?php require_once PUBLIK_DIR . '/komponen/footer.php'; ?>
 
   <!-- JS: order matters -->
   <script src="/js/utilitas/i18n.js"></script>
@@ -251,7 +250,6 @@ $apakahBeranda = true;
   <script src="/js/komponen/cta-mengambang.js"></script>
   <script src="/js/komponen/otentikasi.js"></script>
   <script src="/js/komponen/hero-carousel.js"></script>
-  <script src="/js/komponen/karakter-showcase.js"></script>
   <script src="/js/aplikasi.js"></script>
 </body>
 </html>

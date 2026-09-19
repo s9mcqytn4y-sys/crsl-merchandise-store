@@ -151,6 +151,9 @@ if (($produk['tipe_produk'] ?? '') === 'pre_order') {
   <meta property="og:image" content="<?= htmlspecialchars($produk['gambar_utama']) ?>">
   <meta property="og:url" content="<?= APP_URL ?>/products/<?= $produk['id'] ?>/<?= htmlspecialchars($produk['slug']) ?>">
 
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/aset/ikon/favicon.svg">
+
   <!-- Stylesheets -->
   <link rel="stylesheet" href="/css/variabel.css">
   <link rel="stylesheet" href="/css/dasar.css">
@@ -163,6 +166,7 @@ if (($produk['tipe_produk'] ?? '') === 'pre_order') {
   <link rel="stylesheet" href="/css/komponen/keranjang.css">
   <link rel="stylesheet" href="/css/komponen/cta-mengambang.css">
   <link rel="stylesheet" href="/css/komponen/otentikasi.css">
+  <link rel="stylesheet" href="/css/komponen/footer.css">
   <link rel="stylesheet" href="/css/halaman/produk.css">
 
   <!-- Schema.org JSON-LD -->
@@ -299,7 +303,9 @@ if (($produk['tipe_produk'] ?? '') === 'pre_order') {
           <div class="pdp__gambar-badges">
             <?php if (($produk['tipe_produk'] ?? '') === 'pre_order'): ?>
               <span class="pdp__badge-tipe pdp__badge-tipe--po">Pre Order</span>
-              <span class="pdp__badge-kategori">Tumbler Collection</span>
+            <?php endif; ?>
+            <?php if (!empty($produk['nama_kategori'])): ?>
+              <span class="pdp__badge-kategori"><?= htmlspecialchars($produk['nama_kategori']) ?></span>
             <?php endif; ?>
             <?php if ($apakahDiskon): ?>
               <span class="pdp__badge-diskon"><?= $persenDiskon ?>% OFF</span>
@@ -805,6 +811,9 @@ if (($produk['tipe_produk'] ?? '') === 'pre_order') {
     <div id="pdp-toast" class="pdp-toast" role="alert" aria-live="polite"></div>
 
   </main>
+
+  <!-- ========== FOOTER ========== -->
+  <?php require PUBLIK_DIR . '/komponen/footer.php'; ?>
 
   <!-- Sticky Bottom Action Bar Khusus Mobile -->
   <div class="pdp__mobile-bar" aria-label="Beli produk cepat">

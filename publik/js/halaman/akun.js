@@ -163,7 +163,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }];
       }
 
-      const orderNumber = o.nomor_pesanan || o.id || '-';
+      // Order ID Consolidation
+      let orderNumber = o.nomor_pesanan || o.id || '-';
+      if (typeof orderNumber === 'string' && !orderNumber.startsWith('INV/CRSL/')) {
+        const cleanNo = orderNumber.replace(/[^a-zA-Z0-9]/g, '');
+        orderNumber = cleanNo ? 'INV/CRSL/' + cleanNo : 'INV/CRSL/20260918/0001';
+      } else if (typeof orderNumber === 'number') {
+        orderNumber = 'INV/CRSL/20260918/' + String(orderNumber).padStart(4, '0');
+      }
+
       const totalAmount = o.total || 0;
       const diskonAmount = o.diskon || 0;
       const totalItemsCount = items.reduce((sum, it) => sum + (it.jumlah || 1), 0);
@@ -198,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const footerAksi = isBelumBayar
         ? `<a href="/checkout" class="akun-order-card__btn akun-order-card__btn--bayar">Selesaikan Pembayaran</a>`
         : isKedaluwarsa && sudahBisaRetry
-          ? `<button class="akun-order-card__btn akun-order-card__btn--retry" data-nomor="${orderNumber}">Bayar Ulang</button>`
+          ? `<button type="button" class="akun-order-card__btn akun-order-card__btn--retry" data-nomor="${orderNumber}">Bayar Ulang</button>`
           : `<a href="/invoice/${encodeURIComponent(orderNumber)}" class="akun-order-card__btn">Lihat Invoice</a>`;
 
       const diskonHtml = diskonAmount > 0
@@ -213,7 +221,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       card.innerHTML = `
         <div class="akun-order-card__header">
-          <div class="akun-order-card__id">${orderNumber}</div>
+          <div class="akun-order-card__id" style="display: flex; align-items: center; gap: 8px;">
+            <span>${orderNumber}</span>
+            <button type="button" class="btn-copy-order-id" data-nomor="${orderNumber}" aria-label="Salin nomor pesanan" title="Salin nomor pesanan" style="background:none; border:none; padding:2px; cursor:pointer; color:#9ca3af;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
           <div class="akun-order-card__status" style="color: ${statusColor}; font-weight: 700;">${statusLabel}</div>
         </div>
         <div class="akun-order-card__meta">${dateStr}${kurirInfo}${resiInfo}</div>
@@ -229,6 +242,20 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
 
       ordersListEl.appendChild(card);
+    });
+
+    // Bind copy order id buttons
+    ordersListEl.querySelectorAll('.btn-copy-order-id').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const no = btn.dataset.nomor;
+        if (no) {
+          navigator.clipboard.writeText(no).then(() => {
+            btn.style.color = '#10b981';
+            setTimeout(() => { btn.style.color = '#9ca3af'; }, 1500);
+          });
+        }
+      });
     });
 
     // Bind retry buttons
@@ -343,17 +370,62 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (emptyEl) emptyEl.style.display = 'none';
-    container.innerHTML = wishlist.map(p => `
-      <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px; display: flex; flex-direction: column;">
-        <img src="${p.gambar || '/aset/gambar/crsl-choco-oversized-hoodie-main.png'}" alt="${p.nama}" style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; margin-bottom: 8px;">
-        <div style="font-size: 13px; font-weight: 600; color: #1f2937; margin-bottom: 4px; line-height: 1.3;">${p.nama}</div>
-        <div style="font-size: 13px; font-weight: 700; color: #e52027; margin-bottom: 8px;">Rp ${(p.harga || 0).toLocaleString('id-ID')}</div>
-        <a href="/produk/${p.slug || 'crsl-choco-oversized-hoodie'}" class="akun-btn-pill" style="text-align: center; width: 100%; justify-content: center; box-sizing: border-box;">Lihat Produk</a>
+    container.className = 'akun-bounded-list';
+    container.innerHTML = `
+      <div class="akun-wishlist-grid">
+        ${wishlist.map((p, idx) => `
+          <div class="akun-wishlist-card">
+            <img src="${p.gambar || '/aset/gambar/crsl-choco-oversized-hoodie-main.png'}" alt="${p.nama}" class="akun-wishlist-card__img" loading="lazy">
+            <div class="akun-wishlist-card__title">${p.nama}</div>
+            <div class="akun-wishlist-card__price">Rp ${(p.harga || 0).toLocaleString('id-ID')}</div>
+            <div class="akun-wishlist-card__actions">
+              <a href="/produk/${p.slug || 'crsl-choco-oversized-hoodie'}" class="akun-wishlist-card__btn-view">Lihat Produk</a>
+              <button type="button" class="akun-wishlist-card__btn-remove" data-index="${idx}" aria-label="Hapus dari wishlist" title="Hapus">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+        `).join('')}
       </div>
-    `).join('');
+    `;
+
+    // Bind remove from wishlist buttons
+    container.querySelectorAll('.akun-wishlist-card__btn-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.index, 10);
+        if (!isNaN(idx)) {
+          wishlist.splice(idx, 1);
+          localStorage.setItem('crsl_wishlist', JSON.stringify(wishlist));
+          renderWishlist();
+        }
+      });
+    });
   }
 
-  // 4. Modal Loyalty (Screenshot 4) Handlers
+  // 4. Salin Voucher Button Handler
+  document.querySelectorAll('.btn-salin-voucher').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const kode = btn.dataset.kode;
+      if (!kode) return;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(kode).then(() => {
+          const orig = btn.textContent;
+          btn.textContent = 'Tersalin!';
+          btn.classList.add('tersalin');
+          setTimeout(() => {
+            btn.textContent = orig;
+            btn.classList.remove('tersalin');
+          }, 2000);
+        }).catch(() => {
+          alert('Kode voucher: ' + kode);
+        });
+      } else {
+        alert('Kode voucher: ' + kode);
+      }
+    });
+  });
+
+  // 5. Modal Loyalty (Screenshot 4) Handlers
   function openLoyaltyModal() {
     modalLoyalty?.classList.add('aktif');
     document.body.style.overflow = 'hidden';
@@ -379,7 +451,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 5. Modal Loyalty Terms Handlers
+  // 6. Modal Loyalty Terms Handlers
   function openTermsModal() {
     modalTerms?.classList.add('aktif');
   }
@@ -403,7 +475,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 6. Global Escape Key Listener for Modals
+  // 7. Global Escape Key Listener for Modals
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       if (modalTerms?.classList.contains('aktif')) {
@@ -414,7 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 7. Reseller & Settings handlers
+  // 8. Reseller & Settings handlers
   document.getElementById('btn-become-reseller')?.addEventListener('click', () => {
     window.location.href = 'https://wa.me/6281234567890?text=Halo%20CRSL,%20saya%20tertarik%20mendaftar%20sebagai%20Reseller%20resmi.';
   });

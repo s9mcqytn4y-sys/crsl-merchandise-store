@@ -302,7 +302,9 @@ class PengelolaPesanan
     {
         $stmt = $this->db->prepare(
             "UPDATE pesanan
-             SET status = 'kedaluwarsa', diperbarui_pada = CURRENT_TIMESTAMP
+             SET status = 'dibatalkan',
+                 catatan = COALESCE(catatan, '') || ' [KEDALUWARSA]',
+                 diperbarui_pada = CURRENT_TIMESTAMP
              WHERE status = 'belum_bayar'
                AND waktu_kedaluwarsa IS NOT NULL
                AND waktu_kedaluwarsa < CURRENT_TIMESTAMP"
@@ -330,7 +332,7 @@ class PengelolaPesanan
             return ['sukses' => true, 'pesan' => 'Pesanan sudah dibayar sebelumnya.', 'status' => 200];
         }
 
-        if (in_array($pesanan['status'], ['kedaluwarsa', 'batal'])) {
+        if (in_array($pesanan['status'], ['dibatalkan', 'kedaluwarsa', 'batal'])) {
             return ['sukses' => false, 'pesan' => 'Pesanan sudah kedaluwarsa atau dibatalkan.', 'status' => 400];
         }
 
@@ -369,7 +371,7 @@ class PengelolaPesanan
             return ['sukses' => false, 'pesan' => 'Pesanan tidak ditemukan.', 'status' => 404];
         }
 
-        if ($pesanan['status'] !== 'kedaluwarsa') {
+        if ($pesanan['status'] !== 'dibatalkan' && $pesanan['status'] !== 'kedaluwarsa') {
             return ['sukses' => false, 'pesan' => 'Hanya pesanan yang kedaluwarsa yang bisa di-retry.', 'status' => 400];
         }
 
