@@ -213,7 +213,7 @@
       Checkout with Discount
     </a>
 
-    <p class="keranjang-drawer__loyalty-footer-note">
+    <p class="keranjang-drawer__loyalty-footer-note" id="keranjang-loyalty-footer-note">
       Spend 200K to unlock loyalty rewards!
     </p>
   </div>

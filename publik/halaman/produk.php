@@ -516,38 +516,54 @@ if (($produk['tipe_produk'] ?? '') === 'pre_order') {
           </button>
         </div>
 
-        <!-- Section 10: Estimasi Pengiriman (Delivery & Cek Ongkir) -->
-        <div class="pdp__sec-delivery">
-          <div class="pdp__delivery-header">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="1" y="3" width="15" height="13"/>
-              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
-              <circle cx="5.5" cy="18.5" r="2.5"/>
-              <circle cx="18.5" cy="18.5" r="2.5"/>
-            </svg>
-            <strong>Estimasi Pengiriman</strong>
-          </div>
-          <p class="pdp__delivery-sub">Pilih kota tujuan untuk menghitung ongkos kirim aktual:</p>
-          <div class="pdp__delivery-form">
-            <select id="pdp-select-kota" class="pdp__select-kota" aria-label="Pilih kota tujuan pengiriman">
-              <option value="jogja">DI Yogyakarta (Asal Gudang CRSL)</option>
-              <option value="jakarta" selected>DKI Jakarta &amp; Sekitarnya</option>
-              <option value="bandung">Kota Bandung &amp; Jawa Barat</option>
-              <option value="surabaya">Kota Surabaya &amp; Jawa Timur</option>
-              <option value="luarjawa">Luar Pulau Jawa</option>
-            </select>
-            <div class="pdp__delivery-hasil" id="pdp-delivery-hasil">
-              <div class="pdp__kurir-item">
-                <span class="pdp__kurir-nama">Reguler (JNE / SiCepat)</span>
-                <span class="pdp__kurir-tarif" id="pdp-tarif-reguler">Rp 10.000</span>
-                <span class="pdp__kurir-estimasi">Estimasi 2-3 hari kerja</span>
-              </div>
-              <div class="pdp__kurir-item">
-                <span class="pdp__kurir-nama">Next Day Express</span>
-                <span class="pdp__kurir-tarif" id="pdp-tarif-express">Rp 18.000</span>
-                <span class="pdp__kurir-estimasi">Estimasi 1 hari kerja</span>
+        <!-- Section 10: Kontainer Delivery (Gambar 1 & Gambar 5) -->
+        <div class="pdp__sec-delivery" id="pdp-sec-delivery">
+          <h2 class="pdp__delivery-card-title" data-i18n="pdp.delivery_title">Delivery</h2>
+          <div class="pdp__delivery-table">
+            <!-- Row 1: Deliver to -->
+            <div class="pdp__delivery-row">
+              <span class="pdp__delivery-label" data-i18n="pdp.deliver_to">Deliver to:</span>
+              <button type="button" class="pdp__delivery-btn-lokasi" id="pdp-btn-pilih-alamat" aria-haspopup="dialog" aria-expanded="false" aria-controls="pdp-modal-alamat">
+                <span id="pdp-teks-alamat-tujuan" class="pdp__teks-tujuan">Pilih Alamat Pengiriman</span>
+                <svg class="pdp__chevron-lokasi" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+            </div>
+
+            <!-- Row 2: Estimated Delivery Cost -->
+            <div class="pdp__delivery-row pdp__delivery-row--cost">
+              <span class="pdp__delivery-label" data-i18n="pdp.est_delivery_cost">Estimated Delivery Cost:</span>
+              <div class="pdp__delivery-cost-wrap">
+                <button type="button" class="pdp__delivery-btn-cost" id="pdp-btn-cek-ongkir" aria-haspopup="dialog" aria-expanded="false" aria-controls="pdp-popover-kurir">
+                  <span id="pdp-teks-ongkir" class="pdp__teks-ongkir">Check Delivery Cost</span>
+                  <span id="pdp-ikon-ongkir-info" class="pdp__ikon-info" style="display:none;" aria-label="Rincian opsi kurir">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  </span>
+                </button>
+
+                <!-- Floating Popover Opsi Kurir (2 Kolom: Logo & Tarif+Layanan) -->
+                <div class="pdp__popover-kurir" id="pdp-popover-kurir" role="dialog" aria-modal="false" aria-label="Rincian opsi kurir" style="display:none;">
+                  <div class="pdp__popover-kurir-header">
+                    <span class="pdp__popover-kurir-judul" data-i18n="pdp.courier_options">Opsi Kurir Pengiriman</span>
+                    <button type="button" class="pdp__popover-kurir-tutup" id="pdp-btn-tutup-kurir" aria-label="Tutup popover">&times;</button>
+                  </div>
+                  <div class="pdp__popover-kurir-list" id="pdp-kurir-list">
+                    <!-- Dinamis terisi dari JS: Kolom 1 Logo kurir, Kolom 2: Baris 1 Nominal ongkir, Baris 2 Opsi layanan & estimasi -->
+                  </div>
+                </div>
               </div>
             </div>
+
+            <!-- Row 3: Weight -->
+            <div class="pdp__delivery-row">
+              <span class="pdp__delivery-label" data-i18n="pdp.weight">Weight:</span>
+              <span class="pdp__delivery-weight-val" id="pdp-berat-produk"><?= (int)($produk['berat'] ?: 500) ?>g</span>
+            </div>
+          </div>
+
+          <!-- Footnote Catatan Pengiriman -->
+          <div class="pdp__delivery-footnote">
+            <p data-i18n="pdp.shipped_within">Shipped within 24 hours,</p>
+            <p data-i18n="pdp.payment_confirmation">(Upon confirmation of payment)</p>
           </div>
         </div>
 
@@ -672,6 +688,38 @@ if (($produk['tipe_produk'] ?? '') === 'pre_order') {
     <div class="pdp__lightbox" id="pdp-lightbox" role="dialog" aria-modal="true" aria-label="Perbesar gambar produk">
       <button type="button" class="pdp__lightbox-tutup" id="pdp-lightbox-tutup" aria-label="Tutup pratinjau zoom">&times;</button>
       <img id="pdp-lightbox-img" src="" alt="Pratinjau Zoom Produk" class="pdp__lightbox-img">
+    </div>
+
+    <!-- ========== MODAL POP-UP PEMILIHAN ALAMAT BERTINGKAT (Gambar 2, 3, 4) ========== -->
+    <div class="pdp__modal-alamat-overlay" id="pdp-modal-alamat-overlay" aria-hidden="true">
+      <div class="pdp__modal-alamat" id="pdp-modal-alamat" role="dialog" aria-modal="true" aria-labelledby="pdp-modal-alamat-step-title">
+        
+        <!-- Header: Tombol Back & Judul Langkah -->
+        <div class="pdp__modal-alamat-header">
+          <button type="button" class="pdp__modal-alamat-btn-back" id="pdp-alamat-btn-back" aria-label="Kembali ke langkah sebelumnya">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          </button>
+          <h3 id="pdp-modal-alamat-step-title" class="pdp__modal-alamat-title">1. Pick Province</h3>
+          <button type="button" class="pdp__modal-alamat-btn-close" id="pdp-alamat-btn-close" aria-label="Tutup modal">&times;</button>
+        </div>
+
+        <!-- Subtitle Context Dinamis -->
+        <p class="pdp__modal-alamat-subtitle" id="pdp-alamat-subtitle">Send package to which address?</p>
+
+        <!-- Search Input with Search Icon on Right -->
+        <div class="pdp__modal-alamat-search-wrap">
+          <input type="text" id="pdp-alamat-search-input" class="pdp__modal-alamat-search" placeholder="Search Province" aria-label="Cari wilayah">
+          <div class="pdp__modal-alamat-search-ikon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+        </div>
+
+        <!-- List Items Container -->
+        <div class="pdp__modal-alamat-list" id="pdp-alamat-list-items" role="listbox">
+          <!-- Diisi via JS: Item list dengan chevron > -->
+        </div>
+
+      </div>
     </div>
 
   </main>

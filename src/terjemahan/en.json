@@ -159,6 +159,28 @@
     "you_might_like": "You Might Also Like",
     "recently_viewed": "Recently Viewed",
     "discounts_title": "DISCOUNTS",
-    "apply_coupon": "Apply This Coupon"
+    "apply_coupon": "Apply This Coupon",
+    "delivery_title": "Delivery",
+    "deliver_to": "Deliver to:",
+    "select_delivery_address": "Select Delivery Address",
+    "est_delivery_cost": "Estimated Delivery Cost:",
+    "check_delivery_cost": "Check Delivery Cost",
+    "weight": "Weight:",
+    "shipped_within": "Shipped within 24 hours,",
+    "payment_confirmation": "(Upon confirmation of payment)",
+    "pick_province": "1. Pick Province",
+    "pick_city": "2. Pick City",
+    "pick_area": "3. Pick Area",
+    "send_package_to": "Send package to which address?",
+    "search_province": "Search Province",
+    "search_city": "Search City",
+    "search_area": "Search Area",
+    "courier_options": "Courier Delivery Options",
+    "back": "Back"
+  },
+  "keranjang_extra": {
+    "loyalty_target_text": "Spend {sisa} more to unlock loyalty rewards!",
+    "loyalty_unlocked": "Congratulations! Loyalty Rewards Unlocked! 🎉",
+    "only_stocks_left": "Only {n} stocks left."
   }
 }

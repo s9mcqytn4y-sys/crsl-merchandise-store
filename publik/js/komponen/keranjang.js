@@ -323,24 +323,50 @@ const Keranjang = (() => {
       }
     }
 
-    // Update Progress Loyalitas (Gambar 4)
-    const TARGET_LOYALTI = 1000000; // Tier New Freen target Rp 1.000.000
+    // Update Progress Loyalitas "Spend 200K to unlock loyalty rewards!"
+    const TARGET_LOYALTI = 200000; // Target Rp 200.000
     const sisaLoyalti = Math.max(0, TARGET_LOYALTI - total.totalHarga);
     const persentaseLoyalti = Math.min(100, Math.round((total.totalHarga / TARGET_LOYALTI) * 100));
 
     const loyaltyDesc = document.getElementById('keranjang-loyalty-desc');
     const loyaltyBar = document.getElementById('keranjang-loyalty-bar');
+    const loyaltyFooterNote = document.getElementById('keranjang-loyalty-footer-note');
+
+    const bahasa = (typeof window.i18n !== 'undefined' && window.i18n.dapatkanBahasa) ? window.i18n.dapatkanBahasa() : 'id';
 
     if (loyaltyDesc) {
       if (sisaLoyalti > 0) {
-        loyaltyDesc.textContent = `Spend ${formatRupiah(sisaLoyalti)} more to reach New Freen`;
+        if (bahasa === 'en') {
+          loyaltyDesc.textContent = `Spend ${formatRupiah(sisaLoyalti)} more to unlock loyalty rewards!`;
+        } else {
+          loyaltyDesc.textContent = `Belanja ${formatRupiah(sisaLoyalti)} lagi untuk membuka reward loyalitas!`;
+        }
       } else {
-        loyaltyDesc.textContent = `Congratulations! You reached New Freen VIP status!`;
+        if (bahasa === 'en') {
+          loyaltyDesc.textContent = `🎉 Congratulations! Loyalty Rewards Unlocked!`;
+        } else {
+          loyaltyDesc.textContent = `🎉 Selamat! Reward Loyalitas Aktif!`;
+        }
       }
     }
 
     if (loyaltyBar) {
-      loyaltyBar.style.width = `${Math.max(15, persentaseLoyalti)}%`;
+      loyaltyBar.style.width = `${total.totalHarga > 0 ? Math.max(8, persentaseLoyalti) : 0}%`;
+      if (sisaLoyalti === 0) {
+        loyaltyBar.style.backgroundColor = '#16a34a';
+      } else {
+        loyaltyBar.style.backgroundColor = '';
+      }
+    }
+
+    if (loyaltyFooterNote) {
+      if (sisaLoyalti === 0) {
+        loyaltyFooterNote.textContent = bahasa === 'en' ? '✅ Loyalty rewards unlocked for this order!' : '✅ Reward loyalitas aktif untuk pesanan ini!';
+        loyaltyFooterNote.style.color = '#16a34a';
+      } else {
+        loyaltyFooterNote.textContent = bahasa === 'en' ? 'Spend 200K to unlock loyalty rewards!' : 'Belanja Rp 200.000 untuk membuka reward loyalitas!';
+        loyaltyFooterNote.style.color = '';
+      }
     }
   }
 

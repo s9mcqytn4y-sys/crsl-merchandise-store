@@ -188,8 +188,7 @@ const ProdukDetail = (() => {
         }
       } else {
         if (stokKeterangan) {
-          stokKeterangan.textContent = `Tersedia: ${maxStok} item`;
-          stokKeterangan.style.color = '#16a34a';
+          stokKeterangan.textContent = '';
         }
         if (restockNotif) restockNotif.style.display = 'none';
         if (btnAddCart) {
@@ -313,26 +312,450 @@ const ProdukDetail = (() => {
   }
 
   /* ==========================================================
-     5. Kalkulator Ongkir Pengiriman (Delivery Estimator)
+     5. Multi-Step Address Modal & Courier Estimator (Gambar 1, 2, 3, 4, 5)
      ========================================================== */
   function initDeliveryEstimator() {
-    const selectKota = document.getElementById('pdp-select-kota');
-    const tarifReguler = document.getElementById('pdp-tarif-reguler');
-    const tarifExpress = document.getElementById('pdp-tarif-express');
-
-    const daftarTarif = {
-      jogja: { reguler: 'Rp 0 (Gratis Ongkir)', express: 'Rp 8.000' },
-      jakarta: { reguler: 'Rp 10.000', express: 'Rp 18.000' },
-      bandung: { reguler: 'Rp 12.000', express: 'Rp 20.000' },
-      surabaya: { reguler: 'Rp 12.000', express: 'Rp 22.000' },
-      luarjawa: { reguler: 'Rp 28.000', express: 'Rp 45.000' }
+    // Dataset Wilayah Indonesia (Provinsi > Kota/Kab > Kecamatan)
+    const dataWilayah = {
+      'Bali': {
+        'Kota Denpasar': ['Denpasar Barat', 'Denpasar Selatan', 'Denpasar Timur', 'Denpasar Utara'],
+        'Kab. Badung': ['Kuta', 'Kuta Selatan', 'Kuta Utara', 'Mengwi'],
+        'Kab. Gianyar': ['Gianyar', 'Sukawati', 'Ubud']
+      },
+      'Bangka Belitung': {
+        'Kota Pangkalpinang': ['Bukit Intan', 'Gerunggang', 'Pangkal Balam', 'Rangkui'],
+        'Kab. Bangka': ['Sungai Liat', 'Belinyu', 'Mendo Barat']
+      },
+      'Banten': {
+        'Kota Tangerang': ['Batuceper', 'Ciledug', 'Cipondoh', 'Karawaci', 'Tangerang'],
+        'Kota Tangerang Selatan': ['Ciputat', 'Pamulang', 'Pondok Aren', 'Serpong', 'Serpong Utara'],
+        'Kota Serang': ['Serang', 'Cipocok Jaya', 'Kasemen'],
+        'Kota Cilegon': ['Cilegon', 'Cibeber', 'Grogol']
+      },
+      'Bengkulu': {
+        'Kota Bengkulu': ['Gading Cempaka', 'Ratu Agung', 'Ratu Samban', 'Teluk Segara'],
+        'Kab. Rejang Lebong': ['Curup', 'Curup Tengah', 'Curup Timur']
+      },
+      'DI Yogyakarta': {
+        'Kota Yogyakarta': ['Danurejan', 'Gedongtengen', 'Gondokusuman', 'Gondomanan', 'Kotagede', 'Malioboro', 'Mergangsan', 'Umbulharjo', 'Wirobrajan'],
+        'Kab. Sleman': ['Depok', 'Gamping', 'Mlati', 'Ngaglik', 'Sleman'],
+        'Kab. Bantul': ['Banguntapan', 'Bantul', 'Kasihan', 'Sewon'],
+        'Kab. Kulon Progo': ['Wates', 'Sentolo', 'Pengasih'],
+        'Kab. Gunungkidul': ['Wonosari', 'Playen', 'Karangmojo']
+      },
+      'DKI Jakarta': {
+        'Kab. Kepulauan Seribu': ['Kepulauan Seribu Selatan', 'Kepulauan Seribu Utara'],
+        'Kota Jakarta Barat': ['Cengkareng', 'Grogol Petamburan', 'Kalideres', 'Kebon Jeruk', 'Kembangan', 'Palmerah', 'Taman Sari', 'Tambora'],
+        'Kota Jakarta Pusat': ['Cempaka Putih', 'Gambir', 'Johar Baru', 'Kemayoran', 'Menteng', 'Sawah Besar', 'Senen', 'Tanah Abang'],
+        'Kota Jakarta Selatan': ['Cilandak', 'Jagakarsa', 'Kebayoran Baru', 'Kebayoran Lama', 'Mampang Prapatan', 'Pancoran', 'Pasar Minggu', 'Pesanggrahan', 'Setiabudi', 'Tebet'],
+        'Kota Jakarta Timur': ['Cakung', 'Cipayung', 'Ciracas', 'Duren Sawit', 'Jatinegara', 'Kramat Jati', 'Makasar', 'Matraman', 'Pasar Rebo', 'Pulo Gadung'],
+        'Kota Jakarta Utara': ['Cilincing', 'Kelapa Gading', 'Koja', 'Pademangan', 'Penjaringan', 'Tanjung Priok']
+      },
+      'Gorontalo': {
+        'Kota Gorontalo': ['Dumbo Raya', 'Dungingi', 'Kota Barat', 'Kota Selatan', 'Kota Tengah'],
+        'Kab. Gorontalo': ['Limboto', 'Telaga', 'Tibawa']
+      },
+      'Jawa Barat': {
+        'Kota Bandung': ['Andir', 'Astanaanyar', 'Coblong', 'Lengkong', 'Sukasari', 'Sumur Bandung'],
+        'Kota Bekasi': ['Bekasi Barat', 'Bekasi Selatan', 'Bekasi Timur', 'Bekasi Utara', 'Pondok Gede'],
+        'Kota Bogor': ['Bogor Barat', 'Bogor Selatan', 'Bogor Tengah', 'Bogor Timur', 'Bogor Utara'],
+        'Kota Depok': ['Beji', 'Cimanggis', 'Cinere', 'Pancoran Mas', 'Sukmajaya']
+      },
+      'Jawa Tengah': {
+        'Kota Semarang': ['Banyumanik', 'Candisari', 'Gajahmungkur', 'Pedurungan', 'Semarang Barat', 'Semarang Selatan', 'Semarang Tengah'],
+        'Kota Surakarta': ['Banjarsari', 'Jebres', 'Laweyan', 'Pasar Kliwon', 'Serengan'],
+        'Kota Magelang': ['Magelang Selatan', 'Magelang Tengah', 'Magelang Utara']
+      },
+      'Jawa Timur': {
+        'Kota Surabaya': ['Gubeng', 'Mulyorejo', 'Rungkut', 'Sawahan', 'Sukolilo', 'Tegalsari', 'Wonokromo'],
+        'Kota Malang': ['Blimbing', 'Kedungkandang', 'Klojen', 'Lowokwaru', 'Sukun'],
+        'Kota Sidoarjo': ['Candi', 'Gedangan', 'Sidoarjo', 'Waru']
+      }
     };
 
-    selectKota?.addEventListener('change', () => {
-      const val = selectKota.value;
-      const data = daftarTarif[val] || daftarTarif.jakarta;
-      if (tarifReguler) tarifReguler.textContent = data.reguler;
-      if (tarifExpress) tarifExpress.textContent = data.express;
+    // Elemen DOM Kontainer Delivery
+    const btnPilihAlamat = document.getElementById('pdp-btn-pilih-alamat');
+    const teksAlamatTujuan = document.getElementById('pdp-teks-alamat-tujuan');
+    const btnCekOngkir = document.getElementById('pdp-btn-cek-ongkir');
+    const teksOngkir = document.getElementById('pdp-teks-ongkir');
+    const ikonOngkirInfo = document.getElementById('pdp-ikon-ongkir-info');
+    const popoverKurir = document.getElementById('pdp-popover-kurir');
+    const btnTutupKurir = document.getElementById('pdp-btn-tutup-kurir');
+    const kurirListContainer = document.getElementById('pdp-kurir-list');
+
+    // Elemen DOM Modal Bertingkat
+    const modalOverlay = document.getElementById('pdp-modal-alamat-overlay');
+    const btnCloseModal = document.getElementById('pdp-alamat-btn-close');
+    const btnBackModal = document.getElementById('pdp-alamat-btn-back');
+    const stepTitle = document.getElementById('pdp-modal-alamat-step-title');
+    const subtitle = document.getElementById('pdp-alamat-subtitle');
+    const searchInput = document.getElementById('pdp-alamat-search-input');
+    const listContainer = document.getElementById('pdp-alamat-list-items');
+
+    // State Pemilihan Alamat
+    let activeStep = 1; // 1: Province, 2: City, 3: Area
+    let selectedProv = '';
+    let selectedCity = '';
+    let selectedArea = '';
+    let selectedCourier = null;
+
+    // Berat Produk Aktual dalam Gram (default 500g jika tidak tersedia)
+    const beratProduk = parseInt(produkData.berat, 10) || 500;
+    const kgMultiplier = Math.max(1, Math.ceil(beratProduk / 1000));
+
+    // Ambil data alamat yang tersimpan sebelumnya (User Story: jika user sebelumnya sudah submit)
+    const STORAGE_KEY_ADDR = 'crsl_shipping_destination';
+    const STORAGE_KEY_COURIER = 'crsl_selected_courier';
+
+    function hitungTarifKurir(prov, city) {
+      // Menghitung tarif pengiriman realistis berbasis zona tujuan dan berat
+      let baseReg = 16000;
+      let baseFast = 28000;
+      let baseSicepat = 15000;
+      let baseJnt = 16000;
+
+      if (prov === 'DI Yogyakarta') {
+        baseReg = 8000;
+        baseFast = 15000;
+        baseSicepat = 8000;
+        baseJnt = 9000;
+      } else if (prov === 'DKI Jakarta') {
+        baseReg = 16000;
+        baseFast = 28000;
+        baseSicepat = 15000;
+        baseJnt = 16000;
+      } else if (prov === 'Banten' || prov === 'Jawa Barat') {
+        baseReg = 14000;
+        baseFast = 24000;
+        baseSicepat = 14000;
+        baseJnt = 15000;
+      } else if (prov === 'Jawa Tengah' || prov === 'Jawa Timur') {
+        baseReg = 12000;
+        baseFast = 22000;
+        baseSicepat = 12000;
+        baseJnt = 13000;
+      } else {
+        baseReg = 28000;
+        baseFast = 48000;
+        baseSicepat = 27000;
+        baseJnt = 28000;
+      }
+
+      return [
+        {
+          id: 'jne-reg',
+          namaKurir: 'JNE',
+          logo: '/aset/ikon/kurir-jne.svg',
+          layanan: 'Reguler (2-3 hari)',
+          tarif: baseReg * kgMultiplier,
+          badge: 'Rekomendasi'
+        },
+        {
+          id: 'jne-yes',
+          namaKurir: 'JNE',
+          logo: '/aset/ikon/kurir-jne.svg',
+          layanan: 'YES (Yakin Esok Sampai) (1 hari)',
+          tarif: baseFast * kgMultiplier,
+          badge: 'Express'
+        },
+        {
+          id: 'sicepat-reg',
+          namaKurir: 'SiCepat',
+          logo: '/aset/ikon/kurir-sicepat.svg',
+          layanan: 'Reguler (2-3 hari)',
+          tarif: baseSicepat * kgMultiplier,
+          badge: 'Hemat'
+        },
+        {
+          id: 'jnt-ez',
+          namaKurir: 'J&T',
+          logo: '/aset/ikon/kurir-jnt.svg',
+          layanan: 'EZ Reguler (2-3 hari)',
+          tarif: baseJnt * kgMultiplier,
+          badge: 'Cepat'
+        }
+      ];
+    }
+
+    function renderKurirOptions(options) {
+      if (!kurirListContainer) return;
+      kurirListContainer.innerHTML = '';
+
+      options.forEach(opt => {
+        const isAktif = selectedCourier && selectedCourier.id === opt.id;
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = `pdp__kurir-card ${isAktif ? 'aktif' : ''}`;
+        card.setAttribute('role', 'option');
+        card.setAttribute('aria-selected', isAktif ? 'true' : 'false');
+        card.innerHTML = `
+          <div class="pdp__kurir-logo-col">
+            <img src="${opt.logo}" alt="${opt.namaKurir}" width="72" height="28" loading="lazy">
+          </div>
+          <div class="pdp__kurir-info-col">
+            <div class="pdp__kurir-baris-nominal">Rp ${opt.tarif.toLocaleString('id-ID')}</div>
+            <div class="pdp__kurir-baris-layanan">${opt.layanan}</div>
+          </div>
+        `;
+
+        card.addEventListener('click', () => {
+          selectedCourier = opt;
+          try {
+            localStorage.setItem(STORAGE_KEY_COURIER, JSON.stringify(opt));
+          } catch {}
+
+          // Update teks pada Baris 2 PDP
+          if (teksOngkir) teksOngkir.textContent = `Rp ${opt.tarif.toLocaleString('id-ID')}`;
+          if (ikonOngkirInfo) ikonOngkirInfo.style.display = 'inline-flex';
+
+          tutupPopoverKurir();
+        });
+
+        kurirListContainer.appendChild(card);
+      });
+    }
+
+    function formatAlamatDisplay(kota, area) {
+      // Format ringkas sesuai screenshot: "Jakarta Pusat, Johar Baru ˅"
+      let cleanKota = kota.replace(/^Kota\s+|^Kab\.\s+/i, '');
+      return `${cleanKota}, ${area}`;
+    }
+
+    function perbaruiTampilanPDP() {
+      if (selectedArea && selectedCity) {
+        if (teksAlamatTujuan) {
+          teksAlamatTujuan.textContent = formatAlamatDisplay(selectedCity, selectedArea);
+        }
+
+        const options = hitungTarifKurir(selectedProv, selectedCity);
+        renderKurirOptions(options);
+
+        // Pilih opsi pertama (JNE Reguler) jika belum ada kurir terpilih
+        if (!selectedCourier) {
+          selectedCourier = options[0];
+        } else {
+          // Cari opsi yang setara
+          const match = options.find(o => o.id === selectedCourier.id);
+          selectedCourier = match || options[0];
+        }
+
+        if (teksOngkir) {
+          teksOngkir.textContent = `Rp ${selectedCourier.tarif.toLocaleString('id-ID')}`;
+        }
+        if (ikonOngkirInfo) {
+          ikonOngkirInfo.style.display = 'inline-flex';
+        }
+      } else {
+        if (teksAlamatTujuan) {
+          teksAlamatTujuan.textContent = 'Pilih Alamat Pengiriman';
+        }
+        if (teksOngkir) {
+          teksOngkir.textContent = 'Check Delivery Cost';
+        }
+        if (ikonOngkirInfo) {
+          ikonOngkirInfo.style.display = 'none';
+        }
+      }
+    }
+
+    // Cek data tersimpan di LocalStorage
+    try {
+      const savedRaw = localStorage.getItem(STORAGE_KEY_ADDR);
+      if (savedRaw) {
+        const saved = JSON.parse(savedRaw);
+        if (saved.prov && saved.city && saved.area) {
+          selectedProv = saved.prov;
+          selectedCity = saved.city;
+          selectedArea = saved.area;
+        }
+      }
+      const savedCourierRaw = localStorage.getItem(STORAGE_KEY_COURIER);
+      if (savedCourierRaw) {
+        selectedCourier = JSON.parse(savedCourierRaw);
+      }
+    } catch {}
+
+    perbaruiTampilanPDP();
+
+    /* ----------------------------------------------------
+       Modal Controller (3 Steps: Province -> City -> Area)
+       ---------------------------------------------------- */
+    function bukaModalAlamat() {
+      if (!modalOverlay) return;
+      modalOverlay.classList.add('aktif');
+      document.body.style.overflow = 'hidden';
+      if (btnPilihAlamat) btnPilihAlamat.setAttribute('aria-expanded', 'true');
+      renderStep(activeStep);
+    }
+
+    function tutupModalAlamat() {
+      if (!modalOverlay) return;
+      modalOverlay.classList.remove('aktif');
+      document.body.style.overflow = '';
+      if (btnPilihAlamat) btnPilihAlamat.setAttribute('aria-expanded', 'false');
+    }
+
+    function bukaPopoverKurir() {
+      if (!selectedArea) {
+        // Fallback: jika belum ada alamat, buka modal alamat terlebih dahulu
+        bukaModalAlamat();
+        return;
+      }
+      if (!popoverKurir) return;
+      popoverKurir.style.display = 'block';
+      if (btnCekOngkir) btnCekOngkir.setAttribute('aria-expanded', 'true');
+    }
+
+    function tutupPopoverKurir() {
+      if (!popoverKurir) return;
+      popoverKurir.style.display = 'none';
+      if (btnCekOngkir) btnCekOngkir.setAttribute('aria-expanded', 'false');
+    }
+
+    function renderStep(step) {
+      activeStep = step;
+      if (!searchInput || !listContainer || !stepTitle || !subtitle || !btnBackModal) return;
+
+      listContainer.innerHTML = '';
+      searchInput.value = '';
+
+      // Back button hanya muncul di Step 2 dan Step 3
+      btnBackModal.style.display = (step > 1) ? 'inline-flex' : 'none';
+
+      let items = [];
+
+      if (step === 1) {
+        stepTitle.textContent = '1. Pick Province';
+        subtitle.textContent = 'Send package to which address?';
+        searchInput.placeholder = 'Search Province';
+        items = Object.keys(dataWilayah);
+
+      } else if (step === 2) {
+        stepTitle.textContent = '2. Pick City';
+        subtitle.textContent = `${selectedProv} :`;
+        searchInput.placeholder = 'Search City';
+        const kotaObj = dataWilayah[selectedProv] || {};
+        items = Object.keys(kotaObj);
+
+      } else if (step === 3) {
+        stepTitle.textContent = '3. Pick Area';
+        subtitle.textContent = `${selectedProv}, ${selectedCity} :`;
+        searchInput.placeholder = 'Search Area';
+        const areaArr = (dataWilayah[selectedProv] && dataWilayah[selectedProv][selectedCity]) || [];
+        items = areaArr;
+      }
+
+      function populateList(filterText = '') {
+        listContainer.innerHTML = '';
+        const q = filterText.trim().toLowerCase();
+        const filtered = items.filter(it => it.toLowerCase().includes(q));
+
+        if (filtered.length === 0) {
+          const empty = document.createElement('div');
+          empty.style.padding = '16px';
+          empty.style.color = '#9ca3af';
+          empty.style.fontSize = '13px';
+          empty.textContent = 'Wilayah tidak ditemukan';
+          listContainer.appendChild(empty);
+          return;
+        }
+
+        filtered.forEach(it => {
+          const row = document.createElement('button');
+          row.type = 'button';
+          row.className = 'pdp__modal-alamat-item';
+          row.innerHTML = `
+            <span>${it}</span>
+            <span class="pdp__modal-alamat-item-chevron">&rsaquo;</span>
+          `;
+
+          row.addEventListener('click', () => {
+            if (activeStep === 1) {
+              selectedProv = it;
+              renderStep(2);
+            } else if (activeStep === 2) {
+              selectedCity = it;
+              renderStep(3);
+            } else if (activeStep === 3) {
+              selectedArea = it;
+
+              // Simpan ke storage
+              try {
+                localStorage.setItem(STORAGE_KEY_ADDR, JSON.stringify({
+                  prov: selectedProv,
+                  city: selectedCity,
+                  area: selectedArea
+                }));
+              } catch {}
+
+              perbaruiTampilanPDP();
+              tutupModalAlamat();
+            }
+          });
+
+          listContainer.appendChild(row);
+        });
+      }
+
+      populateList();
+
+      // Realtime search filtering
+      searchInput.oninput = (e) => {
+        populateList(e.target.value);
+      };
+      searchInput.focus();
+    }
+
+    // Event listener navigasi modal
+    btnPilihAlamat?.addEventListener('click', bukaModalAlamat);
+    btnCloseModal?.addEventListener('click', tutupModalAlamat);
+    modalOverlay?.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) tutupModalAlamat();
+    });
+
+    btnBackModal?.addEventListener('click', () => {
+      if (activeStep === 3) {
+        renderStep(2);
+      } else if (activeStep === 2) {
+        renderStep(1);
+      }
+    });
+
+    // Event listener popover kurir
+    btnCekOngkir?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (popoverKurir && popoverKurir.style.display === 'block') {
+        tutupPopoverKurir();
+      } else {
+        bukaPopoverKurir();
+      }
+    });
+
+    ikonOngkirInfo?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (popoverKurir && popoverKurir.style.display === 'block') {
+        tutupPopoverKurir();
+      } else {
+        bukaPopoverKurir();
+      }
+    });
+
+    btnTutupKurir?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      tutupPopoverKurir();
+    });
+
+    document.addEventListener('click', (e) => {
+      if (popoverKurir && !popoverKurir.contains(e.target) && e.target !== btnCekOngkir && !btnCekOngkir?.contains(e.target)) {
+        tutupPopoverKurir();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        tutupModalAlamat();
+        tutupPopoverKurir();
+      }
     });
   }
 
@@ -482,11 +905,15 @@ const ProdukDetail = (() => {
       const next = document.getElementById(nextId);
 
       prev?.addEventListener('click', () => {
-        track?.scrollBy({ left: -240, behavior: 'smooth' });
+        const card = track?.querySelector('.pdp__card-katalog');
+        const scrollAmount = card ? (card.offsetWidth + 16) * 2 : 280;
+        track?.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
       });
 
       next?.addEventListener('click', () => {
-        track?.scrollBy({ left: 240, behavior: 'smooth' });
+        const card = track?.querySelector('.pdp__card-katalog');
+        const scrollAmount = card ? (card.offsetWidth + 16) * 2 : 280;
+        track?.scrollBy({ left: scrollAmount, behavior: 'smooth' });
       });
     };
 

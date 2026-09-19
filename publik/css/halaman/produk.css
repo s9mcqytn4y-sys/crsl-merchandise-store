@@ -162,7 +162,7 @@
   border-radius: var(--radius-lg);
   overflow: hidden;
   border: 1px solid var(--warna-batas);
-  cursor: crosshair;
+  cursor: zoom-in;
   box-shadow: var(--bayangan-sm);
 }
 
@@ -778,74 +778,454 @@
   width: 32%;
 }
 
-/* Section 10: Estimasi Pengiriman (Delivery) */
+/* ==========================================================
+   SECTION 10: CONTAINER DELIVERY (Gambar 1 & Gambar 5)
+   ========================================================== */
 .pdp__sec-delivery {
-  padding: var(--jarak-md);
-  background-color: var(--warna-latar-sekunder);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--warna-batas);
+  padding: 16px 20px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  margin-top: 4px;
 }
 
-.pdp__delivery-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: var(--warna-teks);
-  margin-bottom: 4px;
+[data-tema="gelap"] .pdp__sec-delivery {
+  background-color: var(--warna-latar-kartu, #1e293b);
+  border-color: var(--warna-batas, #334155);
 }
 
-.pdp__delivery-sub {
-  font-size: 12px;
-  color: var(--warna-teks-sekunder);
-  margin-bottom: 8px;
-}
-
-.pdp__select-kota {
-  width: 100%;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--warna-batas);
-  background-color: var(--warna-latar);
-  color: var(--warna-teks);
-  font-size: 13px;
+.pdp__delivery-card-title {
+  font-size: 16px;
   font-weight: 600;
-  margin-bottom: 10px;
+  color: #374151;
+  margin: 0 0 12px 0;
 }
 
-.pdp__delivery-hasil {
+[data-tema="gelap"] .pdp__delivery-card-title {
+  color: #f3f4f6;
+}
+
+.pdp__delivery-table {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
 }
 
-.pdp__kurir-item {
+.pdp__delivery-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  padding: 6px 8px;
-  background-color: var(--warna-latar);
-  border-radius: 4px;
-  border: 1px solid var(--warna-batas);
-  font-size: 12px;
+  font-size: 14px;
+  min-height: 24px;
 }
 
-.pdp__kurir-nama {
-  font-weight: 600;
-  color: var(--warna-teks);
+.pdp__delivery-label {
+  color: #4b5563;
+  font-weight: 400;
 }
 
-.pdp__kurir-tarif {
+[data-tema="gelap"] .pdp__delivery-label {
+  color: #9ca3af;
+}
+
+.pdp__delivery-btn-lokasi {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #c93a3a;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: right;
+  transition: opacity 0.2s;
+}
+
+.pdp__delivery-btn-lokasi:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.pdp__chevron-lokasi {
+  color: #c93a3a;
+  transition: transform 0.2s;
+}
+
+.pdp__delivery-row--cost {
+  position: relative;
+}
+
+.pdp__delivery-cost-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.pdp__delivery-btn-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #c93a3a;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: right;
+}
+
+.pdp__delivery-btn-cost:hover {
+  opacity: 0.85;
+}
+
+.pdp__ikon-info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #c93a3a;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.pdp__ikon-info:hover {
+  transform: scale(1.15);
+}
+
+.pdp__delivery-weight-val {
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+[data-tema="gelap"] .pdp__delivery-weight-val {
+  color: #f3f4f6;
+}
+
+.pdp__delivery-footnote {
+  margin-top: 14px;
+  color: #9ca3af;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.pdp__delivery-footnote p {
+  margin: 0;
+}
+
+/* Floating Popover Rincian Kurir */
+.pdp__popover-kurir {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 320px;
+  max-width: 90vw;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  z-index: 100;
+  padding: 14px;
+  animation: modalMuncul 0.2s ease-out;
+}
+
+[data-tema="gelap"] .pdp__popover-kurir {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+.pdp__popover-kurir-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+[data-tema="gelap"] .pdp__popover-kurir-header {
+  border-color: #334155;
+}
+
+.pdp__popover-kurir-judul {
+  font-size: 13px;
   font-weight: 700;
-  color: var(--warna-primer);
+  color: #111827;
 }
 
-.pdp__kurir-estimasi {
-  width: 100%;
+[data-tema="gelap"] .pdp__popover-kurir-judul {
+  color: #f3f4f6;
+}
+
+.pdp__popover-kurir-tutup {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.pdp__popover-kurir-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pdp__kurir-card {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1.5px solid #f3f4f6;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+[data-tema="gelap"] .pdp__kurir-card {
+  background-color: #0f172a;
+  border-color: #334155;
+}
+
+.pdp__kurir-card:hover,
+.pdp__kurir-card.aktif {
+  border-color: #c93a3a;
+  background-color: rgba(201, 58, 58, 0.04);
+}
+
+.pdp__kurir-logo-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pdp__kurir-logo-col img {
+  width: 72px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.pdp__kurir-info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pdp__kurir-baris-nominal {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+}
+
+[data-tema="gelap"] .pdp__kurir-baris-nominal {
+  color: #f3f4f6;
+}
+
+.pdp__kurir-baris-layanan {
   font-size: 11px;
-  color: var(--warna-teks-sekunder);
-  margin-top: 2px;
+  color: #6b7280;
+  line-height: 1.3;
+}
+
+[data-tema="gelap"] .pdp__kurir-baris-layanan {
+  color: #9ca3af;
+}
+
+/* ==========================================================
+   MODAL POP-UP PEMILIHAN ALAMAT BERTINGKAT (Gambar 2, 3, 4)
+   ========================================================== */
+.pdp__modal-alamat-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99990;
+  background-color: rgba(0, 0, 0, 0.5);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.pdp__modal-alamat-overlay.aktif {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.pdp__modal-alamat {
+  width: 100%;
+  max-width: 440px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: modalMuncul 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: 90vh;
+}
+
+[data-tema="gelap"] .pdp__modal-alamat {
+  background: #1e293b;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.pdp__modal-alamat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+.pdp__modal-alamat-btn-back {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  color: #374151;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+[data-tema="gelap"] .pdp__modal-alamat-btn-back {
+  color: #f3f4f6;
+}
+
+.pdp__modal-alamat-btn-back:hover {
+  background-color: #f3f4f6;
+}
+
+.pdp__modal-alamat-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  flex: 1;
+  margin-left: 12px;
+}
+
+[data-tema="gelap"] .pdp__modal-alamat-title {
+  color: #f3f4f6;
+}
+
+.pdp__modal-alamat-btn-close {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.pdp__modal-alamat-subtitle {
+  font-size: 14px;
+  color: #4b5563;
+  margin: 0;
+}
+
+[data-tema="gelap"] .pdp__modal-alamat-subtitle {
+  color: #cbd5e1;
+}
+
+.pdp__modal-alamat-search-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.pdp__modal-alamat-search {
+  width: 100%;
+  padding: 12px 42px 12px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 14px;
+  background-color: #ffffff;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+[data-tema="gelap"] .pdp__modal-alamat-search {
+  background-color: #0f172a;
+  border-color: #334155;
+  color: #f3f4f6;
+}
+
+.pdp__modal-alamat-search:focus {
+  border-color: #c93a3a;
+  box-shadow: 0 0 0 3px rgba(201, 58, 58, 0.15);
+}
+
+.pdp__modal-alamat-search-ikon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #4b5563;
+  pointer-events: none;
+}
+
+.pdp__modal-alamat-list {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: 380px;
+  padding-right: 4px;
+}
+
+.pdp__modal-alamat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 8px;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  background: transparent;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  width: 100%;
+  text-align: left;
+  transition: background-color 0.15s;
+}
+
+[data-tema="gelap"] .pdp__modal-alamat-item {
+  border-bottom-color: #334155;
+  color: #e2e8f0;
+}
+
+.pdp__modal-alamat-item:hover {
+  background-color: #f9fafb;
+}
+
+[data-tema="gelap"] .pdp__modal-alamat-item:hover {
+  background-color: #0f172a;
+}
+
+.pdp__modal-alamat-item-chevron {
+  color: #9ca3af;
+  font-weight: 600;
 }
 
 /* Section 11: Tombol WhatsApp "Message CRSL" */
