@@ -321,6 +321,8 @@ const Keranjang = (() => {
       } else {
         hematBaris.style.display = 'none';
       }
+    }
+
     // Otomatisasi Voucher "FREEONGKIR10K" (Min. Spend Rp 179.000) (Screenshot 1 & 2)
     const MIN_VOUCHER_BELANJA = 179000;
     const voucherRow = document.getElementById('keranjang-voucher-row');
