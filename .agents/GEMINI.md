@@ -30,7 +30,32 @@ publik/          -> Document root (CSS, JS, halaman PHP)
 src/             -> Backend logic (konfigurasi, basis-data, terjemahan)
 aset/            -> Aset statis (gambar, ikon SVG, font)
 data/            -> SQLite database file
+.agents/         -> Konfigurasi agen, rules modular, subagents, dan skills
 ```
+
+## Arsitektur Agen & Toolkit Modular (.agents/)
+Toolkit `everything-claude-code` telah diadaptasi penuh untuk Antigravity / Gemini CLI (`agy`):
+
+1. **Panduan Alur Kerja**: Baca [.agents/WORKFLOWS.md](file:///c:/Projects/merchandise-store/.agents/WORKFLOWS.md) untuk cheatsheet perintah operasional.
+2. **Aturan Modular (`.agents/rules/`)**:
+   - [keamanan.md](file:///c:/Projects/merchandise-store/.agents/rules/keamanan.md): Standar keamanan SQL injection, XSS, dan proteksi kredensial.
+   - [gaya-koding.md](file:///c:/Projects/merchandise-store/.agents/rules/gaya-koding.md): Konvensi penamaan, semantic HTML, dan mobile-first.
+   - [pengujian.md](file:///c:/Projects/merchandise-store/.agents/rules/pengujian.md): Siklus TDD dan pengujian CLI.
+   - [alur-git.md](file:///c:/Projects/merchandise-store/.agents/rules/alur-git.md): Format commit Bahasa Indonesia dan perubahan atomik.
+   - [performa-dan-database.md](file:///c:/Projects/merchandise-store/.agents/rules/performa-dan-database.md): Konkurensi SQLite WAL dan higienitas aset.
+   - [delegasi-agen.md](file:///c:/Projects/merchandise-store/.agents/rules/delegasi-agen.md): Pembagian peran dan efisiensi jendela konteks.
+3. **Subagen Spesialis (`.agents/agents/`)**:
+   - `arsitek`: Perancangan sistem dan skema data.
+   - `peninjau-kode`: Audit kualitas, antislop, dan konvensi penamaan.
+   - `panduan-tdd`: Pengawalan siklus Red-Green-Refactor.
+   - `penyelesai-error`: Debugging presisi dan resolusi runtime exception.
+   - `peninjau-keamanan`: Audit celah keamanan OWASP dan integritas transaksi.
+   - `pembersih-refaktor`: Eliminasi dead code dan penyederhanaan arsitektur.
+4. **Skills Alur Kerja (`.agents/skills/`)**:
+   - `alur-tdd`: Alur implementasi uji mandiri di `scratch/`.
+   - `siklus-verifikasi`: Loop verifikasi otomatis sebelum rilis.
+   - `tinjauan-keamanan`: Checklist audit endpoint dan SQL.
+   - `kompaksi-strategis`: Optimasi token konteks bersama RTK CLI.
 
 ## Aturan Pengembangan
 
