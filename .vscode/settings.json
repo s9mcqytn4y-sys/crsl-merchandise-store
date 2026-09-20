@@ -1,35 +1,16 @@
 {
-  "editor.formatOnSave": true,
-  "editor.tabSize": 2,
+  "workbench.colorTheme": "Default Dark Modern",
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.wordWrap": "on",
-  "editor.linkedEditing": true,
-  "editor.bracketPairColorization.enabled": true,
-  "files.trimTrailingWhitespace": true,
-  "files.insertFinalNewline": true,
-  "files.associations": {
-    "*.php": "php",
-    "*.css": "css"
-  },
-  "emmet.includeLanguages": {
-    "php": "html"
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
   },
   "[php]": {
     "editor.defaultFormatter": "bmewburn.vscode-intelephense-client"
   },
-  "css.validate": true,
-  "css.lint.unknownAtRules": "ignore",
-  "css.lint.vendorPrefix": "ignore",
-  "css.lint.compatibleVendorPrefixes": "ignore",
-  "markdownlint.config": {
-    "MD022": true,
-    "MD032": true,
-    "MD025": false,
-    "MD033": false
+  "files.associations": {
+    "*.blade.php": "html"
   },
-  "search.exclude": {
-    "**/data": true,
-    "**/vendor": true,
-    "**/node_modules": true
-  }
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true
 }

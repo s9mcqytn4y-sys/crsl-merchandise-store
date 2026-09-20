@@ -1,46 +1,25 @@
-# Aturan Keamanan (Security Rules) - CRSL Merchandise Store
+# Aturan Keamanan (Security Rules) — CRSL Store v2
 
 Aturan ini wajib dipatuhi oleh semua agen saat membaca, menulis, atau memodifikasi kode pada proyek ini.
 
-## 1. Pencegahan SQL Injection
-- **Wajib PDO Prepared Statements**: Jangan pernah menggabungkan variabel langsung ke dalam query SQL via konkatenasi string.
-- Gunakan placeholder bernama (`:produk_id`, `:email`) atau positional (`?`).
-- Contoh aman:
-  ```php
-  $stmt = $db->prepare("SELECT * FROM produk WHERE id = :id AND status = 'aktif'");
-  $stmt->execute([':id' => $produkId]);
-  $produk = $stmt->fetch();
-  ```
+## 1. Proteksi SQL Injection & Eloquent ORM
+- **Wajib Eloquent / Query Builder**: Selalu gunakan Model Eloquent atau Query Builder Laravel dengan binding parameter otomatis.
+- Dilarang keras melakukan konkatenasi variabel string secara langsung dalam `DB::raw()`.
 
-## 2. Pencegahan Cross-Site Scripting (XSS)
-- **Wajib Sanitasi Output**: Setiap data yang bersumber dari pengguna atau basis data yang dicetak ke dalam template HTML wajib dibungkus dengan `htmlspecialchars()`.
-  ```php
-  <?= htmlspecialchars($produk['nama'] ?? '', ENT_QUOTES, 'UTF-8') ?>
-  ```
-- Hindari menyuntikkan HTML mentah (`innerHTML`) di JavaScript tanpa sanitasi ketat. Gunakan `textContent` atau sanitasi DOM.
+## 2. Proteksi Cross-Site Scripting (XSS) & CSRF
+- **Inertia & React Auto-Escaping**: React dan Inertia.js secara otomatis melakukan sanitasi pada data string.
+- Jika menggunakan `dangerouslySetInnerHTML`, data wajib disanitasi menggunakan DOMPurify.
+- **Proteksi CSRF**: Selalu aktifkan middleware CSRF bawaan Laravel untuk setiap request bermetode `POST`, `PUT`, `PATCH`, dan `DELETE`.
 
-## 3. Validasi & Sanitasi Input
-- Validasi tipe data, format, dan batasan panjang untuk semua parameter input dari `$_GET`, `$_POST`, atau JSON payload (`file_get_contents('php://input')`).
-- Angka wajib dicasting ke `(int)` atau `(float)`:
-  ```php
-  $kuantitas = max(1, min(100, (int)($_POST['kuantitas'] ?? 1)));
-  ```
-- Alamat email wajib divalidasi dengan `filter_var($email, FILTER_VALIDATE_EMAIL)`.
+## 3. Validasi Form & Input Request
+- Gunakan Laravel Form Request Validation atau `$request->validate()` untuk memvalidasi tipe data, format, dan batasan panjang input.
+- Kalkulasi total belanja dan harga produk wajib dihitung ulang di server (backend) berdasarkan database `produk` & `produk_varian`, **bukan** mempercayai total harga dari client-side payload.
 
-## 4. Keamanan Autentikasi & Kata Sandi
-- Simpan password hanya menggunakan fungsi hashing modern: `password_hash($password, PASSWORD_DEFAULT)`.
-- Verifikasi password hanya dengan `password_verify($inputPassword, $hash)`.
-- Jangan pernah menyimpan password dalam bentuk teks polos (plain text).
+## 4. Keamanan Autentikasi & Sesi
+- Sesi pengguna dikelola secara aman menggunakan driver `cache_sqlite`.
+- Password di-hash menggunakan algoritma Bcrypt/Argon2 via `Hash::make()`.
 
-## 5. Proteksi Data Sensitif & Kredensial
-- Dilarang keras menaruh API key, secret token, password basis data, atau kredensial pribadi di dalam kode sumber yang di-commit ke repositori git.
-- Gunakan environment variables atau konfigurasi lokal yang dikecualikan di `.gitignore`.
-- Jangan mencetak data sensitif (password hash, token sesi) ke dalam log aplikasi publik atau output JSON.
-
-## 6. Penanganan Error yang Aman
-- Di lingkungan produksi, jangan tampilkan stack trace atau detail error internal basis data kepada pengguna publik.
-- Catat detail error ke dalam log server, dan tampilkan pesan umum yang ramah kepada pengguna:
-  ```php
-  http_response_code(500);
-  echo json_encode(['sukses' => false, 'pesan' => 'Terjadi kendala pada sistem. Silakan coba lagi nanti.']);
-  ```
+## 5. Integrasi Gateways & Proteksi API Key
+- API Key Biteship dan Midtrans Direct Charge Server Key diletakkan pada `.env` dan diakses melalui `config/services.php`.
+- Dilarang keras menaruh secret key secara *hardcoded* di berkas PHP atau JavaScript.
+- Verifikasi signature notification webhook dari Midtrans sebelum memperbarui status `pesanan_pembayaran`.

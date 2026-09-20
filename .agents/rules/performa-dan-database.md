@@ -1,37 +1,28 @@
-# Aturan Performa & Basis Data (Performance & Database Rules) - CRSL Merchandise Store
+# Aturan Performa & Basis Data (Performance & Database Rules) — CRSL Store v2
 
-Aturan keandalan sistem backend, pengelolaan memori, dan efisiensi basis data SQLite.
+Aturan keandalan sistem backend, pengelolaan PostgreSQL 16+, caching SQLite, Zustand state management, dan animasi GSAP 3.
 
-## 1. Standar Konkurensi & Keandalan SQLite
-Pada setiap inisialisasi koneksi PDO SQLite, wajib mengeksekusi tiga instruksi PRAGMA berikut:
-```php
-$pdo->exec("PRAGMA journal_mode = WAL;");
-$pdo->exec("PRAGMA synchronous = NORMAL;");
-$pdo->exec("PRAGMA busy_timeout = 5000;");
-$pdo->exec("PRAGMA foreign_keys = ON;");
-```
-- **WAL (Write-Ahead Logging)**: Mengizinkan pembacaan paralel bersamaan dengan operasi penulisan tanpa lock saling tunggu.
-- **Synchronous NORMAL**: Memberikan performa tulis tinggi dengan jaminan integritas data yang aman pada mode WAL.
-- **Busy Timeout 5000**: Menunggu hingga 5 detik sebelum melempar exception `database is locked` ketika terjadi konkurensi tinggi.
-- **Foreign Keys ON**: Memastikan integritas referensial antar tabel tetap terjaga.
+## 1. Primary Database (PostgreSQL 16+)
+- **Koneksi**: `crsl_store_v2` pada `127.0.0.1:5432` menggunakan PDO driver `pdo_pgsql`.
+- **Integritas Referensial**: Setiap tabel wajib memiliki *Primary Key*, *Foreign Key constraints* dengan `onDelete('cascade')` atau `onDelete('restrict')`, serta indeks pada kolom yang sering dicari (`slug`, `nomor_pesanan`, `status`, `sku`).
+- **Standardisasi Penamaan**: Seluruh 17 tabel menggunakan Bahasa Indonesia (`kategori`, `produk`, `produk_varian`, `produk_spesifikasi`, `gambar_produk`, `tier_loyalitas`, `pengguna_loyalitas`, `voucher`, `voucher_terpakai`, `wilayah_indonesia`, `alamat_pengguna`, `pesanan`, `item_pesanan`, `pesanan_pengiriman`, `pesanan_pembayaran`, `wishlist`, `pesan_produk`).
 
-## 2. Pengelolaan Memori & Siklus Hidup Koneksi
-- Panggil `PengelolaDatabase::tutupKoneksi()` pada akhir eksekusi skrip CLI berat, skrip migrasi, atau seeder data.
-- Gunakan paginasi atau limit query pada tabel besar (`pesanan`, `log_aktivitas`) agar tidak memuat seluruh baris data ke dalam memori PHP sekaligus.
+## 2. Dedicated SQLite Cache & Session Database
+- **Driver**: SQLite3 isolated pada `database/cache.sqlite` melalui koneksi `cache_sqlite` untuk menyimpan data sesi pengguna dan cache query Laravel.
+- **Konkurensi**: SQLite dikonfigurasi dengan mode WAL untuk efisiensi sesi I/O.
 
-## 3. Higienitas Aset & Optimasi Frontend
-- **Format Aset**: Utamakan format WebP untuk foto produk dan SVG untuk ikon navigasi.
-- **Dimensi & SEO**: Setiap tag `<img>` wajib memiliki atribut `alt` deskriptif, serta `width` dan `height` eksplisit untuk mencegah Cumulative Layout Shift (CLS).
+## 3. Zustand v5 State Management Pattern
+- Store utama keranjang belanja dikelola melalui `resources/js/Stores/useKeranjangStore.ts`.
+- Digunakan untuk kalkulasi kuantitas item, subtotal real-time, status drawer keranjang, dan sinkronisasi data lokal.
+
+## 4. GSAP 3 Micro-Animations
+- Gunakan GSAP 3 (`gsap`) untuk animasi mikro UI yang halus tanpa membebani thread utama browser:
+  - *Fade-in & Y-slide* saat render daftar produk atau halaman baru.
+  - *Bounce scale* pada badge keranjang saat item ditambahkan.
+  - *Slide & Fade* pada keranjang belanja drawer.
+- Selalu bersihkan (*kill/cleanup*) GSAP context atau timeline dalam `useEffect` unmount hook jika digunakan pada React.
+
+## 5. Higienitas Aset & Optimasi Frontend
+- **Format Aset**: Foto produk disimpan dalam format WebP di `public/assets/gambar/` dan ikon dalam format SVG di `public/assets/ikon/`.
+- **Dimensi & SEO**: Setiap tag `<img>` wajib memiliki atribut `alt` deskriptif serta atribut `width` dan `height` eksplisit untuk mencegah Cumulative Layout Shift (CLS).
 - **Zero Dead Assets**: Jangan ada pemanggilan file gambar atau ikon yang menghasilkan status 404.
-- **Hover Intent Prefetching**: Gunakan prefetching cerdas untuk rute navigasi berikutnya saat cursor pengguna melayang di atas tautan menu.
-
-## 4. Kompatibilitas CSS Modern
-- Bungkus properti scrollbar modern dalam `@supports (scrollbar-width: ...)`:
-  ```css
-  @supports (scrollbar-width: none) {
-    .container-halus {
-      scrollbar-width: none;
-    }
-  }
-  ```
-- Selalu sediakan fallback standar dan hindari vendor-prefix yatim tanpa padanan standar W3C.

@@ -1,62 +1,56 @@
-# CRSL Merchandise Store
+# CRSL Store v2 — E-Commerce Merchandise Store
 
-Re-build website e-commerce merchandise [crsl-store.id](https://crsl-store.id/) dengan tech stack native.
+CRSL Store v2 adalah aplikasi e-commerce merchandise resmi CRSL yang dibangun dengan arsitektur **Modular Monolith** menggunakan **Laravel 13.x**, **Inertia.js (React 19 + TypeScript)**, **Tailwind CSS v4**, **PostgreSQL 16+**, **SQLite Cache**, **Zustand v5**, dan **GSAP 3**.
 
-## Tech Stack
+---
 
-- **Frontend**: HTML5, CSS3, Vanilla JavaScript
-- **Backend**: PHP 8.5 (built-in server)
-- **Database**: SQLite 3.50
+## Stack Teknologi & Arsitektur
 
-## Memulai
+### Backend & Database
+- **Framework**: Laravel 13.x (`laravel/framework` ^13.17)
+- **PHP**: PHP 8.3+ / PHP 8.5
+- **Primary Database**: PostgreSQL 16+ (`crsl_store_v2` pada `127.0.0.1:5432`)
+- **Cache & Sessions**: Dedicated SQLite3 database (`database/cache.sqlite`)
+- **Integrasi Pihak Ketiga**: Biteship Maps & Rates API (`PengelolaBiteship.php`), Midtrans Core API Direct Charge (`PengelolaMidtrans.php`)
 
-```bash
-# 1. Clone repo
-git clone <repo-url>
-cd merchandise-store
+### Frontend & UI/UX
+- **SPA Bridge**: Inertia.js Laravel (^3.3) & `@inertiajs/react` (^3.7)
+- **UI Framework**: React 19 (`react` ^19.3) + TypeScript 7 Strict Mode
+- **CSS Framework**: Tailwind CSS v4 (`@tailwindcss/vite` ^4.3)
+- **State Management**: Zustand v5 (`useKeranjangStore.ts`)
+- **Micro-Animations**: GSAP 3 (`gsap` ^3.15)
+- **Icons & Helpers**: Lucide React, `clsx`, `tailwind-merge`
 
-# 2. Salin environment
+---
+
+## Konvensi Penamaan Bahasa Indonesia
+
+Seluruh entitas basis data, Model Eloquent, Controller, dan Rute Web mengadopsi domain penamaan Bahasa Indonesia:
+- **17 Eloquent Models**: `Kategori`, `Produk`, `ProdukVarian`, `ProdukSpesifikasi`, `GambarProduk`, `TierLoyalitas`, `PenggunaLoyalitas`, `Voucher`, `VoucherTerpakai`, `WilayahIndonesia`, `AlamatPengguna`, `Pesanan`, `ItemPesanan`, `PesananPengiriman`, `PesananPembayaran`, `Wishlist`, `PesanProduk`
+- **6 Controller**: `BerandaController`, `KatalogController`, `KeranjangController`, `PembayaranController`, `PesananController`, `AkunController`
+
+---
+
+## Panduan Instalasi & Jalankan Sistem
+
+```powershell
+# 1. Install dependensi Composer & NPM
+composer install
+npm install
+
+# 2. Salin environment file & generate key
 copy .env.example .env
+php artisan key:generate
 
-# 3. Inisialisasi database
-php -r "new SQLite3('data/toko.db');"
-sqlite3 data/toko.db < src/basis-data/skema.sql
-sqlite3 data/toko.db < src/basis-data/bibit.sql
+# 3. Migrasi & Seeding Database PostgreSQL
+php artisan migrate:fresh --seed
 
-# 4. Jalankan server development
-php -S localhost:8000 -t publik publik/index.php
+# 4. Migrasi Database Cache SQLite
+php artisan migrate --database=cache_sqlite
+
+# 5. Build Aset Frontend Produksi
+npm run build
+
+# 6. Jalankan Server Dev (Vite & Laravel)
+npm run dev
 ```
-
-Buka `http://localhost:8000` di browser.
-
-## Struktur Folder
-
-```
-├── .agents/          Agentic rules (GEMINI.md)
-├── aset/             Aset statis (gambar, ikon SVG, font)
-├── publik/           Document root
-│   ├── css/          Stylesheet (variabel, dasar, komponen)
-│   ├── js/           JavaScript (utilitas, komponen)
-│   ├── halaman/      Halaman PHP (beranda, akun)
-│   └── index.php     Router
-├── src/              Backend logic
-│   ├── konfigurasi/  Config PHP
-│   ├── basis-data/   SQL schema & seed
-│   └── terjemahan/   i18n JSON (id, en)
-├── data/             SQLite database
-├── DESIGN.md         Design system documentation
-└── README.md
-```
-
-## Fitur (Fase 1)
-
-- Bilah atas (announcement bar) dengan running text
-- Header navigation (hamburger menu, logo, search, account, localization)
-- Drawer sidebar navigation
-- Search overlay dengan popular tags
-- Preferensi lokalisasi (negara, bahasa, mata uang)
-- Halaman Akun (login, signup, pesanan, wishlist)
-- Dark mode toggle
-- i18n (Bahasa Indonesia + English)
-- Mobile-first responsive
-- Keyboard accessible (WCAG AA)
