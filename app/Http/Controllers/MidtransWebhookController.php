@@ -105,6 +105,9 @@ class MidtransWebhookController extends Controller
                         'kurir' => $pengiriman->kurir ?? 'jne',
                         'layanan' => $pengiriman->layanan ?? 'reg',
                         'items' => $items,
+                        'is_dropship' => (bool)$pesanan->is_dropship,
+                        'dropship_pengirim' => $pesanan->dropship_pengirim,
+                        'dropship_telepon' => $pesanan->dropship_telepon,
                     ];
 
                     $resBiteship = $this->biteshipService->buatOrderPengiriman($dataBiteship);

@@ -247,6 +247,18 @@ export default function Home({
                     </div>
                 </div>
             </section>
+
+            {/* Floating WhatsApp Customer Service CTA */}
+            <a
+                href="https://wa.me/6281234567890?text=Halo%20CRSL%20Official%20Store,%20saya%20ingin%20bertanya%20mengenai%20produk%20merchandise."
+                target="_blank"
+                rel="noreferrer"
+                className="fixed bottom-6 right-6 z-40 bg-emerald-500 hover:bg-emerald-600 text-white p-3.5 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 flex items-center gap-2 font-bold text-xs group"
+                title="Tanya CS via WhatsApp"
+            >
+                <span className="text-xl">💬</span>
+                <span className="hidden group-hover:inline-block pr-1 font-extrabold tracking-wider">Chat CS WhatsApp</span>
+            </a>
         </MainLayout>
     );
 }

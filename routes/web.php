@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AkunController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BerandaController;
 use App\Http\Controllers\KatalogController;
 use App\Http\Controllers\KeranjangController;
@@ -43,3 +44,10 @@ Route::post('/api/wilayah/ongkir', [WilayahController::class, 'ongkir'])->name('
 Route::post('/api/voucher/validasi', [PembayaranController::class, 'validasiVoucher'])->name('api.voucher.validasi');
 Route::post('/api/midtrans/webhook', [MidtransWebhookController::class, 'handle'])->name('api.midtrans.webhook');
 Route::get('/api/pesanan/{nomorPesanan}/status', [PesananController::class, 'cekStatusRealtime'])->name('api.pesanan.status');
+
+// Autentikasi & Akun
+Route::post('/login', [AuthController::class, 'login'])->name('login');
+Route::post('/register', [AuthController::class, 'register'])->name('register');
+Route::post('/otp/verifikasi', [AuthController::class, 'verifyOtp'])->name('otp.verifikasi');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::post('/profil/hapus-akun', [AuthController::class, 'hapusAkun'])->name('profil.hapus-akun');

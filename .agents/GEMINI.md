@@ -4,19 +4,22 @@
 
 ### Backend Ecosystem (Laravel 13.x)
 - **Framework**: Laravel 13.x (`laravel/framework` ^13.17) pada PHP 8.3+ / PHP 8.5
+- **Autentikasi & Token**: Laravel Sanctum (`laravel/sanctum` ^4.3)
 - **Single Page Application Bridge**: Inertia.js Laravel (`inertiajs/inertia-laravel` ^3.3) & Ziggy (`tightenco/ziggy` ^2.6)
 - **Primary Database**: PostgreSQL 16+ (`crsl_store_v2` di `127.0.0.1:5432`) dengan driver `pdo_pgsql`
 - **Cache & Session Engine**: Dedicated SQLite3 database (`database/cache.sqlite`) melalui koneksi `cache_sqlite`
 - **Domain Layer (`app/Domains/`)**:
+  - `Auth`: `AuthService.php`, `OtpService.php`, `RegistrasiPenggunaAction.php`, `VerifikasiOtpAction.php` — Flow verifikasi OTP 6 digit.
   - `Order`: `BuatPesananAction.php`, `PesananService.php` — Penomoran `INV/CRSL/YYYYMMDD/XXXX` dengan daily locking counter.
   - `Inventory`: `InventoriService.php` — Proteksi transaksi `lockForUpdate()` pada stok varian produk.
   - `Cart`: `KeranjangService.php` — Persistensi keranjang database (`keranjang`, `item_keranjang`) & Zustand.
-  - `Shipping`: `BiteshipService.php` — Area search, rates calculation, order allocation.
+  - `Shipping`: `BiteshipService.php` — Area search, rates calculation, order allocation dengan dukungan Dropshipper (`is_dropship`).
   - `Payment`: `MidtransService.php` — Direct Charge Core API (`/v2/charge`) untuk QRIS & Bank VA.
 - **Webhook Tunnel Command**: `cloudflared tunnel --url http://localhost:8000`
 
 ### Frontend Ecosystem (React 19 + TypeScript 7)
 - **UI Engine**: React 19 (`react` ^19.3.0) + `@inertiajs/react` (^3.7.1)
+- **UI Primitives**: Headless UI (`@headlessui/react` ^2.2) & Heroicons (`@heroicons/react` ^2.2)
 - **Language**: TypeScript 7 (`typescript` ^7.0.2) dengan Strict Mode
 - **Styling**: Tailwind CSS v4 (`tailwindcss` ^4.3.3) + `@tailwindcss/vite`
 - **Form & Validasi**: React Hook Form (`react-hook-form` ^7.54) + Zod (`zod` ^3.24) + `@hookform/resolvers`
@@ -59,15 +62,13 @@ Seluruh entitas database, Model Eloquent, Controller, Rute Web, dan kontrak API 
 ## 3. Pola Desain (Design Patterns) & Arsitektur
 
 1. **Modular Monolith Architecture**: Pemisahan domain bisnis yang jelas di dalam struktur `app/Domains/` tanpa beban arsitektur microservices.
-2. **Order Domain Architecture (`app/Domains/Order/`)**:
-   - `BuatPesananAction.php`: Eksekusi pembuatan pesanan dengan urutan `INV/CRSL/YYYYMMDD/XXXX` aman dari race condition.
-   - `PesananService.php`: Service riwayat pesanan & detail invoice.
-3. **Inventory Domain Architecture (`app/Domains/Inventory/`)**:
-   - `InventoriService.php`: Validasi ketersediaan stok & penguncian stok row-level `lockForUpdate()`.
-4. **Unified Checkout Pipeline**:
-   - `Total Bayar = Subtotal Produk + Ongkir Biteship - Diskon Voucher`.
-   - Webhook Settlement memicu otomatis alokasi pengiriman Biteship (`akan_dikirim`), penambahan poin loyalitas, dan pencatatan voucher.
-   - Skenario Cancel/Expire memicu rollback stok varian produk secara otomatis.
+2. **Auth & OTP Domain Architecture (`app/Domains/Auth/`)**:
+   - `RegistrasiPenggunaAction.php` & `VerifikasiOtpAction.php`: Flow pendaftaran dengan kode OTP 6 digit dan aktivasi akun otomatis.
+   - `AuthModal.tsx`: Modal interaktif login/register/OTP berbasis Headless UI.
+3. **Order & Dropshipper Pipeline**:
+   - Form checkout dilengkapi checkbox "Kirim sebagai Dropshipper". Saat diaktifkan, data pengirim kustom (`dropship_pengirim` & `dropship_telepon`) diteruskan langsung ke payload POST `/v1/orders` Biteship API.
+4. **Loyalty & Membership System**:
+   - Akumulasi poin otomatis saat pembayaran lunas (1 pt per Rp 10.000) dan kenaikan tier otomatis (`New Freen` -> `Bestfreen` -> `CRSL Gengs`).
 
 ---
 

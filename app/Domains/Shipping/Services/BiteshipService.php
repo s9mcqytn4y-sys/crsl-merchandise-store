@@ -127,6 +127,10 @@ class BiteshipService
     public function buatOrderPengiriman(array $dataPesanan): array
     {
         try {
+            $isDropship = !empty($dataPesanan['is_dropship']);
+            $shipperName = $isDropship ? ($dataPesanan['dropship_pengirim'] ?? 'Reseller CRSL') : 'CRSL Official Store';
+            $shipperPhone = $isDropship ? ($dataPesanan['dropship_telepon'] ?? '081234567890') : '081234567890';
+
             $response = Http::withHeaders([
                 'Authorization' => $this->apiKey,
                 'Content-Type' => 'application/json',
@@ -134,8 +138,8 @@ class BiteshipService
             ->timeout(15)
             ->post("{$this->baseUrl}/v1/orders", [
                 'shipper' => [
-                    'name' => 'CRSL Official Store',
-                    'phone' => '081234567890',
+                    'name' => $shipperName,
+                    'phone' => $shipperPhone,
                     'email' => 'shipping@crslstore.com',
                 ],
                 'origin' => [

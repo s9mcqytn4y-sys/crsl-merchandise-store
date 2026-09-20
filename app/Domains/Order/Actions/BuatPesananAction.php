@@ -59,6 +59,8 @@ class BuatPesananAction
             $total = max(0, ($subtotal + $biayaOngkir) - $diskon);
 
             // 5. Buat Header Pesanan
+            $isDropship = !empty($dataInput['is_dropship']);
+
             $pesanan = Pesanan::create([
                 'pengguna_id' => $penggunaId,
                 'nomor_pesanan' => $nomorPesanan,
@@ -71,6 +73,9 @@ class BuatPesananAction
                 'catatan' => $dataInput['catatan'] ?? null,
                 'kode_voucher' => $dataInput['kode_voucher'] ?? null,
                 'poin_didapat' => (int)floor($total / 10000) * 10,
+                'is_dropship' => $isDropship,
+                'dropship_pengirim' => $isDropship ? ($dataInput['dropship_pengirim'] ?? null) : null,
+                'dropship_telepon' => $isDropship ? ($dataInput['dropship_telepon'] ?? null) : null,
             ]);
 
             // 6. Simpan Alamat Pengguna

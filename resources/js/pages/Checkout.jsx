@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { useForm, Link } from '@inertiajs/react';
+import { useForm, Link, usePage } from '@inertiajs/react';
 import MainLayout from '../Layouts/MainLayout';
 import ShippingAreaSelector from '../Components/ShippingAreaSelector';
+import AuthModal from '../Components/AuthModal';
 import { toast } from 'sonner';
 
 export default function Checkout({
@@ -13,6 +14,7 @@ export default function Checkout({
     metodeBayarList = [],
     paymentMethods = []
 }) {
+    const { auth } = usePage().props;
     const activeCart = Object.keys(keranjang).length > 0 ? keranjang : cart;
     const cartItems = Object.values(activeCart);
 
@@ -24,6 +26,9 @@ export default function Checkout({
     const [selectedPayment, setSelectedPayment] = useState(activePayments[0]?.id || 'qris');
     const [voucherCode, setVoucherCode] = useState('');
     const [diskonAmount, setDiskonAmount] = useState(0);
+
+    // Auth Modal State
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
     const courierCost = dynamicCouriers.find((c) => (c.id || c.kurir_kode) === selectedCourier)?.biaya ?? dynamicCouriers.find((c) => (c.id || c.kurir_kode) === selectedCourier)?.cost ?? dynamicCouriers.find((c) => (c.id || c.kurir_kode) === selectedCourier)?.harga ?? 18000;
     const grandTotal = Math.max(0, subtotal + courierCost - diskonAmount);
@@ -41,6 +46,9 @@ export default function Checkout({
         kurir: selectedCourier,
         metode_pembayaran: selectedPayment,
         kode_voucher: '',
+        is_dropship: false,
+        dropship_pengirim: '',
+        dropship_telepon: '',
         catatan: '',
     });
 
@@ -85,7 +93,7 @@ export default function Checkout({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     area_id: area.id,
-                    items: cartItems.map(item => ({
+                    items: cartItems.map((item) => ({
                         nama: item.nama_produk || item.name,
                         harga: item.harga || item.price,
                         jumlah: item.jumlah || item.quantity || 1,
@@ -112,11 +120,25 @@ export default function Checkout({
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        // Rule Wajib Login: jika belum login, buka modal login
+        if (!auth?.user) {
+            toast.info('Silakan masuk atau daftar akun terlebih dahulu untuk melanjutkan pesanan.');
+            setIsAuthModalOpen(true);
+            return;
+        }
+
         post('/pembayaran');
     };
 
     return (
         <MainLayout keranjang={keranjang} cart={cart}>
+            <AuthModal
+                isOpen={isAuthModalOpen}
+                onClose={() => setIsAuthModalOpen(false)}
+                onSuccessAuth={() => post('/pembayaran')}
+            />
+
             <div className="bg-slate-100 border-b border-slate-200 py-6">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <h1 className="text-2xl font-black text-slate-800">Checkout Pesanan</h1>
@@ -227,6 +249,46 @@ export default function Checkout({
                             </div>
                         </div>
 
+                        {/* Dropshipper Option Checkbox */}
+                        <div className="bg-amber-50/60 p-6 rounded-2xl border border-amber-200 shadow-xs space-y-4">
+                            <label className="flex items-center gap-2.5 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={data.is_dropship}
+                                    onChange={(e) => setData('is_dropship', e.target.checked)}
+                                    className="w-4 h-4 text-[#E52027] rounded border-slate-300 focus:ring-[#E52027]"
+                                />
+                                <span className="font-bold text-xs text-slate-900">📦 Kirim sebagai Dropshipper (Toko Reseller)</span>
+                            </label>
+
+                            {data.is_dropship && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-2 border-t border-amber-200/60">
+                                    <div>
+                                        <label className="font-bold text-slate-700 block mb-1">Nama Pengirim (Toko Reseller) *</label>
+                                        <input
+                                            type="text"
+                                            value={data.dropship_pengirim}
+                                            onChange={(e) => setData('dropship_pengirim', e.target.value)}
+                                            placeholder="Misal: CRSL Shop Jogja"
+                                            className="w-full bg-white border border-amber-300 rounded-lg p-2.5 focus:outline-none focus:border-[#E52027]"
+                                            required={data.is_dropship}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="font-bold text-slate-700 block mb-1">No. Telepon Pengirim *</label>
+                                        <input
+                                            type="tel"
+                                            value={data.dropship_telepon}
+                                            onChange={(e) => setData('dropship_telepon', e.target.value)}
+                                            placeholder="081299998888"
+                                            className="w-full bg-white border border-amber-300 rounded-lg p-2.5 focus:outline-none focus:border-[#E52027]"
+                                            required={data.is_dropship}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                         {/* Courier Selection */}
                         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
                             <h3 className="font-bold text-sm text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-3 flex items-center gap-2">
@@ -300,7 +362,7 @@ export default function Checkout({
                         </div>
                     </div>
 
-                    {/* Order Summary Summary Sidebar (Col-span-5) */}
+                    {/* Order Summary Sidebar (Col-span-5) */}
                     <div className="lg:col-span-5 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-6 sticky top-24">
                         <h3 className="font-black text-slate-900 text-base border-b border-slate-100 pb-3">
                             Ringkasan Pesanan ({cartItems.length} Item)
