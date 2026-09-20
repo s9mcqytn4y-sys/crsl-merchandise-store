@@ -11,30 +11,31 @@ export default function BilahAtas() {
     useEffect(() => {
         if (!textRef.current) return;
 
-        // GSAP 3 Text Entrance Animation
+        // GSAP 3 Horizontal Entrance Animation (Enter from RIGHT to CENTER)
         const ctx = gsap.context(() => {
             gsap.fromTo(
                 textRef.current,
-                { y: 15, opacity: 0 },
-                { y: 0, opacity: 1, duration: 0.5, ease: THEME_TOKENS.motion.rotatorEase }
+                { xPercent: 100, opacity: 0 },
+                { xPercent: 0, opacity: 1, duration: 0.5, ease: THEME_TOKENS.motion.rotatorEaseOut }
             );
         }, containerRef);
 
         const interval = setInterval(() => {
             if (!textRef.current) return;
 
-            // GSAP 3 Text Exit & Rotation Sequence
+            // GSAP 3 Horizontal Exit Animation (Exit to LEFT)
             gsap.to(textRef.current, {
-                y: -15,
+                xPercent: -100,
                 opacity: 0,
-                duration: 0.4,
-                ease: 'power2.in',
+                duration: 0.5,
+                ease: THEME_TOKENS.motion.rotatorEaseIn,
                 onComplete: () => {
                     setIndex((prev) => (prev + 1) % messages.length);
+                    // Next Message Enters from RIGHT to CENTER
                     gsap.fromTo(
                         textRef.current,
-                        { y: 15, opacity: 0 },
-                        { y: 0, opacity: 1, duration: 0.5, ease: THEME_TOKENS.motion.rotatorEase }
+                        { xPercent: 100, opacity: 0 },
+                        { xPercent: 0, opacity: 1, duration: 0.5, ease: THEME_TOKENS.motion.rotatorEaseOut }
                     );
                 },
             });
@@ -49,12 +50,13 @@ export default function BilahAtas() {
     return (
         <div
             ref={containerRef}
-            className="bg-[#E52027] text-white h-9 px-4 flex items-center justify-center overflow-hidden relative shadow-inner select-none z-30 cursor-pointer"
+            className="bg-[#E52027] text-white h-[40px] px-4 flex items-center justify-center overflow-hidden relative shadow-inner select-none z-30 cursor-pointer"
+            style={{ fontFamily: THEME_TOKENS.typography.fontBody }}
         >
-            <div className="max-w-4xl w-full h-full flex items-center justify-center relative">
+            <div className="max-w-4xl w-full h-full flex items-center justify-center relative overflow-hidden">
                 <span
                     ref={textRef}
-                    className="absolute text-xs sm:text-sm font-extrabold uppercase tracking-widest whitespace-nowrap text-white drop-shadow-xs"
+                    className="absolute text-xs sm:text-sm font-bold uppercase tracking-wider whitespace-nowrap text-white"
                 >
                     {messages[index]}
                 </span>

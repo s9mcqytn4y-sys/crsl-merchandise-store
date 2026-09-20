@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, router } from '@inertiajs/react';
 import MainLayout from '../Layouts/MainLayout';
+import HeroCarousel from '../Components/HeroCarousel';
 
 export default function Home({
     kategori = [],
@@ -40,47 +41,8 @@ export default function Home({
 
     return (
         <MainLayout keranjang={keranjang} cart={cart}>
-            {/* Hero Section */}
-            <section className="relative bg-slate-900 text-white overflow-hidden py-16 lg:py-24">
-                <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-red-600 via-rose-600 to-amber-500 pointer-events-none" />
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                    <div className="space-y-6">
-                        <div className="inline-flex items-center gap-2 bg-red-600/30 border border-red-500/50 text-red-200 text-xs font-bold px-3 py-1 rounded-full">
-                            <span>🐾 Official CRSL Merchandise</span>
-                        </div>
-                        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
-                            Animals as your <span className="text-[#E52027] underline decoration-wavy">Bestfriends!</span>
-                        </h1>
-                        <p className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-xl">
-                            Temukan koleksi dompet canvas, tas ransel fluffy, tumbler stainless steel, dan apparel streetwear eksklusif dengan 5 karakter sahabat CRSL.
-                        </p>
-                        <div className="flex flex-wrap gap-4 pt-2">
-                            <Link
-                                href="/katalog"
-                                className="bg-[#E52027] hover:bg-[#CC1C22] text-white font-extrabold text-sm px-8 py-3.5 rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95"
-                            >
-                                Jelajahi Katalog
-                            </Link>
-                            <Link
-                                href="/katalog?kategori=back-to-school-essentials"
-                                className="bg-white/10 hover:bg-white/20 text-white font-bold text-sm px-6 py-3.5 rounded-full border border-white/20 transition-all"
-                            >
-                                🎒 BTS Collection
-                            </Link>
-                        </div>
-                    </div>
-
-                    <div className="relative group flex justify-center">
-                        <div className="w-full max-w-md aspect-4/3 rounded-3xl overflow-hidden border-4 border-white/20 shadow-2xl bg-slate-800">
-                            <img
-                                src="/assets/gambar/banner-bts.webp"
-                                alt="CRSL BTS Collection Banner"
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            />
-                        </div>
-                    </div>
-                </div>
-            </section>
+            {/* Hero Carousel Section with GSAP 3 Parallax */}
+            <HeroCarousel />
 
             {/* 5 Character Sahabat CRSL Section */}
             <section className="py-12 bg-white border-b border-slate-200">
