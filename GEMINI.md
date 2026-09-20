@@ -7,8 +7,13 @@
 - **Single Page Application Bridge**: Inertia.js Laravel (`inertiajs/inertia-laravel` ^3.3) & Ziggy (`tightenco/ziggy` ^2.6)
 - **Primary Database**: PostgreSQL 16+ (`crsl_store_v2` di `127.0.0.1:5432`) dengan driver `pdo_pgsql`
 - **Cache & Session Engine**: Dedicated SQLite3 database (`database/cache.sqlite`) melalui koneksi `cache_sqlite`
-- **Integrasi Kurir & Logistik Domain**: Biteship Domain Service (`app/Domains/Shipping/Services/BiteshipService.php`) & `WilayahController.php`
-- **Integrasi Payment Gateway**: Midtrans Core API Direct Charge Service (`app/Domains/Payment/Services/MidtransService.php`) & `MidtransWebhookController.php`
+- **Domain Layer (`app/Domains/`)**:
+  - `Order`: `BuatPesananAction.php`, `PesananService.php` — Penomoran `INV/CRSL/YYYYMMDD/XXXX` dengan daily locking counter.
+  - `Inventory`: `InventoriService.php` — Proteksi transaksi `lockForUpdate()` pada stok varian produk.
+  - `Cart`: `KeranjangService.php` — Persistensi keranjang database (`keranjang`, `item_keranjang`) & Zustand.
+  - `Shipping`: `BiteshipService.php` — Area search, rates calculation, order allocation.
+  - `Payment`: `MidtransService.php` — Direct Charge Core API (`/v2/charge`) untuk QRIS & Bank VA.
+- **Webhook Tunnel Command**: `cloudflared tunnel --url http://localhost:8000`
 
 ### Frontend Ecosystem (React 19 + TypeScript 7)
 - **UI Engine**: React 19 (`react` ^19.3.0) + `@inertiajs/react` (^3.7.1)
@@ -28,7 +33,7 @@
 
 Seluruh entitas database, Model Eloquent, Controller, Rute Web, dan kontrak API secara ketat menggunakan penamaan domain **Bahasa Indonesia**:
 
-### 17 Model Eloquent & Tabel PostgreSQL
+### 19 Model Eloquent & Tabel PostgreSQL
 1. `Kategori` (`kategori`) — Kategori produk merchandise (T-Shirt, Outerwear, Accessories, Toys, etc.)
 2. `Produk` (`produk`) — Katalog produk utama beserta slug, deskripsi, dan status aktif
 3. `ProdukVarian` (`produk_varian`) — Varian ukuran (S, M, L, XL) dan warna beserta stok dan SKU
@@ -46,33 +51,23 @@ Seluruh entitas database, Model Eloquent, Controller, Rute Web, dan kontrak API 
 15. `PesananPembayaran` (`pesanan_pembayaran`) — Method pembayaran Midtrans, snap token, dan status bayar
 16. `Wishlist` (`wishlist`) — Daftar produk favorit pelanggan
 17. `PesanProduk` (`pesan_produk`) — Diskusi atau pesan pertanyaan produk dari pelanggan
-
-### Controller Utama
-- `BerandaController`: Halaman utama, produk unggulan, banner promo
-- `KatalogController`: Listing produk, filter kategori, pencarian, dan detail produk
-- `KeranjangController`: Manajemen keranjang belanja berbasis session & state
-- `PembayaranController`: Form checkout, validasi voucher, kalkulasi ongkir Biteship, dan inisialisasi Midtrans Charge
-- `PesananController`: Halaman faktur/invoice, instruksi bayar native, dan real-time status check
-- `AkunController`: Profil pelanggan, alamat pengiriman, riwayat pesanan, dan daftar wishlist
-- `WilayahController`: API pencarian area Biteship (`/api/wilayah/cari`) & tarif ongkir (`/api/wilayah/ongkir`)
-- `MidtransWebhookController`: Webhook handler notification Midtrans (`POST /api/midtrans/webhook`) dengan validasi Signature Key SHA-512 & otomatis alokasi pengiriman Biteship
+18. `Keranjang` (`keranjang`) — Header keranjang pengguna terautentikasi / session
+19. `ItemKeranjang` (`item_keranjang`) — Item produk & varian terikat keranjang pengguna
 
 ---
 
 ## 3. Pola Desain (Design Patterns) & Arsitektur
 
-1. **Modular Monolith Architecture**: Pemisahan domain bisnis yang jelas di dalam struktur standar Laravel tanpa beban infrastruktur microservices.
-2. **Payment Domain Architecture (`app/Domains/Payment/`)**:
-   - `MidtransService.php`: Direct Charge Core API (`/v2/charge`) untuk QRIS, Bank Virtual Account (BCA, BNI, BRI, Permata), dan Mandiri Bill Payment.
-3. **Domain Shipping Architecture (`app/Domains/Shipping/`)**:
-   - `BiteshipService.php`: Layanan API Biteship untuk area search, rates calculation, order allocation, dan tracking.
+1. **Modular Monolith Architecture**: Pemisahan domain bisnis yang jelas di dalam struktur `app/Domains/` tanpa beban arsitektur microservices.
+2. **Order Domain Architecture (`app/Domains/Order/`)**:
+   - `BuatPesananAction.php`: Eksekusi pembuatan pesanan dengan urutan `INV/CRSL/YYYYMMDD/XXXX` aman dari race condition.
+   - `PesananService.php`: Service riwayat pesanan & detail invoice.
+3. **Inventory Domain Architecture (`app/Domains/Inventory/`)**:
+   - `InventoriService.php`: Validasi ketersediaan stok & penguncian stok row-level `lockForUpdate()`.
 4. **Unified Checkout Pipeline**:
    - `Total Bayar = Subtotal Produk + Ongkir Biteship - Diskon Voucher`.
    - Webhook Settlement memicu otomatis alokasi pengiriman Biteship (`akan_dikirim`), penambahan poin loyalitas, dan pencatatan voucher.
    - Skenario Cancel/Expire memicu rollback stok varian produk secara otomatis.
-5. **Hybrid State Management**:
-   - **Client State**: Zustand (`useKeranjangStore.ts`) untuk kalkulasi real-time jumlah item, drawer state, dan persistensi keranjang lokal.
-   - **Server State**: Inertia.js Page Props untuk data katalog, detail produk, invoice, dan profil akun.
 
 ---
 

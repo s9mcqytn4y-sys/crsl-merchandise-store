@@ -2,55 +2,37 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Produk;
-use App\Models\ProdukVarian;
+use App\Domains\Cart\Services\KeranjangService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class KeranjangController extends Controller
 {
+    public function __construct(
+        protected KeranjangService $keranjangService
+    ) {}
+
     public function tambah(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'produk_id' => 'required|exists:produk,id',
             'varian_id' => 'nullable|exists:produk_varian,id',
             'jumlah' => 'required|integer|min:1',
-            'ukuran' => 'nullable|string',
-            'warna' => 'nullable|string',
         ]);
 
-        $produk = Produk::findOrFail($validated['produk_id']);
-        $varian = isset($validated['varian_id']) ? ProdukVarian::find($validated['varian_id']) : null;
+        $res = $this->keranjangService->tambahItem(
+            (int)$validated['produk_id'],
+            isset($validated['varian_id']) ? (int)$validated['varian_id'] : null,
+            (int)$validated['jumlah'],
+            auth()->id(),
+            session()->getId()
+        );
 
-        $keyKeranjang = $produk->id . '_' . ($varian?->id ?? 'default') . '_' . ($validated['ukuran'] ?? 'default');
-
-        $keranjang = session()->get('keranjang', []);
-
-        $hargaSatuan = $produk->harga_diskon ?? $produk->harga_dasar;
-        if ($varian && $varian->harga_tambahan > 0) {
-            $hargaSatuan += $varian->harga_tambahan;
+        if (!$res['sukses']) {
+            return redirect()->back()->with('error', $res['pesan']);
         }
 
-        if (isset($keranjang[$keyKeranjang])) {
-            $keranjang[$keyKeranjang]['jumlah'] += $validated['jumlah'];
-        } else {
-            $keranjang[$keyKeranjang] = [
-                'id' => $keyKeranjang,
-                'produk_id' => $produk->id,
-                'varian_id' => $varian?->id,
-                'nama_produk' => $produk->nama,
-                'harga' => $hargaSatuan,
-                'gambar' => $varian?->gambar_varian ?? $produk->gambar_utama,
-                'jumlah' => $validated['jumlah'],
-                'ukuran' => $validated['ukuran'] ?? $varian?->ukuran ?? 'All Size',
-                'warna' => $validated['warna'] ?? $varian?->nama_varian ?? 'Default',
-                'sku' => $varian?->sku ?? 'CRSL-' . $produk->id,
-            ];
-        }
-
-        session()->put('keranjang', $keranjang);
-
-        return redirect()->back()->with('sukses', 'Produk berhasil ditambahkan ke keranjang!');
+        return redirect()->back()->with('sukses', $res['pesan']);
     }
 
     public function perbarui(Request $request, string $id): RedirectResponse
@@ -59,31 +41,22 @@ class KeranjangController extends Controller
             'jumlah' => 'required|integer|min:1',
         ]);
 
-        $keranjang = session()->get('keranjang', []);
-
-        if (isset($keranjang[$id])) {
-            $keranjang[$id]['jumlah'] = $validated['jumlah'];
-            session()->put('keranjang', $keranjang);
-        }
+        $this->keranjangService->perbaruiKuantitas($id, (int)$validated['jumlah'], auth()->id());
 
         return redirect()->back();
     }
 
     public function hapus(string $id): RedirectResponse
     {
-        $keranjang = session()->get('keranjang', []);
+        $this->keranjangService->hapusItem($id, auth()->id());
 
-        if (isset($keranjang[$id])) {
-            unset($keranjang[$id]);
-            session()->put('keranjang', $keranjang);
-        }
-
-        return redirect()->back()->with('sukses', 'Produk dihapus dari keranjang.');
+        return redirect()->back()->with('sukses', 'Item dihapus dari keranjang.');
     }
 
     public function kosongkan(): RedirectResponse
     {
-        session()->forget('keranjang');
-        return redirect()->back();
+        $this->keranjangService->kosongkan(auth()->id());
+
+        return redirect()->back()->with('sukses', 'Keranjang dikosongkan.');
     }
 }
