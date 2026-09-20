@@ -1,0 +1,300 @@
+<?php
+
+namespace App\Domains\Payment\Services;
+
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+class MidtransService
+{
+    protected string $serverKey;
+    protected string $clientKey;
+    protected bool $isProduction;
+    protected string $apiBaseUrl;
+
+    public function __construct()
+    {
+        $this->serverKey = config('services.midtrans.server_key', '');
+        $this->clientKey = config('services.midtrans.client_key', '');
+        $this->isProduction = (bool)config('services.midtrans.is_production', false);
+        $this->apiBaseUrl = $this->isProduction
+            ? 'https://api.midtrans.com/v2'
+            : 'https://api.sandbox.midtrans.com/v2';
+    }
+
+    /**
+     * Kirim permintaan Direct Charge (/v2/charge) ke Midtrans Core API.
+     */
+    protected function buatDirectCharge(array $payload): array
+    {
+        try {
+            $authHeader = 'Basic ' . base64_encode($this->serverKey . ':');
+
+            $httpRequest = Http::withHeaders([
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'Authorization' => $authHeader,
+            ])->timeout(15);
+
+            if (!$this->isProduction || app()->isLocal()) {
+                $httpRequest->withoutVerifying();
+            }
+
+            $response = $httpRequest->post("{$this->apiBaseUrl}/charge", $payload);
+
+            if ($response->successful()) {
+                return [
+                    'sukses' => true,
+                    'data' => $response->json(),
+                ];
+            }
+
+            Log::error("Midtrans Direct Charge Error: " . $response->body());
+            return [
+                'sukses' => false,
+                'pesan' => $response->json('status_message', 'Gagal memproses pembayaran ke Midtrans'),
+                'raw' => $response->json() ?? [],
+            ];
+        } catch (\Throwable $e) {
+            Log::error("Midtrans Direct Charge Exception: " . $e->getMessage());
+            return [
+                'sukses' => false,
+                'pesan' => 'Terjadi kesalahan koneksi ke server Midtrans',
+            ];
+        }
+    }
+
+    /**
+     * Charge Virtual Account Bank (BCA, BNI, BRI, Permata).
+     */
+    public function chargeBankTransfer(string $bank, array $pesanan, array $pembeli): array
+    {
+        $bank = strtolower($bank);
+        $orderId = str_replace('/', '-', $pesanan['nomor_pesanan']);
+        $grossAmount = (int)round($pesanan['total']);
+
+        $payload = [
+            'payment_type' => 'bank_transfer',
+            'transaction_details' => [
+                'order_id' => $orderId,
+                'gross_amount' => $grossAmount,
+            ],
+            'customer_details' => [
+                'first_name' => $pembeli['nama'] ?? 'Adopter CRSL',
+                'email' => $pembeli['email'] ?? 'adopter@crsl-store.id',
+                'phone' => $pembeli['telepon'] ?? '08123456789',
+            ],
+        ];
+
+        if ($bank === 'permata') {
+            $payload['bank_transfer'] = ['bank' => 'permata'];
+        } else {
+            $payload['bank_transfer'] = ['bank' => $bank];
+        }
+
+        $res = $this->buatDirectCharge($payload);
+        if (!$res['sukses']) {
+            return $res;
+        }
+
+        $data = $res['data'];
+        $vaNumber = '';
+        if (!empty($data['va_numbers'][0]['va_number'])) {
+            $vaNumber = $data['va_numbers'][0]['va_number'];
+        } elseif (!empty($data['permata_va_number'])) {
+            $vaNumber = $data['permata_va_number'];
+        }
+
+        return [
+            'sukses' => true,
+            'metode_bayar' => strtoupper($bank) . ' Virtual Account',
+            'bank' => strtoupper($bank),
+            'nomor_va' => $vaNumber,
+            'transaction_id' => $data['transaction_id'] ?? null,
+            'waktu_transaksi' => $data['transaction_time'] ?? date('Y-m-d H:i:s'),
+            'waktu_kadaluarsa' => $data['expiry_time'] ?? date('Y-m-d H:i:s', strtotime('+24 hours')),
+            'status_transaksi' => $data['transaction_status'] ?? 'pending',
+            'instruksi_bayar' => [
+                "Buka aplikasi Mobile Banking " . strtoupper($bank) . " atau kunjungi ATM " . strtoupper($bank),
+                "Pilih menu Transfer > Virtual Account",
+                "Masukkan Nomor Virtual Account: {$vaNumber}",
+                "Pastikan nominal sesuai tagihan dan simpan bukti transaksi",
+            ],
+        ];
+    }
+
+    /**
+     * Charge Mandiri Bill Payment (E-Channel).
+     */
+    public function chargeMandiriBill(array $pesanan, array $pembeli): array
+    {
+        $orderId = str_replace('/', '-', $pesanan['nomor_pesanan']);
+        $grossAmount = (int)round($pesanan['total']);
+
+        $payload = [
+            'payment_type' => 'echannel',
+            'transaction_details' => [
+                'order_id' => $orderId,
+                'gross_amount' => $grossAmount,
+            ],
+            'echannel' => [
+                'bill_info1' => 'Pembayaran Pesanan:',
+                'bill_info2' => 'CRSL Official Store',
+            ],
+            'customer_details' => [
+                'first_name' => $pembeli['nama'] ?? 'Adopter CRSL',
+                'email' => $pembeli['email'] ?? 'adopter@crsl-store.id',
+                'phone' => $pembeli['telepon'] ?? '08123456789',
+            ],
+        ];
+
+        $res = $this->buatDirectCharge($payload);
+        if (!$res['sukses']) {
+            return $res;
+        }
+
+        $data = $res['data'];
+        $billerCode = $data['biller_code'] ?? '70012';
+        $billKey = $data['bill_key'] ?? '';
+
+        return [
+            'sukses' => true,
+            'metode_bayar' => 'Mandiri Bill Payment',
+            'bank' => 'MANDIRI',
+            'kode_biller' => $billerCode,
+            'bill_key' => $billKey,
+            'nomor_va' => $billKey,
+            'transaction_id' => $data['transaction_id'] ?? null,
+            'waktu_transaksi' => $data['transaction_time'] ?? date('Y-m-d H:i:s'),
+            'waktu_kadaluarsa' => $data['expiry_time'] ?? date('Y-m-d H:i:s', strtotime('+24 hours')),
+            'status_transaksi' => $data['transaction_status'] ?? 'pending',
+            'instruksi_bayar' => [
+                "Buka Livin' by Mandiri atau ATM Mandiri",
+                "Pilih menu Bayar / Pembayaran > Multi Payment",
+                "Masukkan Kode Perusahaan (Biller Code): {$billerCode}",
+                "Masukkan Nomor Tagihan (Bill Key): {$billKey}",
+                "Konfirmasi rincian pembayaran dan selesaikan transaksi",
+            ],
+        ];
+    }
+
+    /**
+     * Charge QRIS (GoPay, ShopeePay, BCA QR, Livin, OVO, Dana).
+     */
+    public function chargeQris(array $pesanan, array $pembeli): array
+    {
+        $orderId = str_replace('/', '-', $pesanan['nomor_pesanan']);
+        $grossAmount = (int)round($pesanan['total']);
+
+        $payload = [
+            'payment_type' => 'qris',
+            'transaction_details' => [
+                'order_id' => $orderId,
+                'gross_amount' => $grossAmount,
+            ],
+            'qris' => [
+                'acquirer' => 'gopay',
+            ],
+            'customer_details' => [
+                'first_name' => $pembeli['nama'] ?? 'Adopter CRSL',
+                'email' => $pembeli['email'] ?? 'adopter@crsl-store.id',
+                'phone' => $pembeli['telepon'] ?? '08123456789',
+            ],
+        ];
+
+        $res = $this->buatDirectCharge($payload);
+        if (!$res['sukses']) {
+            return $res;
+        }
+
+        $data = $res['data'];
+        $qrCodeUrl = '';
+        if (!empty($data['actions'])) {
+            foreach ($data['actions'] as $act) {
+                if (($act['name'] ?? '') === 'generate-qr-code') {
+                    $qrCodeUrl = $act['url'] ?? '';
+                    break;
+                }
+            }
+        }
+
+        return [
+            'sukses' => true,
+            'metode_bayar' => 'QRIS (All E-Wallet & Mobile Banking)',
+            'bank' => 'QRIS',
+            'qr_code_url' => $qrCodeUrl,
+            'qr_string' => $data['qr_string'] ?? '',
+            'transaction_id' => $data['transaction_id'] ?? null,
+            'waktu_transaksi' => $data['transaction_time'] ?? date('Y-m-d H:i:s'),
+            'waktu_kadaluarsa' => $data['expiry_time'] ?? date('Y-m-d H:i:s', strtotime('+15 minutes')),
+            'status_transaksi' => $data['transaction_status'] ?? 'pending',
+            'instruksi_bayar' => [
+                "Buka aplikasi e-wallet atau mobile banking apa saja (GoPay, BCA, Livin, OVO, Dana, ShopeePay)",
+                "Pilih menu Bayar / Scan QRIS",
+                "Arahkan kamera ke QR Code di layar",
+                "Periksa nominal pembayaran dan selesaikan transaksi",
+            ],
+        ];
+    }
+
+    /**
+     * Memeriksa status pembayaran transaksi terkini via Midtrans Status API.
+     */
+    public function cekStatus(string $orderId): array
+    {
+        $sanitizedOrderId = str_replace('/', '-', $orderId);
+        $authHeader = 'Basic ' . base64_encode($this->serverKey . ':');
+
+        try {
+            $httpRequest = Http::withHeaders([
+                'Accept' => 'application/json',
+                'Authorization' => $authHeader,
+            ])->timeout(10);
+
+            if (!$this->isProduction || app()->isLocal()) {
+                $httpRequest->withoutVerifying();
+            }
+
+            $response = $httpRequest->get("{$this->apiBaseUrl}/" . urlencode($sanitizedOrderId) . "/status");
+
+            if ($response->successful()) {
+                $json = $response->json();
+                $txStatus = $json['transaction_status'] ?? 'unknown';
+
+                $statusPesanan = 'belum_bayar';
+                if (in_array($txStatus, ['settlement', 'capture'])) {
+                    $statusPesanan = 'akan_dikirim';
+                } elseif (in_array($txStatus, ['deny', 'cancel', 'expire'])) {
+                    $statusPesanan = 'dibatalkan';
+                }
+
+                return [
+                    'sukses' => true,
+                    'nomor_pesanan' => $orderId,
+                    'status_transaksi' => $txStatus,
+                    'status_pesanan' => $statusPesanan,
+                    'waktu_pembayaran' => $json['settlement_time'] ?? ($json['transaction_time'] ?? null),
+                    'tipe_pembayaran' => $json['payment_type'] ?? null,
+                    'raw' => $json,
+                ];
+            }
+        } catch (\Throwable $e) {
+            Log::error("Midtrans Status Check Exception: " . $e->getMessage());
+        }
+
+        return [
+            'sukses' => false,
+            'status' => 'unknown',
+            'pesan' => 'Gagal mengecek status ke Midtrans',
+        ];
+    }
+
+    /**
+     * Verifikasi Signature Key SHA-512 dari Webhook Midtrans.
+     */
+    public function verifikasiSignature(string $orderId, string $statusCode, string $grossAmount, string $signatureKey): bool
+    {
+        $expectedSignature = hash('sha512', $orderId . $statusCode . $grossAmount . $this->serverKey);
+        return hash_equals($expectedSignature, $signatureKey);
+    }
+}

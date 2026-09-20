@@ -4,6 +4,7 @@ use App\Http\Controllers\AkunController;
 use App\Http\Controllers\BerandaController;
 use App\Http\Controllers\KatalogController;
 use App\Http\Controllers\KeranjangController;
+use App\Http\Controllers\MidtransWebhookController;
 use App\Http\Controllers\PembayaranController;
 use App\Http\Controllers\PesananController;
 use App\Http\Controllers\WilayahController;
@@ -37,3 +38,8 @@ Route::post('/wishlist/toggle', [AkunController::class, 'toggleWishlist'])->name
 // API Wilayah & Biteship Shipping
 Route::get('/api/wilayah/cari', [WilayahController::class, 'cari'])->name('api.wilayah.cari');
 Route::post('/api/wilayah/ongkir', [WilayahController::class, 'ongkir'])->name('api.wilayah.ongkir');
+
+// API Voucher, Webhook Midtrans & Status Realtime
+Route::post('/api/voucher/validasi', [PembayaranController::class, 'validasiVoucher'])->name('api.voucher.validasi');
+Route::post('/api/midtrans/webhook', [MidtransWebhookController::class, 'handle'])->name('api.midtrans.webhook');
+Route::get('/api/pesanan/{nomorPesanan}/status', [PesananController::class, 'cekStatusRealtime'])->name('api.pesanan.status');

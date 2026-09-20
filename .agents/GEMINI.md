@@ -8,7 +8,7 @@
 - **Primary Database**: PostgreSQL 16+ (`crsl_store_v2` di `127.0.0.1:5432`) dengan driver `pdo_pgsql`
 - **Cache & Session Engine**: Dedicated SQLite3 database (`database/cache.sqlite`) melalui koneksi `cache_sqlite`
 - **Integrasi Kurir & Logistik Domain**: Biteship Domain Service (`app/Domains/Shipping/Services/BiteshipService.php`) & `WilayahController.php`
-- **Integrasi Payment Gateway**: Midtrans Core API Direct Charge (`PengelolaMidtrans.php`)
+- **Integrasi Payment Gateway**: Midtrans Core API Direct Charge Service (`app/Domains/Payment/Services/MidtransService.php`) & `MidtransWebhookController.php`
 
 ### Frontend Ecosystem (React 19 + TypeScript 7)
 - **UI Engine**: React 19 (`react` ^19.3.0) + `@inertiajs/react` (^3.7.1)
@@ -40,7 +40,7 @@ Seluruh entitas database, Model Eloquent, Controller, Rute Web, dan kontrak API 
 9. `VoucherTerpakai` (`voucher_terpakai`) — Log klaim voucher oleh pelanggan
 10. `WilayahIndonesia` (`wilayah_indonesia`) — Master data provinsi, kota/kabupaten, dan kecamatan
 11. `AlamatPengguna` (`alamat_pengguna`) — Daftar alamat pengiriman pelanggan
-12. `Pesanan` (`pesanan`) — Header transaksi pesanan dan nomor invoice unik (`CRSL-YYYYMMDD-XXXX`)
+12. `Pesanan` (`pesanan`) — Header transaksi pesanan dan nomor invoice unik (`INV/CRSL/YYYYMMDD/XXXX`)
 13. `ItemPesanan` (`item_pesanan`) — Rincian item produk, kuantitas, dan harga saat dipesan
 14. `PesananPengiriman` (`pesanan_pengiriman`) — Detail kurir, resi pengiriman, dan status Biteship
 15. `PesananPembayaran` (`pesanan_pembayaran`) — Method pembayaran Midtrans, snap token, dan status bayar
@@ -51,24 +51,28 @@ Seluruh entitas database, Model Eloquent, Controller, Rute Web, dan kontrak API 
 - `BerandaController`: Halaman utama, produk unggulan, banner promo
 - `KatalogController`: Listing produk, filter kategori, pencarian, dan detail produk
 - `KeranjangController`: Manajemen keranjang belanja berbasis session & state
-- `PembayaranController`: Form checkout, kalkulasi ongkir Biteship, dan trigger payment Midtrans
-- `PesananController`: Halaman faktur/invoice dan lacak status pesanan
-- `AkunController`: Profil pelanggan, alamat pengiriman, dan daftar wishlist
+- `PembayaranController`: Form checkout, validasi voucher, kalkulasi ongkir Biteship, dan inisialisasi Midtrans Charge
+- `PesananController`: Halaman faktur/invoice, instruksi bayar native, dan real-time status check
+- `AkunController`: Profil pelanggan, alamat pengiriman, riwayat pesanan, dan daftar wishlist
 - `WilayahController`: API pencarian area Biteship (`/api/wilayah/cari`) & tarif ongkir (`/api/wilayah/ongkir`)
+- `MidtransWebhookController`: Webhook handler notification Midtrans (`POST /api/midtrans/webhook`) dengan validasi Signature Key SHA-512 & otomatis alokasi pengiriman Biteship
 
 ---
 
 ## 3. Pola Desain (Design Patterns) & Arsitektur
 
 1. **Modular Monolith Architecture**: Pemisahan domain bisnis yang jelas di dalam struktur standar Laravel tanpa beban infrastruktur microservices.
-2. **Domain Shipping Architecture (`app/Domains/Shipping/`)**:
+2. **Payment Domain Architecture (`app/Domains/Payment/`)**:
+   - `MidtransService.php`: Direct Charge Core API (`/v2/charge`) untuk QRIS, Bank Virtual Account (BCA, BNI, BRI, Permata), dan Mandiri Bill Payment.
+3. **Domain Shipping Architecture (`app/Domains/Shipping/`)**:
    - `BiteshipService.php`: Layanan API Biteship untuk area search, rates calculation, order allocation, dan tracking.
-   - `BiteshipArea.php` & `BiteshipRateOption.php`: DTOs untuk pengetikan data yang presisi.
-3. **Hybrid State Management**:
+4. **Unified Checkout Pipeline**:
+   - `Total Bayar = Subtotal Produk + Ongkir Biteship - Diskon Voucher`.
+   - Webhook Settlement memicu otomatis alokasi pengiriman Biteship (`akan_dikirim`), penambahan poin loyalitas, dan pencatatan voucher.
+   - Skenario Cancel/Expire memicu rollback stok varian produk secara otomatis.
+5. **Hybrid State Management**:
    - **Client State**: Zustand (`useKeranjangStore.ts`) untuk kalkulasi real-time jumlah item, drawer state, dan persistensi keranjang lokal.
    - **Server State**: Inertia.js Page Props untuk data katalog, detail produk, invoice, dan profil akun.
-4. **GSAP 3 Micro-Animations & Sonner Toast**:
-   - Micro-interactions pada penambahan keranjang, drawer slide-over, dan notifikasi Sonner.
 
 ---
 

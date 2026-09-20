@@ -22,9 +22,11 @@ export default function Checkout({
     const [dynamicCouriers, setDynamicCouriers] = useState(activeCouriers);
     const [selectedCourier, setSelectedCourier] = useState(activeCouriers[0]?.id || 'jne');
     const [selectedPayment, setSelectedPayment] = useState(activePayments[0]?.id || 'qris');
+    const [voucherCode, setVoucherCode] = useState('');
+    const [diskonAmount, setDiskonAmount] = useState(0);
 
     const courierCost = dynamicCouriers.find((c) => (c.id || c.kurir_kode) === selectedCourier)?.biaya ?? dynamicCouriers.find((c) => (c.id || c.kurir_kode) === selectedCourier)?.cost ?? dynamicCouriers.find((c) => (c.id || c.kurir_kode) === selectedCourier)?.harga ?? 18000;
-    const grandTotal = subtotal + courierCost;
+    const grandTotal = Math.max(0, subtotal + courierCost - diskonAmount);
 
     const { data, setData, post, processing, errors } = useForm({
         nama_lengkap: '',
@@ -38,8 +40,32 @@ export default function Checkout({
         kode_pos: '',
         kurir: selectedCourier,
         metode_pembayaran: selectedPayment,
+        kode_voucher: '',
         catatan: '',
     });
+
+    const handleApplyVoucher = async () => {
+        if (!voucherCode.trim()) return;
+        try {
+            const response = await fetch('/api/voucher/validasi', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ kode: voucherCode.trim(), subtotal })
+            });
+            const res = await response.json();
+            if (res.sukses) {
+                setDiskonAmount(res.nilai_diskon || 0);
+                setData('kode_voucher', res.kode);
+                toast.success(res.pesan || 'Voucher berhasil terpasang!');
+            } else {
+                setDiskonAmount(0);
+                setData('kode_voucher', '');
+                toast.error(res.pesan || 'Voucher tidak valid.');
+            }
+        } catch (err) {
+            toast.error('Gagal memverifikasi voucher.');
+        }
+    };
 
     const handleSelectArea = async (area) => {
         setData((prev) => ({
@@ -296,14 +322,41 @@ export default function Checkout({
                         </div>
 
                         <div className="space-y-2 pt-4 border-t border-slate-100 text-xs text-slate-600">
+                            {/* Voucher Input Field */}
+                            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 mb-3 space-y-2">
+                                <label className="font-bold text-slate-800 text-[11px] block">🏷️ Punya Kode Voucher / Kupon Diskon?</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={voucherCode}
+                                        onChange={(e) => setVoucherCode(e.target.value)}
+                                        placeholder="Misal: NEWADOPTER10, AUTO10"
+                                        className="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-[#E52027]"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleApplyVoucher}
+                                        className="bg-[#E52027] text-white font-bold text-xs px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors"
+                                    >
+                                        Gunakan
+                                    </button>
+                                </div>
+                            </div>
+
                             <div className="flex justify-between">
                                 <span>Subtotal Produk</span>
                                 <span className="font-bold text-slate-800">{formatRupiah(subtotal)}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span>Biaya Pengiriman</span>
+                                <span>Biaya Pengiriman (Biteship)</span>
                                 <span className="font-bold text-slate-800">{formatRupiah(courierCost)}</span>
                             </div>
+                            {diskonAmount > 0 && (
+                                <div className="flex justify-between text-emerald-600 font-bold">
+                                    <span>Diskon Voucher</span>
+                                    <span>- {formatRupiah(diskonAmount)}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between text-sm font-black text-slate-900 pt-3 border-t border-slate-200">
                                 <span>Total Pembayaran</span>
                                 <span className="text-[#E52027] text-base">{formatRupiah(grandTotal)}</span>
