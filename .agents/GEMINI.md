@@ -4,16 +4,18 @@
 
 ### Backend Ecosystem (Laravel 13.x)
 - **Framework**: Laravel 13.x (`laravel/framework` ^13.17) pada PHP 8.3+ / PHP 8.5
-- **Single Page Application Bridge**: Inertia.js Laravel (`inertiajs/inertia-laravel` ^3.3)
+- **Single Page Application Bridge**: Inertia.js Laravel (`inertiajs/inertia-laravel` ^3.3) & Ziggy (`tightenco/ziggy` ^2.6)
 - **Primary Database**: PostgreSQL 16+ (`crsl_store_v2` di `127.0.0.1:5432`) dengan driver `pdo_pgsql`
 - **Cache & Session Engine**: Dedicated SQLite3 database (`database/cache.sqlite`) melalui koneksi `cache_sqlite`
-- **Integrasi Kurir & Ekspedisi**: Biteship API Driver (`PengelolaBiteship.php`)
+- **Integrasi Kurir & Logistik Domain**: Biteship Domain Service (`app/Domains/Shipping/Services/BiteshipService.php`) & `WilayahController.php`
 - **Integrasi Payment Gateway**: Midtrans Core API Direct Charge (`PengelolaMidtrans.php`)
 
 ### Frontend Ecosystem (React 19 + TypeScript 7)
 - **UI Engine**: React 19 (`react` ^19.3.0) + `@inertiajs/react` (^3.7.1)
 - **Language**: TypeScript 7 (`typescript` ^7.0.2) dengan Strict Mode
 - **Styling**: Tailwind CSS v4 (`tailwindcss` ^4.3.3) + `@tailwindcss/vite`
+- **Form & Validasi**: React Hook Form (`react-hook-form` ^7.54) + Zod (`zod` ^3.24) + `@hookform/resolvers`
+- **Notifikasi Toast**: Sonner (`sonner` ^2.0)
 - **Utility CSS Helpers**: `clsx` (^2.1.1) + `tailwind-merge` (^3.7.0)
 - **Ikonografi**: Lucide React (`lucide-react` ^1.47.0)
 - **State Management**: Zustand v5 (`zustand` ^5.0.15) — `useKeranjangStore.ts`
@@ -45,27 +47,28 @@ Seluruh entitas database, Model Eloquent, Controller, Rute Web, dan kontrak API 
 16. `Wishlist` (`wishlist`) — Daftar produk favorit pelanggan
 17. `PesanProduk` (`pesan_produk`) — Diskusi atau pesan pertanyaan produk dari pelanggan
 
-### 6 Controller Utama
+### Controller Utama
 - `BerandaController`: Halaman utama, produk unggulan, banner promo
 - `KatalogController`: Listing produk, filter kategori, pencarian, dan detail produk
 - `KeranjangController`: Manajemen keranjang belanja berbasis session & state
 - `PembayaranController`: Form checkout, kalkulasi ongkir Biteship, dan trigger payment Midtrans
 - `PesananController`: Halaman faktur/invoice dan lacak status pesanan
 - `AkunController`: Profil pelanggan, alamat pengiriman, dan daftar wishlist
+- `WilayahController`: API pencarian area Biteship (`/api/wilayah/cari`) & tarif ongkir (`/api/wilayah/ongkir`)
 
 ---
 
 ## 3. Pola Desain (Design Patterns) & Arsitektur
 
 1. **Modular Monolith Architecture**: Pemisahan domain bisnis yang jelas di dalam struktur standar Laravel tanpa beban infrastruktur microservices.
-2. **Repository/Service Gateway Driver**: Wrapper terisolasi untuk layanan pihak ketiga (Midtrans Direct Charge & Biteship Shipping API).
+2. **Domain Shipping Architecture (`app/Domains/Shipping/`)**:
+   - `BiteshipService.php`: Layanan API Biteship untuk area search, rates calculation, order allocation, dan tracking.
+   - `BiteshipArea.php` & `BiteshipRateOption.php`: DTOs untuk pengetikan data yang presisi.
 3. **Hybrid State Management**:
    - **Client State**: Zustand (`useKeranjangStore.ts`) untuk kalkulasi real-time jumlah item, drawer state, dan persistensi keranjang lokal.
    - **Server State**: Inertia.js Page Props untuk data katalog, detail produk, invoice, dan profil akun.
-4. **GSAP 3 Micro-Animations Pattern**:
-   - Animasi kemunculan kartu produk (`gsap.fromTo`).
-   - Drawer keranjang belanja (*slide-in* & *backdrop fade*).
-   - Indikator badge keranjang membal (*bounce scale*) saat item ditambahkan.
+4. **GSAP 3 Micro-Animations & Sonner Toast**:
+   - Micro-interactions pada penambahan keranjang, drawer slide-over, dan notifikasi Sonner.
 
 ---
 

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useForm, Link } from '@inertiajs/react';
 import MainLayout from '../Layouts/MainLayout';
+import ShippingAreaSelector from '../Components/ShippingAreaSelector';
+import { toast } from 'sonner';
 
 export default function Checkout({
     keranjang = {},
@@ -17,10 +19,11 @@ export default function Checkout({
     const activeCouriers = kurirList.length > 0 ? kurirList : couriers;
     const activePayments = metodeBayarList.length > 0 ? metodeBayarList : paymentMethods;
 
+    const [dynamicCouriers, setDynamicCouriers] = useState(activeCouriers);
     const [selectedCourier, setSelectedCourier] = useState(activeCouriers[0]?.id || 'jne');
     const [selectedPayment, setSelectedPayment] = useState(activePayments[0]?.id || 'qris');
 
-    const courierCost = activeCouriers.find((c) => c.id === selectedCourier)?.biaya ?? activeCouriers.find((c) => c.id === selectedCourier)?.cost ?? 18000;
+    const courierCost = dynamicCouriers.find((c) => (c.id || c.kurir_kode) === selectedCourier)?.biaya ?? dynamicCouriers.find((c) => (c.id || c.kurir_kode) === selectedCourier)?.cost ?? dynamicCouriers.find((c) => (c.id || c.kurir_kode) === selectedCourier)?.harga ?? 18000;
     const grandTotal = subtotal + courierCost;
 
     const { data, setData, post, processing, errors } = useForm({
@@ -28,12 +31,54 @@ export default function Checkout({
         email: '',
         telepon: '',
         alamat_lengkap: '',
+        biteship_area_id: '',
+        provinsi: '',
         kota: '',
+        kecamatan: '',
         kode_pos: '',
         kurir: selectedCourier,
         metode_pembayaran: selectedPayment,
         catatan: '',
     });
+
+    const handleSelectArea = async (area) => {
+        setData((prev) => ({
+            ...prev,
+            biteship_area_id: area.id,
+            provinsi: area.provinsi,
+            kota: area.kota,
+            kecamatan: area.kecamatan,
+            kode_pos: area.kode_pos || prev.kode_pos,
+        }));
+
+        toast.info(`Lokasi ${area.kota} terpilih. Menghitung ongkir...`);
+
+        try {
+            const response = await fetch('/api/wilayah/ongkir', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    area_id: area.id,
+                    items: cartItems.map(item => ({
+                        nama: item.nama_produk || item.name,
+                        harga: item.harga || item.price,
+                        jumlah: item.jumlah || item.quantity || 1,
+                        berat_gram: 250
+                    }))
+                })
+            });
+            const res = await response.json();
+            if (res.sukses && Array.isArray(res.data) && res.data.length > 0) {
+                setDynamicCouriers(res.data);
+                setSelectedCourier(res.data[0].kurir_kode);
+                setData('kurir', res.data[0].kurir_kode);
+                toast.success('Tarif ongkir Biteship berhasil diperbarui!');
+            }
+        } catch (err) {
+            console.error('Gagal mengambil ongkir:', err);
+            toast.error('Gagal memperbarui ongkir. Menggunakan tarif standar.');
+        }
+    };
 
     const formatRupiah = (num) => {
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0);
@@ -112,6 +157,11 @@ export default function Checkout({
                             </h3>
 
                             <div className="space-y-4 text-xs">
+                                <ShippingAreaSelector
+                                    valueAreaId={data.biteship_area_id}
+                                    onSelectArea={handleSelectArea}
+                                />
+
                                 <div>
                                     <label className="font-bold text-slate-700 block mb-1">Alamat Lengkap (Jalan, RT/RW, No. Rumah) *</label>
                                     <textarea
@@ -158,26 +208,40 @@ export default function Checkout({
                             </h3>
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                {activeCouriers.map((courier) => (
-                                    <button
-                                        type="button"
-                                        key={courier.id}
-                                        onClick={() => {
-                                            setSelectedCourier(courier.id);
-                                            setData('kurir', courier.id);
-                                        }}
-                                        className={`p-3.5 rounded-xl border text-left transition-all ${
-                                            selectedCourier === courier.id
-                                                ? 'border-[#E52027] bg-red-50 ring-1 ring-[#E52027]'
-                                                : 'border-slate-200 bg-white hover:border-slate-300'
-                                        }`}
-                                    >
-                                        <div className="font-bold text-xs text-slate-900">{courier.nama || courier.name}</div>
-                                        <div className="text-[#E52027] font-extrabold text-xs mt-1">
-                                            {formatRupiah(courier.biaya ?? courier.cost)}
-                                        </div>
-                                    </button>
-                                ))}
+                                {dynamicCouriers.map((courier) => {
+                                    const cId = courier.id || courier.kurir_kode;
+                                    const cNama = courier.nama || courier.kurir_nama || courier.name;
+                                    const cLayanan = courier.layanan_nama || courier.layanan_kode || '';
+                                    const cHarga = courier.biaya ?? courier.cost ?? courier.harga ?? 0;
+                                    const cLogo = courier.logo_url || `/assets/ikon/shipment-${cId}.svg`;
+
+                                    return (
+                                        <button
+                                            type="button"
+                                            key={cId + cLayanan}
+                                            onClick={() => {
+                                                setSelectedCourier(cId);
+                                                setData('kurir', cId);
+                                            }}
+                                            className={`p-3.5 rounded-xl border text-left transition-all ${
+                                                selectedCourier === cId
+                                                    ? 'border-[#E52027] bg-red-50 ring-1 ring-[#E52027]'
+                                                    : 'border-slate-200 bg-white hover:border-slate-300'
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between mb-1">
+                                                <span className="font-bold text-xs text-slate-900">{cNama}</span>
+                                                {cLogo && (
+                                                    <img src={cLogo} alt={cNama} className="h-4 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                                                )}
+                                            </div>
+                                            {cLayanan && <div className="text-[10px] text-slate-500 font-medium">{cLayanan}</div>}
+                                            <div className="text-[#E52027] font-extrabold text-xs mt-1">
+                                                {formatRupiah(cHarga)}
+                                            </div>
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
 

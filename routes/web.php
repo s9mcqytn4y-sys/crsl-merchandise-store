@@ -6,6 +6,7 @@ use App\Http\Controllers\KatalogController;
 use App\Http\Controllers\KeranjangController;
 use App\Http\Controllers\PembayaranController;
 use App\Http\Controllers\PesananController;
+use App\Http\Controllers\WilayahController;
 use Illuminate\Support\Facades\Route;
 
 // Storefront Beranda
@@ -32,3 +33,7 @@ Route::get('/lacak', [PesananController::class, 'lacak'])->name('lacak');
 // Akun Pelanggan & Wishlist
 Route::get('/akun', [AkunController::class, 'index'])->name('akun');
 Route::post('/wishlist/toggle', [AkunController::class, 'toggleWishlist'])->name('wishlist.toggle');
+
+// API Wilayah & Biteship Shipping
+Route::get('/api/wilayah/cari', [WilayahController::class, 'cari'])->name('api.wilayah.cari');
+Route::post('/api/wilayah/ongkir', [WilayahController::class, 'ongkir'])->name('api.wilayah.ongkir');

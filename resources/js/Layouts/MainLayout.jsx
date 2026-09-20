@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
+import { Toaster } from 'sonner';
 
 export default function MainLayout({ children, keranjang = {}, cart = {} }) {
     const { flash } = usePage().props;
@@ -39,6 +40,7 @@ export default function MainLayout({ children, keranjang = {}, cart = {} }) {
 
     return (
         <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 font-sans">
+            <Toaster position="top-right" richColors />
             {/* Announcement Marquee Bar */}
             <div className="bg-[#E52027] text-white text-xs font-semibold py-2 px-4 overflow-hidden relative shadow-inner">
                 <div className="animate-marquee whitespace-nowrap flex gap-8 items-center justify-around">

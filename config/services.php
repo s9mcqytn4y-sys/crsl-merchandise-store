@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    'biteship' => [
+        'api_key' => env('BITESHIP_API_KEY'),
+        'origin_area_id' => env('BITESHIP_ORIGIN_AREA_ID', 'IDNP11KOT789311'),
+        'origin_postal_code' => env('BITESHIP_ORIGIN_POSTAL_CODE', '55281'),
+        'origin_city' => env('BITESHIP_ORIGIN_CITY', 'Sleman, D.I. Yogyakarta'),
+        'base_url' => env('BITESHIP_BASE_URL', 'https://api.biteship.com'),
+    ],
+
+    'midtrans' => [
+        'server_key' => env('MIDTRANS_SERVER_KEY'),
+        'client_key' => env('MIDTRANS_CLIENT_KEY'),
+        'is_production' => env('MIDTRANS_IS_PRODUCTION', false),
+    ],
+
 ];
