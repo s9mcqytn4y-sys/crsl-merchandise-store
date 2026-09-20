@@ -24,11 +24,12 @@
 - **Styling**: Tailwind CSS v4 (`tailwindcss` ^4.3.3) + `@tailwindcss/vite`
 - **Form & Validasi**: React Hook Form (`react-hook-form` ^7.54) + Zod (`zod` ^3.24) + `@hookform/resolvers`
 - **Notifikasi Toast**: Sonner (`sonner` ^2.0)
+- **Komponen Transisi**: `BilahAtas.tsx` — Rotator teks promo dinamis dengan siklus 4000ms dan transisi slide-in.
 - **Utility CSS Helpers**: `clsx` (^2.1.1) + `tailwind-merge` (^3.7.0)
 - **Ikonografi**: Lucide React (`lucide-react` ^1.47.0)
 - **State Management**: Zustand v5 (`zustand` ^5.0.15) — `useKeranjangStore.ts`
 - **Micro-Animations**: GSAP 3 (`gsap` ^3.15.0) untuk transisi halaman, keranjang belanja, dan mikro-interaksi UI
-- **Build Tool**: Vite 8 (`vite` ^8.0.0) + `laravel-vite-plugin` (^3.1)
+- **Build Tool**: Vite 8 (`vite` ^8.0.0) + `laravel-vite-plugin` (^3.1) (`chunkSizeWarningLimit: 1000`)
 
 ---
 
@@ -62,13 +63,13 @@ Seluruh entitas database, Model Eloquent, Controller, Rute Web, dan kontrak API 
 ## 3. Pola Desain (Design Patterns) & Arsitektur
 
 1. **Modular Monolith Architecture**: Pemisahan domain bisnis yang jelas di dalam struktur `app/Domains/` tanpa beban arsitektur microservices.
-2. **Auth & OTP Domain Architecture (`app/Domains/Auth/`)**:
+2. **Announcement Bar Rotator (`BilahAtas.tsx`)**:
+   - Memutar 3 pesan promo utama setiap 4000ms dengan transisi slide-in & fade.
+3. **Auth & OTP Domain Architecture (`app/Domains/Auth/`)**:
    - `RegistrasiPenggunaAction.php` & `VerifikasiOtpAction.php`: Flow pendaftaran dengan kode OTP 6 digit dan aktivasi akun otomatis.
    - `AuthModal.tsx`: Modal interaktif login/register/OTP berbasis Headless UI.
-3. **Order & Dropshipper Pipeline**:
+4. **Order & Dropshipper Pipeline**:
    - Form checkout dilengkapi checkbox "Kirim sebagai Dropshipper". Saat diaktifkan, data pengirim kustom (`dropship_pengirim` & `dropship_telepon`) diteruskan langsung ke payload POST `/v1/orders` Biteship API.
-4. **Loyalty & Membership System**:
-   - Akumulasi poin otomatis saat pembayaran lunas (1 pt per Rp 10.000) dan kenaikan tier otomatis (`New Freen` -> `Bestfreen` -> `CRSL Gengs`).
 
 ---
 

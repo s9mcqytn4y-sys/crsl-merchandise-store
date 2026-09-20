@@ -18,6 +18,9 @@ export default defineConfig({
             '@': path.resolve(import.meta.dirname, './resources/js'),
         },
     },
+    build: {
+        chunkSizeWarningLimit: 1000,
+    },
     server: {
         watch: {
             ignored: ['**/storage/framework/views/**'],

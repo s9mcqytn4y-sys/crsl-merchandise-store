@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
 import { Toaster } from 'sonner';
+import BilahAtas from '../Components/BilahAtas';
 
 export default function MainLayout({ children, keranjang = {}, cart = {} }) {
     const { flash } = usePage().props;
@@ -41,14 +42,8 @@ export default function MainLayout({ children, keranjang = {}, cart = {} }) {
     return (
         <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 font-sans">
             <Toaster position="top-right" richColors />
-            {/* Announcement Marquee Bar */}
-            <div className="bg-[#E52027] text-white text-xs font-semibold py-2 px-4 overflow-hidden relative shadow-inner">
-                <div className="animate-marquee whitespace-nowrap flex gap-8 items-center justify-around">
-                    <span>🐾 ANIMALS AS YOUR BESTFRIENDS! — CRSL MERCHANDISE OFFICIAL STORE 🐾</span>
-                    <span>🔥 GRATIS ONGKIR SE-INDONESIA MIN. BELANJA RP 300.000 🔥</span>
-                    <span>✨ DAPATKAN EXCLUSIVE STICKER PACK 5 SAHABAT CRSL DI SETIAP PEMBELIAN ✨</span>
-                </div>
-            </div>
+            {/* Announcement Bar Rotator (Bilah Atas) */}
+            <BilahAtas />
 
             {/* Header Navigation */}
             <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
