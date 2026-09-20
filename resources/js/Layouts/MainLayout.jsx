@@ -1,26 +1,28 @@
 import React, { useState } from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
-import { Toaster } from 'sonner';
+import { Toaster, toast } from 'sonner';
+import { Menu, Search, User, ShoppingBag, Globe } from 'lucide-react';
 import BilahAtas from '../Components/BilahAtas';
+import PreferensiModal from '../Components/PreferensiModal';
+import PencarianModal from '../Components/PencarianModal';
+import SideMenuDrawer from '../Components/SideMenuDrawer';
 
 export default function MainLayout({ children, keranjang = {}, cart = {} }) {
     const { flash } = usePage().props;
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isPrefOpen, setIsPrefOpen] = useState(false);
+
+    // Preferences state
+    const [country, setCountry] = useState('ID');
+    const [language, setLanguage] = useState('id');
+    const [currency, setCurrency] = useState('IDR');
 
     const activeCart = keranjang && Object.keys(keranjang).length > 0 ? keranjang : cart;
     const cartItems = Object.values(activeCart || {});
     const cartCount = cartItems.reduce((acc, item) => acc + (item.jumlah ?? item.quantity ?? 1), 0);
     const subtotal = cartItems.reduce((acc, item) => acc + ((item.harga ?? item.price ?? 0) * (item.jumlah ?? item.quantity ?? 1)), 0);
-
-    const handleSearchSubmit = (e) => {
-        e.preventDefault();
-        if (searchQuery.trim()) {
-            router.get('/katalog', { cari: searchQuery.trim() });
-            setIsSearchOpen(false);
-        }
-    };
 
     const handleUpdateQuantity = (cartKey, newQty) => {
         if (newQty < 1) return;
@@ -29,6 +31,7 @@ export default function MainLayout({ children, keranjang = {}, cart = {} }) {
 
     const handleRemoveItem = (cartKey) => {
         router.delete(`/keranjang/${cartKey}`, { preserveScroll: true });
+        toast.info('Item dihapus dari keranjang.');
     };
 
     const formatRupiah = (number) => {
@@ -40,70 +43,84 @@ export default function MainLayout({ children, keranjang = {}, cart = {} }) {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 font-sans">
+        <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 font-sans relative">
             <Toaster position="top-right" richColors />
+
             {/* Announcement Bar Rotator (Bilah Atas) */}
             <BilahAtas />
 
             {/* Header Navigation */}
             <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-                    {/* Brand Logo */}
-                    <Link href="/" className="flex items-center gap-2 group">
-                        <div className="w-10 h-10 rounded-full bg-[#E52027] text-white flex items-center justify-center font-bold text-xl tracking-tighter shadow-md group-hover:scale-105 transition-transform">
-                            CRSL
-                        </div>
-                        <div className="hidden sm:block">
-                            <span className="text-xl font-extrabold text-[#E52027] tracking-wider block leading-none">CRSL</span>
-                            <span className="text-[10px] text-slate-500 tracking-widest font-medium uppercase">Merchandise Store</span>
-                        </div>
-                    </Link>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-4">
+                    {/* Left: Side Menu & Brand Logo */}
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setIsMenuOpen(true)}
+                            className="p-1.5 text-slate-700 hover:text-[#E52027] hover:bg-slate-100 rounded-xl transition-all"
+                            title="Buka Menu"
+                        >
+                            <Menu className="w-6 h-6" />
+                        </button>
+
+                        <Link href="/" className="flex items-center gap-2 group">
+                            <div className="w-9 h-9 rounded-full bg-[#E52027] text-white flex items-center justify-center font-black text-lg tracking-tighter shadow-md group-hover:scale-105 transition-transform">
+                                CRSL
+                            </div>
+                            <div className="hidden sm:block">
+                                <span className="text-lg font-extrabold text-[#E52027] tracking-wider block leading-none">CRSL</span>
+                                <span className="text-[9px] text-slate-500 tracking-widest font-medium uppercase">Merchandise Store</span>
+                            </div>
+                        </Link>
+                    </div>
 
                     {/* Navigation Links */}
-                    <nav className="hidden md:flex items-center gap-6 font-semibold text-sm text-slate-700">
+                    <nav className="hidden md:flex items-center gap-6 font-bold text-xs text-slate-700 uppercase tracking-wider">
                         <Link href="/" className="hover:text-[#E52027] transition-colors">Beranda</Link>
                         <Link href="/katalog" className="hover:text-[#E52027] transition-colors">Katalog Produk</Link>
-                        <Link href="/katalog?kategori=back-to-school-essentials" className="hover:text-[#E52027] transition-colors flex items-center gap-1">
+                        <Link href="/katalog?kategori=back-to-school-essentials" className="hover:text-[#E52027] transition-colors flex items-center gap-1 text-[#E52027]">
                             <span>🎒</span> BTS Collection
                         </Link>
                         <Link href="/lacak" className="hover:text-[#E52027] transition-colors">Lacak Pesanan</Link>
                     </nav>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-3 sm:gap-4">
+                    {/* Actions Right */}
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        {/* Region & Currency Preference */}
+                        <button
+                            onClick={() => setIsPrefOpen(true)}
+                            className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-[#E52027] px-2.5 py-1.5 rounded-xl hover:bg-slate-100 transition-all border border-slate-200"
+                        >
+                            <span>🇮🇩</span>
+                            <span>{currency}</span>
+                        </button>
+
                         {/* Search Button */}
                         <button
                             onClick={() => setIsSearchOpen(true)}
-                            className="p-2 text-slate-600 hover:text-[#E52027] hover:bg-red-50 rounded-full transition-all"
+                            className="p-2 text-slate-700 hover:text-[#E52027] hover:bg-red-50 rounded-full transition-all"
                             title="Cari Produk"
                         >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
+                            <Search className="w-5 h-5" />
                         </button>
 
                         {/* Customer Account */}
                         <Link
                             href="/akun"
-                            className="p-2 text-slate-600 hover:text-[#E52027] hover:bg-red-50 rounded-full transition-all"
+                            className="p-2 text-slate-700 hover:text-[#E52027] hover:bg-red-50 rounded-full transition-all relative"
                             title="Akun Saya"
                         >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
+                            <User className="w-5 h-5" />
                         </Link>
 
                         {/* Cart Button */}
                         <button
                             onClick={() => setIsCartOpen(true)}
-                            className="relative p-2.5 bg-[#E52027] text-white rounded-full hover:bg-red-700 transition-all shadow-sm flex items-center justify-center group"
+                            className="relative p-2 bg-[#E52027] text-white rounded-full hover:bg-red-700 transition-all shadow-sm flex items-center justify-center group"
                             title="Keranjang Belanja"
                         >
-                            <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                            </svg>
+                            <ShoppingBag className="w-5 h-5 group-hover:scale-110 transition-transform" />
                             {cartCount > 0 && (
-                                <span className="absolute -top-1 -right-1 bg-amber-400 text-slate-900 text-xs font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-xs animate-bounce">
+                                <span className="absolute -top-1 -right-1 bg-amber-400 text-slate-900 text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-white shadow-xs animate-bounce">
                                     {cartCount}
                                 </span>
                             )}
@@ -114,7 +131,7 @@ export default function MainLayout({ children, keranjang = {}, cart = {} }) {
 
             {/* Flash Message */}
             {flash?.sukses && (
-                <div className="bg-emerald-500 text-white py-2.5 px-4 text-center font-bold text-sm shadow-sm flex items-center justify-center gap-2">
+                <div className="bg-emerald-500 text-white py-2 px-4 text-center font-bold text-xs shadow-sm flex items-center justify-center gap-2">
                     <span>✨ {flash.sukses}</span>
                 </div>
             )}
@@ -124,31 +141,20 @@ export default function MainLayout({ children, keranjang = {}, cart = {} }) {
                 {children}
             </main>
 
-            {/* Character Mascot Footer Strip */}
-            <div className="bg-slate-100 border-t border-slate-200 py-6 px-4">
-                <div className="max-w-7xl mx-auto flex flex-wrap justify-around items-center gap-6 text-center text-xs font-bold text-slate-600">
-                    <div className="flex items-center gap-2 group cursor-pointer">
-                        <span className="text-2xl group-hover:scale-125 transition-transform">🐱</span>
-                        <div><div className="font-extrabold text-[#E52027]">CHILO</div><div className="text-[10px] text-slate-400">The Cute Cat</div></div>
+            {/* Floating Sticky Cart Capsule Bar at Bottom */}
+            {cartCount > 0 && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[#E52027] text-white px-5 py-3 rounded-full shadow-2xl flex items-center justify-between gap-6 border-2 border-white/20 animate-fade-in hover:scale-105 transition-transform cursor-pointer"
+                    onClick={() => setIsCartOpen(true)}
+                >
+                    <div className="text-left">
+                        <div className="font-extrabold text-xs">{cartCount} Items in My Cart</div>
+                        <div className="text-[11px] font-bold text-amber-300">{formatRupiah(subtotal)}</div>
                     </div>
-                    <div className="flex items-center gap-2 group cursor-pointer">
-                        <span className="text-2xl group-hover:scale-125 transition-transform">🦖</span>
-                        <div><div className="font-extrabold text-emerald-600">ODIN</div><div className="text-[10px] text-slate-400">The Adventurer Dino</div></div>
-                    </div>
-                    <div className="flex items-center gap-2 group cursor-pointer">
-                        <span className="text-2xl group-hover:scale-125 transition-transform">🐼</span>
-                        <div><div className="font-extrabold text-sky-600">POPO</div><div className="text-[10px] text-slate-400">The Chill Panda</div></div>
-                    </div>
-                    <div className="flex items-center gap-2 group cursor-pointer">
-                        <span className="text-2xl group-hover:scale-125 transition-transform">🐻</span>
-                        <div><div className="font-extrabold text-amber-700">CHOCO</div><div className="text-[10px] text-slate-400">The Warm Bear</div></div>
-                    </div>
-                    <div className="flex items-center gap-2 group cursor-pointer">
-                        <span className="text-2xl group-hover:scale-125 transition-transform">🐷</span>
-                        <div><div className="font-extrabold text-rose-500">PIGKO</div><div className="text-[10px] text-slate-400">The Cheerful Pig</div></div>
+                    <div className="w-8 h-8 rounded-full bg-white text-[#E52027] flex items-center justify-center font-bold text-xs shadow-sm">
+                        🛍️
                     </div>
                 </div>
-            </div>
+            )}
 
             {/* Main Footer */}
             <footer className="bg-slate-900 text-slate-300 text-sm border-t border-slate-800">
@@ -299,35 +305,29 @@ export default function MainLayout({ children, keranjang = {}, cart = {} }) {
                 </div>
             )}
 
-            {/* Search Modal */}
-            {isSearchOpen && (
-                <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-slate-900/70 backdrop-blur-xs">
-                    <div className="bg-white rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-4">
-                        <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                            <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
-                                🔍 Cari Produk CRSL
-                            </h3>
-                            <button onClick={() => setIsSearchOpen(false)} className="text-slate-400 hover:text-slate-700 font-bold">✕</button>
-                        </div>
-                        <form onSubmit={handleSearchSubmit} className="flex gap-2">
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Ketik nama produk, misal: Tumblr, Backpack, Wallet..."
-                                className="flex-1 bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E52027] text-slate-800"
-                                autoFocus
-                            />
-                            <button
-                                type="submit"
-                                className="bg-[#E52027] text-white font-bold text-xs px-5 py-2.5 rounded-xl hover:bg-red-700 transition-colors"
-                            >
-                                Cari
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            )}
+            {/* Modals & Drawers */}
+            <PreferensiModal
+                isOpen={isPrefOpen}
+                onClose={() => setIsPrefOpen(false)}
+                currentCountry={country}
+                currentLanguage={language}
+                currentCurrency={currency}
+                onSavePreferences={(c, l, curr) => {
+                    setCountry(c);
+                    setLanguage(l);
+                    setCurrency(curr);
+                }}
+            />
+
+            <PencarianModal
+                isOpen={isSearchOpen}
+                onClose={() => setIsSearchOpen(false)}
+            />
+
+            <SideMenuDrawer
+                isOpen={isMenuOpen}
+                onClose={() => setIsMenuOpen(false)}
+            />
         </div>
     );
 }

@@ -11,11 +11,11 @@ export default function BilahAtas() {
     useEffect(() => {
         if (!textRef.current) return;
 
-        // GSAP 3 Horizontal Entrance Animation (Enter from RIGHT to CENTER)
         const ctx = gsap.context(() => {
+            // Animasi Masuk (Enter dari Kiri ke Tengah)
             gsap.fromTo(
                 textRef.current,
-                { xPercent: 100, opacity: 0 },
+                { xPercent: -100, opacity: 0 },
                 { xPercent: 0, opacity: 1, duration: 0.5, ease: THEME_TOKENS.motion.rotatorEaseOut }
             );
         }, containerRef);
@@ -23,18 +23,20 @@ export default function BilahAtas() {
         const interval = setInterval(() => {
             if (!textRef.current) return;
 
-            // GSAP 3 Horizontal Exit Animation (Exit to LEFT)
+            // Animasi Keluar (Exit ke Kiri atau Kanan)
             gsap.to(textRef.current, {
-                xPercent: -100,
+                xPercent: 100, // Keluar ke arah kanan (atau ubah ke -100 jika ingin konsisten ke kiri)
                 opacity: 0,
                 duration: 0.5,
                 ease: THEME_TOKENS.motion.rotatorEaseIn,
                 onComplete: () => {
+                    // Pindah indeks setelah animasi keluar selesai
                     setIndex((prev) => (prev + 1) % messages.length);
-                    // Next Message Enters from RIGHT to CENTER
+
+                    // Reset posisi ke kiri sebelum animasi masuk berikutnya
                     gsap.fromTo(
                         textRef.current,
-                        { xPercent: 100, opacity: 0 },
+                        { xPercent: -100, opacity: 0 },
                         { xPercent: 0, opacity: 1, duration: 0.5, ease: THEME_TOKENS.motion.rotatorEaseOut }
                     );
                 },
@@ -43,9 +45,9 @@ export default function BilahAtas() {
 
         return () => {
             clearInterval(interval);
-            ctx.revert(); // GSAP Cleanup on unmount
+            ctx.revert();
         };
-    }, [messages.length]);
+    }, [index, messages.length]);
 
     return (
         <div

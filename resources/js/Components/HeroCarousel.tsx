@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from '@inertiajs/react';
 import gsap from 'gsap';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
-import { THEME_TOKENS } from '../Config/situsConfig';
 
 export interface HeroSlide {
     gambar: string;
@@ -14,9 +13,9 @@ export interface HeroSlide {
     alt: string;
 }
 
-const DEFAULT_SLIDES: HeroSlide[] = [
+const LEGACY_SLIDES: HeroSlide[] = [
     {
-        gambar: '/assets/banner/new-arrival-banner.webp',
+        gambar: '/assets/gambar/banner-1.webp',
         tag: 'NEW SEASON',
         judul: 'Animals as your Bestfriends!',
         subjudul: 'Merchandise karakter hewan lucu & fungsional untuk menemani hari-harimu.',
@@ -25,7 +24,7 @@ const DEFAULT_SLIDES: HeroSlide[] = [
         alt: 'CRSL Koleksi Terbaru',
     },
     {
-        gambar: '/assets/banner/banner-bts-section.webp',
+        gambar: '/assets/gambar/banner-hero-main.webp',
         tag: 'BTS ESSENTIALS',
         judul: 'Back to School with Odin & Friends',
         subjudul: 'Ransel water-repellent, kapasitas laptop 14 inci, dan kompartemen lengkap.',
@@ -34,7 +33,7 @@ const DEFAULT_SLIDES: HeroSlide[] = [
         alt: 'CRSL Back to School Essentials',
     },
     {
-        gambar: '/assets/banner/banner-all-tumbler.webp',
+        gambar: '/assets/gambar/banner-tumbler.webp',
         tag: 'EVERYDAY HYDRATION',
         judul: 'Tumbler Termos 12 Jam Dingin',
         subjudul: 'Stainless steel food-grade anti tumpah dengan karakter imut Popo si Panda.',
@@ -43,7 +42,7 @@ const DEFAULT_SLIDES: HeroSlide[] = [
         alt: 'CRSL Tumbler Collection',
     },
     {
-        gambar: '/assets/banner/banner-cassie-wallet.webp',
+        gambar: '/assets/gambar/banner-cassie.webp',
         tag: 'BEST SELLER',
         judul: 'Compact & Stylish Cassie Wallet',
         subjudul: 'Dompet kanvas lipat wanita dengan motif plaid ikonik dan slot kartu lengkap.',
@@ -52,7 +51,7 @@ const DEFAULT_SLIDES: HeroSlide[] = [
         alt: 'CRSL Cassie Wallet',
     },
     {
-        gambar: '/assets/banner/banner-monie-cap.webp',
+        gambar: '/assets/gambar/banner-2.webp',
         tag: 'SPECIAL EDITION',
         judul: 'Meet The 5 Bestfriends Squad',
         subjudul: 'Temukan kepribadianmu bersama Odin, Chilo, Pigko, Popo, dan Choco.',
@@ -62,27 +61,43 @@ const DEFAULT_SLIDES: HeroSlide[] = [
     },
 ];
 
-export default function HeroCarousel({ slides = DEFAULT_SLIDES }: { slides?: HeroSlide[] }) {
+const AUTOPLAY_DELAY = 5000;
+
+export default function HeroCarousel({ slides = LEGACY_SLIDES }: { slides?: HeroSlide[] }) {
+    const activeSlides = slides.length > 0 ? slides : LEGACY_SLIDES;
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
+    const [timerKey, setTimerKey] = useState(0);
+
     const containerRef = useRef<HTMLDivElement>(null);
-    const trackRef = useRef<HTMLDivElement>(null);
     const imageRefs = useRef<(HTMLImageElement | null)[]>([]);
 
-    const activeSlides = slides.length > 0 ? slides : DEFAULT_SLIDES;
+    const goToSlide = useCallback((index: number) => {
+        setCurrentIndex(index);
+        setTimerKey((prev) => prev + 1);
+    }, []);
 
-    // Auto-advance Carousel Timer (5 seconds per slide)
+    const goToPrev = useCallback(() => {
+        goToSlide((currentIndex - 1 + activeSlides.length) % activeSlides.length);
+    }, [currentIndex, activeSlides.length, goToSlide]);
+
+    const goToNext = useCallback(() => {
+        goToSlide((currentIndex + 1) % activeSlides.length);
+    }, [currentIndex, activeSlides.length, goToSlide]);
+
+    // Autoplay Timer
     useEffect(() => {
-        if (isPaused) return;
+        if (isPaused || activeSlides.length <= 1) return;
 
-        const timer = setInterval(() => {
+        const timer = setTimeout(() => {
             setCurrentIndex((prev) => (prev + 1) % activeSlides.length);
-        }, 5000);
+            setTimerKey((prev) => prev + 1);
+        }, AUTOPLAY_DELAY);
 
-        return () => clearInterval(timer);
-    }, [isPaused, activeSlides.length]);
+        return () => clearTimeout(timer);
+    }, [currentIndex, isPaused, timerKey, activeSlides.length]);
 
-    // GSAP 3 Parallax Effect on Scroll
+    // GSAP Parallax Effect
     useEffect(() => {
         const ctx = gsap.context(() => {
             const handleScroll = () => {
@@ -103,25 +118,29 @@ export default function HeroCarousel({ slides = DEFAULT_SLIDES }: { slides?: Her
         return () => ctx.revert();
     }, []);
 
-    const goToPrev = () => {
-        setCurrentIndex((prev) => (prev - 1 + activeSlides.length) % activeSlides.length);
-    };
-
-    const goToNext = () => {
-        setCurrentIndex((prev) => (prev + 1) % activeSlides.length);
-    };
-
     return (
         <section
             ref={containerRef}
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
-            className="relative w-full h-[calc(100dvh-96px)] min-h-[480px] max-h-[850px] overflow-hidden bg-slate-900 select-none"
+            className="group relative w-full h-[calc(100dvh-96px)] min-h-[480px] max-h-[850px] overflow-hidden bg-slate-950 select-none"
             aria-label="Sorotan Utama CRSL"
         >
+            {/* Keyframes bawaan langsung aktif tanpa modifikasi tailwind.config.js */}
+            <style>{`
+                @keyframes progressFill {
+                    from { width: 0%; }
+                    to { width: 100%; }
+                }
+                .dot-progress-active {
+                    animation-name: progressFill;
+                    animation-timing-function: linear;
+                    animation-fill-mode: forwards;
+                }
+            `}</style>
+
             {/* Carousel Track */}
             <div
-                ref={trackRef}
                 className="flex w-full h-full transition-transform duration-700 ease-out will-change-transform"
                 style={{ transform: `translateX(-${currentIndex * 100}%)` }}
             >
@@ -130,23 +149,24 @@ export default function HeroCarousel({ slides = DEFAULT_SLIDES }: { slides?: Her
                         key={idx}
                         className="flex-none w-full h-full relative overflow-hidden shrink-0"
                         role="group"
+                        aria-roledescription="slide"
                         aria-label={`Slide ${idx + 1} dari ${activeSlides.length}`}
                     >
-                        {/* Background Image Wadah */}
-                        <div className="w-full h-full relative">
+                        <div className="w-full h-full relative overflow-hidden">
                             <img
                                 ref={(el) => { imageRefs.current[idx] = el; }}
                                 src={slide.gambar}
                                 alt={slide.alt}
-                                className="w-full h-full object-cover object-center transform scale-105"
+                                className="w-full h-full object-cover object-center transform scale-100"
                                 loading={idx === 0 ? 'eager' : 'lazy'}
                             />
-                            {/* Overlay Gradient */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent pointer-events-none" />
+                            {/* Seamless Vignette Overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent pointer-events-none" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/60 via-transparent to-slate-950/60 pointer-events-none" />
                         </div>
 
-                        {/* Slide Content Overlay */}
-                        <div className="absolute bottom-16 sm:bottom-20 left-6 sm:left-12 lg:left-16 max-w-xl z-10 text-white space-y-3">
+                        {/* Slide Content Overlay - Diberi padding aman dari arrow */}
+                        <div className="absolute bottom-16 sm:bottom-20 left-6 sm:left-16 lg:left-24 max-w-xl z-10 text-white space-y-3 pointer-events-auto">
                             <span className="inline-block bg-[#E52027] text-white text-[11px] font-black px-3 py-1 rounded-full tracking-widest uppercase shadow-sm">
                                 {slide.tag}
                             </span>
@@ -170,11 +190,11 @@ export default function HeroCarousel({ slides = DEFAULT_SLIDES }: { slides?: Her
                 ))}
             </div>
 
-            {/* Navigation Arrows */}
+            {/* Seamless Floating Navigation Arrows: Tersembunyi rapi, muncul saat hover */}
             <button
                 type="button"
                 onClick={goToPrev}
-                className="hidden sm:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-slate-950/40 hover:bg-slate-950/80 text-white/90 hover:text-white items-center justify-center backdrop-blur-md border border-white/10 transition-all shadow-lg hover:scale-110"
+                className="hidden sm:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/20 hover:bg-black/60 text-white/70 hover:text-white items-center justify-center backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-xl hover:scale-110 active:scale-95"
                 aria-label="Slide sebelumnya"
             >
                 <ChevronLeft className="w-6 h-6" />
@@ -182,32 +202,49 @@ export default function HeroCarousel({ slides = DEFAULT_SLIDES }: { slides?: Her
             <button
                 type="button"
                 onClick={goToNext}
-                className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-slate-950/40 hover:bg-slate-950/80 text-white/90 hover:text-white items-center justify-center backdrop-blur-md border border-white/10 transition-all shadow-lg hover:scale-110"
+                className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/20 hover:bg-black/60 text-white/70 hover:text-white items-center justify-center backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-xl hover:scale-110 active:scale-95"
                 aria-label="Slide berikutnya"
             >
                 <ChevronRight className="w-6 h-6" />
             </button>
 
-            {/* Interactive Capsule Dot Indicators */}
-            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-slate-950/60 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 shadow-lg">
-                {activeSlides.map((_, idx) => (
-                    <button
-                        key={idx}
-                        type="button"
-                        onClick={() => setCurrentIndex(idx)}
-                        className={`h-2 rounded-full transition-all duration-300 overflow-hidden relative ${
-                            idx === currentIndex ? 'w-8 bg-white/30' : 'w-2 bg-white/40 hover:bg-white/70'
-                        }`}
-                        aria-label={`Ke slide ${idx + 1}`}
-                    >
-                        {idx === currentIndex && (
+            {/* Seamless Glass Dot Indicators */}
+            <div
+                className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-black/25 hover:bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 shadow-lg transition-colors duration-300"
+                role="tablist"
+                aria-label="Indikator slide"
+            >
+                {activeSlides.map((_, idx) => {
+                    const isActive = idx === currentIndex;
+                    return (
+                        <button
+                            key={idx}
+                            type="button"
+                            role="tab"
+                            aria-selected={isActive}
+                            aria-label={`Pindah ke slide ${idx + 1}`}
+                            onClick={() => goToSlide(idx)}
+                            className="group/btn p-1.5 focus:outline-none"
+                        >
                             <span
-                                className="absolute left-0 top-0 bottom-0 bg-white rounded-full animate-progress"
-                                style={{ animationDuration: '5000ms' }}
-                            />
-                        )}
-                    </button>
-                ))}
+                                className={`block h-1.5 rounded-full transition-all duration-300 overflow-hidden relative ${
+                                    isActive ? 'w-8 bg-white/20' : 'w-2 bg-white/40 group-hover/btn:bg-white/80'
+                                }`}
+                            >
+                                {isActive && (
+                                    <span
+                                        key={timerKey}
+                                        className="absolute left-0 top-0 bottom-0 bg-white rounded-full dot-progress-active"
+                                        style={{
+                                            animationDuration: `${AUTOPLAY_DELAY}ms`,
+                                            animationPlayState: isPaused ? 'paused' : 'running',
+                                        }}
+                                    />
+                                )}
+                            </span>
+                        </button>
+                    );
+                })}
             </div>
         </section>
     );
