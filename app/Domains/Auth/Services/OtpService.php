@@ -2,8 +2,10 @@
 
 namespace App\Domains\Auth\Services;
 
+use App\Mail\OtpVerifikasiMail;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class OtpService
 {
@@ -12,7 +14,7 @@ class OtpService
     /**
      * Generate 6-digit OTP code and store in cache with 10-minute expiration.
      */
-    public function generateOtp(string $email): string
+    public function generateOtp(string $email, string $nama = 'Bestie'): string
     {
         $emailKey = strtolower(trim($email));
         $otpCode = (string)rand(100000, 999999);
@@ -21,6 +23,12 @@ class OtpService
         Cache::put($cacheKey, $otpCode, now()->addMinutes($this->ttlMinutes));
 
         Log::info("OTP 6-Digit Generated for {$emailKey}: {$otpCode}");
+
+        try {
+            Mail::to($emailKey)->send(new OtpVerifikasiMail($nama, $otpCode));
+        } catch (\Throwable $e) {
+            Log::error("Failed to send OTP Mail: " . $e->getMessage());
+        }
 
         return $otpCode;
     }

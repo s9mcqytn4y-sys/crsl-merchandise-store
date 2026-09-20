@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Domains\Payment\Services\MidtransService;
 use App\Domains\Shipping\Services\BiteshipService;
+use App\Mail\KonfirmasiPesananMail;
 use App\Models\ItemPesanan;
 use App\Models\PenggunaLoyalitas;
 use App\Models\Pesanan;
@@ -15,6 +16,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class MidtransWebhookController extends Controller
@@ -127,6 +129,15 @@ class MidtransWebhookController extends Controller
                     $loyalitas->poin += $pesanan->poin_didapat;
                     $loyalitas->total_belanja += $pesanan->total;
                     $loyalitas->save();
+                }
+
+                // EMAIL NOTIFIKASI PEMBAYARAN BERHASIL
+                if ($pesanan->pengguna && $pesanan->pengguna->email) {
+                    try {
+                        Mail::to($pesanan->pengguna->email)->send(new KonfirmasiPesananMail($pesanan));
+                    } catch (\Throwable $e) {
+                        Log::error("Failed to send order confirmation email: " . $e->getMessage());
+                    }
                 }
 
                 Log::info("Pesanan Lunas & Express Shipping Allocated: {$pesanan->nomor_pesanan}");
