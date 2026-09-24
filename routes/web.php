@@ -32,8 +32,9 @@ Route::post('/pembayaran', [PembayaranController::class, 'proses'])->name('pemba
 Route::get('/faktur/{nomorPesanan}', [PesananController::class, 'faktur'])->name('faktur');
 Route::get('/lacak', [PesananController::class, 'lacak'])->name('lacak');
 
-// Akun Pelanggan & Wishlist
+// Akun Pelanggan & Wishlist (Mendukung path /akun dan /account)
 Route::get('/akun', [AkunController::class, 'index'])->name('akun');
+Route::get('/account', [AkunController::class, 'index'])->name('account');
 Route::post('/wishlist/toggle', [AkunController::class, 'toggleWishlist'])->name('wishlist.toggle');
 
 // API Wilayah & Biteship Shipping

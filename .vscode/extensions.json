@@ -1,17 +1,10 @@
 {
   "recommendations": [
     "bmewburn.vscode-intelephense-client",
-    "devsense.phptools-vscode",
-    "ecmel.vscode-html-css",
+    "bradlc.vscode-tailwindcss",
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
-    "formulahendry.auto-rename-tag",
-    "ritwickdey.liveserver",
-    "alexcvzz.vscode-sqlite",
-    "naumovs.color-highlight",
-    "usernamehw.errorlens",
-    "streetsidesoftware.code-spell-checker",
-    "yzhang.markdown-all-in-one",
-    "davidanson.vscode-markdownlint"
+    "onecentlin.laravel-blade",
+    "amiralizadeh9480.laravel-extra-intellisense"
   ]
 }

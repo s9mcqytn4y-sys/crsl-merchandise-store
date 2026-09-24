@@ -1,68 +1,133 @@
-import React, { useState, useEffect, useRef } from 'react';
-import gsap from 'gsap';
-import { SITUS_CONFIG, THEME_TOKENS } from '../Config/situsConfig';
+import React, { useState, useEffect, useRef } from "react";
+import gsap from "gsap";
+import { SITUS_CONFIG, THEME_TOKENS } from "../Config/situsConfig";
 
 export default function BilahAtas() {
-    const [index, setIndex] = useState(0);
-    const textRef = useRef<HTMLSpanElement>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
     const messages = SITUS_CONFIG.pesanPromoBilahAtas;
 
-    useEffect(() => {
-        if (!textRef.current) return;
+    const [currentIdx, setCurrentIdx] = useState(0);
+    const [nextIdx, setNextIdx] = useState(1);
 
-        const ctx = gsap.context(() => {
-            // Animasi Masuk (Enter dari Kiri ke Tengah)
-            gsap.fromTo(
-                textRef.current,
-                { xPercent: -100, opacity: 0 },
-                { xPercent: 0, opacity: 1, duration: 0.5, ease: THEME_TOKENS.motion.rotatorEaseOut }
-            );
-        }, containerRef);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const currentTextRef = useRef<HTMLSpanElement>(null);
+    const nextTextRef = useRef<HTMLSpanElement>(null);
+
+    const isPausedRef = useRef(false);
+    const isAnimatingRef = useRef(false);
+    const indexRef = useRef(0);
+
+    useEffect(() => {
+        if (!messages || messages.length <= 1) return;
+
+        const prefersReducedMotion = window.matchMedia(
+            "(prefers-reduced-motion: reduce)",
+        ).matches;
+
+        // Inisialisasi posisi: Teks aktif di tengah (0%), teks cadangan siap di sebelah kiri (-100%)
+        gsap.set(currentTextRef.current, { xPercent: 0, opacity: 1 });
+        gsap.set(nextTextRef.current, { xPercent: -100, opacity: 0 });
+
+        const duration = THEME_TOKENS.motion.rotatorDuration || 4;
 
         const interval = setInterval(() => {
-            if (!textRef.current) return;
+            if (isPausedRef.current || isAnimatingRef.current) return;
 
-            // Animasi Keluar (Exit ke Kiri atau Kanan)
-            gsap.to(textRef.current, {
-                xPercent: 100, // Keluar ke arah kanan (atau ubah ke -100 jika ingin konsisten ke kiri)
-                opacity: 0,
-                duration: 0.5,
-                ease: THEME_TOKENS.motion.rotatorEaseIn,
+            const nextIndexValue = (indexRef.current + 1) % messages.length;
+
+            if (prefersReducedMotion) {
+                indexRef.current = nextIndexValue;
+                setCurrentIdx(nextIndexValue);
+                return;
+            }
+
+            isAnimatingRef.current = true;
+            setNextIdx(nextIndexValue);
+
+            // Timeline transisi horizontal serentak (Kiri IN -> Kanan OUT)
+            const tl = gsap.timeline({
                 onComplete: () => {
-                    // Pindah indeks setelah animasi keluar selesai
-                    setIndex((prev) => (prev + 1) % messages.length);
+                    indexRef.current = nextIndexValue;
+                    setCurrentIdx(nextIndexValue);
 
-                    // Reset posisi ke kiri sebelum animasi masuk berikutnya
-                    gsap.fromTo(
-                        textRef.current,
-                        { xPercent: -100, opacity: 0 },
-                        { xPercent: 0, opacity: 1, duration: 0.5, ease: THEME_TOKENS.motion.rotatorEaseOut }
-                    );
+                    // Reset posisi instan tanpa glitch: aktif di tengah, cadangan kembali di kiri luar
+                    gsap.set(currentTextRef.current, {
+                        xPercent: 0,
+                        opacity: 1,
+                    });
+                    gsap.set(nextTextRef.current, {
+                        xPercent: -100,
+                        opacity: 0,
+                    });
+
+                    isAnimatingRef.current = false;
                 },
             });
-        }, THEME_TOKENS.motion.rotatorDuration * 1000);
+
+            // 1. Teks aktif KELUAR ke arah KANAN (0% -> 100%)
+            tl.to(
+                currentTextRef.current,
+                {
+                    xPercent: 100,
+                    opacity: 0,
+                    duration: 0.6,
+                    ease: "power2.inOut",
+                },
+                0,
+            );
+
+            // 2. Teks berikutnya MASUK dari arah KIRI (-100% -> 0%)
+            tl.fromTo(
+                nextTextRef.current,
+                { xPercent: -100, opacity: 0 },
+                {
+                    xPercent: 0,
+                    opacity: 1,
+                    duration: 0.6,
+                    ease: "power2.inOut",
+                },
+                0,
+            );
+        }, duration * 1000);
 
         return () => {
             clearInterval(interval);
-            ctx.revert();
         };
-    }, [index, messages.length]);
+    }, [messages]);
+
+    if (!messages || messages.length === 0) return null;
 
     return (
-        <div
+        <aside
             ref={containerRef}
-            className="bg-[#E52027] text-white h-[40px] px-4 flex items-center justify-center overflow-hidden relative shadow-inner select-none z-30 cursor-pointer"
-            style={{ fontFamily: THEME_TOKENS.typography.fontBody }}
+            aria-label="Pemberitahuan Promo Toko"
+            onMouseEnter={() => {
+                isPausedRef.current = true;
+            }}
+            onMouseLeave={() => {
+                isPausedRef.current = false;
+            }}
+            className="bg-[#E52027] text-white h-9 px-4 flex items-center justify-center overflow-hidden relative select-none z-30 border-b border-red-700/30"
         >
             <div className="max-w-4xl w-full h-full flex items-center justify-center relative overflow-hidden">
+                {/* Slot Teks 1: Sedang Aktif */}
                 <span
-                    ref={textRef}
-                    className="absolute text-xs sm:text-sm font-bold uppercase tracking-wider whitespace-nowrap text-white"
+                    ref={currentTextRef}
+                    role="status"
+                    aria-live="polite"
+                    className="absolute text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-center whitespace-nowrap text-white will-change-transform"
                 >
-                    {messages[index]}
+                    {messages[currentIdx]}
+                </span>
+
+                {/* Slot Teks 2: Masuk dari Kiri */}
+                <span
+                    ref={nextTextRef}
+                    aria-hidden="true"
+                    className="absolute text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-center whitespace-nowrap text-white will-change-transform pointer-events-none"
+                >
+                    {messages[nextIdx]}
                 </span>
             </div>
-        </div>
+        </aside>
     );
 }

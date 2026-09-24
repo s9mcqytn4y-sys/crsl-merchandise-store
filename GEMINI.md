@@ -9,7 +9,7 @@
 - **Primary Database**: PostgreSQL 16+ (`crsl_store_v2` di `127.0.0.1:5432`) dengan driver `pdo_pgsql`
 - **Cache & Session Engine**: Dedicated SQLite3 database (`database/cache.sqlite`) melalui koneksi `cache_sqlite`
 - **Domain Layer (`app/Domains/`)**:
-  - `Auth`: `AuthService.php`, `OtpService.php`, `RegistrasiPenggunaAction.php`, `VerifikasiOtpAction.php` — Flow verifikasi OTP 6 digit.
+  - `Auth`: `AuthService.php`, `OtpService.php`, `RegistrasiPenggunaAction.php`, `VerifikasiOtpAction.php` — Flow verifikasi OTP 6 digit & soft delete `hapusAkun`.
   - `Order`: `BuatPesananAction.php`, `PesananService.php` — Penomoran `INV/CRSL/YYYYMMDD/XXXX` dengan daily locking counter.
   - `Inventory`: `InventoriService.php` — Proteksi transaksi `lockForUpdate()` pada stok varian produk.
   - `Cart`: `KeranjangService.php` — Persistensi keranjang database (`keranjang`, `item_keranjang`) & Zustand.
@@ -24,7 +24,7 @@
 - **Styling**: Tailwind CSS v4 (`tailwindcss` ^4.3.3) + `@tailwindcss/vite`
 - **Form & Validasi**: React Hook Form (`react-hook-form` ^7.54) + Zod (`zod` ^3.24) + `@hookform/resolvers`
 - **Notifikasi Toast**: Sonner (`sonner` ^2.0)
-- **Komponen Transisi**: `BilahAtas.tsx` — Rotator teks promo dinamis dengan siklus 4000ms dan transisi slide-in.
+- **Komponen Transisi**: `BilahAtas.tsx`, `HeroCarousel.tsx` (GSAP 3 Parallax)
 - **Utility CSS Helpers**: `clsx` (^2.1.1) + `tailwind-merge` (^3.7.0)
 - **Ikonografi**: Lucide React (`lucide-react` ^1.47.0)
 - **State Management**: Zustand v5 (`zustand` ^5.0.15) — `useKeranjangStore.ts`
@@ -63,13 +63,13 @@ Seluruh entitas database, Model Eloquent, Controller, Rute Web, dan kontrak API 
 ## 3. Pola Desain (Design Patterns) & Arsitektur
 
 1. **Modular Monolith Architecture**: Pemisahan domain bisnis yang jelas di dalam struktur `app/Domains/` tanpa beban arsitektur microservices.
-2. **Announcement Bar Rotator (`BilahAtas.tsx`)**:
-   - Memutar 3 pesan promo utama setiap 4000ms dengan transisi slide-in & fade.
-3. **Auth & OTP Domain Architecture (`app/Domains/Auth/`)**:
-   - `RegistrasiPenggunaAction.php` & `VerifikasiOtpAction.php`: Flow pendaftaran dengan kode OTP 6 digit dan aktivasi akun otomatis.
-   - `AuthModal.tsx`: Modal interaktif login/register/OTP berbasis Headless UI.
-4. **Order & Dropshipper Pipeline**:
-   - Form checkout dilengkapi checkbox "Kirim sebagai Dropshipper". Saat diaktifkan, data pengirim kustom (`dropship_pengirim` & `dropship_telepon`) diteruskan langsung ke payload POST `/v1/orders` Biteship API.
+2. **Katalog & Discovery (Iteration 2)**:
+   - PLP (`Catalog.jsx`): Dual-handle price slider, color swatch & size filters, sort dropdown, active filter chips.
+   - PDP (`ProductDetail.jsx`): Variant swatches, image gallery zoom, Biteship delivery cost estimator, "Message CRSL?" inquiry modal, "You Might Also Like" & "Recent Viewed" carousels.
+   - Live Search (`PencarianModal.tsx`): Debounced search autocomplete dengan LocalStorage search history & zero-result best seller fallback.
+3. **Delete Account Rules**:
+   - Modal konfirmasi penghapusan akun wajib mengetikkan kata "DELETE" (case-sensitive) secara presisi.
+   - Sistem memblokir penghapusan akun jika user masih memiliki pesanan aktif (`belum_bayar`, `akan_dikirim`, `dikirim`).
 
 ---
 

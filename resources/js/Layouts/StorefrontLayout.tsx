@@ -1,49 +1,58 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
 import { Toaster, toast } from 'sonner';
-import { Menu, Search, User, ShoppingBag, Globe } from 'lucide-react';
+import { Menu, Search, User, ShoppingBag } from 'lucide-react';
 import BilahAtas from '../Components/BilahAtas';
 import PreferensiModal from '../Components/PreferensiModal';
 import PencarianModal from '../Components/PencarianModal';
 import SideMenuDrawer from '../Components/SideMenuDrawer';
+import { useAppStore } from '../Stores/useAppStore';
+import { formatRupiah } from '../Utils/formatters';
 
-export default function MainLayout({ children, keranjang = {}, cart = {} }) {
-    const { flash } = usePage().props;
-    const [isCartOpen, setIsCartOpen] = useState(false);
-    const [isSearchOpen, setIsSearchOpen] = useState(false);
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [isPrefOpen, setIsPrefOpen] = useState(false);
+interface StorefrontLayoutProps {
+    children: React.ReactNode;
+    keranjang?: any;
+    cart?: any;
+}
 
-    // Preferences state
-    const [country, setCountry] = useState('ID');
-    const [language, setLanguage] = useState('id');
-    const [currency, setCurrency] = useState('IDR');
+export default function StorefrontLayout({ children, keranjang = {}, cart = {} }: StorefrontLayoutProps) {
+    const { flash } = usePage().props as any;
+
+    const {
+        isSearchOpen,
+        isMenuOpen,
+        isPrefOpen,
+        country,
+        language,
+        currency,
+        openSearch,
+        closeSearch,
+        openMenu,
+        closeMenu,
+        openPref,
+        closePref,
+        setPreferences,
+    } = useAppStore();
+
+    const [isCartOpen, setIsCartOpen] = React.useState(false);
 
     const activeCart = keranjang && Object.keys(keranjang).length > 0 ? keranjang : cart;
-    const cartItems = Object.values(activeCart || {});
+    const cartItems = Object.values(activeCart || {}) as any[];
     const cartCount = cartItems.reduce((acc, item) => acc + (item.jumlah ?? item.quantity ?? 1), 0);
     const subtotal = cartItems.reduce((acc, item) => acc + ((item.harga ?? item.price ?? 0) * (item.jumlah ?? item.quantity ?? 1)), 0);
 
-    const handleUpdateQuantity = (cartKey, newQty) => {
+    const handleUpdateQuantity = (cartKey: string, newQty: number) => {
         if (newQty < 1) return;
         router.put(`/keranjang/${cartKey}`, { jumlah: newQty }, { preserveScroll: true });
     };
 
-    const handleRemoveItem = (cartKey) => {
+    const handleRemoveItem = (cartKey: string) => {
         router.delete(`/keranjang/${cartKey}`, { preserveScroll: true });
         toast.info('Item dihapus dari keranjang.');
     };
 
-    const formatRupiah = (number) => {
-        return new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-            maximumFractionDigits: 0
-        }).format(number || 0);
-    };
-
     return (
-        <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 font-sans relative">
+        <div className="min-h-dvh flex flex-col bg-slate-50 text-slate-800 font-sans relative">
             <Toaster position="top-right" richColors />
 
             {/* Announcement Bar Rotator (Bilah Atas) */}
@@ -55,9 +64,10 @@ export default function MainLayout({ children, keranjang = {}, cart = {} }) {
                     {/* Left: Side Menu & Brand Logo */}
                     <div className="flex items-center gap-3">
                         <button
-                            onClick={() => setIsMenuOpen(true)}
+                            onClick={openMenu}
                             className="p-1.5 text-slate-700 hover:text-[#E52027] hover:bg-slate-100 rounded-xl transition-all"
                             title="Buka Menu"
+                            aria-label="Buka Menu Navigasi"
                         >
                             <Menu className="w-6 h-6" />
                         </button>
@@ -85,38 +95,38 @@ export default function MainLayout({ children, keranjang = {}, cart = {} }) {
 
                     {/* Actions Right */}
                     <div className="flex items-center gap-2 sm:gap-3">
-                        {/* Region & Currency Preference */}
                         <button
-                            onClick={() => setIsPrefOpen(true)}
+                            onClick={openPref}
                             className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-[#E52027] px-2.5 py-1.5 rounded-xl hover:bg-slate-100 transition-all border border-slate-200"
+                            aria-label="Pengaturan Wilayah"
                         >
                             <span>🇮🇩</span>
                             <span>{currency}</span>
                         </button>
 
-                        {/* Search Button */}
                         <button
-                            onClick={() => setIsSearchOpen(true)}
+                            onClick={openSearch}
                             className="p-2 text-slate-700 hover:text-[#E52027] hover:bg-red-50 rounded-full transition-all"
                             title="Cari Produk"
+                            aria-label="Buka Pencarian"
                         >
                             <Search className="w-5 h-5" />
                         </button>
 
-                        {/* Customer Account */}
                         <Link
                             href="/akun"
                             className="p-2 text-slate-700 hover:text-[#E52027] hover:bg-red-50 rounded-full transition-all relative"
                             title="Akun Saya"
+                            aria-label="Halaman Akun"
                         >
                             <User className="w-5 h-5" />
                         </Link>
 
-                        {/* Cart Button */}
                         <button
                             onClick={() => setIsCartOpen(true)}
                             className="relative p-2 bg-[#E52027] text-white rounded-full hover:bg-red-700 transition-all shadow-sm flex items-center justify-center group"
                             title="Keranjang Belanja"
+                            aria-label="Buka Keranjang Belanja"
                         >
                             <ShoppingBag className="w-5 h-5 group-hover:scale-110 transition-transform" />
                             {cartCount > 0 && (
@@ -143,8 +153,9 @@ export default function MainLayout({ children, keranjang = {}, cart = {} }) {
 
             {/* Floating Sticky Cart Capsule Bar at Bottom */}
             {cartCount > 0 && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[#E52027] text-white px-5 py-3 rounded-full shadow-2xl flex items-center justify-between gap-6 border-2 border-white/20 animate-fade-in hover:scale-105 transition-transform cursor-pointer"
+                <div
                     onClick={() => setIsCartOpen(true)}
+                    className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[#E52027] text-white px-5 py-3 rounded-full shadow-2xl flex items-center justify-between gap-6 border-2 border-white/20 animate-fade-in hover:scale-105 transition-transform cursor-pointer"
                 >
                     <div className="text-left">
                         <div className="font-extrabold text-xs">{cartCount} Items in My Cart</div>
@@ -184,7 +195,6 @@ export default function MainLayout({ children, keranjang = {}, cart = {} }) {
                             <li><Link href="/lacak" className="hover:text-white transition-colors">Lacak Pesanan</Link></li>
                             <li><a href="https://wa.me/6281234567890" target="_blank" rel="noreferrer" className="hover:text-emerald-400 transition-colors">Customer Service WhatsApp</a></li>
                             <li><Link href="/akun" className="hover:text-white transition-colors">Akun & Wishlist</Link></li>
-                            <li><span className="text-slate-500">Panduan Ukuran (Size Chart)</span></li>
                         </ul>
                     </div>
                     <div>
@@ -206,7 +216,6 @@ export default function MainLayout({ children, keranjang = {}, cart = {} }) {
                     <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={() => setIsCartOpen(false)} />
                     <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
                         <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col">
-                            {/* Drawer Header */}
                             <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <span className="text-xl">🛍️</span>
@@ -223,7 +232,6 @@ export default function MainLayout({ children, keranjang = {}, cart = {} }) {
                                 </button>
                             </div>
 
-                            {/* Drawer Body */}
                             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                                 {cartItems.length === 0 ? (
                                     <div className="text-center py-16 space-y-3">
@@ -239,7 +247,7 @@ export default function MainLayout({ children, keranjang = {}, cart = {} }) {
                                         </Link>
                                     </div>
                                 ) : (
-                                    cartItems.map((item) => (
+                                    cartItems.map((item: any) => (
                                         <div key={item.id} className="flex gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200 relative group">
                                             <img
                                                 src={item.gambar || item.image || '/assets/gambar/cassie-wallet.webp'}
@@ -284,7 +292,6 @@ export default function MainLayout({ children, keranjang = {}, cart = {} }) {
                                 )}
                             </div>
 
-                            {/* Drawer Footer */}
                             {cartItems.length > 0 && (
                                 <div className="p-4 bg-slate-50 border-t border-slate-200 space-y-3">
                                     <div className="flex justify-between items-center text-sm font-extrabold text-slate-900">
@@ -308,25 +315,21 @@ export default function MainLayout({ children, keranjang = {}, cart = {} }) {
             {/* Modals & Drawers */}
             <PreferensiModal
                 isOpen={isPrefOpen}
-                onClose={() => setIsPrefOpen(false)}
+                onClose={closePref}
                 currentCountry={country}
                 currentLanguage={language}
                 currentCurrency={currency}
-                onSavePreferences={(c, l, curr) => {
-                    setCountry(c);
-                    setLanguage(l);
-                    setCurrency(curr);
-                }}
+                onSavePreferences={setPreferences}
             />
 
             <PencarianModal
                 isOpen={isSearchOpen}
-                onClose={() => setIsSearchOpen(false)}
+                onClose={closeSearch}
             />
 
             <SideMenuDrawer
                 isOpen={isMenuOpen}
-                onClose={() => setIsMenuOpen(false)}
+                onClose={closeMenu}
             />
         </div>
     );
