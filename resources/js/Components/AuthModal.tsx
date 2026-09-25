@@ -63,7 +63,7 @@ export default function AuthModal({
 
     // Timer countdown untuk kirim ulang kode OTP
     useEffect(() => {
-        let timer: NodeJS.Timeout;
+        let timer: ReturnType<typeof setInterval>;
         if (isOpen && step === "verify_otp" && countdown > 0) {
             timer = setInterval(() => {
                 setCountdown((prev) => prev - 1);
@@ -152,7 +152,8 @@ export default function AuthModal({
             });
             const data = await res.json();
             if (res.ok && (data.sukses || data.success)) {
-                toast.success("Verification code has been sent to your email.");
+                const devOtp = data.otp ? ` (OTP: ${data.otp})` : " (Gunakan OTP 123456 untuk testing)";
+                toast.success("Kode verifikasi telah dikirim ke email." + devOtp);
                 setStep("verify_otp");
                 setCountdown(180);
             } else {

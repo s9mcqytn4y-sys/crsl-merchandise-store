@@ -44,7 +44,7 @@ class KatalogController extends Controller
         $produk = $query->get();
         $kategori = Kategori::where('aktif', true)->orderBy('urutan')->get();
 
-        return Inertia::render('Catalog', [
+        return Inertia::render('Katalog', [
             'produk' => $produk,
             'kategori' => $kategori,
             'filter' => [
@@ -69,7 +69,7 @@ class KatalogController extends Controller
             ->take(4)
             ->get();
 
-        return Inertia::render('ProductDetail', [
+        return Inertia::render('DetailProduk', [
             'produk' => $produk,
             'rekomendasi' => $rekomendasi,
             'keranjang' => session()->get('keranjang', []),

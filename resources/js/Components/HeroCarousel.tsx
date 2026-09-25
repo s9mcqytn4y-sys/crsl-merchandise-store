@@ -71,9 +71,9 @@ const AUTOPLAY_DELAY = 5000;
 export default function HeroCarousel({
     slides = DEFAULT_SLIDES,
 }: {
-    slides?: HeroSlide[];
+    slides?: HeroSlide[] | readonly HeroSlide[];
 }) {
-    const activeSlides = slides.length > 0 ? slides : DEFAULT_SLIDES;
+    const activeSlides = slides.length > 0 ? (slides as HeroSlide[]) : DEFAULT_SLIDES;
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
     const [timerKey, setTimerKey] = useState(0);
@@ -179,11 +179,9 @@ export default function HeroCarousel({
             ref={containerRef}
             tabIndex={0}
             onKeyDown={handleKeyDown}
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
-            className="group relative w-full h-[520px] sm:h-[580px] lg:h-[640px] overflow-hidden bg-slate-950 select-none focus:outline-none"
+            className="group relative w-full h-130 sm:h-145 lg:h-160 overflow-hidden bg-slate-950 select-none focus:outline-none"
             aria-label="Carousel Banner Utama CRSL"
         >
             {/* Inline Keyframe Khusus Progress Carousel */}
@@ -215,19 +213,19 @@ export default function HeroCarousel({
                                 <img
                                     src={slide.gambar}
                                     alt={slide.alt}
-                                    className="hero-parallax-img absolute -top-[10%] left-0 w-full h-[120%] object-cover object-center transform scale-105 will-change-transform"
+                                    className="hero-parallax-img absolute top-[-10%] left-0 w-full h-[120%] object-cover object-center transform scale-105 will-change-transform"
                                     loading={idx === 0 ? "eager" : "lazy"}
                                     fetchPriority={idx === 0 ? "high" : "auto"}
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/50 to-transparent pointer-events-none" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/20 pointer-events-none" />
+                                <div className="absolute inset-0 bg-linear-to-r from-slate-950/90 via-slate-950/50 to-transparent pointer-events-none" />
+                                <div className="absolute inset-0 bg-linear-to-t from-slate-950/80 via-transparent to-black/20 pointer-events-none" />
                             </div>
 
                             {/* Konten Teks Slide */}
                             <div className="absolute inset-0 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 flex flex-col justify-center pointer-events-none">
                                 <div className="max-w-xl text-white space-y-3.5 pointer-events-auto">
                                     <div>
-                                        <span className="inline-block bg-[#E52027] text-white text-[11px] font-black px-3.5 py-1 rounded-full tracking-wider uppercase shadow-xs">
+                                        <span className="inline-block bg-primary text-white text-[11px] font-black px-3.5 py-1 rounded-full tracking-wider uppercase shadow-xs">
                                             {slide.tag}
                                         </span>
                                     </div>
@@ -241,11 +239,11 @@ export default function HeroCarousel({
                                         <Link
                                             href={slide.tautan}
                                             tabIndex={isCurrent ? 0 : -1}
-                                            className="inline-flex items-center gap-2.5 bg-white hover:bg-[#E52027] text-slate-900 hover:text-white font-extrabold text-xs sm:text-sm px-6 py-3.5 rounded-full shadow-lg transition-all duration-200 active:scale-95 group/btn"
+                                            className="inline-flex items-center gap-2.5 bg-white hover:bg-primary text-slate-900 hover:text-white font-extrabold text-xs sm:text-sm px-6 py-3.5 rounded-full shadow-lg transition-all duration-200 active:scale-95 group/btn"
                                             aria-label={`${slide.tombol} - ${slide.judul}`}
                                         >
                                             <span>{slide.tombol}</span>
-                                            <ArrowRight className="w-4 h-4 text-[#E52027] group-hover/btn:text-white transition-colors" />
+                                            <ArrowRight className="w-4 h-4 text-primary group-hover/btn:text-white transition-colors" />
                                         </Link>
                                     </div>
                                 </div>
@@ -306,9 +304,7 @@ export default function HeroCarousel({
                                         className="absolute inset-0 bg-white rounded-full origin-left will-change-transform"
                                         style={{
                                             animation: `crslBarProgress ${AUTOPLAY_DELAY}ms linear forwards`,
-                                            animationPlayState: isPaused
-                                                ? "paused"
-                                                : "running",
+                                            animationPlayState: "running",
                                         }}
                                     />
                                 )}

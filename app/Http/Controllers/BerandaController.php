@@ -18,27 +18,24 @@ class BerandaController extends Controller
             ->get();
 
         // Best seller — produk dengan flag is_best_seller
-        $produkBestSeller = Produk::where('aktif', true)
+        $produkBestSeller = Produk::with('varian')->where('aktif', true)
             ->where('is_best_seller', true)
             ->orderByDesc('terjual')
             ->take(8)
-            ->select(['id', 'nama', 'slug', 'harga_dasar', 'harga_diskon', 'gambar_utama', 'status_stok', 'terjual'])
             ->get();
 
         // Produk terbaru (fallback jika best seller kosong)
-        $produkTerbaru = Produk::where('aktif', true)
+        $produkTerbaru = Produk::with('varian')->where('aktif', true)
             ->orderByDesc('created_at')
             ->take(8)
-            ->select(['id', 'nama', 'slug', 'harga_dasar', 'harga_diskon', 'gambar_utama', 'status_stok', 'terjual'])
             ->get();
 
         // Produk promo / diskon aktif
-        $produkPromo = Produk::where('aktif', true)
+        $produkPromo = Produk::with('varian')->where('aktif', true)
             ->whereNotNull('harga_diskon')
             ->whereRaw('harga_diskon < harga_dasar')
             ->orderByDesc('terjual')
             ->take(4)
-            ->select(['id', 'nama', 'slug', 'harga_dasar', 'harga_diskon', 'gambar_utama', 'status_stok'])
             ->get();
 
         return Inertia::render('Beranda', [

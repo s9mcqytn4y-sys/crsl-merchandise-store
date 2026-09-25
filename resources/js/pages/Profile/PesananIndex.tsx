@@ -152,7 +152,7 @@ export default function PesananIndex({ pesanan }: PesananIndexProps) {
 
     return (
         <StorefrontLayout>
-            <Head title="Riwayat Pesanan Saya — CRSL Official Store" />
+            <Head title="Riwayat Pesanan Saya - CRSL Official Store" />
 
             {/* Header Halaman */}
             <div className="bg-slate-50/80 border-b border-slate-200/80 py-8">

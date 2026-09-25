@@ -1,5 +1,5 @@
 /**
- * CRSL Store v2 — Shared Utility Formatters
+ * CRSL Store v2 - Shared Utility Formatters
  * Centralized currency, date, and string formatters to prevent code duplication.
  */
 

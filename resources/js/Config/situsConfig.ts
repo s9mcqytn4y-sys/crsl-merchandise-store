@@ -208,11 +208,12 @@ export const THEME_TOKENS = {
         transitionDuration: 0.3,
     },
     typography: {
-        fontBody: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
+        fontBody: "'Open Sans', system-ui, -apple-system, sans-serif",
+        fontHeading: "'Roboto', system-ui, -apple-system, sans-serif",
         fontMono: "'JetBrains Mono', Consolas, monospace",
-        headingWeight: 900,
-        subheadingWeight: 700,
-        bodyWeight: 500,
+        headingWeight: 700,
+        subheadingWeight: 600,
+        bodyWeight: 400,
     },
     layout: {
         bilahAtasHeight: "36px",

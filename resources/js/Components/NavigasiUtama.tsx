@@ -126,35 +126,39 @@ export default function NavigasiUtama({
                     </button>
                 </div>
 
-                {/* TENGAH: Logo Utama */}
+                {/* TENGAH: Logo Utama (<ROSL Mascot Logo) */}
                 <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
                     <Link
                         href="/"
                         className="flex items-center gap-2 group focus-visible:ring-2 focus-visible:ring-[#E52027] focus-visible:outline-none rounded-lg p-1"
-                        aria-label="CRSL Official Store — Beranda"
+                        aria-label="CRSL Official Store - Beranda"
                     >
                         <img
-                            src="/assets/gambar/logo-crsl.png"
+                            src="/assets/gambar/logo-crsl-bw.webp"
                             alt="CRSL Logo"
-                            width={38}
-                            height={38}
-                            className="h-8 md:h-9 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                            width={112}
+                            height={32}
+                            className="h-6 sm:h-7 md:h-8 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                            onError={(e) => {
+                                // Fallback jika webp gagal dimuat
+                                (e.currentTarget as HTMLImageElement).src = "/assets/gambar/logo-crsl.png";
+                            }}
                         />
                     </Link>
                 </div>
 
                 {/* SISI KANAN: Tombol Aksi */}
-                <div className="flex items-center gap-1.5 sm:gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                     {/* Preferensi Mata Uang */}
                     <button
                         id="btn-preferensi-wilayah"
                         type="button"
                         onClick={onPrefOpen}
-                        className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors focus-visible:ring-2 focus-visible:ring-[#E52027] focus-visible:outline-none"
+                        className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-semibold text-slate-700 hover:text-slate-900 px-1.5 sm:px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors focus-visible:ring-2 focus-visible:ring-[#E52027] focus-visible:outline-none"
                         aria-label={`Mata uang aktif: ${currency}`}
                     >
                         <IkonBendera currency={currency} />
-                        <span>{currency}</span>
+                        <span className="hidden xs:inline sm:inline">{currency}</span>
                     </button>
 
                     {/* Tombol Pencarian */}

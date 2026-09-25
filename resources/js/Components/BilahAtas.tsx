@@ -1,100 +1,77 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import gsap from "gsap";
-import { SITUS_CONFIG, THEME_TOKENS } from "../Config/situsConfig";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function BilahAtas() {
-    const messages = SITUS_CONFIG.pesanPromoBilahAtas;
+    const messages = [
+        "DISKON 10% ALL ITEM UNTUK NEW ADOPTER",
+        "GRATIS ONGKIR SELURUH INDONESIA",
+        "BELANJA DI WEBSITE LEBIH MURAH",
+    ] as const;
 
     const [currentIdx, setCurrentIdx] = useState(0);
-    const [nextIdx, setNextIdx] = useState(1);
-
     const containerRef = useRef<HTMLDivElement>(null);
-    const currentTextRef = useRef<HTMLSpanElement>(null);
-    const nextTextRef = useRef<HTMLSpanElement>(null);
-
+    const sliderTrackRef = useRef<HTMLDivElement>(null);
     const isPausedRef = useRef(false);
     const isAnimatingRef = useRef(false);
-    const indexRef = useRef(0);
 
-    useEffect(() => {
-        if (!messages || messages.length <= 1) return;
+    const slideTo = useCallback((newIndex: number, direction: "next" | "prev" = "next") => {
+        if (isAnimatingRef.current) return;
+        isAnimatingRef.current = true;
 
-        const prefersReducedMotion = window.matchMedia(
-            "(prefers-reduced-motion: reduce)",
-        ).matches;
+        const targetX = direction === "next" ? -100 : 100;
+        const enterX = direction === "next" ? 100 : -100;
 
-        // Inisialisasi posisi: Teks aktif di tengah (0%), teks cadangan siap di sebelah kiri (-100%)
-        gsap.set(currentTextRef.current, { xPercent: 0, opacity: 1 });
-        gsap.set(nextTextRef.current, { xPercent: -100, opacity: 0 });
-
-        const duration = THEME_TOKENS.motion.rotatorDuration || 4;
-
-        const interval = setInterval(() => {
-            if (isPausedRef.current || isAnimatingRef.current) return;
-
-            const nextIndexValue = (indexRef.current + 1) % messages.length;
-
-            if (prefersReducedMotion) {
-                indexRef.current = nextIndexValue;
-                setCurrentIdx(nextIndexValue);
-                return;
-            }
-
-            isAnimatingRef.current = true;
-            setNextIdx(nextIndexValue);
-
-            // Timeline transisi horizontal serentak (Kiri IN -> Kanan OUT)
-            const tl = gsap.timeline({
+        if (sliderTrackRef.current) {
+            gsap.to(sliderTrackRef.current, {
+                xPercent: targetX,
+                opacity: 0,
+                duration: 0.45,
+                ease: "power2.inOut",
                 onComplete: () => {
-                    indexRef.current = nextIndexValue;
-                    setCurrentIdx(nextIndexValue);
-
-                    // Reset posisi instan tanpa glitch: aktif di tengah, cadangan kembali di kiri luar
-                    gsap.set(currentTextRef.current, {
-                        xPercent: 0,
-                        opacity: 1,
-                    });
-                    gsap.set(nextTextRef.current, {
-                        xPercent: -100,
-                        opacity: 0,
-                    });
-
-                    isAnimatingRef.current = false;
+                    setCurrentIdx(newIndex);
+                    gsap.fromTo(
+                        sliderTrackRef.current,
+                        { xPercent: enterX, opacity: 0 },
+                        {
+                            xPercent: 0,
+                            opacity: 1,
+                            duration: 0.45,
+                            ease: "power2.out",
+                            onComplete: () => {
+                                isAnimatingRef.current = false;
+                            },
+                        }
+                    );
                 },
             });
+        } else {
+            setCurrentIdx(newIndex);
+            isAnimatingRef.current = false;
+        }
+    }, []);
 
-            // 1. Teks aktif KELUAR ke arah KANAN (0% -> 100%)
-            tl.to(
-                currentTextRef.current,
-                {
-                    xPercent: 100,
-                    opacity: 0,
-                    duration: 0.6,
-                    ease: "power2.inOut",
-                },
-                0,
-            );
+    const nextSlide = useCallback(() => {
+        const nextIdx = (currentIdx + 1) % messages.length;
+        slideTo(nextIdx, "next");
+    }, [currentIdx, messages.length, slideTo]);
 
-            // 2. Teks berikutnya MASUK dari arah KIRI (-100% -> 0%)
-            tl.fromTo(
-                nextTextRef.current,
-                { xPercent: -100, opacity: 0 },
-                {
-                    xPercent: 0,
-                    opacity: 1,
-                    duration: 0.6,
-                    ease: "power2.inOut",
-                },
-                0,
-            );
-        }, duration * 1000);
+    const prevSlide = useCallback(() => {
+        const prevIdx = (currentIdx - 1 + messages.length) % messages.length;
+        slideTo(prevIdx, "prev");
+    }, [currentIdx, messages.length, slideTo]);
 
-        return () => {
-            clearInterval(interval);
-        };
-    }, [messages]);
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (!isPausedRef.current && !isAnimatingRef.current) {
+                nextSlide();
+            }
+        }, 4000);
 
-    if (!messages || messages.length === 0) return null;
+        return () => clearInterval(interval);
+    }, [nextSlide]);
+
+    if (!messages.length) return null;
 
     return (
         <aside
@@ -106,28 +83,39 @@ export default function BilahAtas() {
             onMouseLeave={() => {
                 isPausedRef.current = false;
             }}
-            className="bg-[#E52027] text-white h-9 px-4 flex items-center justify-center overflow-hidden relative select-none z-30 border-b border-red-700/30"
+            className="bg-[#E52027] text-white h-9 px-3 sm:px-6 flex items-center justify-between overflow-hidden relative select-none z-30 border-b border-red-700/30"
         >
-            <div className="max-w-4xl w-full h-full flex items-center justify-center relative overflow-hidden">
-                {/* Slot Teks 1: Sedang Aktif */}
-                <span
-                    ref={currentTextRef}
+            {/* Tombol Navigasi Slider Kiri */}
+            <button
+                type="button"
+                onClick={prevSlide}
+                aria-label="Pesan promo sebelumnya"
+                className="p-1 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors shrink-0 focus:outline-none focus-visible:ring-1 focus-visible:ring-white"
+            >
+                <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Slider Content */}
+            <div className="flex-1 max-w-2xl mx-auto h-full flex items-center justify-center overflow-hidden">
+                <div
+                    ref={sliderTrackRef}
                     role="status"
                     aria-live="polite"
-                    className="absolute text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-center whitespace-nowrap text-white will-change-transform"
+                    className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-center whitespace-nowrap text-white will-change-transform"
                 >
                     {messages[currentIdx]}
-                </span>
-
-                {/* Slot Teks 2: Masuk dari Kiri */}
-                <span
-                    ref={nextTextRef}
-                    aria-hidden="true"
-                    className="absolute text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-center whitespace-nowrap text-white will-change-transform pointer-events-none"
-                >
-                    {messages[nextIdx]}
-                </span>
+                </div>
             </div>
+
+            {/* Tombol Navigasi Slider Kanan */}
+            <button
+                type="button"
+                onClick={nextSlide}
+                aria-label="Pesan promo berikutnya"
+                className="p-1 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors shrink-0 focus:outline-none focus-visible:ring-1 focus-visible:ring-white"
+            >
+                <ChevronRight className="w-3.5 h-3.5" />
+            </button>
         </aside>
     );
 }

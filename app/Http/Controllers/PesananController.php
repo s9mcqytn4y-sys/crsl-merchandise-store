@@ -27,7 +27,7 @@ class PesananController extends Controller
             ->orWhere('nomor_pesanan', $nomorPesanan)
             ->firstOrFail();
 
-        return Inertia::render('Invoice', [
+        return Inertia::render('Faktur', [
             'pesanan' => $pesanan,
             'keranjang' => session()->get('keranjang', []),
         ]);
@@ -76,7 +76,7 @@ class PesananController extends Controller
                 ->first();
         }
 
-        return Inertia::render('TrackOrder', [
+        return Inertia::render('LacakPesanan', [
             'nomorPesanan' => $nomorPesanan,
             'pesanan' => $pesanan,
             'keranjang' => session()->get('keranjang', []),

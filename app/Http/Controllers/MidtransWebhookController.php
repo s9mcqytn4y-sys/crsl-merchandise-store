@@ -88,24 +88,33 @@ class MidtransWebhookController extends Controller
 
                 // UNIFIED LOGISTICS PIPELINE: Otomatis Alokasi Order Pengiriman ke Biteship API
                 if ($pengiriman) {
-                    $alamat = DB::table('alamat_pengguna')->where('pengguna_id', $pesanan->pengguna_id)->first();
-                    $items = ItemPesanan::where('pesanan_id', $pesanan->id)->get()->map(function ($item) {
+                    $alamat = null;
+                    if ($pesanan->pengguna_id) {
+                        $alamat = DB::table('alamat_pengguna')
+                            ->where('pengguna_id', $pesanan->pengguna_id)
+                            ->orderByDesc('adalah_utama')
+                            ->first();
+                    }
+
+                    // Ambil detail item dengan bobot gram aktual dari relasi produk
+                    $items = ItemPesanan::where('pesanan_id', $pesanan->id)->with('produk')->get()->map(function ($item) {
+                        $beratGram = (int)($item->produk->berat_gram ?? 250);
                         return [
                             'name' => $item->nama_produk,
                             'value' => (int)$item->harga,
                             'quantity' => $item->jumlah,
-                            'weight' => 250,
+                            'weight' => $beratGram > 0 ? $beratGram : 250,
                         ];
                     })->toArray();
 
                     $dataBiteship = [
                         'area_id' => $alamat->area_id ?? 'IDNP11KOT789311',
-                        'nama_penerima' => $alamat->nama_penerima ?? 'Pelanggan CRSL',
+                        'nama_penerima' => $alamat->nama_penerima ?? ($pesanan->pengguna->name ?? 'Pelanggan CRSL Official'),
                         'telepon' => $alamat->telepon ?? '081234567890',
-                        'alamat_lengkap' => $alamat->alamat_lengkap ?? 'Alamat Pelanggan',
+                        'alamat_lengkap' => $alamat->alamat_lengkap ?? 'Condongcatur, Sleman, D.I. Yogyakarta',
                         'kode_pos' => $alamat->kode_pos ?? '55281',
-                        'kurir' => $pengiriman->kurir ?? 'jne',
-                        'layanan' => $pengiriman->layanan ?? 'reg',
+                        'kurir' => strtolower($pengiriman->kurir ?? 'jne'),
+                        'layanan' => strtolower($pengiriman->layanan ?? 'reg'),
                         'items' => $items,
                         'is_dropship' => (bool)$pesanan->is_dropship,
                         'dropship_pengirim' => $pesanan->dropship_pengirim,
@@ -114,10 +123,14 @@ class MidtransWebhookController extends Controller
 
                     $resBiteship = $this->biteshipService->buatOrderPengiriman($dataBiteship);
                     $pengiriman->biteship_order_id = $resBiteship['biteship_order_id'] ?? null;
-                    $pengiriman->nomor_resi = $resBiteship['waybill_id'] ?? ('RESI-' . strtoupper(Str::random(8)));
+                    $pengiriman->nomor_resi = !empty($resBiteship['waybill_id']) 
+                        ? $resBiteship['waybill_id'] 
+                        : (strtoupper($pengiriman->kurir ?? 'JNE') . '-' . date('Ymd') . '-' . strtoupper(Str::random(6)));
                     $pengiriman->tracking_status = $resBiteship['status'] ?? 'allocated';
                     $pengiriman->json_payload = $resBiteship;
                     $pengiriman->save();
+
+                    Log::info("Biteship Order Allocated: Resi {$pengiriman->nomor_resi} for Order {$pesanan->nomor_pesanan}");
                 }
 
                 // UPDATE POIN LOYALITAS PELANGGAN

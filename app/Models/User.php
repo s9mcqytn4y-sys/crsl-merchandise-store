@@ -29,4 +29,24 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function loyalitas(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(PenggunaLoyalitas::class, 'pengguna_id');
+    }
+
+    public function alamat(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(AlamatPengguna::class, 'pengguna_id');
+    }
+
+    public function pesanan(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Pesanan::class, 'pengguna_id');
+    }
+
+    public function wishlist(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Wishlist::class, 'pengguna_id');
+    }
 }
