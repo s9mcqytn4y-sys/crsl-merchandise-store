@@ -38,11 +38,17 @@ class BerandaController extends Controller
             ->take(4)
             ->get();
 
+        // Produk Pre-Order aktual dari database
+        $produkPreOrder = Produk::with(['varian', 'kategori'])->where('aktif', true)
+            ->where('tipe_produk', 'pre_order')
+            ->first() ?? Produk::with(['varian', 'kategori'])->find(7);
+
         return Inertia::render('Beranda', [
             'kategori'          => $kategori,
             'produkBestSeller'  => $produkBestSeller,
             'produkTerbaru'     => $produkTerbaru,
             'produkPromo'       => $produkPromo,
+            'produkPreOrder'    => $produkPreOrder,
         ]);
     }
 }

@@ -146,7 +146,7 @@ export default function SideMenuDrawer({
                                     {authUser ? (
                                         <>
                                             <Link
-                                                href="/akun"
+                                                href="/account"
                                                 onClick={onClose}
                                                 className="flex items-center gap-3 p-2.5 bg-white border border-slate-200/80 rounded-xl hover:border-slate-300 transition-all shadow-2xs"
                                                 aria-label="Ke halaman akun saya"

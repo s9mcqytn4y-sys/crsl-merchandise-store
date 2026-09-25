@@ -102,7 +102,7 @@ export default function Footer() {
                                 </a>
                             </li>
                             <li>
-                                <Link href="/akun" className="hover:text-white transition-colors">
+                                <Link href="/account" className="hover:text-white transition-colors">
                                     Akun & Wishlist
                                 </Link>
                             </li>
@@ -138,7 +138,7 @@ export default function Footer() {
                     <div className="flex items-center gap-4 text-slate-400">
                         <Link href="/katalog" className="hover:text-slate-200 transition-colors">Katalog</Link>
                         <span>•</span>
-                        <Link href="/akun" className="hover:text-slate-200 transition-colors">Akun</Link>
+                        <Link href="/account" className="hover:text-slate-200 transition-colors">Akun</Link>
                     </div>
                 </div>
             </div>

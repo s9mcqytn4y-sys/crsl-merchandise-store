@@ -23,6 +23,7 @@ interface BerandaProps {
     produkBestSeller: ProdukItem[];
     produkTerbaru: ProdukItem[];
     produkPromo: ProdukItem[];
+    produkPreOrder?: ProdukItem;
 }
 
 export default function Beranda({
@@ -30,6 +31,7 @@ export default function Beranda({
     produkBestSeller,
     produkTerbaru,
     produkPromo,
+    produkPreOrder,
 }: BerandaProps) {
     const produkTampil =
         produkBestSeller && produkBestSeller.length > 0
@@ -44,8 +46,8 @@ export default function Beranda({
                 {/* 1. HERO CAROUSEL */}
                 <HeroCarousel slides={SITUS_CONFIG.heroSlidesCMS} />
 
-                {/* 2. PRE-ORDER SECTION */}
-                <PreOrderSection />
+                {/* 2. PRE-ORDER SECTION DENGAN DATA VALID & DINAMIS */}
+                <PreOrderSection produk={produkPreOrder} />
 
                 {/* 3. SECTION DIVIDER BACK TO SCHOOL */}
                 <PemisahSeksi
@@ -110,11 +112,6 @@ export default function Beranda({
                 )}
 
                 {/* 8. LET'S ADOPT NOW - CATEGORY TILES */}
-                <PemisahSeksi
-                    src="/assets/gambar/banner-cassie.webp"
-                    alt="Let's Adopt Now CRSL Characters"
-                    label="Adopt Now Divider"
-                />
                 <AdoptNowSection />
             </div>
         </StorefrontLayout>

@@ -11,6 +11,7 @@ import SideMenuDrawer from '../Components/SideMenuDrawer';
 import DrawerKeranjang from '../Components/DrawerKeranjang';
 import AuthModal from '../Components/AuthModal';
 import AddToCartModal from '../Components/AddToCartModal';
+import StickyCartBar from '../Components/StickyCartBar';
 import Footer from '../Components/Footer';
 import { useAppStore } from '../Stores/useAppStore';
 import { useKeranjangStore } from '../Stores/useKeranjangStore';
@@ -107,31 +108,8 @@ export default function StorefrontLayout({ children, keranjang = {}, cart = {} }
                 {children}
             </main>
 
-            {/* Floating Sticky Cart Capsule Bar at Bottom (Screenshot 1 & 2) */}
-            {(storeCount > 0 || cartCount > 0) && (
-                <div
-                    onClick={() => {
-                        bukaKeranjang();
-                        setIsCartOpen(true);
-                    }}
-                    className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 bg-[#E52027] hover:bg-[#CC1C22] text-white px-5 py-2.5 rounded-full shadow-2xl flex items-center justify-between gap-5 border border-white/20 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer max-w-[92vw] sm:max-w-md w-full"
-                >
-                    <div className="text-left">
-                        <div className="font-extrabold text-xs tracking-wide">
-                            {storeCount > 0 ? storeCount : cartCount} Items in My Cart
-                        </div>
-                        <div className="text-xs font-black text-white">
-                            {formatRupiah(storeCount > 0 ? useKeranjangStore.getState().hitungTotal() : subtotal)}
-                        </div>
-                    </div>
-                    <div className="relative flex items-center justify-center w-9 h-9 rounded-full bg-white text-[#E52027] shadow-sm shrink-0">
-                        <ShoppingBag className="w-5 h-5 stroke-[2.2]" />
-                        <span className="absolute -top-1 -right-1 bg-slate-900 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
-                            {storeCount > 0 ? storeCount : cartCount}
-                        </span>
-                    </div>
-                </div>
-            )}
+            {/* Floating Sticky Cart Bar Sesuai Screenshot 4 */}
+            <StickyCartBar />
 
             {/* Main Modular Footer */}
             <Footer />

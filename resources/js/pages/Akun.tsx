@@ -1,20 +1,26 @@
 import React, { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import StorefrontLayout from '../Layouts/StorefrontLayout';
 import HeaderProfil from '../Components/Akun/HeaderProfil';
 import KartuLoyalitas from '../Components/Akun/KartuLoyalitas';
 import KartuVoucher from '../Components/Akun/KartuVoucher';
 import PesananTab, { OrderItem } from '../Components/Akun/PesananTab';
 import WishlistTab, { WishlistItem } from '../Components/Akun/WishlistTab';
+import MyInfoSection from '../Components/Akun/MyInfoSection';
 import ModalEditProfil from '../Components/Akun/ModalEditProfil';
 import ModalKelolaAlamat, { DeliveryAddress } from '../Components/Akun/ModalKelolaAlamat';
-import { ShoppingBag, Heart, MapPin, User, LogIn } from 'lucide-react';
+import { ShoppingBag, Heart, MapPin, UserCheck, LogIn, Sparkles } from 'lucide-react';
 import { useAuthStore } from '../Stores/useAuthStore';
 
 interface AccountProps {
     user?: {
         name?: string;
         email?: string;
+        phone?: string;
+        birth_day?: string;
+        birth_month?: string;
+        birth_year?: string;
+        gender?: string;
     } | null;
     orders?: OrderItem[];
     wishlists?: WishlistItem[];
@@ -36,70 +42,79 @@ export default function Akun({
     addresses = [],
     reseller_status,
     vouchers = [],
+    initialView = 'dashboard',
 }: AccountProps) {
-    const [tabAktif, setTabAktif] = useState<'pesanan' | 'wishlist'>('pesanan');
+    const defaultTab = initialView === 'profile' ? 'myinfo' : 'pesanan';
+    const [tabAktif, setTabAktif] = useState<'pesanan' | 'wishlist' | 'myinfo'>(defaultTab);
     const [isModalProfilBuka, setIsModalProfilBuka] = useState(false);
     const [isModalAlamatBuka, setIsModalAlamatBuka] = useState(false);
     const openLogin = useAuthStore((state) => state.openLogin);
 
-    // Jika pengguna belum login
-    if (!user) {
-        return (
-            <StorefrontLayout>
-                <Head title="Akun Saya - CRSL Official Store" />
-                <div className="max-w-md mx-auto px-4 py-20 text-center space-y-4">
-                    <div className="w-14 h-14 rounded-2xl bg-red-50 text-[#E52027] flex items-center justify-center mx-auto border border-red-100 shadow-2xs">
-                        <User className="w-7 h-7" />
-                    </div>
-                    <h1 className="text-xl font-black text-slate-900 tracking-tight">
-                        Masuk ke Akun Anda
-                    </h1>
-                    <p className="text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
-                        Akses riwayat pesanan, kumpulkan poin loyalitas membership, dan simpan daftar wishlist favoritmu.
-                    </p>
-                    <button
-                        type="button"
-                        onClick={openLogin}
-                        className="inline-flex items-center gap-2 bg-[#E52027] hover:bg-[#CC1C22] text-white text-xs font-bold px-6 py-3 rounded-xl transition-all shadow-sm"
-                    >
-                        <LogIn className="w-4 h-4" />
-                        Masuk / Daftar Sekarang
-                    </button>
-                </div>
-            </StorefrontLayout>
-        );
-    }
+    const isGuest = !user;
 
     return (
         <StorefrontLayout>
-            <Head title={`Akun Saya - ${user.name || 'CRSL Store'}`} />
+            <Head title={isGuest ? "Akun Pelanggan - CRSL Official Store" : `Akun Saya - ${user.name}`} />
 
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
-                {/* 1. Header Profil */}
-                <HeaderProfil
-                    nama={user.name || ''}
-                    email={user.email}
-                    resellerStatus={reseller_status}
-                    onBukaPengaturan={() => setIsModalProfilBuka(true)}
-                />
+                {/* 1. Banner Guest / Header Profil User */}
+                {isGuest ? (
+                    <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 border border-slate-700">
+                        <div className="space-y-2 text-center md:text-left">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-xs font-bold tracking-wider uppercase border border-red-500/30">
+                                <Sparkles className="w-3.5 h-3.5 text-[#E52027]" />
+                                <span>CRSL Freen Membership</span>
+                            </div>
+                            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                                Selamat Datang di CRSL Official Store!
+                            </h1>
+                            <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+                                Masuk atau daftar akun untuk mengakses riwayat pesanan otomatis, menyimpan wishlist merchandise favorit, dan kumpulkan poin loyalitas New Freen.
+                            </p>
+                        </div>
 
-                {/* 2. Ringkasan Loyalitas & Voucher */}
+                        <div className="flex items-center gap-3 shrink-0">
+                            <button
+                                type="button"
+                                onClick={openLogin}
+                                className="px-6 py-3 bg-[#E52027] hover:bg-[#CC1C22] active:scale-95 text-white font-bold text-xs sm:text-sm rounded-full shadow-lg shadow-red-500/20 transition-all flex items-center gap-2 cursor-pointer"
+                            >
+                                <LogIn className="w-4 h-4" />
+                                <span>Masuk / Daftar Sekarang</span>
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <HeaderProfil
+                        nama={user.name || ''}
+                        email={user.email}
+                        resellerStatus={reseller_status}
+                        onBukaPengaturan={() => setIsModalProfilBuka(true)}
+                    />
+                )}
+
+                {/* 2. Ringkasan Loyalitas & Voucher (Guest & User Tetap Melihat Manfaat) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <KartuLoyalitas
-                        tier={loyalty?.tier || 'Non-Member'}
-                        progressText={loyalty?.progress_text || 'Kumpulkan poin dengan berbelanja merchandise original CRSL!'}
+                        tier={loyalty?.tier || (isGuest ? 'Non-Member' : 'New Freen')}
+                        progressText={
+                            loyalty?.progress_text ||
+                            (isGuest
+                                ? 'Daftar sekarang & dapatkan 100 Welcome Points!'
+                                : 'Belanja merchandise untuk mencapai tier Freen!')
+                        }
                         onLihatDetail={() => setTabAktif('pesanan')}
                     />
                     <KartuVoucher vouchers={vouchers} />
                 </div>
 
-                {/* 3. Tab Switcher (Pesanan & Wishlist) */}
+                {/* 3. Tab Navigation (Pesanan, Wishlist, My Info, Alamat) */}
                 <div className="border-b border-slate-200">
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-6 overflow-x-auto [scrollbar-width:none]">
                         <button
                             type="button"
                             onClick={() => setTabAktif('pesanan')}
-                            className={`pb-3.5 text-sm font-black transition-all relative flex items-center gap-2 ${
+                            className={`pb-3.5 text-sm font-bold transition-all relative flex items-center gap-2 shrink-0 cursor-pointer ${
                                 tabAktif === 'pesanan'
                                     ? 'text-slate-900 border-b-2 border-[#E52027]'
                                     : 'text-slate-400 hover:text-slate-700'
@@ -107,9 +122,13 @@ export default function Akun({
                         >
                             <ShoppingBag className="w-4 h-4" />
                             <span>Pesanan</span>
-                            <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
-                                tabAktif === 'pesanan' ? 'bg-red-50 text-[#E52027]' : 'bg-slate-100 text-slate-500'
-                            }`}>
+                            <span
+                                className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                                    tabAktif === 'pesanan'
+                                        ? 'bg-red-50 text-[#E52027]'
+                                        : 'bg-slate-100 text-slate-500'
+                                }`}
+                            >
                                 {orders.length}
                             </span>
                         </button>
@@ -117,7 +136,7 @@ export default function Akun({
                         <button
                             type="button"
                             onClick={() => setTabAktif('wishlist')}
-                            className={`pb-3.5 text-sm font-black transition-all relative flex items-center gap-2 ${
+                            className={`pb-3.5 text-sm font-bold transition-all relative flex items-center gap-2 shrink-0 cursor-pointer ${
                                 tabAktif === 'wishlist'
                                     ? 'text-slate-900 border-b-2 border-[#E52027]'
                                     : 'text-slate-400 hover:text-slate-700'
@@ -125,25 +144,44 @@ export default function Akun({
                         >
                             <Heart className="w-4 h-4" />
                             <span>Wishlist</span>
-                            <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
-                                tabAktif === 'wishlist' ? 'bg-red-50 text-[#E52027]' : 'bg-slate-100 text-slate-500'
-                            }`}>
+                            <span
+                                className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                                    tabAktif === 'wishlist'
+                                        ? 'bg-red-50 text-[#E52027]'
+                                        : 'bg-slate-100 text-slate-500'
+                                }`}
+                            >
                                 {wishlists.length}
                             </span>
                         </button>
 
                         <button
                             type="button"
-                            onClick={() => setIsModalAlamatBuka(true)}
-                            className="pb-3.5 text-sm font-bold text-slate-400 hover:text-slate-700 transition-colors ml-auto hidden sm:flex items-center gap-1.5"
+                            onClick={() => setTabAktif('myinfo')}
+                            className={`pb-3.5 text-sm font-bold transition-all relative flex items-center gap-2 shrink-0 cursor-pointer ${
+                                tabAktif === 'myinfo'
+                                    ? 'text-slate-900 border-b-2 border-[#E52027]'
+                                    : 'text-slate-400 hover:text-slate-700'
+                            }`}
                         >
-                            <MapPin className="w-4 h-4 text-slate-400" />
-                            <span>Alamat Tersimpan ({addresses.length})</span>
+                            <UserCheck className="w-4 h-4" />
+                            <span>Info Profil (My Info)</span>
                         </button>
+
+                        {!isGuest && (
+                            <button
+                                type="button"
+                                onClick={() => setIsModalAlamatBuka(true)}
+                                className="pb-3.5 text-sm font-bold text-slate-400 hover:text-slate-700 transition-colors ml-auto hidden sm:flex items-center gap-1.5 shrink-0 cursor-pointer"
+                            >
+                                <MapPin className="w-4 h-4 text-slate-400" />
+                                <span>Alamat Tersimpan ({addresses.length})</span>
+                            </button>
+                        )}
                     </div>
                 </div>
 
-                {/* 4. Konten Tab Aktif */}
+                {/* 4. Tab Content */}
                 {tabAktif === 'pesanan' && (
                     <PesananTab
                         orders={orders}
@@ -156,20 +194,32 @@ export default function Akun({
                 {tabAktif === 'wishlist' && (
                     <WishlistTab wishlists={wishlists} />
                 )}
+
+                {tabAktif === 'myinfo' && (
+                    <MyInfoSection
+                        user={user}
+                        isGuest={isGuest}
+                        onOpenAuth={openLogin}
+                    />
+                )}
             </div>
 
             {/* Modals */}
-            <ModalEditProfil
-                isOpen={isModalProfilBuka}
-                onClose={() => setIsModalProfilBuka(false)}
-                user={user}
-            />
+            {!isGuest && (
+                <>
+                    <ModalEditProfil
+                        isOpen={isModalProfilBuka}
+                        onClose={() => setIsModalProfilBuka(false)}
+                        user={user}
+                    />
 
-            <ModalKelolaAlamat
-                isOpen={isModalAlamatBuka}
-                onClose={() => setIsModalAlamatBuka(false)}
-                addresses={addresses}
-            />
+                    <ModalKelolaAlamat
+                        isOpen={isModalAlamatBuka}
+                        onClose={() => setIsModalAlamatBuka(false)}
+                        addresses={addresses}
+                    />
+                </>
+            )}
         </StorefrontLayout>
     );
 }

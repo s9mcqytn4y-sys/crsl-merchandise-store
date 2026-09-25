@@ -193,7 +193,7 @@ export default function DrawerKeranjang({ isOpen, onClose }: DrawerKeranjangProp
                             </div>
                             <div className="text-right">
                                 <Link
-                                    href="/akun"
+                                    href="/account"
                                     onClick={onClose}
                                     className="text-[11px] font-bold text-slate-600 hover:text-slate-900 inline-flex items-center gap-1"
                                 >

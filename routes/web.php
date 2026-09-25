@@ -15,12 +15,13 @@ use Illuminate\Support\Facades\Route;
 // Storefront Beranda
 Route::get('/', [BerandaController::class, 'index'])->name('beranda');
 
-// Paket Bundle BTS (Screenshot 2: /bundles/{id}/{slug})
+// Paket Bundle BTS (crsl-store.id/bundles/{id}/{slug})
 Route::get('/bundles/{id}/{slug?}', [BundleController::class, 'show'])->name('bundles.show');
-Route::get('/paket/{id}/{slug?}', [BundleController::class, 'show'])->name('paket.show');
+Route::redirect('/paket/{id}/{slug?}', '/bundles/{id}/{slug?}', 301);
 
-// Katalog & Detail Produk
+// Katalog & Detail Produk (crsl-store.id/products/{slug})
 Route::get('/katalog', [KatalogController::class, 'index'])->name('katalog');
+Route::get('/products/{slug}', [KatalogController::class, 'detail'])->name('products.detail');
 Route::get('/produk/{slug}', [KatalogController::class, 'detail'])->name('produk.detail');
 
 // Manajemen Keranjang Belanja (Session)
@@ -39,11 +40,11 @@ Route::post('/checkout', [PembayaranController::class, 'proses'])->name('checkou
 Route::get('/faktur/{nomorPesanan}', [PesananController::class, 'faktur'])->name('faktur');
 Route::get('/lacak', [PesananController::class, 'lacak'])->name('lacak');
 
-// Akun Pelanggan & Wishlist (Mendukung path /akun, /account, /profile/myinfo, /profil/myinfo)
-Route::get('/akun', [AkunController::class, 'index'])->name('akun');
+// Akun Pelanggan & Wishlist (crsl-store.id/account & /profile/myinfo)
+Route::redirect('/akun', '/account', 301);
 Route::get('/account', [AkunController::class, 'index'])->name('account');
+Route::redirect('/profil/myinfo', '/profile/myinfo', 301);
 Route::get('/profile/myinfo', [AkunController::class, 'myinfo'])->name('profile.myinfo');
-Route::get('/profil/myinfo', [AkunController::class, 'myinfo'])->name('profil.myinfo');
 Route::post('/profil/perbarui', [AkunController::class, 'perbaruiProfil'])->name('profil.perbarui');
 Route::post('/wishlist/toggle', [AkunController::class, 'toggleWishlist'])->name('wishlist.toggle');
 
