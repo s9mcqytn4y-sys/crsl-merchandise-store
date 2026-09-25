@@ -1,50 +1,68 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 export default function BilahAtas() {
-    const promoMessages = [
-        "BELANJA DI WEBSITE LEBIH MURAH",
-        "DISKON 10% ALL ITEM UNTUK NEW ADOPTER",
+    const promoPesan = [
         "GRATIS ONGKIR SELURUH INDONESIA",
+        "BELANJA DI WEBSITE LEBIH MURAH",
     ];
 
-    // Gandakan daftar untuk animasi continuous marquee yang mulus
-    const items = [...promoMessages, ...promoMessages, ...promoMessages, ...promoMessages];
+    const [indeksAktif, setIndeksAktif] = useState(0);
+    const [sedangTransisi, setSedangTransisi] = useState(false);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setSedangTransisi(true);
+            setTimeout(() => {
+                setIndeksAktif((prev) => (prev + 1) % promoPesan.length);
+                setSedangTransisi(false);
+            }, 500); // durasi animasi keluar-masuk
+        }, 3500);
+
+        return () => clearInterval(interval);
+    }, [promoPesan.length]);
 
     return (
         <aside
             aria-label="Pemberitahuan Promo Toko"
-            className="bg-[#E52027] text-white h-8 overflow-hidden relative select-none z-30 flex items-center border-b border-red-700/20"
+            className="bg-primary text-white h-9 overflow-hidden relative select-none z-30 flex items-center justify-center border-b border-red-700/20 px-4"
         >
             <style>{`
-                @keyframes marquee-ltr {
+                @keyframes slideInFromLeft {
                     0% {
-                        transform: translateX(-50%);
+                        opacity: 0;
+                        transform: translateX(-40px);
                     }
                     100% {
-                        transform: translateX(0%);
+                        opacity: 1;
+                        transform: translateX(0);
                     }
                 }
-                .bilah-atas-marquee {
-                    display: flex;
-                    width: max-content;
-                    animation: marquee-ltr 28s linear infinite;
+                @keyframes slideOutToRight {
+                    0% {
+                        opacity: 1;
+                        transform: translateX(0);
+                    }
+                    100% {
+                        opacity: 0;
+                        transform: translateX(40px);
+                    }
                 }
-                .bilah-atas-marquee:hover {
-                    animation-play-state: paused;
+                .anim-slide-kiri-kanan-in {
+                    animation: slideInFromLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                }
+                .anim-slide-kiri-kanan-out {
+                    animation: slideOutToRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
                 }
             `}</style>
-            <div className="bilah-atas-marquee will-change-transform py-1">
-                {items.map((msg, idx) => (
-                    <div
-                        key={idx}
-                        className="flex items-center space-x-6 px-6 shrink-0"
-                    >
-                        <span className="text-[11px] sm:text-xs font-light tracking-widest text-white/95 uppercase">
-                            {msg}
-                        </span>
-                        <span className="text-white/40 text-[10px] select-none font-thin">•</span>
-                    </div>
-                ))}
+            <div className="relative w-full max-w-4xl h-full flex items-center justify-center text-center">
+                <span
+                    key={indeksAktif}
+                    className={`text-[12px] sm:text-[13px] font-normal tracking-wider text-white uppercase will-change-transform ${
+                        sedangTransisi ? "anim-slide-kiri-kanan-out" : "anim-slide-kiri-kanan-in"
+                    }`}
+                >
+                    {promoPesan[indeksAktif]}
+                </span>
             </div>
         </aside>
     );

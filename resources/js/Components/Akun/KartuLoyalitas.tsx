@@ -1,5 +1,5 @@
 import React from 'react';
-import { Gift, ChevronRight } from 'lucide-react';
+import { Gift } from 'lucide-react';
 
 interface KartuLoyalitasProps {
     tier?: string;
@@ -9,34 +9,33 @@ interface KartuLoyalitasProps {
 
 export default function KartuLoyalitas({
     tier = 'Non-Member',
-    progressText = 'Belanja Rp 200.000 lagi untuk mencapai New Freen',
+    progressText = 'Spend Rp 200,000 more to reach New Freen',
     onLihatDetail,
 }: KartuLoyalitasProps) {
     return (
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col justify-between h-full">
-            <div className="flex items-center justify-between gap-2 mb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    Status Loyalitas
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-4">
+                <span className="text-sm font-bold text-slate-800">
+                    Loyalty
                 </span>
                 <button
                     type="button"
                     onClick={onLihatDetail}
-                    className="text-xs font-bold text-[#E52027] hover:underline inline-flex items-center gap-0.5"
+                    className="text-xs font-semibold text-primary hover:underline cursor-pointer"
                 >
-                    Lihat Detail
-                    <ChevronRight className="w-3.5 h-3.5" />
+                    See Details
                 </button>
             </div>
 
-            <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-red-50 text-[#E52027] flex items-center justify-center shrink-0 border border-red-100">
-                    <Gift className="w-5 h-5" />
+            <div className="flex items-center gap-4">
+                <div className="w-11 h-11 rounded-full bg-slate-100 flex items-center justify-center shrink-0 text-slate-500">
+                    <Gift className="w-5 h-5 stroke-[1.8]" />
                 </div>
                 <div>
-                    <h3 className="font-extrabold text-sm sm:text-base text-slate-900 tracking-tight">
+                    <h3 className="font-bold text-sm text-slate-900">
                         {tier}
                     </h3>
-                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                    <p className="text-xs text-slate-500 mt-0.5">
                         {progressText}
                     </p>
                 </div>

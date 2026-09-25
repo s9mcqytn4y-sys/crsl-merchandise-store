@@ -40,12 +40,25 @@ Route::post('/checkout', [PembayaranController::class, 'proses'])->name('checkou
 Route::get('/faktur/{nomorPesanan}', [PesananController::class, 'faktur'])->name('faktur');
 Route::get('/lacak', [PesananController::class, 'lacak'])->name('lacak');
 
-// Akun Pelanggan & Wishlist (crsl-store.id/account & /profile/myinfo)
+// Akun Pelanggan & Profile (crsl-store.id/account & /profile/[myinfo, delivery, account])
 Route::redirect('/akun', '/account', 301);
 Route::get('/account', [AkunController::class, 'index'])->name('account');
+
 Route::redirect('/profil/myinfo', '/profile/myinfo', 301);
-Route::get('/profile/myinfo', [AkunController::class, 'myinfo'])->name('profile.myinfo');
-Route::post('/profil/perbarui', [AkunController::class, 'perbaruiProfil'])->name('profil.perbarui');
+Route::get('/profile/myinfo', [AkunController::class, 'infoProfil'])->name('profile.myinfo');
+Route::post('/profile/myinfo', [AkunController::class, 'perbaruiProfil'])->name('profile.myinfo.perbarui');
+
+Route::redirect('/profil/delivery', '/profile/delivery', 301);
+Route::get('/profile/delivery', [AkunController::class, 'infoPengiriman'])->name('profile.delivery');
+Route::post('/profile/delivery', [AkunController::class, 'simpanAlamat'])->name('profile.delivery.simpan');
+Route::put('/profile/delivery/{id}', [AkunController::class, 'perbaruiAlamat'])->name('profile.delivery.perbarui');
+Route::delete('/profile/delivery/{id}', [AkunController::class, 'hapusAlamat'])->name('profile.delivery.hapus');
+Route::post('/profile/delivery/{id}/utama', [AkunController::class, 'jadikanAlamatUtama'])->name('profile.delivery.utama');
+
+Route::redirect('/profil/account', '/profile/account', 301);
+Route::get('/profile/account', [AkunController::class, 'infoAkun'])->name('profile.account');
+Route::post('/profile/account/hapus', [AuthController::class, 'hapusAkun'])->name('profile.account.hapus');
+
 Route::post('/wishlist/toggle', [AkunController::class, 'toggleWishlist'])->name('wishlist.toggle');
 
 // API Wilayah & Biteship Shipping

@@ -21,7 +21,7 @@ export default function StickyCartBar() {
             <button
                 type="button"
                 onClick={bukaKeranjang}
-                className="w-full bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.99] text-white rounded-2xl px-5 py-3.5 shadow-2xl flex items-center justify-between transition-all duration-200 cursor-pointer border border-red-500/30"
+                className="w-full bg-primary hover:bg-primary-hover active:scale-[0.99] text-white rounded-2xl px-5 py-3.5 shadow-2xl flex items-center justify-between transition-all duration-200 cursor-pointer border border-red-500/30"
                 aria-label={`Keranjang belanja: ${totalQty} produk, total ${formatRupiah(totalHarga)}`}
             >
                 {/* Informasi Kiri: Jumlah Item & Total Harga */}
@@ -35,7 +35,7 @@ export default function StickyCartBar() {
                 </div>
 
                 {/* Tombol Bulat Kanan: Icon Cart + Badge Merah Sesuai Screenshot 4 */}
-                <div className="relative flex items-center justify-center w-11 h-11 bg-white text-[#E52027] rounded-full shadow-md shrink-0">
+                <div className="relative flex items-center justify-center w-11 h-11 bg-white text-primary rounded-full shadow-md shrink-0">
                     <svg
                         className="w-5 h-5 fill-none stroke-current"
                         viewBox="0 0 24 24"
@@ -50,7 +50,7 @@ export default function StickyCartBar() {
                     </svg>
 
                     {/* Badge Angka Bulat Merah Kecil di Sudut */}
-                    <span className="absolute -top-1 -right-1 bg-[#E52027] text-white text-[10px] font-black rounded-full w-5 h-5 flex items-center justify-center border-2 border-white shadow-xs">
+                    <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-black rounded-full w-5 h-5 flex items-center justify-center border-2 border-white shadow-xs">
                         {totalQty > 99 ? "99+" : totalQty}
                     </span>
                 </div>

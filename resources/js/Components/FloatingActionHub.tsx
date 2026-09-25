@@ -27,7 +27,7 @@ export default function FloatingActionHub({
                 <button
                     type="button"
                     onClick={() => setIsVoucherOpen(true)}
-                    className="flex items-center justify-center w-10 h-11 bg-[#E52027] hover:bg-[#CC1C22] text-white rounded-l-xl shadow-lg transition-transform duration-200 hover:-translate-x-1 focus-visible:ring-2 focus-visible:ring-[#E52027] focus-visible:outline-none cursor-pointer"
+                    className="flex items-center justify-center w-10 h-11 bg-primary hover:bg-primary-hover text-white rounded-l-xl shadow-lg transition-transform duration-200 hover:-translate-x-1 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none cursor-pointer"
                     aria-label="Buka Available Voucher"
                     title="Available Voucher"
                 >
@@ -40,7 +40,7 @@ export default function FloatingActionHub({
                 <button
                     type="button"
                     onClick={() => setIsVoucherOpen(true)}
-                    className="w-12 h-12 rounded-full bg-[#E52027] hover:bg-[#CC1C22] text-white shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#E52027] focus-visible:outline-none"
+                    className="w-12 h-12 rounded-full bg-primary hover:bg-primary-hover text-white shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                     aria-label="CRSL Loyalty & Voucher"
                     title="CRSL Rewards"
                 >
@@ -82,7 +82,7 @@ export default function FloatingActionHub({
                             href={waLink}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="w-full py-3.5 px-4 bg-[#E52027] hover:bg-[#CC1C22] text-white font-bold text-sm rounded-full flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg transition-all duration-150 transform hover:scale-[1.01] active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-[#E52027] focus-visible:outline-none cursor-pointer"
+                            className="w-full py-3.5 px-4 bg-primary hover:bg-primary-hover text-white font-bold text-sm rounded-full flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg transition-all duration-150 transform hover:scale-[1.01] active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none cursor-pointer"
                         >
                             {/* WhatsApp SVG Icon */}
                             <svg
@@ -104,13 +104,13 @@ export default function FloatingActionHub({
                     className={`w-13 h-13 rounded-full ${
                         isWaOpen
                             ? "bg-[#eab308] hover:bg-[#ca8a04] text-slate-900"
-                            : "bg-[#E52027] hover:bg-[#CC1C22] text-white"
-                    } shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#E52027] focus-visible:outline-none cursor-pointer`}
+                            : "bg-primary hover:bg-primary-hover text-white"
+                    } shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none cursor-pointer`}
                     aria-label={isWaOpen ? "Tutup bantuan chat" : "Buka bantuan chat WhatsApp"}
                     aria-expanded={isWaOpen}
                 >
                     {isWaOpen ? (
-                        <X className="w-6 h-6 stroke-[3] text-slate-900" />
+                        <X className="w-6 h-6 stroke-3 text-slate-900" />
                     ) : (
                         <svg
                             className="w-6 h-6 fill-current"

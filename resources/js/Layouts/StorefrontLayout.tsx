@@ -141,6 +141,9 @@ export default function StorefrontLayout({ children, keranjang = {}, cart = {} }
             <SideMenuDrawer
                 isOpen={isMenuOpen}
                 onClose={closeMenu}
+                authUser={auth?.user}
+                onOpenAuth={() => useAuthStore.getState().openAuthModal("login")}
+                onLogout={() => router.post("/logout")}
             />
 
             {/* Floating Action Hub (WhatsApp Chat Support, Available Voucher, Mascot) */}
