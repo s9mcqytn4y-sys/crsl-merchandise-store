@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Domains\Payment\Services\MidtransService;
-use App\Domains\Shipping\Services\BiteshipService;
+use App\Domains\Pembayaran\Services\MidtransService;
+use App\Domains\Pengiriman\Services\BiteshipService;
+use App\Domains\Pesanan\Actions\BuatPesananAction;
 use App\Models\AlamatPengguna;
 use App\Models\ItemPesanan;
 use App\Models\Pesanan;
@@ -17,7 +18,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
-use App\Domains\Order\Actions\BuatPesananAction;
 use Inertia\Response;
 
 class PembayaranController extends Controller
@@ -304,7 +304,8 @@ class PembayaranController extends Controller
                 \Illuminate\Support\Facades\Cache::forget('pengguna:akun:' . auth()->id());
             }
 
-            return redirect()->route('faktur', ['nomorPesanan' => $pesanan->nomor_pesanan])
+            $urlNomorPesanan = str_replace('/', '-', $pesanan->nomor_pesanan);
+            return redirect()->route('faktur', ['nomorPesanan' => $urlNomorPesanan])
                 ->with('sukses', 'Pesanan berhasil dibuat. Silakan selesaikan pembayaran!');
 
         } catch (\Throwable $e) {

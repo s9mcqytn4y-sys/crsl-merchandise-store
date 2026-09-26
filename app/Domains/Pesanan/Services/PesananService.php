@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\Order\Services;
+namespace App\Domains\Pesanan\Services;
 
 use App\Models\Pesanan;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;

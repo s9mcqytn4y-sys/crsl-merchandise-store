@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\Auth\Services;
+namespace App\Domains\Autentikasi\Services;
 
 use App\Mail\OtpVerifikasiMail;
 use App\Mail\ResetPasswordMail;

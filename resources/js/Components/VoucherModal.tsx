@@ -128,7 +128,7 @@ export default function VoucherModal({
                                                         <span className="text-xs text-slate-500 font-medium block mt-0.5">
                                                             {v.minSpend}
                                                         </span>
-                                                        <span className="text-xs font-mono font-bold text-[#E52027] mt-1 block">
+                                                        <span className="text-xs font-mono font-bold text-primary mt-1 block">
                                                             Kode: {v.code}
                                                         </span>
                                                     </div>
@@ -140,7 +140,7 @@ export default function VoucherModal({
                                                             className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                                                                 isSelected
                                                                     ? "bg-emerald-600 text-white"
-                                                                    : "bg-[#E52027] hover:bg-[#CC1C22] text-white shadow-2xs"
+                                                                    : "bg-primary hover:bg-primary-hover text-white shadow-2xs"
                                                             }`}
                                                         >
                                                             {isSelected ? "Terpakai" : "Gunakan"}

@@ -52,16 +52,21 @@ export default function PengingatPesananBelumBayar() {
         return () => clearInterval(interval);
     }, [unpaid?.batas_waktu]);
 
-    if (!unpaid || isDismissed || isHiddenPage || sisaWaktu.expired) {
+    if (!unpaid || isDismissed || isHiddenPage) {
         return null;
     }
 
     const formatCountdown = () => {
+        if (sisaWaktu.expired) {
+            return "Segera Selesaikan";
+        }
         const hh = String(sisaWaktu.jam).padStart(2, "0");
         const mm = String(sisaWaktu.menit).padStart(2, "0");
         const ss = String(sisaWaktu.detik).padStart(2, "0");
         return sisaWaktu.jam > 0 ? `${hh}:${mm}:${ss}` : `${mm}:${ss}`;
     };
+
+    const fakturSlug = (unpaid.nomor_pesanan || "").replace(/\//g, "-");
 
     return (
         <aside
@@ -93,7 +98,7 @@ export default function PengingatPesananBelumBayar() {
 
                 <div className="flex items-center gap-2 shrink-0">
                     <Link
-                        href={`/faktur/${encodeURIComponent(unpaid.nomor_pesanan)}`}
+                        href={`/faktur/${fakturSlug}`}
                         className="bg-white hover:bg-slate-100 text-red-600 font-extrabold px-3.5 py-1 rounded-full text-xs transition-transform active:scale-95 shadow-sm inline-flex items-center gap-1 cursor-pointer"
                     >
                         <span>Bayar</span>

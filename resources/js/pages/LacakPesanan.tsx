@@ -18,6 +18,8 @@ import {
     Radio,
 } from "lucide-react";
 import { toast } from "sonner";
+import FulfillmentTimeline from "../Components/Lacak/FulfillmentTimeline";
+import RincianPaket from "../Components/Lacak/RincianPaket";
 
 interface OrderItem {
     id: number | string;
@@ -293,9 +295,9 @@ export default function TrackOrder({
                         {/* Visual Step Timeline */}
                         <div className="py-2">
                             <div className="grid grid-cols-4 gap-2 text-center text-xs relative">
-                                <div className="absolute top-4 left-[12.5%] right-[12.5%] h-0.5 bg-slate-200 -z-0" />
+                                <div className="absolute top-4 left-[12.5%] right-[12.5%] h-0.5 bg-slate-200 z-0" />
                                 <div
-                                    className="absolute top-4 left-[12.5%] h-0.5 bg-primary -z-0 transition-all duration-500"
+                                    className="absolute top-4 left-[12.5%] h-0.5 bg-primary z-0 transition-all duration-500"
                                     style={{
                                         width: `${Math.max(0, Math.min(3, currentStep - 1)) * 33.33}%`,
                                     }}
@@ -379,94 +381,24 @@ export default function TrackOrder({
                             </div>
                         </div>
 
-                        {/* Info Resi Ekspedisi & Biteship API Details */}
-                        {activeOrder.pengiriman?.nomor_resi && (
-                            <div className="space-y-3">
-                                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/90 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                                    <div>
-                                        <span className="text-[11px] text-slate-500 font-semibold block">
-                                            Ekspedisi:{" "}
-                                            {(
-                                                activeOrder.pengiriman.kurir ||
-                                                "Kurir Standar"
-                                            ).toUpperCase()}{" "}
-                                            (
-                                            {activeOrder.pengiriman.layanan ||
-                                                "REG"}
-                                            )
-                                        </span>
-                                        <div className="font-mono font-black text-sm text-slate-900 mt-0.5">
-                                            Resi:{" "}
-                                            {activeOrder.pengiriman.nomor_resi}
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                handleCopyResi(
-                                                    activeOrder.pengiriman
-                                                        ?.nomor_resi!,
-                                                )
-                                            }
-                                            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:border-slate-300 px-3 py-2 rounded-xl transition-colors shadow-2xs cursor-pointer"
-                                        >
-                                            {copied ? (
-                                                <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                            ) : (
-                                                <Copy className="w-3.5 h-3.5" />
-                                            )}
-                                            {copied ? "Tersalin" : "Salin Resi"}
-                                        </button>
-                                        {tracking?.link && (
-                                            <a
-                                                href={tracking.link}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="inline-flex items-center gap-1 text-xs font-bold text-primary bg-red-50 hover:bg-red-100 border border-red-200/80 px-3 py-2 rounded-xl transition-colors shadow-2xs"
-                                            >
-                                                <ExternalLink className="w-3.5 h-3.5" />
-                                                Biteship Live
-                                            </a>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Real-time Biteship Timeline Logs */}
-                                {trackingHistory.length > 0 && (
-                                    <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-5 space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
-                                                <Radio className="w-4 h-4 text-emerald-500 animate-pulse" />
-                                                <span>Aktivitas Pengiriman Terakhir (Biteship API)</span>
-                                            </div>
-                                            {tracking?.is_mock && (
-                                                <span className="text-[10px] font-semibold text-slate-400 bg-white px-2 py-0.5 rounded-md border border-slate-200">
-                                                    Mode Dev Simulasi
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        <div className="relative pl-6 space-y-5 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
-                                            {trackingHistory.map((log, idx) => (
-                                                <div key={idx} className="relative group">
-                                                    <div className={`absolute -left-6 top-1 w-3.5 h-3.5 rounded-full border-2 border-white shadow-xs ${idx === 0 ? "bg-primary ring-2 ring-red-100" : "bg-slate-300"}`} />
-                                                    <div>
-                                                        <p className={`text-xs ${idx === 0 ? "font-bold text-slate-900" : "font-medium text-slate-600"}`}>
-                                                            {log.note}
-                                                        </p>
-                                                        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-0.5">
-                                                            <Calendar className="w-3 h-3 text-slate-400" />
-                                                            <span>{formatTanggal(log.updated_at)}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                        {/* Fulfillment Timeline Section (Smart Fallback & Live Biteship) */}
+                        <FulfillmentTimeline
+                            orderStatus={activeOrder.status}
+                            kurir={activeOrder.pengiriman?.kurir}
+                            layanan={activeOrder.pengiriman?.layanan}
+                            nomorResi={activeOrder.pengiriman?.nomor_resi}
+                            tracking={tracking}
+                            alamatPenerima={
+                                activeOrder.pengiriman?.alamat_lengkap ||
+                                activeOrder.pengiriman?.json_payload?.alamat_lengkap
+                            }
+                            namaPenerima={
+                                activeOrder.pengiriman?.nama_penerima ||
+                                activeOrder.pengiriman?.json_payload?.nama_penerima ||
+                                activeOrder.pengiriman?.penerima
+                            }
+                            formatTanggal={formatTanggal}
+                        />
 
                         {/* CTA Bayar Jika Status Belum Bayar */}
                         {activeOrder.status === "belum_bayar" && (
@@ -479,7 +411,7 @@ export default function TrackOrder({
                                     </span>
                                 </div>
                                 <Link
-                                    href={`/faktur/${activeOrder.nomor_pesanan || activeOrder.order_number}`}
+                                    href={`/faktur/${(activeOrder.nomor_pesanan || activeOrder.order_number || "").replace(/\//g, "-")}`}
                                     className="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-hover text-white text-xs font-bold px-4 py-2 rounded-xl transition-colors shrink-0 shadow-xs cursor-pointer"
                                 >
                                     <CreditCard className="w-3.5 h-3.5" />
@@ -488,54 +420,28 @@ export default function TrackOrder({
                             </div>
                         )}
 
-                        {/* Daftar Produk */}
-                        <div className="space-y-3">
-                            <h4 className="font-bold text-xs text-slate-900 uppercase tracking-wider">
-                                Produk Dalam Paket:
-                            </h4>
-                            <div className="border border-slate-200/80 rounded-2xl divide-y divide-slate-100 text-xs overflow-hidden">
-                                {orderItems.map((item, idx) => {
-                                    const nama =
-                                        item.nama_produk ||
-                                        item.product_name ||
-                                        "Produk CRSL";
-                                    const qty =
-                                        item.jumlah ?? item.quantity ?? 1;
-                                    const harga = item.harga || item.price || 0;
-
-                                    return (
-                                        <div
-                                            key={
-                                                item.id
-                                                    ? `${item.id}-${idx}`
-                                                    : idx
-                                            }
-                                            className="p-3.5 bg-slate-50/50 flex items-center justify-between gap-4"
-                                        >
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <div className="w-10 h-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center shrink-0 text-slate-400">
-                                                    <Package className="w-5 h-5" />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <h5 className="font-bold text-slate-900 truncate">
-                                                        {nama}
-                                                    </h5>
-                                                    <p className="text-[11px] text-slate-400 mt-0.5">
-                                                        {qty} pcs{" "}
-                                                        {item.ukuran
-                                                            ? `• Ukuran: ${item.ukuran}`
-                                                            : ""}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="font-black text-slate-900 tabular-nums shrink-0">
-                                                {formatRupiah(harga * qty)}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
+                        {/* Rincian Produk & Tujuan Pengiriman */}
+                        <RincianPaket
+                            items={orderItems}
+                            penerima={
+                                activeOrder.pengiriman?.nama_penerima ||
+                                activeOrder.pengiriman?.json_payload?.nama_penerima ||
+                                activeOrder.pengiriman?.penerima
+                            }
+                            telepon={
+                                activeOrder.pengiriman?.telepon ||
+                                activeOrder.pengiriman?.json_payload?.telepon
+                            }
+                            alamatLengkap={
+                                activeOrder.pengiriman?.alamat_lengkap ||
+                                activeOrder.pengiriman?.json_payload?.alamat_lengkap
+                            }
+                            catatan={
+                                activeOrder.pengiriman?.catatan ||
+                                activeOrder.pengiriman?.json_payload?.catatan
+                            }
+                            total={activeOrder.total}
+                        />
 
                         {/* Navigasi Footer */}
                         <div className="pt-2 flex justify-between items-center text-xs">
@@ -546,7 +452,7 @@ export default function TrackOrder({
                                 ← Kembali ke Katalog
                             </Link>
                             <Link
-                                href={`/faktur/${activeOrder.nomor_pesanan || activeOrder.order_number}`}
+                                href={`/faktur/${(activeOrder.nomor_pesanan || activeOrder.order_number || "").replace(/\//g, "-")}`}
                                 className="text-primary hover:underline font-bold inline-flex items-center gap-1"
                             >
                                 Lihat Faktur Lengkap{" "}

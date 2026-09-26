@@ -51,53 +51,53 @@ export default function PaymentBreakdownSection({
             {/* Breakdown Items */}
             <div className="space-y-2.5 text-slate-600">
                 <div className="flex items-center justify-between">
-                    <span>Subtotal • {totalItemsCount} items</span>
+                    <span>Subtotal • {totalItemsCount} produk</span>
                     <span className="font-semibold text-slate-900">{formatRupiah(subtotal)}</span>
                 </div>
 
                 {productDiscount > 0 && (
                     <div className="flex items-center justify-between text-emerald-600">
-                        <span>Product Discount</span>
+                        <span>Diskon Produk</span>
                         <span className="font-semibold">-{formatRupiah(productDiscount)}</span>
                     </div>
                 )}
 
                 {bundleDiscount > 0 && (
                     <div className="flex items-center justify-between text-emerald-600">
-                        <span>Bundle product discount</span>
+                        <span>Diskon Paket Bundle</span>
                         <span className="font-semibold">-{formatRupiah(bundleDiscount)}</span>
                     </div>
                 )}
 
                 {voucherDiscount > 0 && (
                     <div className="flex items-center justify-between text-emerald-600">
-                        <span>Voucher Discount {appliedVoucher ? `(${appliedVoucher.kode})` : ""}</span>
+                        <span>Diskon Voucher {appliedVoucher ? `(${appliedVoucher.kode})` : ""}</span>
                         <span className="font-semibold">-{formatRupiah(voucherDiscount)}</span>
                     </div>
                 )}
 
                 {useLoyaltyPoints && loyaltyDiscount > 0 && (
                     <div className="flex items-center justify-between text-emerald-600">
-                        <span>Loyalty Point Discount</span>
+                        <span>Diskon Poin Loyalitas</span>
                         <span className="font-semibold">-{formatRupiah(loyaltyDiscount)}</span>
                     </div>
                 )}
 
                 <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                        <span>Shipping • {totalWeightKg.toFixed(1)}kg</span>
+                        <span>Ongkos Kirim • {totalWeightKg.toFixed(1)}kg</span>
                         <span className="font-semibold text-slate-900">
                             {shippingCost > 0 ? formatRupiah(shippingCost) : "Rp 0"}
                         </span>
                     </div>
                     <p className="text-[10px] sm:text-[11px] text-slate-400 leading-tight">
-                        Shipping might be charged by volumetric weight, based on parcel size rather than actual weight.
+                        Ongkos kirim dapat disesuaikan dengan berat volumetrik berdasarkan ukuran paket pengiriman.
                     </p>
                 </div>
 
                 {hasInsurance && (
                     <div className="flex items-center justify-between">
-                        <span>Shipment Insurance Fee</span>
+                        <span>Biaya Asuransi Pengiriman</span>
                         <span className="font-semibold text-slate-900">{formatRupiah(insuranceFee)}</span>
                     </div>
                 )}
@@ -106,14 +106,14 @@ export default function PaymentBreakdownSection({
             {/* Separator */}
             <div className="border-t border-slate-100" />
 
-            {/* Total Payment */}
+            {/* Total Pembayaran */}
             <div className="flex items-center justify-between pt-1">
                 <span className="text-sm sm:text-base font-bold text-slate-900">
-                    Total Payment
+                    Total Pembayaran
                 </span>
                 <span
                     ref={totalRef}
-                    className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight inline-block transition-transform"
+                    className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight inline-block transition-transform tabular-nums"
                 >
                     {formatRupiah(totalPayment)}
                 </span>

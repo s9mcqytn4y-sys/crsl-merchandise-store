@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\Inventory\Services;
+namespace App\Domains\Inventori\Services;
 
 use App\Models\ProdukVarian;
 use Exception;
@@ -57,7 +57,7 @@ class InventoriService
     public function kunciDanKurangiStok(array $items): bool
     {
         foreach ($items as $item) {
-            $varianId = $item['varian_id'] ?? $item['produk_varian_id'] ?? null;
+            $varianId = $item['varian_id'] ?? $item['produk_varian_id'] ?? $item['id'] ?? null;
             $jumlah = (int)($item['jumlah'] ?? $item['quantity'] ?? 1);
 
             if (!$varianId) {

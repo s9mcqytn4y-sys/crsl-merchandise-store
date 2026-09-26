@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Domains\Order\Actions;
+namespace App\Domains\Pesanan\Actions;
 
-use App\Domains\Inventory\Services\InventoriService;
-use App\Domains\Payment\Services\MidtransService;
-use App\Domains\Shipping\Services\BiteshipService;
+use App\Domains\Inventori\Services\InventoriService;
+use App\Domains\Pembayaran\Services\MidtransService;
+use App\Domains\Pengiriman\Services\BiteshipService;
 use App\Models\AlamatPengguna;
 use App\Models\ItemPesanan;
 use App\Models\Pesanan;
@@ -25,6 +25,17 @@ class BuatPesananAction
     ) {}
 
     /**
+     * Eksekusi alias konvensi bahasa Indonesia.
+     */
+    public function eksekusi(array $dataInput, array $keranjang = [], ?int $penggunaId = null): Pesanan
+    {
+        if (empty($keranjang) && isset($dataInput['items'])) {
+            $keranjang = $dataInput['items'];
+        }
+        return $this->execute($dataInput, $keranjang, $penggunaId);
+    }
+
+    /**
      * Eksekusi pembuatan pesanan baru dengan transaksi database terproteksi.
      *
      * @param array $dataInput
@@ -33,8 +44,17 @@ class BuatPesananAction
      * @return Pesanan
      * @throws Exception
      */
-    public function execute(array $dataInput, array $keranjang, ?int $penggunaId = null): Pesanan
+    public function execute(array $dataInput, array $keranjang = [], ?int $penggunaId = null): Pesanan
     {
+        // Auto-detect jika urutan parameter tertukar atau items ada di dataInput
+        if (isset($dataInput['items']) && !isset($keranjang['items']) && !isset($keranjang[0])) {
+            $temp = $keranjang;
+            $keranjang = $dataInput['items'];
+            $dataInput = array_merge($temp, $dataInput);
+        } elseif (empty($keranjang) && isset($dataInput['items'])) {
+            $keranjang = $dataInput['items'];
+        }
+
         if (empty($keranjang)) {
             throw new Exception("Keranjang belanja kosong.");
         }
@@ -47,7 +67,12 @@ class BuatPesananAction
             $nomorPesanan = $this->generateNomorPesanan();
 
             // 3. Kalkulasi Subtotal & Ongkir
-            $subtotal = collect($keranjang)->sum(fn ($item) => $item['harga'] * $item['jumlah']);
+            $subtotal = collect($keranjang)->sum(function ($item) {
+                if (!is_array($item)) return 0;
+                $harga = (float)($item['harga'] ?? $item['price'] ?? 0);
+                $jumlah = (int)($item['jumlah'] ?? $item['quantity'] ?? 1);
+                return $harga * $jumlah;
+            });
 
             $biayaOngkir = isset($dataInput['ongkir']) ? (float)$dataInput['ongkir'] : null;
             $layananKurir = $dataInput['layanan_kurir'] ?? null;
@@ -155,15 +180,15 @@ class BuatPesananAction
                 AlamatPengguna::create([
                     'pengguna_id' => $penggunaId,
                     'label' => 'Alamat Pengiriman',
-                    'nama_penerima' => $dataInput['nama_lengkap'],
-                    'telepon' => $dataInput['telepon'],
-                    'email' => $dataInput['email'],
+                    'nama_penerima' => $dataInput['nama_penerima'] ?? $dataInput['nama_lengkap'] ?? 'Pelanggan',
+                    'telepon' => $dataInput['telepon'] ?? '',
+                    'email' => $dataInput['email'] ?? '',
                     'area_id' => $areaId,
                     'provinsi' => $dataInput['provinsi'] ?? 'D.I. Yogyakarta',
-                    'kota' => $dataInput['kota'],
+                    'kota' => $dataInput['kota'] ?? 'Sleman',
                     'kecamatan' => $dataInput['kecamatan'] ?? 'Depok',
-                    'kode_pos' => $dataInput['kode_pos'],
-                    'alamat_lengkap' => $dataInput['alamat_lengkap'],
+                    'kode_pos' => $dataInput['kode_pos'] ?? '55281',
+                    'alamat_lengkap' => $dataInput['alamat_lengkap'] ?? '',
                     'adalah_utama' => !$sudahPunyaUtama,
                 ]);
             }
@@ -176,7 +201,7 @@ class BuatPesananAction
                     $produkId = null;
                 }
 
-                $rawVarianId = $item['varian_id'] ?? null;
+                $rawVarianId = $item['varian_id'] ?? $item['produk_varian_id'] ?? ($item['id'] ?? null);
                 $varianId = (!empty($rawVarianId) && is_numeric($rawVarianId)) ? (int) $rawVarianId : null;
                 if ($varianId && !ProdukVarian::where('id', $varianId)->exists()) {
                     $varianId = null;
@@ -197,10 +222,10 @@ class BuatPesananAction
                     'pesanan_id' => $pesanan->id,
                     'produk_id' => $produkId,
                     'produk_varian_id' => $varianId,
-                    'nama_produk' => $item['nama_produk'] ?? 'Produk CRSL',
+                    'nama_produk' => $item['nama_produk'] ?? $item['name'] ?? 'Produk CRSL',
                     'sku' => $item['sku'] ?? ($produkId ? ('CRSL-' . $produkId) : 'CRSL-ITEM'),
-                    'harga' => $item['harga'] ?? 0,
-                    'jumlah' => $item['jumlah'] ?? 1,
+                    'harga' => (float)($item['harga'] ?? $item['price'] ?? 0),
+                    'jumlah' => (int)($item['jumlah'] ?? $item['quantity'] ?? 1),
                     'ukuran' => $item['ukuran'] ?? null,
                     'warna' => $item['warna'] ?? null,
                     'gambar' => $itemGambar,
@@ -208,16 +233,18 @@ class BuatPesananAction
             }
 
             // 8. Simpan Detail Pesanan Pengiriman
+            $namaPenerima = $dataInput['nama_penerima'] ?? $dataInput['nama_lengkap'] ?? 'Pelanggan';
+
             PesananPengiriman::create([
                 'pesanan_id' => $pesanan->id,
                 'kurir' => strtolower($dataInput['kurir']),
                 'layanan' => $layananKurir ?? 'reg',
                 'tracking_status' => 'allocated',
                 'json_payload' => [
-                    'nama_penerima' => $dataInput['nama_lengkap'],
-                    'telepon' => $dataInput['telepon'],
-                    'email' => $dataInput['email'],
-                    'alamat_lengkap' => $dataInput['alamat_lengkap'],
+                    'nama_penerima' => $namaPenerima,
+                    'telepon' => $dataInput['telepon'] ?? '',
+                    'email' => $dataInput['email'] ?? '',
+                    'alamat_lengkap' => $dataInput['alamat_lengkap'] ?? '',
                     'provinsi' => $dataInput['provinsi'] ?? '',
                     'kota' => $dataInput['kota'] ?? '',
                     'kecamatan' => $dataInput['kecamatan'] ?? '',
@@ -228,9 +255,9 @@ class BuatPesananAction
 
             // 9. Inisialisasi Charge Midtrans Core API (Real Sandbox Execution)
             $pembeli = [
-                'nama' => $dataInput['nama_lengkap'],
-                'email' => $dataInput['email'],
-                'telepon' => $dataInput['telepon'],
+                'nama' => $namaPenerima,
+                'email' => $dataInput['email'] ?? '',
+                'telepon' => $dataInput['telepon'] ?? '',
             ];
 
             $metode = strtolower(str_replace(['va_', 'va-'], '', (string) $dataInput['metode_pembayaran']));
@@ -262,7 +289,7 @@ class BuatPesananAction
                 'kode_biller' => $chargeRes['kode_biller'] ?? null,
                 'qr_string' => $chargeRes['qr_string'] ?? null,
                 'qr_code_url' => $chargeRes['qr_code_url'] ?? null,
-                'waktu_kedaluwarsa' => $chargeRes['waktu_kadaluarsa'] ?? now()->addMinutes(15),
+                'waktu_kedaluwarsa' => $chargeRes['waktu_kadaluarsa'] ?? (str_contains($metode, 'qris') ? now()->addMinutes(15) : now()->addHours(24)),
                 'instruksi_bayar' => $chargeRes['instruksi_bayar'] ?? [],
             ]);
 
@@ -302,6 +329,24 @@ class BuatPesananAction
         }
 
         $paddedCounter = str_pad((string)$nextVal, 4, '0', STR_PAD_LEFT);
-        return "INV/CRSL/{$dateStr}/{$paddedCounter}";
+        $candidate = "INV/CRSL/{$dateStr}/{$paddedCounter}";
+
+        // Double check terhadap kemungkinan nomor sudah pernah ada di tabel pesanan
+        $pattern = "INV/CRSL/{$dateStr}/%";
+        $maxExisting = (int) DB::table('pesanan')
+            ->where('nomor_pesanan', 'like', $pattern)
+            ->selectRaw("MAX(CAST(RIGHT(nomor_pesanan, 4) AS INTEGER)) as max_val")
+            ->value('max_val');
+
+        if ($maxExisting >= $nextVal) {
+            $nextVal = $maxExisting + 1;
+            DB::table('nomor_pesanan_harian')
+                ->where('tanggal', $today)
+                ->update(['urutan' => $nextVal, 'updated_at' => now()]);
+            $paddedCounter = str_pad((string)$nextVal, 4, '0', STR_PAD_LEFT);
+            $candidate = "INV/CRSL/{$dateStr}/{$paddedCounter}";
+        }
+
+        return $candidate;
     }
 }

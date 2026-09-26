@@ -48,27 +48,49 @@ export default function Beranda({
         if (!mainRef.current) return;
 
         const ctx = gsap.context(() => {
-            // Animasi reveal bertahap yang smooth untuk setiap seksi beranda
+            // 1. Animasi reveal bertahap yang smooth untuk setiap seksi beranda
             const revealSections =
                 gsap.utils.toArray<HTMLElement>(".gsap-section-reveal");
 
             revealSections.forEach((sec) => {
                 gsap.fromTo(
                     sec,
-                    { opacity: 0.9, y: 24 },
+                    { opacity: 0.92, y: 20 },
                     {
                         opacity: 1,
                         y: 0,
-                        duration: 0.7,
+                        duration: 0.6,
                         ease: "power2.out",
                         scrollTrigger: {
                             trigger: sec,
-                            start: "top 88%",
+                            start: "top 90%",
                             toggleActions: "play none none reverse",
                         },
                     },
                 );
             });
+
+            // 2. Subtle Micro-Parallax pada Konten Produk (Bukan Section Divider)
+            const cardItems = gsap.utils.toArray<HTMLElement>(".gsap-card-item");
+            if (cardItems.length > 0) {
+                cardItems.forEach((card, index) => {
+                    const offset = (index % 2 === 0 ? 8 : -8);
+                    gsap.fromTo(
+                        card,
+                        { y: offset },
+                        {
+                            y: -offset,
+                            ease: "none",
+                            scrollTrigger: {
+                                trigger: card,
+                                start: "top bottom",
+                                end: "bottom top",
+                                scrub: 0.8,
+                            },
+                        }
+                    );
+                });
+            }
         }, mainRef);
 
         return () => ctx.revert();

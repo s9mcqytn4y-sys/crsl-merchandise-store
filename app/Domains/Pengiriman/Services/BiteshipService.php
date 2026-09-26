@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Domains\Shipping\Services;
+namespace App\Domains\Pengiriman\Services;
 
-use App\Domains\Shipping\DTOs\BiteshipArea;
-use App\Domains\Shipping\DTOs\BiteshipRateOption;
+use App\Domains\Pengiriman\DTOs\BiteshipArea;
+use App\Domains\Pengiriman\DTOs\BiteshipRateOption;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;

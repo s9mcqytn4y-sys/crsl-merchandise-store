@@ -71,15 +71,19 @@ export default function InstruksiVirtualAccount({
     const lowerMetode = (metodeBayar || "").toLowerCase();
     let simUrl = "https://simulator.sandbox.midtrans.com/bca/va/index";
     let bankNamaSingkat = "BCA";
-    if (lowerMetode.includes("bni")) {
+    let displayedMetode = metodeBayar;
+
+    // Deteksi cerdas: jika nomor VA berawalan 41400 (standar prefix Permata Midtrans)
+    if (nomorVa?.startsWith("41400") || lowerMetode.includes("permata")) {
+        simUrl = "https://simulator.sandbox.midtrans.com/permata/va/index";
+        bankNamaSingkat = "Permata";
+        displayedMetode = "Permata Virtual Account";
+    } else if (lowerMetode.includes("bni")) {
         simUrl = "https://simulator.sandbox.midtrans.com/bni/va/index";
         bankNamaSingkat = "BNI";
     } else if (lowerMetode.includes("bri")) {
         simUrl = "https://simulator.sandbox.midtrans.com/bri/va/index";
         bankNamaSingkat = "BRI";
-    } else if (lowerMetode.includes("permata")) {
-        simUrl = "https://simulator.sandbox.midtrans.com/permata/va/index";
-        bankNamaSingkat = "Permata";
     } else if (lowerMetode.includes("cimb")) {
         simUrl = "https://simulator.sandbox.midtrans.com/cimb/va/index";
         bankNamaSingkat = "CIMB Niaga";
@@ -91,7 +95,7 @@ export default function InstruksiVirtualAccount({
                 <div className="flex items-center justify-between text-xs font-bold text-slate-600">
                     <span className="flex items-center gap-1.5">
                         <Building2 className="w-4 h-4 text-primary" />
-                        <span>{metodeBayar}</span>
+                        <span>{displayedMetode}</span>
                     </span>
                     <span className="text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 text-[10px] tracking-wide uppercase font-black">
                         Otomatis Terverifikasi
@@ -128,7 +132,7 @@ export default function InstruksiVirtualAccount({
                         <button
                             type="button"
                             onClick={handleCopy}
-                            className="inline-flex items-center justify-center gap-1.5 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-2xs cursor-pointer shrink-0 min-h-[42px]"
+                            className="inline-flex items-center justify-center gap-1.5 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-2xs cursor-pointer shrink-0 min-h-10.5"
                             aria-label="Salin nomor VA"
                         >
                             {isCopied ? (

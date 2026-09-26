@@ -266,10 +266,33 @@ class MerchandiseSeeder extends Seeder
 
         // 8. Seed Gambar Produk
         $gambarList = [
+            // Produk 1: Cassie Wallet
             ['id' => 1, 'produk_id' => 1, 'url' => '/assets/gambar/cassie-wallet.webp', 'alt_teks' => 'CRSL Cassie Wallet Tampilan Depan', 'urutan' => 1],
             ['id' => 2, 'produk_id' => 1, 'url' => '/assets/gambar/banner-cassie.webp', 'alt_teks' => 'CRSL Cassie Wallet Motif Plaid & Kompartemen', 'urutan' => 2],
             ['id' => 3, 'produk_id' => 1, 'url' => '/assets/gambar/banner-1.webp', 'alt_teks' => 'CRSL Cassie Wallet Model Lifestyle', 'urutan' => 3],
 
+            // Produk 2: Odin Backpack (Haru Backpack)
+            ['id' => 4, 'produk_id' => 2, 'url' => '/assets/gambar/crsl-haru-backpack-main.jpeg', 'alt_teks' => 'CRSL Haru Backpack Tampak Depan', 'urutan' => 1],
+            ['id' => 5, 'produk_id' => 2, 'url' => '/assets/gambar/crsl-haru-backpack-gallery-1.jpeg', 'alt_teks' => 'CRSL Haru Backpack Kompartemen', 'urutan' => 2],
+            ['id' => 6, 'produk_id' => 2, 'url' => '/assets/gambar/crsl-haru-backpack-gallery-2.jpg', 'alt_teks' => 'CRSL Haru Backpack Lifestyle', 'urutan' => 3],
+
+            // Produk 3: Chilo Slingbag (Tata Travel Pouch)
+            ['id' => 7, 'produk_id' => 3, 'url' => '/assets/gambar/crsl-tata-travel-pouch-main.webp', 'alt_teks' => 'CRSL Tata Travel Pouch Tampak Depan', 'urutan' => 1],
+            ['id' => 8, 'produk_id' => 3, 'url' => '/assets/gambar/crsl-tata-travel-pouch-gallery-1.webp', 'alt_teks' => 'CRSL Tata Travel Pouch Detail', 'urutan' => 2],
+
+            // Produk 4: Popo Vacuum Tumbler
+            ['id' => 9, 'produk_id' => 4, 'url' => '/assets/gambar/banner-tumbler.webp', 'alt_teks' => 'CRSL Popo Vacuum Tumbler Tampak Depan', 'urutan' => 1],
+            ['id' => 10, 'produk_id' => 4, 'url' => '/assets/gambar/drinke-tumblr.webp', 'alt_teks' => 'CRSL Popo Vacuum Tumbler Lifestyle', 'urutan' => 2],
+
+            // Produk 5: Choco Oversized Hoodie (Yori Jacket)
+            ['id' => 11, 'produk_id' => 5, 'url' => '/assets/gambar/crsl-yori-jacket-main.jpg', 'alt_teks' => 'CRSL Yori Jacket Tampak Depan', 'urutan' => 1],
+            ['id' => 12, 'produk_id' => 5, 'url' => '/assets/gambar/crsl-yori-jacket-gallery-1.jpg', 'alt_teks' => 'CRSL Yori Jacket Detail Bahan', 'urutan' => 2],
+
+            // Produk 6: Pigko Cheerful Cap (Monie Cap)
+            ['id' => 13, 'produk_id' => 6, 'url' => '/assets/gambar/crsl-monie-cap-main.jpg', 'alt_teks' => 'CRSL Monie Cap Tampak Depan', 'urutan' => 1],
+            ['id' => 14, 'produk_id' => 6, 'url' => '/assets/gambar/crsl-monie-cap-gallery-1.jpg', 'alt_teks' => 'CRSL Monie Cap Tampak Belakang', 'urutan' => 2],
+
+            // Produk 7: Drinke Tumblr Series
             ['id' => 15, 'produk_id' => 7, 'url' => '/assets/gambar/drinke-tumblr.webp', 'alt_teks' => 'CRSL Drinke Tumblr Series 5 Karakter', 'urutan' => 1],
             ['id' => 16, 'produk_id' => 7, 'url' => '/assets/gambar/banner-tumbler.webp', 'alt_teks' => 'CRSL Drinke Tumblr Series Retensi Dingin 12 Jam', 'urutan' => 2],
             ['id' => 17, 'produk_id' => 7, 'url' => '/assets/gambar/banner-bts.webp', 'alt_teks' => 'CRSL Drinke Tumblr Series Detail Silicone Straw', 'urutan' => 3],

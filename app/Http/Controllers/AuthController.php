@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Domains\Auth\Actions\RegistrasiPenggunaAction;
-use App\Domains\Auth\Actions\VerifikasiOtpAction;
-use App\Domains\Auth\Services\AuthService;
+use App\Domains\Autentikasi\Actions\RegistrasiPenggunaAction;
+use App\Domains\Autentikasi\Actions\VerifikasiOtpAction;
+use App\Domains\Autentikasi\Services\AuthService;
 use App\Models\Pesanan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;

@@ -322,7 +322,7 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                 preserveScroll: true,
                 onSuccess: () => {
                     toast.dismiss(toastId);
-                    toast.success(`Metode pembayaran berhasil diubah ke ${metode.name}!`);
+                    toast.success(`Metode pembayaran berhasil diubah ke ${metode.nama}!`);
                 },
                 onError: (err) => {
                     toast.dismiss(toastId);
@@ -440,7 +440,7 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                                 <button
                                     type="button"
                                     onClick={() => window.print()}
-                                    className="inline-flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-2xs cursor-pointer min-h-[38px]"
+                                    className="inline-flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-2xs cursor-pointer min-h-9.5"
                                 >
                                     <Printer className="w-3.5 h-3.5 text-slate-500" />
                                     Cetak Faktur
@@ -649,7 +649,7 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                                     href={`https://wa.me/6281234567890?text=Halo%20CRSL%2C%20saya%20butuh%20bantuan%20terkait%20pesanan%20${encodeURIComponent(activeOrder.nomor_pesanan || "")}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl transition-colors cursor-pointer min-h-[38px]"
+                                    className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl transition-colors cursor-pointer min-h-9.5"
                                 >
                                     <span>Chat CS WhatsApp</span>
                                     <ExternalLink className="w-3 h-3" />
@@ -682,7 +682,6 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                             asuransiPengiriman={activeOrder.asuransi_pengiriman}
                             biayaAsuransi={activeOrder.biaya_asuransi}
                             formatRupiah={formatRupiah}
-                            canEditAddress={isPendingPayment}
                             onOpenEditRecipient={() => setIsEditAddressOpen(true)}
                         />
                     </div>

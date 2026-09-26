@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\Cart\Services;
+namespace App\Domains\Keranjang\Services;
 
 use App\Models\ItemKeranjang;
 use App\Models\Keranjang;

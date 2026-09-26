@@ -32,7 +32,8 @@ php artisan test
 ```
 
 ## Architecture & Code Standards
-- **Standardized Domain Conventions (Bahasa Indonesia)**: All 17 Eloquent models (`Kategori`, `Produk`, `ProdukVarian`, `ProdukSpesifikasi`, `GambarProduk`, `Pesanan`, `ItemPesanan`, `PesananPengiriman`, `PesananPembayaran`, `AlamatPengguna`, `WilayahIndonesia`, `TierLoyalitas`, `PenggunaLoyalitas`, `Voucher`, `VoucherTerpakai`, `Wishlist`, `PesanProduk`), controllers (`BerandaController`, `KatalogController`, `KeranjangController`, `PembayaranController`, `PesananController`, `AkunController`), migration tables, columns, and API contracts use Indonesian domain terms.
+- **Standardized Domain Conventions (Bahasa Indonesia)**: All 19 Eloquent models, controllers (`BerandaController`, `KatalogController`, `KeranjangController`, `PembayaranController`, `PesananController`, `AkunController`), migration tables, and domain layer in `app/Domains/` (`Autentikasi`, `Inventori`, `Keranjang`, `Pembayaran`, `Pengiriman`, `Pesanan`) strictly follow standardized Indonesian terminology.
+- **Session & Cookie Architecture**: PostgreSQL database session driver with 120m lifetime. Unencrypted cookies for client preferences (`crsl_user_preferences`, `crsl_locale`, `crsl_currency`).
 - **State Management**: Client-side state managed via Zustand (`resources/js/Stores/useKeranjangStore.ts`).
-- **Animations**: Page & component micro-animations powered by GSAP 3 (`gsap`).
-- **Styling**: Tailwind CSS v4 (`@tailwindcss/vite`) with mobile-first responsive design.
+- **Animations**: Page & component micro-animations powered by GSAP 3 (`gsap`) with strict context cleanup.
+- **Styling**: Tailwind CSS v4 (`@tailwindcss/vite`) with mobile-first responsive design, semantic design tokens, and anti-slop guidelines (no em dash, no harsh arbitrary corners).

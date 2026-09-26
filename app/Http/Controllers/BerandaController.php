@@ -17,21 +17,24 @@ class BerandaController extends Controller
             ->select(['id', 'nama', 'slug', 'emoji'])
             ->get();
 
+        // Eager relations standar
+        $relations = ['varian', 'gambar', 'kategori'];
+
         // Best seller — produk dengan flag is_best_seller
-        $produkBestSeller = Produk::with('varian')->where('aktif', true)
+        $produkBestSeller = Produk::with($relations)->where('aktif', true)
             ->where('is_best_seller', true)
             ->orderByDesc('terjual')
             ->take(8)
             ->get();
 
         // Produk terbaru (fallback jika best seller kosong)
-        $produkTerbaru = Produk::with('varian')->where('aktif', true)
+        $produkTerbaru = Produk::with($relations)->where('aktif', true)
             ->orderByDesc('created_at')
             ->take(8)
             ->get();
 
         // Produk promo / diskon aktif
-        $produkPromo = Produk::with('varian')->where('aktif', true)
+        $produkPromo = Produk::with($relations)->where('aktif', true)
             ->whereNotNull('harga_diskon')
             ->whereRaw('harga_diskon < harga_dasar')
             ->orderByDesc('terjual')
@@ -39,9 +42,9 @@ class BerandaController extends Controller
             ->get();
 
         // Produk Pre-Order aktual dari database
-        $produkPreOrder = Produk::with(['varian', 'kategori'])->where('aktif', true)
+        $produkPreOrder = Produk::with($relations)->where('aktif', true)
             ->where('tipe_produk', 'pre_order')
-            ->first() ?? Produk::with(['varian', 'kategori'])->find(7);
+            ->first() ?? Produk::with($relations)->find(7);
 
         return Inertia::render('Beranda', [
             'kategori'          => $kategori,

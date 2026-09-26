@@ -309,178 +309,184 @@ export default function PesananTab({
                                 .filter(Boolean)
                                 .join(" / ");
 
-                        return (
-                            <div
-                                key={order.id}
-                                className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-xs hover:border-slate-300 transition-all"
-                            >
-                                {/* Header Kartu Pesanan */}
-                                <div className="px-5 py-3.5 bg-slate-50/70 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
-                                    <div className="flex items-center gap-2.5 flex-wrap">
-                                        <span className="font-mono font-bold text-slate-900 bg-white border border-slate-200/80 px-2.5 py-1 rounded-lg select-all">
-                                            #{orderNumber}
-                                        </span>
-                                        <span className="text-slate-300">
-                                            •
-                                        </span>
-                                        <span className="text-slate-500 font-medium">
-                                            {order.created_at}
-                                        </span>
-                                    </div>
+                                        const fakturSlug = orderNumber.replace(/\//g, "-");
 
-                                    <div className="flex items-center gap-2">
-                                        <OrderStatusBadge
-                                            statusRaw={order.status_raw}
-                                            statusLabel={order.status}
-                                        />
-                                    </div>
-                                </div>
+                                        return (
+                                            <div
+                                                key={order.id}
+                                                className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-xs hover:border-slate-300 transition-all"
+                                            >
+                                                {/* Header Kartu Pesanan */}
+                                                <div className="px-5 py-3.5 bg-slate-50/70 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+                                                    <div className="flex items-center gap-2.5 flex-wrap">
+                                                        <span className="font-mono font-bold text-slate-900 bg-white border border-slate-200/80 px-2.5 py-1 rounded-lg select-all">
+                                                            #{orderNumber}
+                                                        </span>
+                                                        <span className="text-slate-300">
+                                                            •
+                                                        </span>
+                                                        <span className="text-slate-500 font-medium">
+                                                            {order.created_at}
+                                                        </span>
+                                                    </div>
 
-                                {/* Area Konten Produk */}
-                                <div className="p-5 space-y-4">
-                                    {itemUtama ? (
-                                        <div className="flex items-start sm:items-center justify-between gap-4">
-                                            <div className="flex items-center gap-3.5 min-w-0">
-                                                <div className="w-16 h-16 rounded-xl bg-slate-50 border border-slate-200/80 shrink-0 overflow-hidden flex items-center justify-center p-0.5">
-                                                    {itemUtama.gambar ? (
-                                                        <img
-                                                            src={
-                                                                itemUtama.gambar
-                                                            }
-                                                            alt={namaProduk}
-                                                            className="w-full h-full object-cover rounded-lg"
-                                                            onError={(e) => {
-                                                                const target =
-                                                                    e.currentTarget;
-                                                                target.onerror =
-                                                                    null;
-                                                                target.src =
-                                                                    "/assets/gambar/placeholder.webp";
-                                                            }}
+                                                    <div className="flex items-center gap-2">
+                                                        <OrderStatusBadge
+                                                            statusRaw={order.status_raw}
+                                                            statusLabel={order.status}
                                                         />
-                                                    ) : (
-                                                        <Package className="w-6 h-6 text-slate-300" />
-                                                    )}
+                                                    </div>
                                                 </div>
 
-                                                <div className="min-w-0 space-y-0.5">
-                                                    <h5 className="text-xs sm:text-sm font-bold text-slate-900 line-clamp-1">
-                                                        {namaProduk}
-                                                    </h5>
-                                                    {varianProduk && (
-                                                        <p className="text-[11px] text-slate-500">
-                                                            Varian / Ukuran:{" "}
-                                                            <span className="font-semibold text-slate-700">
-                                                                {varianProduk}
+                                                {/* Area Konten Produk */}
+                                                <div className="p-5 space-y-4">
+                                                    {itemUtama ? (
+                                                        <div className="flex items-start sm:items-center justify-between gap-4">
+                                                            <div className="flex items-center gap-3.5 min-w-0">
+                                                                <div className="w-16 h-16 rounded-xl bg-slate-50 border border-slate-200/80 shrink-0 overflow-hidden flex items-center justify-center p-0.5">
+                                                                    {itemUtama.gambar ? (
+                                                                        <img
+                                                                            src={
+                                                                                itemUtama.gambar.startsWith("http") || itemUtama.gambar.startsWith("/")
+                                                                                    ? itemUtama.gambar
+                                                                                    : `/storage/${itemUtama.gambar}`
+                                                                            }
+                                                                            alt={namaProduk}
+                                                                            className="w-full h-full object-cover rounded-lg"
+                                                                            onError={(e) => {
+                                                                                const target =
+                                                                                    e.currentTarget;
+                                                                                target.onerror =
+                                                                                    null;
+                                                                                target.src =
+                                                                                    "/assets/gambar/placeholder.webp";
+                                                                            }}
+                                                                        />
+                                                                    ) : (
+                                                                        <Package className="w-6 h-6 text-slate-300" />
+                                                                    )}
+                                                                </div>
+
+                                                                <div className="min-w-0 space-y-0.5">
+                                                                    <h5 className="text-xs sm:text-sm font-bold text-slate-900 line-clamp-1">
+                                                                        {namaProduk}
+                                                                    </h5>
+                                                                    {varianProduk && (
+                                                                        <p className="text-[11px] text-slate-500">
+                                                                            Varian / Ukuran:{" "}
+                                                                            <span className="font-semibold text-slate-700">
+                                                                                {varianProduk}
+                                                                            </span>
+                                                                        </p>
+                                                                    )}
+                                                                    {sisaVarianItem > 0 && (
+                                                                        <p className="text-[11px] font-semibold text-slate-400 inline-flex items-center gap-1">
+                                                                            +{sisaVarianItem}{" "}
+                                                                            item produk lainnya
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="text-right shrink-0">
+                                                                <p className="text-xs sm:text-sm font-black text-slate-900 tabular-nums">
+                                                                    {formatRupiah(
+                                                                        itemUtama.harga,
+                                                                    )}
+                                                                </p>
+                                                                <p className="text-[11px] text-slate-400 mt-0.5 font-medium">
+                                                                    {itemUtama.jumlah} barang
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-xs">
+                                                            <div className="flex items-center gap-2 text-slate-600">
+                                                                <Package className="w-4 h-4 text-slate-400" />
+                                                                <span>
+                                                                    Rincian pesanan (
+                                                                    {order.item_count || 1}{" "}
+                                                                    produk)
+                                                                </span>
+                                                            </div>
+                                                            <Link
+                                                                href={`/faktur/${fakturSlug}`}
+                                                                className="text-[11px] font-bold text-slate-800 hover:text-primary inline-flex items-center gap-1"
+                                                            >
+                                                                Lihat Faktur{" "}
+                                                                <ArrowUpRight className="w-3.5 h-3.5" />
+                                                            </Link>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Footer Kartu & Tombol Aksi Transaksi */}
+                                                    <div className="pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                        <div className="text-xs text-slate-500">
+                                                            Total Tagihan:{" "}
+                                                            <span className="font-black text-sm sm:text-base text-slate-900 tabular-nums ml-1">
+                                                                {formatRupiah(order.total)}
                                                             </span>
-                                                        </p>
-                                                    )}
-                                                    {sisaVarianItem > 0 && (
-                                                        <p className="text-[11px] font-semibold text-slate-400 inline-flex items-center gap-1">
-                                                            +{sisaVarianItem}{" "}
-                                                            item produk lainnya
-                                                        </p>
-                                                    )}
+                                                        </div>
+
+                                                        <div className="flex flex-wrap items-center gap-2 self-stretch sm:self-auto justify-end">
+                                                            {/* Tombol Sekunder: Lacak Paket (untuk pesanan yang sudah dibayar/sedang diproses/dikirim) */}
+                                                            {["akan_dikirim", "dikirim", "selesai"].includes(order.status_raw || "") && (
+                                                                <Link
+                                                                    href={`/lacak?nomor=${encodeURIComponent(orderNumber)}`}
+                                                                    className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 active:scale-95 text-xs font-bold text-slate-700 transition-all shadow-2xs"
+                                                                >
+                                                                    <Truck className="w-3.5 h-3.5 text-primary" />
+                                                                    <span>Lacak Paket</span>
+                                                                </Link>
+                                                            )}
+
+                                                            {/* Tombol Utama: Lihat Faktur Resmi */}
+                                                            <Link
+                                                                href={`/faktur/${fakturSlug}`}
+                                                                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-bold transition-all shadow-2xs"
+                                                            >
+                                                                <ReceiptText className="w-3.5 h-3.5 text-slate-300" />
+                                                                <span>Lihat Faktur Resmi</span>
+                                                            </Link>
+
+                                                            {/* Opsi Tindakan Belum Bayar */}
+                                                            {order.status_raw === "belum_bayar" && (
+                                                                <Link
+                                                                    href={`/faktur/${fakturSlug}`}
+                                                                    className="flex-1 sm:flex-initial inline-flex items-center justify-center px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                                                                >
+                                                                    Bayar Sekarang
+                                                                </Link>
+                                                            )}
+
+                                                            {order.status_raw === "dikirim" && (
+                                                                <button
+                                                                    type="button"
+                                                                    disabled={
+                                                                        isProcessingConfirm
+                                                                    }
+                                                                    onClick={() =>
+                                                                        handleConfirmOrder(
+                                                                            orderNumber,
+                                                                        )
+                                                                    }
+                                                                    className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+                                                                >
+                                                                    {isProcessingConfirm ? (
+                                                                        <>
+                                                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                                            Memproses...
+                                                                        </>
+                                                                    ) : (
+                                                                        "Konfirmasi Selesai"
+                                                                    )}
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
-
-                                            <div className="text-right shrink-0">
-                                                <p className="text-xs sm:text-sm font-black text-slate-900 tabular-nums">
-                                                    {formatRupiah(
-                                                        itemUtama.harga,
-                                                    )}
-                                                </p>
-                                                <p className="text-[11px] text-slate-400 mt-0.5 font-medium">
-                                                    {itemUtama.jumlah} barang
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-xs">
-                                            <div className="flex items-center gap-2 text-slate-600">
-                                                <Package className="w-4 h-4 text-slate-400" />
-                                                <span>
-                                                    Rincian rincian pesanan (
-                                                    {order.item_count || 1}{" "}
-                                                    produk)
-                                                </span>
-                                            </div>
-                                            <Link
-                                                href={`/faktur/${encodeURIComponent(orderNumber)}`}
-                                                className="text-[11px] font-bold text-slate-800 hover:text-primary inline-flex items-center gap-1"
-                                            >
-                                                Lihat Rincian{" "}
-                                                <ArrowUpRight className="w-3.5 h-3.5" />
-                                            </Link>
-                                        </div>
-                                    )}
-
-                                    {/* Footer Kartu & Tombol Aksi Transaksi */}
-                                    <div className="pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                        <div className="text-xs text-slate-500">
-                                            Total Tagihan:{" "}
-                                            <span className="font-black text-sm sm:text-base text-slate-900 tabular-nums ml-1">
-                                                {formatRupiah(order.total)}
-                                            </span>
-                                        </div>
-
-                                        <div className="flex flex-wrap items-center gap-2 self-stretch sm:self-auto justify-end">
-                                            <Link
-                                                href={`/faktur/${encodeURIComponent(orderNumber)}`}
-                                                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1 px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 active:scale-95 text-xs font-bold text-slate-700 transition-all shadow-2xs"
-                                            >
-                                                Rincian Faktur
-                                                <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                                            </Link>
-
-                                            {/* Opsi Tindakan Belum Bayar (Screenshot #4) */}
-                                            {order.status_raw === "belum_bayar" && (
-                                                <>
-                                                    <Link
-                                                        href={`/faktur/${encodeURIComponent(orderNumber)}`}
-                                                        className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-bold transition-all cursor-pointer"
-                                                    >
-                                                        <CreditCard className="w-3.5 h-3.5 text-slate-500" />
-                                                        <span>Ganti Metode</span>
-                                                    </Link>
-
-                                                    <Link
-                                                        href={`/faktur/${encodeURIComponent(orderNumber)}`}
-                                                        className="flex-1 sm:flex-initial inline-flex items-center justify-center px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
-                                                    >
-                                                        Bayar
-                                                    </Link>
-                                                </>
-                                            )}
-
-                                            {order.status_raw === "dikirim" && (
-                                                <button
-                                                    type="button"
-                                                    disabled={
-                                                        isProcessingConfirm
-                                                    }
-                                                    onClick={() =>
-                                                        handleConfirmOrder(
-                                                            orderNumber,
-                                                        )
-                                                    }
-                                                    className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
-                                                >
-                                                    {isProcessingConfirm ? (
-                                                        <>
-                                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                                            Memproses...
-                                                        </>
-                                                    ) : (
-                                                        "Konfirmasi Selesai"
-                                                    )}
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        );
+                                        );
                     })}
 
                     {/* Pagination Bar (Maks 5 Pesanan per Halaman) */}

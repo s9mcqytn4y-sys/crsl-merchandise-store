@@ -7,12 +7,16 @@ interface ModalBatalPesananProps {
     isOpen: boolean;
     onClose: () => void;
     nomorPesanan: string;
+    total?: number;
+    onSuccess?: () => void;
 }
 
 export default function ModalBatalPesanan({
     isOpen,
     onClose,
     nomorPesanan,
+    total,
+    onSuccess,
 }: ModalBatalPesananProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -29,6 +33,7 @@ export default function ModalBatalPesanan({
                     setIsSubmitting(false);
                     toast.success("Pesanan berhasil dibatalkan.");
                     onClose();
+                    onSuccess?.();
                 },
                 onError: (err) => {
                     setIsSubmitting(false);

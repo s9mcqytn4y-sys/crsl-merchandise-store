@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\Shipping\DTOs;
+namespace App\Domains\Pengiriman\DTOs;
 
 class BiteshipRateOption
 {

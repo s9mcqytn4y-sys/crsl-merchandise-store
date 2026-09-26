@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Domains\Payment\Services\MidtransService;
-use App\Domains\Shipping\Services\BiteshipService;
+use App\Domains\Pembayaran\Services\MidtransService;
+use App\Domains\Pengiriman\Services\BiteshipService;
 use App\Models\Pesanan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -174,13 +174,34 @@ class PesananController extends Controller
 
         if ($nomorPesanan) {
             try {
-                $pesanan = $this->temukanPesanan($nomorPesanan, ['items', 'pembayaran', 'pengiriman']);
-                if ($pesanan && $pesanan->pengiriman && !empty($pesanan->pengiriman->nomor_resi)) {
+                $pesanan = $this->temukanPesanan($nomorPesanan, ['items.produk', 'items.varian', 'pembayaran', 'pengiriman']);
+                if ($pesanan) {
                     $kurir = $pesanan->pengiriman->kurir ?? 'jne';
-                    $tracking = $this->biteshipService->lacakPengiriman(
-                        (string) $pesanan->pengiriman->nomor_resi,
-                        (string) $kurir
-                    );
+                    if (!empty($pesanan->pengiriman?->nomor_resi)) {
+                        $tracking = $this->biteshipService->lacakPengiriman(
+                            (string) $pesanan->pengiriman->nomor_resi,
+                            (string) $kurir
+                        );
+                    } else {
+                        // Smart Fulfillment Timeline saat resi kurir belum terbit
+                        $isPaid = in_array($pesanan->status, ['akan_dikirim', 'dikirim', 'selesai']);
+                        $tracking = [
+                            'sukses' => true,
+                            'status' => $isPaid ? 'allocated' : 'pending_payment',
+                            'kurir' => strtoupper($kurir),
+                            'layanan' => strtoupper($pesanan->pengiriman->layanan ?? 'REG'),
+                            'is_pre_dispatch' => true,
+                            'history' => [
+                                [
+                                    'note' => $isPaid
+                                        ? 'Pesanan terverifikasi lunas. Sedang disiapkan & dikemas di Gudang Sleman, DI Yogyakarta.'
+                                        : 'Pesanan telah berhasil dibuat. Menunggu konfirmasi pembayaran.',
+                                    'updated_at' => $pesanan->created_at->toIso8601String(),
+                                    'status' => $isPaid ? 'allocated' : 'order_placed',
+                                ],
+                            ],
+                        ];
+                    }
                 }
             } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
                 $pesanan = null;

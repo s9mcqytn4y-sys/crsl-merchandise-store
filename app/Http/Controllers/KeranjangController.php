@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Domains\Cart\Services\KeranjangService;
+use App\Domains\Keranjang\Services\KeranjangService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 

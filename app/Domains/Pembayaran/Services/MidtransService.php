@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\Payment\Services;
+namespace App\Domains\Pembayaran\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -69,10 +69,22 @@ class MidtransService
      */
     public function chargeBankTransfer(string $bank, array $pesanan, array $pembeli): array
     {
-        $bank = strtolower(str_replace(['va_', 'va-'], '', trim($bank)));
-        if ($bank === 'mandiri' || $bank === 'echannel') {
+        $normalized = strtolower(trim($bank));
+        if (str_contains($normalized, 'mandiri') || str_contains($normalized, 'echannel')) {
             return $this->chargeMandiriBill($pesanan, $pembeli);
         }
+
+        $targetBank = 'bca';
+        if (str_contains($normalized, 'bni')) {
+            $targetBank = 'bni';
+        } elseif (str_contains($normalized, 'bri')) {
+            $targetBank = 'bri';
+        } elseif (str_contains($normalized, 'permata')) {
+            $targetBank = 'permata';
+        } elseif (str_contains($normalized, 'cimb')) {
+            $targetBank = 'cimb';
+        }
+
         $orderId = str_replace('/', '-', $pesanan['nomor_pesanan']);
         $grossAmount = (int)round($pesanan['total']);
 
@@ -87,13 +99,10 @@ class MidtransService
                 'email' => $pembeli['email'] ?? 'adopter@crsl-store.id',
                 'phone' => $pembeli['telepon'] ?? '08123456789',
             ],
+            'bank_transfer' => [
+                'bank' => $targetBank,
+            ],
         ];
-
-        if ($bank === 'permata') {
-            $payload['bank_transfer'] = ['bank' => 'permata'];
-        } else {
-            $payload['bank_transfer'] = ['bank' => $bank];
-        }
 
         $res = $this->buatDirectCharge($payload);
         if (!$res['sukses']) {
@@ -102,23 +111,38 @@ class MidtransService
 
         $data = $res['data'];
         $vaNumber = '';
+        $actualBank = $targetBank;
+
         if (!empty($data['va_numbers'][0]['va_number'])) {
-            $vaNumber = $data['va_numbers'][0]['va_number'];
+            $vaNumber = (string) $data['va_numbers'][0]['va_number'];
+            if (!empty($data['va_numbers'][0]['bank'])) {
+                $actualBank = strtolower($data['va_numbers'][0]['bank']);
+            }
         } elseif (!empty($data['permata_va_number'])) {
-            $vaNumber = $data['permata_va_number'];
+            $vaNumber = (string) $data['permata_va_number'];
+            $actualBank = 'permata';
+        }
+
+        if (str_starts_with($vaNumber, '41400')) {
+            $actualBank = 'permata';
+        }
+
+        $bankLabel = strtoupper($actualBank);
+        if ($actualBank === 'permata') {
+            $bankLabel = 'Permata';
         }
 
         return [
             'sukses' => true,
-            'metode_bayar' => strtoupper($bank) . ' Virtual Account',
-            'bank' => strtoupper($bank),
+            'metode_bayar' => "{$bankLabel} Virtual Account",
+            'bank' => strtoupper($actualBank),
             'nomor_va' => $vaNumber,
             'transaction_id' => $data['transaction_id'] ?? null,
             'waktu_transaksi' => $data['transaction_time'] ?? date('Y-m-d H:i:s'),
             'waktu_kadaluarsa' => $data['expiry_time'] ?? date('Y-m-d H:i:s', strtotime('+24 hours')),
             'status_transaksi' => $data['transaction_status'] ?? 'pending',
             'instruksi_bayar' => [
-                "Buka aplikasi Mobile Banking " . strtoupper($bank) . " atau kunjungi ATM " . strtoupper($bank),
+                "Buka aplikasi Mobile Banking {$bankLabel} atau kunjungi ATM {$bankLabel}",
                 "Pilih menu Transfer > Virtual Account",
                 "Masukkan Nomor Virtual Account: {$vaNumber}",
                 "Pastikan nominal sesuai tagihan dan simpan bukti transaksi",

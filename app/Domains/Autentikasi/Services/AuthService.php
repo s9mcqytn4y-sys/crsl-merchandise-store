@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\Auth\Services;
+namespace App\Domains\Autentikasi\Services;
 
 use App\Models\PenggunaLoyalitas;
 use App\Models\User;

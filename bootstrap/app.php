@@ -16,6 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/midtrans/webhook',
             'api/webhooks/midtrans',
         ]);
+        $middleware->encryptCookies(except: [
+            'crsl_user_preferences',
+            'crsl_locale',
+            'crsl_currency',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

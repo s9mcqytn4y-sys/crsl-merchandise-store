@@ -9,12 +9,12 @@
 - **Primary Database**: PostgreSQL 16+ (`crsl_store_v2` di `127.0.0.1:5432`) dengan driver `pdo_pgsql`
 - **Cache & Session Engine**: Dedicated SQLite3 database (`database/cache.sqlite`) melalui koneksi `cache_sqlite`
 - **Domain Layer (`app/Domains/`)**:
-  - `Auth`: `AuthService.php`, `OtpService.php`, `RegistrasiPenggunaAction.php`, `VerifikasiOtpAction.php` — Flow verifikasi OTP 6 digit & soft delete `hapusAkun`.
-  - `Order`: `BuatPesananAction.php`, `PesananService.php` — Penomoran `INV/CRSL/YYYYMMDD/XXXX` dengan daily locking counter.
-  - `Inventory`: `InventoriService.php` — Proteksi transaksi `lockForUpdate()` pada stok varian produk.
-  - `Cart`: `KeranjangService.php` — Persistensi keranjang database (`keranjang`, `item_keranjang`) & Zustand.
-  - `Shipping`: `BiteshipService.php` — Area search, rates calculation, order allocation dengan dukungan Dropshipper (`is_dropship`).
-  - `Payment`: `MidtransService.php` — Direct Charge Core API (`/v2/charge`) untuk QRIS & Bank VA.
+  - `Autentikasi`: `AuthService.php`, `OtpService.php`, `RegistrasiPenggunaAction.php`, `VerifikasiOtpAction.php` — Flow verifikasi OTP 6 digit & soft delete `hapusAkun`.
+  - `Pesanan`: `BuatPesananAction.php`, `PesananService.php` — Penomoran `INV/CRSL/YYYYMMDD/XXXX` dengan daily locking counter dan cross-table max-order protection.
+  - `Inventori`: `InventoriService.php` — Proteksi transaksi `lockForUpdate()` pada stok varian produk.
+  - `Keranjang`: `KeranjangService.php` — Persistensi keranjang database (`keranjang`, `item_keranjang`) & Zustand.
+  - `Pengiriman`: `BiteshipService.php` — Area search, rates calculation, order allocation dengan dukungan Dropshipper (`is_dropship`).
+  - `Pembayaran`: `MidtransService.php` — Direct Charge Core API (`/v2/charge`) untuk QRIS & Bank VA.
 - **Webhook Tunnel Command**: `cloudflared tunnel --url http://localhost:8000`
 
 ### Frontend Ecosystem (React 19 + TypeScript 7)

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Domains\Shipping\Services\BiteshipService;
+use App\Domains\Pengiriman\Services\BiteshipService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

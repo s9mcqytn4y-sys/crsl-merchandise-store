@@ -642,7 +642,7 @@ export default function Pembayaran({
     };
 
     return (
-        <div className="min-h-screen bg-[#F8F9FA] text-slate-800 font-sans flex flex-col justify-between">
+        <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex flex-col justify-between">
             <Head title="Checkout Pesanan - CRSL Official Store" />
 
             <Toaster position="top-center" richColors />

@@ -1,16 +1,17 @@
 import React from 'react';
 import { Link } from '@inertiajs/react';
 import { MapPin, MessageCircle, ShieldCheck, CreditCard, ExternalLink } from 'lucide-react';
+import { SITEMAP_CONFIG } from '../Config/sitemapConfig';
 
 export default function Footer() {
     return (
         <footer className="bg-slate-950 text-white pt-12 sm:pt-16 pb-24 border-t border-slate-900" role="contentinfo">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 pb-12 border-b border-slate-850">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 pb-12 border-b border-slate-900">
                     {/* Brand Info */}
                     <div className="space-y-4">
                         <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-[#E52027] text-white flex items-center justify-center font-black text-sm tracking-wider">
+                            <div className="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-black text-sm tracking-wider">
                                 CRSL
                             </div>
                             <span className="text-xl font-black text-white tracking-widest font-heading">
@@ -21,7 +22,7 @@ export default function Footer() {
                             Apparel & accessories brand asal Yogyakarta yang terinspirasi dari karakter 5 hewan sahabat unik. Animals as your bestfriends!
                         </p>
                         <div className="flex items-center gap-2 text-xs text-slate-400">
-                            <MapPin className="w-4 h-4 text-[#E52027] shrink-0" />
+                            <MapPin className="w-4 h-4 text-primary shrink-0" />
                             <span>Sleman, D.I. Yogyakarta, Indonesia</span>
                         </div>
                         <div className="pt-2 flex items-center gap-3">
@@ -29,7 +30,7 @@ export default function Footer() {
                                 href="https://instagram.com/crsl.store"
                                 target="_blank"
                                 rel="noreferrer"
-                                className="w-8 h-8 rounded-full bg-slate-900 hover:bg-[#E52027] text-slate-300 hover:text-white flex items-center justify-center transition-colors"
+                                className="w-8 h-8 rounded-full bg-slate-900 hover:bg-primary text-slate-300 hover:text-white flex items-center justify-center transition-colors"
                                 aria-label="Kunjungi Instagram Resmi CRSL"
                             >
                                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -50,74 +51,48 @@ export default function Footer() {
                         </div>
                     </div>
 
-                    {/* Kategori Populer */}
-                    <div>
-                        <h4 className="font-extrabold text-white mb-4 text-xs sm:text-sm uppercase tracking-wider">
-                            Kategori Populer
-                        </h4>
-                        <ul className="space-y-2.5 text-xs text-slate-400">
-                            <li>
-                                <Link href="/katalog?kategori=backpack-collection" className="hover:text-white transition-colors">
-                                    Backpack Collection
-                                </Link>
-                            </li>
-                            <li>
-                                <Link href="/katalog?kategori=tumbler-collection" className="hover:text-[#E52027] transition-colors">
-                                    Tumbler Series
-                                </Link>
-                            </li>
-                            <li>
-                                <Link href="/katalog?kategori=outerwears-collection" className="hover:text-white transition-colors">
-                                    Outerwears & Hoodie
-                                </Link>
-                            </li>
-                            <li>
-                                <Link href="/katalog?kategori=wallet-accessories" className="hover:text-white transition-colors">
-                                    Wallet & Accessories
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
-
-                    {/* Bantuan & Layanan */}
-                    <div>
-                        <h4 className="font-extrabold text-white mb-4 text-xs sm:text-sm uppercase tracking-wider">
-                            Bantuan & Layanan
-                        </h4>
-                        <ul className="space-y-2.5 text-xs text-slate-400">
-                            <li>
-                                <Link href="/lacak" className="hover:text-white transition-colors">
-                                    Lacak Pesanan
-                                </Link>
-                            </li>
-                            <li>
-                                <a
-                                    href="https://wa.me/6281222222775"
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5"
-                                >
-                                    <span>Chat CS WhatsApp</span>
-                                    <ExternalLink className="w-3 h-3 opacity-70" />
-                                </a>
-                            </li>
-                            <li>
-                                <Link href="/account" className="hover:text-white transition-colors">
-                                    Akun & Wishlist
-                                </Link>
-                            </li>
-                            <li>
-                                <Link href="/katalog" className="hover:text-white transition-colors">
-                                    Semua Produk
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
+                    {/* Sitemap Sections Ter-modularisasi */}
+                    {SITEMAP_CONFIG.map((section) => (
+                        <div key={section.judul}>
+                            <h4 className="font-extrabold text-white mb-4 text-xs sm:text-sm uppercase tracking-wider">
+                                {section.judul}
+                            </h4>
+                            <ul className="space-y-2.5 text-xs text-slate-400">
+                                {section.links.map((link) => (
+                                    <li key={link.label}>
+                                        {link.isExternal ? (
+                                            <a
+                                                href={link.href}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5"
+                                            >
+                                                <span>{link.label}</span>
+                                                <ExternalLink className="w-3 h-3 opacity-70" />
+                                            </a>
+                                        ) : (
+                                            <Link
+                                                href={link.href}
+                                                className="hover:text-white transition-colors inline-flex items-center gap-1.5"
+                                            >
+                                                <span>{link.label}</span>
+                                                {link.badge && (
+                                                    <span className="text-[9px] font-bold bg-primary text-white px-1.5 py-0.5 rounded-full">
+                                                        {link.badge}
+                                                    </span>
+                                                )}
+                                            </Link>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ))}
 
                     {/* Pembayaran & Keaslian */}
                     <div>
                         <h4 className="font-extrabold text-white mb-4 text-xs sm:text-sm uppercase tracking-wider flex items-center gap-2">
-                            <CreditCard className="w-4 h-4 text-[#E52027]" />
+                            <CreditCard className="w-4 h-4 text-primary" />
                             <span>Pembayaran Aman</span>
                         </h4>
                         <p className="text-xs text-slate-400 mb-4 leading-relaxed">

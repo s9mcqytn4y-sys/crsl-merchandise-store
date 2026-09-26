@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Domains\Payment\Services\MidtransService;
-use App\Domains\Shipping\Services\BiteshipService;
+use App\Domains\Pembayaran\Services\MidtransService;
+use App\Domains\Pengiriman\Services\BiteshipService;
 use App\Mail\KonfirmasiPesananMail;
 use App\Models\ItemPesanan;
 use App\Models\PenggunaLoyalitas;
@@ -142,6 +142,9 @@ class MidtransWebhookController extends Controller
                     $loyalitas->poin += $pesanan->poin_didapat;
                     $loyalitas->total_belanja += $pesanan->total;
                     $loyalitas->save();
+
+                    \Illuminate\Support\Facades\Cache::forget("pengguna:akun:{$pesanan->pengguna_id}");
+                    \Illuminate\Support\Facades\Cache::forget("pengguna:profil:{$pesanan->pengguna_id}");
                 }
 
                 // EMAIL NOTIFIKASI PEMBAYARAN BERHASIL
@@ -191,7 +194,24 @@ class MidtransWebhookController extends Controller
                     }
                 }
 
-                Log::info("Pesanan Dibatalkan & Stok Rollback: {$pesanan->nomor_pesanan}");
+                // SKENARIO ROLLBACK: Kembalikan Saldo Poin Loyalitas
+                if ($pesanan->pengguna_id && $pesanan->poin_digunakan > 0) {
+                    $loyalitas = PenggunaLoyalitas::firstOrCreate(
+                        ['pengguna_id' => $pesanan->pengguna_id],
+                        ['poin' => 0, 'total_belanja' => 0]
+                    );
+                    $loyalitas->increment('poin', $pesanan->poin_digunakan);
+                    \Illuminate\Support\Facades\Cache::forget("pengguna:akun:{$pesanan->pengguna_id}");
+                    \Illuminate\Support\Facades\Cache::forget("pengguna:profil:{$pesanan->pengguna_id}");
+                }
+
+                // SKENARIO ROLLBACK: Kembalikan Kuota Voucher
+                if ($pesanan->kode_voucher) {
+                    \App\Models\Voucher::where('kode', $pesanan->kode_voucher)->increment('kuota', 1);
+                    VoucherTerpakai::where('pesanan_id', $pesanan->id)->delete();
+                }
+
+                Log::info("Pesanan Dibatalkan & Stok/Loyalitas/Voucher Rollback: {$pesanan->nomor_pesanan}");
             }
 
             DB::commit();

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Domains\Auth\Actions;
+namespace App\Domains\Autentikasi\Actions;
 
-use App\Domains\Auth\Services\AuthService;
+use App\Domains\Autentikasi\Services\AuthService;
 
 class VerifikasiOtpAction
 {

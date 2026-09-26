@@ -30,7 +30,7 @@ export default function ProductGridSection({
         <section
             aria-labelledby={judul ? id : undefined}
             className={`py-8 sm:py-12 ${
-                dark ? "bg-[#E52027] text-white" : "bg-white text-slate-900"
+                dark ? "bg-primary text-white" : "bg-white text-slate-900"
             }`}
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -41,7 +41,7 @@ export default function ProductGridSection({
                             {labelSubjudul && (
                                 <p
                                     className={`text-[11px] font-black uppercase tracking-[0.25em] mb-1 ${
-                                        dark ? "text-red-100" : "text-[#E52027]"
+                                        dark ? "text-red-100" : "text-primary"
                                     }`}
                                 >
                                     {labelSubjudul}
@@ -62,7 +62,7 @@ export default function ProductGridSection({
                                 className={`hidden sm:inline-flex items-center gap-1.5 text-xs font-bold transition-colors ${
                                     dark
                                         ? "text-white hover:text-red-100"
-                                        : "text-[#E52027] hover:text-[#CC1C22]"
+                                        : "text-primary hover:text-primary-hover"
                                 }`}
                                 aria-label={linkLabel}
                             >
@@ -76,7 +76,9 @@ export default function ProductGridSection({
                 {/* Grid Sesuai Screenshot 1 & 5: 2 Kolom Mobile, 3 Kolom Tablet, 4 Kolom Desktop */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-5">
                     {produk.slice(0, 8).map((p) => (
-                        <ProductCard key={p.id} produk={p} />
+                        <div key={p.id} className="gsap-card-item">
+                            <ProductCard produk={p} />
+                        </div>
                     ))}
                 </div>
 
@@ -88,8 +90,8 @@ export default function ProductGridSection({
                             href={linkHref}
                             className={`inline-flex items-center gap-2 text-xs font-extrabold px-6 py-2.5 rounded-full shadow-xs transition-all ${
                                 dark
-                                    ? "bg-white text-[#E52027] hover:bg-red-50"
-                                    : "bg-[#E52027] text-white hover:bg-[#CC1C22]"
+                                    ? "bg-white text-primary hover:bg-red-50"
+                                    : "bg-primary text-white hover:bg-primary-hover"
                             }`}
                         >
                             <span>{linkLabel || "Lihat Semua"}</span>

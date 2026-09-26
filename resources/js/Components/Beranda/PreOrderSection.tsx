@@ -26,7 +26,7 @@ export default function PreOrderSection({ produk }: PreOrderSectionProps) {
     return (
         <section
             id="pre-order-section"
-            className="py-10 sm:py-14 bg-gradient-to-b from-white via-slate-50 to-white border-y border-slate-100"
+            className="py-10 sm:py-14 bg-linear-to-b from-white via-slate-50 to-white border-y border-slate-100"
             aria-label="Section Pre-Order CRSL"
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -48,19 +48,19 @@ export default function PreOrderSection({ produk }: PreOrderSectionProps) {
 
                         <ul className="flex flex-col gap-2.5 my-1" role="list">
                             <li className="flex items-center gap-3 text-xs sm:text-sm text-slate-700 font-medium">
-                                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-red-50 text-primary flex items-center justify-center font-bold text-xs">
+                                <span className="shrink-0 w-7 h-7 rounded-full bg-red-50 text-primary flex items-center justify-center font-bold text-xs">
                                     ✓
                                 </span>
                                 <span>Estimasi pengiriman 30 hari kerja</span>
                             </li>
                             <li className="flex items-center gap-3 text-xs sm:text-sm text-slate-700 font-medium">
-                                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-red-50 text-primary flex items-center justify-center font-bold text-xs">
+                                <span className="shrink-0 w-7 h-7 rounded-full bg-red-50 text-primary flex items-center justify-center font-bold text-xs">
                                     ✓
                                 </span>
                                 <span>Material food-grade stainless steel 304 (BPA Free)</span>
                             </li>
                             <li className="flex items-center gap-3 text-xs sm:text-sm text-slate-700 font-medium">
-                                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-red-50 text-primary flex items-center justify-center font-bold text-xs">
+                                <span className="shrink-0 w-7 h-7 rounded-full bg-red-50 text-primary flex items-center justify-center font-bold text-xs">
                                     ✓
                                 </span>
                                 <span>Termasuk bonus stiker pack karakter eksklusif</span>

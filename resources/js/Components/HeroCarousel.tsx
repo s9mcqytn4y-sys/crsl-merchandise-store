@@ -207,7 +207,7 @@ export default function HeroCarousel({
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
             onMouseMove={handleMouseMove}
-            className="relative w-full h-[calc(100dvh-5rem)] min-h-[540px] max-h-[960px] overflow-hidden bg-slate-950 select-none focus:outline-hidden"
+            className="relative w-full h-[calc(100dvh-5rem)] min-h-135 max-h-240 overflow-hidden bg-slate-950 select-none focus:outline-hidden"
             aria-label="Carousel Banner Utama CRSL"
         >
             {/* Track Slider Banner */}
