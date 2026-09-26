@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\AlamatPengguna;
 use App\Models\Pesanan;
+use App\Models\TierLoyalitas;
+use App\Models\Voucher;
 use App\Models\Wishlist;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,7 +29,7 @@ class AkunController extends Controller
                 'wishlists'       => [],
                 'loyalty'         => [
                     'tier'          => 'Non-Member',
-                    'progress_text' => 'Spend Rp 200,000 more to reach New Freen',
+                    'progress_text' => 'Spend Rp 200.000 more to reach New Freen',
                 ],
                 'vouchers'        => [],
                 'reseller_status' => null,
@@ -36,56 +38,133 @@ class AkunController extends Controller
             ]);
         }
 
-        // Ambil riwayat pesanan pengguna
-        $rawPesanan = Pesanan::with('item')
-            ->where('pengguna_id', $pengguna->id)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // Cache profil akun & relasi selama 10 menit dengan auto-invalidation
+        $cacheKey = "pengguna:akun:{$pengguna->id}";
+        $akunData = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(10), function () use ($pengguna) {
+            // Ambil riwayat pesanan pengguna
+            $rawPesanan = Pesanan::with('item')
+                ->where('pengguna_id', $pengguna->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
 
-        $statusMapping = [
-            'belum_bayar'   => 'Belum Bayar',
-            'akan_dikirim'  => 'Perlu Dikirim',
-            'dikirim'       => 'Dikirim',
-            'selesai'       => 'Selesai',
-            'dibatalkan'    => 'Cancelled',
-            'dikembalikan'  => 'Dikembalikan',
-        ];
-
-        $orders = $rawPesanan->map(function ($p) use ($statusMapping) {
-            return [
-                'id'           => $p->id,
-                'order_number' => $p->nomor_pesanan,
-                'created_at'   => $p->created_at->format('M d, Y'),
-                'status'       => $statusMapping[$p->status] ?? ucfirst($p->status),
-                'status_raw'   => $p->status,
-                'total'        => (float) $p->total,
-                'item_count'   => $p->item->sum('jumlah'),
-                'items'        => $p->item->map(function ($it) {
-                    return [
-                        'id'     => $it->id,
-                        'nama'   => $it->nama_produk,
-                        'varian' => trim(($it->warna ?? '') . ' ' . ($it->ukuran ?? '')),
-                        'gambar' => $it->gambar,
-                        'harga'  => (float) $it->harga,
-                        'jumlah' => (int) $it->jumlah,
-                    ];
-                }),
+            $statusMapping = [
+                'belum_bayar'   => 'Belum Bayar',
+                'akan_dikirim'  => 'Perlu Dikirim',
+                'dikirim'       => 'Dikirim',
+                'selesai'       => 'Selesai',
+                'dibatalkan'    => 'Cancelled',
+                'dikembalikan'  => 'Dikembalikan',
             ];
-        });
 
-        // Ambil wishlist pengguna
-        $rawWishlist = Wishlist::with('produk')
-            ->where('pengguna_id', $pengguna->id)
-            ->get();
+            $orders = $rawPesanan->map(function ($p) use ($statusMapping) {
+                return [
+                    'id'           => $p->id,
+                    'order_number' => $p->nomor_pesanan,
+                    'created_at'   => $p->created_at->format('M d, Y'),
+                    'status'       => $statusMapping[$p->status] ?? ucfirst($p->status),
+                    'status_raw'   => $p->status,
+                    'total'        => (float) $p->total,
+                    'item_count'   => $p->item->sum('jumlah'),
+                    'items'        => $p->item->map(function ($it) {
+                        return [
+                            'id'     => $it->id,
+                            'nama'   => $it->nama_produk,
+                            'varian' => trim(($it->warna ?? '') . ' ' . ($it->ukuran ?? '')),
+                            'gambar' => $it->gambar,
+                            'harga'  => (float) $it->harga,
+                            'jumlah' => (int) $it->jumlah,
+                        ];
+                    }),
+                ];
+            })->all();
 
-        $wishlists = $rawWishlist->map(function ($w) {
-            $prod = $w->produk;
+            // Ambil wishlist pengguna
+            $rawWishlist = Wishlist::with('produk')
+                ->where('pengguna_id', $pengguna->id)
+                ->get();
+
+            $wishlists = $rawWishlist->map(function ($w) {
+                $prod = $w->produk;
+                return [
+                    'id'     => $w->id,
+                    'nama'   => $prod ? $prod->nama : 'Produk',
+                    'gambar' => $prod ? $prod->gambar_utama : null,
+                    'harga'  => $prod ? (float) ($prod->harga_diskon ?? $prod->harga_dasar) : 0,
+                    'slug'   => $prod ? $prod->slug : '',
+                ];
+            })->all();
+
+            // Hitung Loyalitas Dinamis dari Database
+            $allTiers = TierLoyalitas::orderBy('syarat_belanja', 'asc')->get();
+            $loyalitas = $pengguna->loyalitas;
+            $totalBelanja = (float) ($loyalitas ? $loyalitas->total_belanja : 0);
+
+            $currentTier = $allTiers->first();
+            $nextTier = null;
+
+            foreach ($allTiers as $t) {
+                if ($totalBelanja >= $t->syarat_belanja) {
+                    $currentTier = $t;
+                } else {
+                    $nextTier = $t;
+                    break;
+                }
+            }
+
+            $tierName = $currentTier ? $currentTier->nama : 'New Freen';
+            if ($nextTier) {
+                $selisih = $nextTier->syarat_belanja - $totalBelanja;
+                $progressText = 'Spend Rp ' . number_format($selisih, 0, ',', '.') . ' more to reach ' . $nextTier->nama;
+            } else {
+                $progressText = 'You have reached the highest tier!';
+            }
+
+            // Ambil Voucher Aktif Dinamis dari Database
+            $rawVouchers = Voucher::where('aktif', true)
+                ->where(function ($q) {
+                    $q->whereNull('berlaku_sampai')
+                      ->orWhere('berlaku_sampai', '>=', now());
+                })
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            $vouchers = $rawVouchers->map(function ($v) {
+                $sisaWaktu = 'Berlaku';
+                if ($v->berlaku_sampai) {
+                    $diff = now()->diff($v->berlaku_sampai);
+                    if ($diff->days > 0) {
+                        $sisaWaktu = "{$diff->days}d left";
+                    } else {
+                        $sisaWaktu = sprintf("%02d:%02d:%02d left", $diff->h, $diff->i, $diff->s);
+                    }
+                }
+
+                return [
+                    'id'       => $v->id,
+                    'title'    => $v->judul,
+                    'code'     => $v->kode,
+                    'discount' => $v->tipe === 'persen' ? "{$v->nilai}%" : 'Rp ' . number_format($v->nilai, 0, ',', '.'),
+                    'timeLeft' => $sisaWaktu,
+                ];
+            })->all();
+
             return [
-                'id'     => $w->id,
-                'nama'   => $prod ? $prod->nama : 'Produk',
-                'gambar' => $prod ? $prod->gambar_utama : null,
-                'harga'  => $prod ? (float) ($prod->harga_diskon ?? $prod->harga_dasar) : 0,
-                'slug'   => $prod ? $prod->slug : '',
+                'orders'    => $orders,
+                'wishlists' => $wishlists,
+                'loyalty'   => [
+                    'tier'          => $tierName,
+                    'progress_text' => $progressText,
+                    'points'        => $loyalitas ? (int) $loyalitas->poin : 0,
+                    'total_spend'   => $totalBelanja,
+                    'tiers'         => $allTiers->map(fn ($t) => [
+                        'id'             => $t->id,
+                        'nama'           => $t->nama,
+                        'syarat_belanja' => (float) $t->syarat_belanja,
+                        'multiplier'     => (float) ($t->multiplier_poin ?? 1.0),
+                        'deskripsi'      => $t->deskripsi,
+                    ])->all(),
+                ],
+                'vouchers'  => $vouchers,
             ];
         });
 
@@ -98,21 +177,10 @@ class AkunController extends Controller
                 'birth_month' => $pengguna->birth_month ?? '09',
                 'birth_year'  => $pengguna->birth_year ?? '2003',
             ],
-            'orders'          => $orders,
-            'wishlists'       => $wishlists,
-            'loyalty'         => [
-                'tier'          => 'Non-Member',
-                'progress_text' => 'Spend Rp 200,000 more to reach New Freen',
-            ],
-            'vouchers'        => [
-                [
-                    'id'         => 1,
-                    'title'      => 'PAYDAY MEMBERSHIP',
-                    'code'       => 'CRSLYAY25',
-                    'discount'   => '25%',
-                    'timeLeft'   => '03:12:04 left',
-                ]
-            ],
+            'orders'          => $akunData['orders'],
+            'wishlists'       => $akunData['wishlists'],
+            'loyalty'         => $akunData['loyalty'],
+            'vouchers'        => $akunData['vouchers'],
             'reseller_status' => 'Settings Requested',
             'flash_message'   => session('login_success') ? 'Login Success' : null,
         ]);
@@ -161,9 +229,11 @@ class AkunController extends Controller
                     'nama_penerima'  => $a->nama_penerima,
                     'telepon'        => $a->telepon,
                     'email'          => $a->email ?? '',
+                    'area_id'        => $a->area_id ?? '',
                     'provinsi'       => $a->provinsi ?? '',
                     'kota'           => $a->kota ?? '',
                     'kecamatan'      => $a->kecamatan ?? '',
+                    'kelurahan'      => $a->kelurahan ?? '',
                     'kode_pos'       => $a->kode_pos ?? '',
                     'alamat_lengkap' => $a->alamat_lengkap,
                     'format_lengkap' => $a->alamat_lengkap . ', ' . $a->kota . ', ' . $a->kecamatan . ', ' . ($a->provinsi ?? 'Indonesia'),
@@ -226,8 +296,18 @@ class AkunController extends Controller
             $pengguna->birth_year = $validated['birth_year'];
         }
         $pengguna->save();
+        $this->flushUserCache($pengguna->id);
 
         return redirect()->back()->with('sukses', 'Profil berhasil diperbarui!');
+    }
+
+    /**
+     * Helper invalidasi cache data pengguna.
+     */
+    private function flushUserCache(int $userId): void
+    {
+        \Illuminate\Support\Facades\Cache::forget("pengguna:akun:{$userId}");
+        \Illuminate\Support\Facades\Cache::forget("pengguna:profil:{$userId}");
     }
 
     /**
@@ -245,9 +325,11 @@ class AkunController extends Controller
             'nama_penerima'  => 'required|string|max:100',
             'telepon'        => 'required|string|max:25',
             'email'          => 'nullable|email|max:100',
+            'area_id'        => 'nullable|string|max:64',
             'provinsi'       => 'nullable|string|max:100',
             'kota'           => 'nullable|string|max:100',
             'kecamatan'      => 'nullable|string|max:100',
+            'kelurahan'      => 'nullable|string|max:100',
             'kode_pos'       => 'nullable|string|max:10',
             'alamat_lengkap' => 'required|string|max:500',
             'adalah_utama'   => 'boolean',
@@ -269,13 +351,16 @@ class AkunController extends Controller
             'telepon'        => $validated['telepon'],
             'email'          => $validated['email'] ?? $pengguna->email,
             'negara'         => 'Indonesia',
+            'area_id'        => $validated['area_id'] ?? null,
             'provinsi'       => $validated['provinsi'] ?? 'DKI Jakarta',
             'kota'           => $validated['kota'] ?? 'Jakarta Pusat',
             'kecamatan'      => $validated['kecamatan'] ?? 'Johar Baru',
+            'kelurahan'      => $validated['kelurahan'] ?? null,
             'kode_pos'       => $validated['kode_pos'] ?? '10560',
             'alamat_lengkap' => $validated['alamat_lengkap'],
             'adalah_utama'   => $isUtama,
         ]);
+        $this->flushUserCache($pengguna->id);
 
         return redirect()->back()->with('sukses', 'Alamat pengiriman berhasil ditambahkan!');
     }
@@ -297,9 +382,11 @@ class AkunController extends Controller
             'nama_penerima'  => 'required|string|max:100',
             'telepon'        => 'required|string|max:25',
             'email'          => 'nullable|email|max:100',
+            'area_id'        => 'nullable|string|max:64',
             'provinsi'       => 'nullable|string|max:100',
             'kota'           => 'nullable|string|max:100',
             'kecamatan'      => 'nullable|string|max:100',
+            'kelurahan'      => 'nullable|string|max:100',
             'kode_pos'       => 'nullable|string|max:10',
             'alamat_lengkap' => 'required|string|max:500',
             'adalah_utama'   => 'boolean',
@@ -315,13 +402,16 @@ class AkunController extends Controller
             'nama_penerima'  => $validated['nama_penerima'],
             'telepon'        => $validated['telepon'],
             'email'          => $validated['email'] ?? $alamat->email,
+            'area_id'        => $validated['area_id'] ?? $alamat->area_id,
             'provinsi'       => $validated['provinsi'] ?? $alamat->provinsi,
             'kota'           => $validated['kota'] ?? $alamat->kota,
             'kecamatan'      => $validated['kecamatan'] ?? $alamat->kecamatan,
+            'kelurahan'      => $validated['kelurahan'] ?? $alamat->kelurahan,
             'kode_pos'       => $validated['kode_pos'] ?? $alamat->kode_pos,
             'alamat_lengkap' => $validated['alamat_lengkap'],
             'adalah_utama'   => $isUtama,
         ]);
+        $this->flushUserCache($pengguna->id);
 
         return redirect()->back()->with('sukses', 'Alamat pengiriman berhasil diperbarui!');
     }
@@ -347,6 +437,7 @@ class AkunController extends Controller
                 $nextAlamat->update(['adalah_utama' => true]);
             }
         }
+        $this->flushUserCache($pengguna->id);
 
         return redirect()->back()->with('sukses', 'Alamat berhasil dihapus!');
     }
@@ -363,6 +454,7 @@ class AkunController extends Controller
 
         AlamatPengguna::where('pengguna_id', $pengguna->id)->update(['adalah_utama' => false]);
         AlamatPengguna::where('pengguna_id', $pengguna->id)->where('id', $id)->update(['adalah_utama' => true]);
+        $this->flushUserCache($pengguna->id);
 
         return redirect()->back()->with('sukses', 'Alamat utama berhasil diperbarui!');
     }
@@ -395,7 +487,68 @@ class AkunController extends Controller
             ]);
             $msg = 'Produk disimpan ke wishlist!';
         }
+        $this->flushUserCache($penggunaId);
 
         return redirect()->back()->with('sukses', $msg);
+    }
+
+    /**
+     * Tautkan pesanan tamu (guest checkout) ke akun pengguna aktif.
+     */
+    public function klaimPesananTamu(Request $request): RedirectResponse
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return redirect()->route('account')->with('error', 'Silakan login terlebih dahulu untuk menautkan pesanan.');
+        }
+
+        $validated = $request->validate([
+            'nomor_pesanan' => 'nullable|string|max:100',
+            'email'         => 'nullable|email|max:255',
+            'telepon'       => 'nullable|string|max:50',
+        ]);
+
+        $nomorInput = trim($validated['nomor_pesanan'] ?? '');
+        $emailInput = trim($validated['email'] ?? $user->email);
+        $teleponInput = trim($validated['telepon'] ?? ($user->telepon ?? ''));
+
+        if (empty($nomorInput) && empty($emailInput) && empty($teleponInput)) {
+            return redirect()->back()->with('error', 'Mohon masukkan nomor pesanan, email, atau nomor telepon.');
+        }
+
+        $query = Pesanan::with('pengiriman')->whereNull('pengguna_id');
+
+        if (!empty($nomorInput)) {
+            $query->where(function ($q) use ($nomorInput) {
+                $q->where('nomor_pesanan', $nomorInput)
+                  ->orWhere('nomor_pesanan', str_replace('-', '/', $nomorInput));
+            });
+        } else {
+            $query->where(function ($q) use ($emailInput, $teleponInput) {
+                if (!empty($emailInput)) {
+                    $q->whereRaw("json_payload->>'email' ILIKE ?", ['%' . $emailInput . '%']);
+                }
+                if (!empty($teleponInput)) {
+                    $q->orWhereRaw("json_payload->>'telepon' ILIKE ?", ['%' . $teleponInput . '%']);
+                }
+            });
+        }
+
+        $orders = $query->get();
+
+        if ($orders->isEmpty()) {
+            return redirect()->back()->with('error', 'Tidak ditemukan pesanan tamu yang cocok untuk ditautkan.');
+        }
+
+        $claimedCount = 0;
+        foreach ($orders as $order) {
+            $order->pengguna_id = $user->id;
+            $order->save();
+            $claimedCount++;
+        }
+
+        $this->flushUserCache($user->id);
+
+        return redirect()->back()->with('sukses', "Berhasil menautkan {$claimedCount} pesanan ke akun Anda!");
     }
 }

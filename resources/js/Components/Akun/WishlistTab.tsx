@@ -1,12 +1,13 @@
-import React from 'react';
-import { Link, router } from '@inertiajs/react';
+import React, { useEffect } from 'react';
+import { Link, usePage } from '@inertiajs/react';
 import { Heart, Trash2, ArrowRight } from 'lucide-react';
 import { formatRupiah } from '../../Utils/formatters';
+import { useWishlistStore, WishlistProduct } from '../../Stores/useWishlistStore';
 
 export interface WishlistItem {
     id: number | string;
     nama: string;
-    gambar?: string;
+    gambar?: string | null;
     harga: number;
     slug?: string;
 }
@@ -16,13 +17,37 @@ interface WishlistTabProps {
 }
 
 export default function WishlistTab({ wishlists = [] }: WishlistTabProps) {
+    const page = usePage();
+    const isLoggedIn = Boolean((page.props as any)?.auth?.user || (page.props as any)?.user);
+
+    const storeItems = useWishlistStore((state) => state.items);
+    const hapusWishlist = useWishlistStore((state) => state.hapusWishlist);
+    const setInitialItems = useWishlistStore((state) => state.setInitialItems);
+
+    // Sinkronisasi data awal dari server saat user login
+    useEffect(() => {
+        if (isLoggedIn && wishlists && wishlists.length > 0) {
+            const formatted: WishlistProduct[] = wishlists.map((w) => ({
+                id: Number(w.id),
+                nama: w.nama,
+                slug: w.slug || '',
+                harga: w.harga,
+                gambar: w.gambar || null,
+            }));
+            setInitialItems(formatted);
+        }
+    }, [isLoggedIn, wishlists, setInitialItems]);
+
+    // Data tampilan: gunakan storeItems jika ada, atau fallback ke wishlists prop
+    const displayItems: WishlistItem[] = storeItems.length > 0
+        ? storeItems
+        : wishlists;
+
     const handleHapus = (produkId: number | string) => {
-        router.post('/wishlist/toggle', { produk_id: produkId }, {
-            preserveScroll: true,
-        });
+        hapusWishlist(Number(produkId), isLoggedIn);
     };
 
-    if (wishlists.length === 0) {
+    if (displayItems.length === 0) {
         return (
             <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-12 text-center space-y-3">
                 <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center mx-auto">
@@ -32,7 +57,7 @@ export default function WishlistTab({ wishlists = [] }: WishlistTabProps) {
                     Wishlist Masih Kosong
                 </h3>
                 <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    Simpan produk impianmu dengan menekan ikon hati pada katalog produk.
+                    Simpan produk impianmu dengan menekan ikon hati pada kartu produk di beranda atau katalog.
                 </p>
                 <Link
                     href="/katalog"
@@ -49,12 +74,12 @@ export default function WishlistTab({ wishlists = [] }: WishlistTabProps) {
             <h2 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
                 Wishlist Saya
                 <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                    {wishlists.length}
+                    {displayItems.length}
                 </span>
             </h2>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                {wishlists.map((item) => (
+                {displayItems.map((item) => (
                     <div
                         key={item.id}
                         className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md transition-all overflow-hidden flex flex-col justify-between"
@@ -66,14 +91,17 @@ export default function WishlistTab({ wishlists = [] }: WishlistTabProps) {
                                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                                 loading="lazy"
                                 onError={(e) => {
-                                    (e.target as HTMLImageElement).src = '/assets/gambar/cassie-wallet.webp';
+                                    const target = e.currentTarget as HTMLImageElement;
+                                    target.onerror = null;
+                                    target.src = '/assets/gambar/cassie-wallet.webp';
                                 }}
                             />
                             <button
                                 type="button"
                                 onClick={() => handleHapus(item.id)}
-                                className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-colors shadow-2xs"
+                                className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
                                 title="Hapus dari Wishlist"
+                                aria-label={`Hapus ${item.nama} dari wishlist`}
                             >
                                 <Trash2 className="w-4 h-4" />
                             </button>
@@ -90,7 +118,7 @@ export default function WishlistTab({ wishlists = [] }: WishlistTabProps) {
                             </div>
 
                             <Link
-                                href={item.slug ? `/produk/${item.slug}` : '/katalog'}
+                                href={item.slug ? `/produk/${encodeURIComponent(item.slug)}` : '/katalog'}
                                 className="w-full inline-flex items-center justify-center gap-1.5 bg-slate-900 hover:bg-[#E52027] text-white text-[11px] font-bold py-2 rounded-xl transition-colors mt-2"
                             >
                                 <span>Lihat Produk</span>

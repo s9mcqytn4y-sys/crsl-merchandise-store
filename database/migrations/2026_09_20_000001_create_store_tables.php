@@ -132,7 +132,7 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->foreignId('voucher_id')->constrained('voucher')->cascadeOnDelete();
             $table->foreignId('pengguna_id')->constrained('users')->cascadeOnDelete();
-            $table->unsignedBigInteger('pesanan_id')->nullable();
+            $table->uuid('pesanan_id')->nullable();
             $table->timestampTz('dipakai_pada')->useCurrent();
             $table->timestamps();
 
@@ -247,8 +247,8 @@ return new class extends Migration
             $table->string('sku', 80)->nullable();
             $table->decimal('harga', 12, 2);
             $table->integer('jumlah')->default(1);
-            $table->string('ukuran', 50)->nullable();
-            $table->string('warna', 50)->nullable();
+            $table->text('ukuran')->nullable();
+            $table->text('warna')->nullable();
             $table->string('gambar', 500)->nullable();
             $table->timestamps();
         });

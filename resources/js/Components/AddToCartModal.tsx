@@ -61,7 +61,6 @@ export default function AddToCartModal() {
 
         toast.success(`${product.nama} ditambahkan ke keranjang!`);
         closeCartModal();
-        bukaKeranjang();
     };
 
     return (
@@ -175,7 +174,7 @@ export default function AddToCartModal() {
                             className="w-9 h-8 flex items-center justify-center text-slate-400 hover:text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 cursor-pointer font-bold text-base transition-colors"
                             aria-label="Kurangi jumlah"
                         >
-                            —
+                            -
                         </button>
                         <span className="w-12 text-center text-xs font-semibold text-slate-800 select-none">
                             {jumlah}

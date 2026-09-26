@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Head, router } from "@inertiajs/react";
 import ProfileLayout from "../Layouts/ProfileLayout";
-import { toast } from "sonner";
+import { toastNotifikasi } from "../Utils/toastNotifikasi";
 
 interface UserProfile {
     name?: string;
@@ -18,48 +18,49 @@ interface ProfileMyInfoProps {
 
 export default function ProfileMyInfo({ user }: ProfileMyInfoProps) {
     const [nama, setNama] = useState(user?.name || "");
-    const [birthDay, setBirthDay] = useState(user?.birth_day || "14");
-    const [birthMonth, setBirthMonth] = useState(user?.birth_month || "09");
-    const [birthYear, setBirthYear] = useState(user?.birth_year || "2003");
+    const birthDay = user?.birth_day || "14";
+    const birthMonth = user?.birth_month || "09";
+    const birthYear = user?.birth_year || "2003";
     const [sedangMenyimpan, setSedangMenyimpan] = useState(false);
+    const [namaError, setNamaError] = useState("");
 
-    const hariOptions = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, "0"));
-    const bulanOptions = [
-        { val: "01", label: "01 - Januari" },
-        { val: "02", label: "02 - Februari" },
-        { val: "03", label: "03 - Maret" },
-        { val: "04", label: "04 - April" },
-        { val: "05", label: "05 - Mei" },
-        { val: "06", label: "06 - Juni" },
-        { val: "07", label: "07 - Juli" },
-        { val: "08", label: "08 - Agustus" },
-        { val: "09", label: "09 - September" },
-        { val: "10", label: "10 - Oktober" },
-        { val: "11", label: "11 - November" },
-        { val: "12", label: "12 - Desember" },
-    ];
-    const currentYear = new Date().getFullYear();
-    const tahunOptions = Array.from({ length: 90 }, (_, i) => String(currentYear - i));
+    const bulanMap: Record<string, string> = {
+        "01": "Januari",
+        "02": "Februari",
+        "03": "Maret",
+        "04": "April",
+        "05": "Mei",
+        "06": "Juni",
+        "07": "Juli",
+        "08": "Agustus",
+        "09": "September",
+        "10": "Oktober",
+        "11": "November",
+        "12": "Desember",
+    };
 
     const handleSimpanProfil = (e: React.FormEvent) => {
         e.preventDefault();
+        if (!nama.trim()) {
+            setNamaError("Name cannot be empty");
+            return;
+        }
+
         setSedangMenyimpan(true);
+        setNamaError("");
 
         router.post(
             "/profile/myinfo",
             {
-                name: nama,
-                birth_day: birthDay,
-                birth_month: birthMonth,
-                birth_year: birthYear,
+                name: nama.trim(),
             },
             {
                 onSuccess: () => {
-                    toast.success("Profil berhasil diperbarui!");
+                    toastNotifikasi.sukses("Profil berhasil diperbarui!");
                     setSedangMenyimpan(false);
                 },
                 onError: () => {
-                    toast.error("Gagal menyimpan profil. Silakan periksa formulir.");
+                    toastNotifikasi.error("Gagal menyimpan profil. Silakan periksa kembali.");
                     setSedangMenyimpan(false);
                 },
                 onFinish: () => setSedangMenyimpan(false),
@@ -77,11 +78,11 @@ export default function ProfileMyInfo({ user }: ProfileMyInfoProps) {
                 </h1>
 
                 <form onSubmit={handleSimpanProfil} className="space-y-6 max-w-xl">
-                    {/* Name Field */}
-                    <div className="space-y-2">
+                    {/* Name Field (Hanya field ini yang dapat diedit) */}
+                    <div className="space-y-1.5">
                         <label
                             htmlFor="input-name"
-                            className="block text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                            className="block text-xs font-semibold text-slate-700 uppercase tracking-wider"
                         >
                             Name
                         </label>
@@ -89,96 +90,107 @@ export default function ProfileMyInfo({ user }: ProfileMyInfoProps) {
                             id="input-name"
                             type="text"
                             value={nama}
-                            onChange={(e) => setNama(e.target.value)}
+                            onChange={(e) => {
+                                setNama(e.target.value);
+                                if (namaError) setNamaError("");
+                            }}
                             required
-                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                            className={`w-full px-4 py-3 bg-white border rounded-xl text-sm text-slate-800 transition-all ${
+                                namaError
+                                    ? "border-red-400 ring-1 ring-red-200"
+                                    : "border-slate-200/90 focus:border-slate-400 focus:ring-1 focus:ring-slate-300"
+                            }`}
                             placeholder="Your full name"
                         />
+                        {namaError && (
+                            <p className="text-[11px] font-medium text-red-500 pl-1">
+                                {namaError}
+                            </p>
+                        )}
                     </div>
 
-                    {/* Email Field (Disabled) */}
-                    <div className="space-y-2">
-                        <label
-                            htmlFor="input-email"
-                            className="block text-xs font-semibold text-slate-400 uppercase tracking-wider"
-                        >
-                            Email
-                        </label>
+                    {/* Email Field (Read-only + Mute) */}
+                    <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                            <label
+                                htmlFor="input-email"
+                                className="block text-xs font-semibold text-slate-400 uppercase tracking-wider"
+                            >
+                                Email
+                            </label>
+                            <span className="text-[11px] text-slate-400 italic font-normal">
+                                Read-only
+                            </span>
+                        </div>
                         <input
                             id="input-email"
                             type="email"
                             value={user?.email || ""}
                             readOnly
                             disabled
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm text-slate-500 cursor-not-allowed select-none"
+                            tabIndex={-1}
+                            className="w-full px-4 py-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-400 cursor-not-allowed select-none opacity-80"
                         />
                     </div>
 
-                    {/* My Birthday Field (3 dropdowns) */}
-                    <div className="space-y-2">
-                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                            My Birthday
-                        </label>
+                    {/* My Birthday Field (Read-only + Mute) */}
+                    <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                My Birthday
+                            </label>
+                            <span className="text-[11px] text-slate-400 italic font-normal">
+                                Read-only
+                            </span>
+                        </div>
                         <div className="grid grid-cols-3 gap-3">
                             {/* Day */}
                             <div className="space-y-1">
                                 <span className="text-[11px] text-slate-400">Day</span>
-                                <select
-                                    aria-label="Hari Kelahiran"
+                                <input
+                                    type="text"
                                     value={birthDay}
-                                    onChange={(e) => setBirthDay(e.target.value)}
-                                    className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer"
-                                >
-                                    {hariOptions.map((d) => (
-                                        <option key={d} value={d}>
-                                            {d}
-                                        </option>
-                                    ))}
-                                </select>
+                                    readOnly
+                                    disabled
+                                    tabIndex={-1}
+                                    className="w-full px-3 py-2.5 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-400 cursor-not-allowed select-none opacity-80 text-center font-medium"
+                                />
                             </div>
 
                             {/* Month */}
                             <div className="space-y-1">
                                 <span className="text-[11px] text-slate-400">Month</span>
-                                <select
-                                    aria-label="Bulan Kelahiran"
-                                    value={birthMonth}
-                                    onChange={(e) => setBirthMonth(e.target.value)}
-                                    className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer"
-                                >
-                                    {bulanOptions.map((m) => (
-                                        <option key={m.val} value={m.val}>
-                                            {m.val}
-                                        </option>
-                                    ))}
-                                </select>
+                                <input
+                                    type="text"
+                                    value={bulanMap[birthMonth] || birthMonth}
+                                    readOnly
+                                    disabled
+                                    tabIndex={-1}
+                                    className="w-full px-3 py-2.5 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-400 cursor-not-allowed select-none opacity-80 text-center font-medium"
+                                />
                             </div>
 
                             {/* Year */}
                             <div className="space-y-1">
                                 <span className="text-[11px] text-slate-400">Year</span>
-                                <select
-                                    aria-label="Tahun Kelahiran"
+                                <input
+                                    type="text"
                                     value={birthYear}
-                                    onChange={(e) => setBirthYear(e.target.value)}
-                                    className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer"
-                                >
-                                    {tahunOptions.map((y) => (
-                                        <option key={y} value={y}>
-                                            {y}
-                                        </option>
-                                    ))}
-                                </select>
+                                    readOnly
+                                    disabled
+                                    tabIndex={-1}
+                                    className="w-full px-3 py-2.5 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-400 cursor-not-allowed select-none opacity-80 text-center font-medium"
+                                />
                             </div>
                         </div>
                     </div>
 
                     {/* Action Save Button */}
-                    <div className="pt-4">
+                    <div className="pt-2">
                         <button
                             type="submit"
                             disabled={sedangMenyimpan}
-                            className="px-6 py-2.5 bg-primary hover:bg-primary-hover active:scale-95 text-white font-bold text-sm rounded-full shadow-md transition-all cursor-pointer disabled:opacity-50"
+                            className="px-7 py-3 bg-[#E52027] hover:bg-[#CC1C22] active:scale-95 text-white font-bold text-sm rounded-full shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {sedangMenyimpan ? "Saving..." : "Save Changes"}
                         </button>

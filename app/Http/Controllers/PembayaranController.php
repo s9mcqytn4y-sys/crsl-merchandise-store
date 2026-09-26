@@ -17,108 +17,179 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use App\Domains\Order\Actions\BuatPesananAction;
 use Inertia\Response;
 
 class PembayaranController extends Controller
 {
     public function __construct(
         protected MidtransService $midtransService,
-        protected BiteshipService $biteshipService
+        protected BiteshipService $biteshipService,
+        protected BuatPesananAction $buatPesananAction
     ) {}
 
     public function index(): Response|RedirectResponse
     {
         $keranjang = session()->get('keranjang', []);
 
-        if (empty($keranjang)) {
-            // Sediakan fallback item sampel (CRSL Cassie Wallet) agar halaman /pembayaran & /checkout dapat langsung dievaluasi
-            $keranjang = [
-                'demo-cassie-wallet' => [
-                    'id' => 'demo-cassie-wallet',
-                    'produk_id' => 1,
-                    'varian_id' => 1,
-                    'nama_produk' => 'CRSL Cassie Wallet | Dompet Lipat Canvas Wanita Pattern Plaid | Compact & Stylish',
-                    'harga' => 179100,
-                    'harga_asli' => 199000,
-                    'jumlah' => 1,
-                    'warna' => 'CHILO PINK',
-                    'gambar' => '/aset/produk/cassie-wallet-pink.webp',
-                ]
+        $allAddresses = [];
+        $alamatUtama = null;
+        $loyaltyPoint = 0;
+        $currentUser = null;
+
+        if (auth()->check()) {
+            $user = auth()->user();
+            $currentUser = [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'telepon' => $user->telepon,
             ];
-            session()->put('keranjang', $keranjang);
+
+            $loyaltyPoint = (int) ($user->loyalitas?->poin ?? 0);
+
+            $rawAddresses = AlamatPengguna::where('pengguna_id', $user->id)
+                ->orderByDesc('adalah_utama')
+                ->orderByDesc('id')
+                ->get();
+
+            $allAddresses = $rawAddresses->map(function ($a) {
+                return [
+                    'id'             => $a->id,
+                    'label'          => $a->label ?? 'Rumah',
+                    'nama_penerima'  => $a->nama_penerima,
+                    'telepon'        => $a->telepon,
+                    'email'          => $a->email ?? auth()->user()->email,
+                    'area_id'        => $a->area_id ?? '',
+                    'provinsi'       => $a->provinsi ?? '',
+                    'kota'           => $a->kota ?? '',
+                    'kecamatan'      => $a->kecamatan ?? '',
+                    'kelurahan'      => $a->kelurahan ?? '',
+                    'kode_pos'       => $a->kode_pos ?? '',
+                    'alamat_lengkap' => $a->alamat_lengkap,
+                    'format_lengkap' => trim(($a->alamat_lengkap ?? '') . ', ' . ($a->kecamatan ?? '') . ', ' . ($a->kota ?? '') . ', ' . ($a->provinsi ?? '') . ' ' . ($a->kode_pos ?? '')),
+                    'adalah_utama'   => (bool)$a->adalah_utama,
+                ];
+            })->all();
+
+            $alamatUtama = !empty($allAddresses) ? $allAddresses[0] : null;
+
+            $dbKeranjang = \App\Models\Keranjang::with(['items.produk', 'items.produk_varian'])
+                ->where('pengguna_id', $user->id)
+                ->first();
+            if ($dbKeranjang && $dbKeranjang->items->isNotEmpty() && empty($keranjang)) {
+                $keranjang = [];
+                foreach ($dbKeranjang->items as $item) {
+                    $p = $item->produk;
+                    $v = $item->produk_varian;
+                    if ($p) {
+                        $cartKey = $p->id . ($v ? '_' . $v->id : '');
+                        $harga = $v && $v->harga_tambahan > 0
+                            ? ($p->harga_diskon ?? $p->harga_dasar) + $v->harga_tambahan
+                            : ($p->harga_diskon ?? $p->harga_dasar);
+                        $keranjang[$cartKey] = [
+                            'id' => $cartKey,
+                            'produk_id' => $p->id,
+                            'varian_id' => $v?->id,
+                            'nama_produk' => $p->nama . ($v ? " ({$v->nama_varian})" : ''),
+                            'sku' => $v?->sku ?? "CRSL-{$p->id}",
+                            'harga' => (float)$harga,
+                            'jumlah' => $item->jumlah,
+                            'ukuran' => $v?->ukuran,
+                            'warna' => $v?->warna,
+                            'gambar' => $v?->gambar_varian ?? $p->gambar_utama,
+                        ];
+                    }
+                }
+                session()->put('keranjang', $keranjang);
+            }
         }
 
         $subtotal = collect($keranjang)->sum(fn ($item) => ($item['harga'] ?? 0) * ($item['jumlah'] ?? 1));
 
+        // Ambil voucher aktif dari database
+        $vouchers = Voucher::where('aktif', true)
+            ->where(function ($q) {
+                $q->whereNull('berlaku_sampai')
+                  ->orWhere('berlaku_sampai', '>=', now());
+            })
+            ->get()
+            ->map(function ($v) {
+                return [
+                    'id'          => $v->id,
+                    'kode'        => $v->kode,
+                    'code'        => $v->kode,
+                    'judul'       => $v->judul,
+                    'title'       => $v->judul,
+                    'tipe'        => $v->tipe,
+                    'nilai'       => (float) $v->nilai,
+                    'min_belanja' => (float) $v->min_belanja,
+                    'discount'    => $v->tipe === 'persen' ? "{$v->nilai}%" : 'Rp ' . number_format($v->nilai, 0, ',', '.'),
+                ];
+            })
+            ->all();
+
         return Inertia::render('Pembayaran', [
             'keranjang' => $keranjang,
             'subtotal' => $subtotal,
-            'kurirList' => [
-                ['id' => 'jne', 'kurir_kode' => 'jne', 'nama' => 'JNE Reguler (2-3 hari)', 'biaya' => 18000],
-                ['id' => 'jnt', 'kurir_kode' => 'jnt', 'nama' => 'J&T Express (1-2 hari)', 'biaya' => 20000],
-                ['id' => 'sicepat', 'kurir_kode' => 'sicepat', 'nama' => 'SiCepat BEST (1 hari)', 'biaya' => 24000],
-            ],
-            'metodeBayarList' => [
-                ['id' => 'qris', 'nama' => 'QRIS (GoPay, OVO, ShopeePay, Dana, BCA)', 'ikon' => '📱'],
-                ['id' => 'bca', 'nama' => 'Transfer Virtual Account BCA', 'ikon' => '🏦'],
-                ['id' => 'bni', 'nama' => 'Transfer Virtual Account BNI', 'ikon' => '🏛️'],
-                ['id' => 'bri', 'nama' => 'Transfer Virtual Account BRI', 'ikon' => '🏢'],
-                ['id' => 'mandiri', 'nama' => 'Mandiri Bill Payment (E-Channel)', 'ikon' => '💳'],
-            ],
+            'user' => $currentUser,
+            'alamatUtama' => $alamatUtama,
+            'addresses' => $allAddresses,
+            'loyaltyPoint' => $loyaltyPoint,
+            'vouchers' => $vouchers,
+            'kurirList' => collect(config('pengiriman.kurir', []))
+                ->filter(fn ($k) => !empty($k['aktif']))
+                ->values()
+                ->all(),
+            'metodeBayarList' => collect(config('pembayaran.metode', []))
+                ->filter(fn ($m) => !empty($m['aktif']))
+                ->values()
+                ->all(),
         ]);
     }
 
     /**
-     * Validasi kode voucher dan hitung diskon real-time.
+     * Validasi kode voucher dan hitung diskon real-time langsung dari database dan cache.
      */
     public function validasiVoucher(Request $request): JsonResponse
     {
         $request->validate([
-            'kode' => 'required|string',
+            'kode' => 'required|string|max:50',
             'subtotal' => 'required|numeric|min:0',
         ]);
 
         $kode = strtoupper(trim($request->input('kode')));
         $subtotal = (float)$request->input('subtotal');
 
-        if ($kode === 'FREEONGKIR10K') {
-            if ($subtotal < 179000) {
-                return response()->json(['sukses' => false, 'pesan' => 'Minimum belanja Rp 179.000 untuk voucher ini.'], 422);
-            }
-            return response()->json([
-                'sukses' => true,
-                'kode' => 'FREEONGKIR10K',
-                'judul' => 'Diskon Ongkir Rp 10.000',
-                'tipe' => 'ongkir',
-                'nilai_diskon' => 10000,
-                'pesan' => 'Voucher Diskon Ongkir Rp 10.000 Terpasang!',
-            ]);
-        }
+        $cacheKey = "voucher:detail:{$kode}";
+        $voucher = \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function () use ($kode) {
+            return Voucher::where('kode', $kode)->where('aktif', true)->first();
+        });
 
-        if (in_array($kode, ['NEWADOPTER10', 'AUTO10', 'CRSLHEMAT'])) {
-            $minBelanja = ($kode === 'NEWADOPTER10') ? 100000 : 200000;
-            if ($subtotal < $minBelanja) {
-                return response()->json([
-                    'sukses' => false,
-                    'pesan' => 'Minimum belanja Rp ' . number_format($minBelanja, 0, ',', '.') . ' untuk voucher ini.'
-                ], 422);
-            }
-            $nilaiDiskon = (float)round($subtotal * 0.10);
-            return response()->json([
-                'sukses' => true,
-                'kode' => $kode,
-                'judul' => 'Diskon 10% All Items',
-                'tipe' => 'persen',
-                'nilai_diskon' => $nilaiDiskon,
-                'pesan' => 'Voucher Diskon 10% Terpasang! Hemat Rp ' . number_format($nilaiDiskon, 0, ',', '.') . '!',
-            ]);
-        }
-
-        $voucher = Voucher::where('kode', $kode)->where('aktif', true)->first();
         if (!$voucher) {
-            return response()->json(['sukses' => false, 'pesan' => 'Kode voucher tidak valid atau tidak berlaku.'], 404);
+            return response()->json([
+                'sukses' => false,
+                'pesan' => 'Kode voucher tidak valid atau tidak aktif.'
+            ], 404);
         }
 
+        // Cek masa berlaku
+        if ($voucher->berlaku_sampai && now()->greaterThan($voucher->berlaku_sampai)) {
+            return response()->json([
+                'sukses' => false,
+                'pesan' => "Voucher {$voucher->kode} telah kedaluwarsa."
+            ], 422);
+        }
+
+        // Cek kuota
+        if ($voucher->kuota !== null && $voucher->kuota <= 0) {
+            return response()->json([
+                'sukses' => false,
+                'pesan' => "Kuota voucher {$voucher->kode} telah habis."
+            ], 422);
+        }
+
+        // Cek minimum belanja
         if ($subtotal < (float)$voucher->min_belanja) {
             return response()->json([
                 'sukses' => false,
@@ -128,7 +199,7 @@ class PembayaranController extends Controller
 
         $nilaiDiskon = ($voucher->tipe === 'persen')
             ? round($subtotal * ($voucher->nilai / 100))
-            : $voucher->nilai;
+            : (float)$voucher->nilai;
 
         return response()->json([
             'sukses' => true,
@@ -136,7 +207,7 @@ class PembayaranController extends Controller
             'judul' => $voucher->judul,
             'tipe' => $voucher->tipe,
             'nilai_diskon' => (float)$nilaiDiskon,
-            'pesan' => 'Voucher ' . $voucher->judul . ' Terpasang!',
+            'pesan' => "Voucher {$voucher->judul} Terpasang! Hemat Rp " . number_format($nilaiDiskon, 0, ',', '.') . "!",
         ]);
     }
 
@@ -145,7 +216,34 @@ class PembayaranController extends Controller
      */
     public function proses(Request $request): RedirectResponse
     {
-        $keranjang = session()->get('keranjang', []);
+        $keranjang = [];
+
+        $buyNowJson = $request->input('buy_now_item');
+        if (!empty($buyNowJson)) {
+            $buyNowData = is_array($buyNowJson) ? $buyNowJson : json_decode($buyNowJson, true);
+            if ($buyNowData && isset($buyNowData['produk_id'])) {
+                $cartKey = 'buynow-' . $buyNowData['produk_id'] . (!empty($buyNowData['varian_id']) ? '_' . $buyNowData['varian_id'] : '');
+                $keranjang = [$cartKey => $buyNowData];
+            }
+        } elseif ($request->has('items') && is_array($request->input('items')) && count($request->input('items')) > 0) {
+            foreach ($request->input('items') as $idx => $it) {
+                $pId = $it['id'] ?? ($it['produk_id'] ?? $idx);
+                $vId = $it['varian_id'] ?? null;
+                $cartKey = "req-{$pId}" . ($vId ? "_{$vId}" : '');
+                $keranjang[$cartKey] = [
+                    'id'          => $cartKey,
+                    'produk_id'   => $pId,
+                    'varian_id'   => $vId,
+                    'nama_produk' => $it['nama'] ?? ($it['nama_produk'] ?? 'Produk CRSL'),
+                    'harga'       => (float)($it['harga'] ?? 0),
+                    'jumlah'      => (int)($it['jumlah'] ?? 1),
+                    'warna'       => $it['warna'] ?? null,
+                    'ukuran'      => $it['ukuran'] ?? null,
+                ];
+            }
+        } else {
+            $keranjang = session()->get('keranjang', []);
+        }
 
         if (empty($keranjang)) {
             return redirect()->route('katalog')->with('error', 'Keranjang belanja Anda kosong.');
@@ -167,134 +265,48 @@ class PembayaranController extends Controller
             'catatan' => 'nullable|string|max:500',
         ]);
 
-        DB::beginTransaction();
         try {
-            $subtotal = collect($keranjang)->sum(fn ($item) => $item['harga'] * $item['jumlah']);
-
-            // Kalkulasi Ongkir Biteship
-            $areaId = $validated['biteship_area_id'] ?? 'IDNP11KOT789311';
-            $rates = $this->biteshipService->kalkulasiOngkir($areaId, array_values($keranjang), $validated['kurir']);
-            $matchedRate = collect($rates)->firstWhere('kurir_kode', strtolower($validated['kurir']));
-            $biayaOngkir = (float)($matchedRate['harga'] ?? 18000);
-
-            // Hitung Diskon Voucher jika ada
+            // Kalkulasi Diskon Voucher awal
+            $subtotalAwal = collect($keranjang)->sum(fn ($item) => ($item['harga'] ?? 0) * ($item['jumlah'] ?? 1));
             $diskon = 0;
             if (!empty($validated['kode_voucher'])) {
-                $vRes = $this->validasiVoucher(new Request(['kode' => $validated['kode_voucher'], 'subtotal' => $subtotal]));
-                if ($vRes->getData()->sukses ?? false) {
-                    $diskon = (float)($vRes->getData()->nilai_diskon ?? 0);
+                $voucher = Voucher::where('kode', strtoupper(trim($validated['kode_voucher'])))
+                    ->where('aktif', true)
+                    ->first();
+                if ($voucher && $subtotalAwal >= (float)$voucher->min_belanja) {
+                    $diskon = ($voucher->tipe === 'persen')
+                        ? round($subtotalAwal * ($voucher->nilai / 100))
+                        : (float)$voucher->nilai;
                 }
             }
 
-            // EQUATION: Total = Subtotal + Ongkir - Diskon
-            $total = max(0, ($subtotal + $biayaOngkir) - $diskon);
+            // Delegasi Eksekusi ke Domain Action BuatPesananAction
+            $pesanan = $this->buatPesananAction->execute(
+                dataInput: array_merge($validated, [
+                    'nilai_diskon' => $diskon,
+                    'is_dropship' => !empty($request->input('is_dropship')),
+                    'dropship_pengirim' => $request->input('dropship_pengirim'),
+                    'dropship_telepon' => $request->input('dropship_telepon'),
+                    'asuransi_pengiriman' => !empty($request->input('asuransi_pengiriman')),
+                    'biaya_asuransi' => $request->input('biaya_asuransi'),
+                    'ongkir' => $request->input('ongkir'),
+                    'layanan_kurir' => $request->input('layanan_kurir'),
+                ]),
+                keranjang: $keranjang,
+                penggunaId: auth()->id()
+            );
 
-            $nomorPesanan = 'INV/CRSL/' . date('Ymd') . '/' . strtoupper(Str::random(5));
-
-            // 1. Simpan Pesanan Utama
-            $pesanan = Pesanan::create([
-                'pengguna_id' => auth()->id(),
-                'nomor_pesanan' => $nomorPesanan,
-                'status' => 'belum_bayar',
-                'subtotal' => $subtotal,
-                'ongkir' => $biayaOngkir,
-                'diskon' => $diskon,
-                'total' => $total,
-                'mata_uang' => 'IDR',
-                'catatan' => $validated['catatan'] ?? null,
-                'kode_voucher' => $validated['kode_voucher'] ?? null,
-                'poin_didapat' => (int)floor($total / 10000) * 10,
-            ]);
-
-            // 2. Simpan Alamat Pengguna
-            if (auth()->check()) {
-                AlamatPengguna::create([
-                    'pengguna_id' => auth()->id(),
-                    'label' => 'Alamat Utama',
-                    'nama_penerima' => $validated['nama_lengkap'],
-                    'telepon' => $validated['telepon'],
-                    'email' => $validated['email'],
-                    'area_id' => $areaId,
-                    'provinsi' => $validated['provinsi'] ?? 'D.I. Yogyakarta',
-                    'kota' => $validated['kota'],
-                    'kecamatan' => $validated['kecamatan'] ?? 'Depok',
-                    'kode_pos' => $validated['kode_pos'],
-                    'alamat_lengkap' => $validated['alamat_lengkap'],
-                    'adalah_utama' => true,
-                ]);
-            }
-
-            // 3. Simpan Item Pesanan & Kurangi Stok Varian
-            foreach ($keranjang as $item) {
-                ItemPesanan::create([
-                    'pesanan_id' => $pesanan->id,
-                    'produk_id' => $item['produk_id'],
-                    'produk_varian_id' => $item['varian_id'] ?? null,
-                    'nama_produk' => $item['nama_produk'],
-                    'sku' => $item['sku'] ?? ('CRSL-' . $item['produk_id']),
-                    'harga' => $item['harga'],
-                    'jumlah' => $item['jumlah'],
-                    'ukuran' => $item['ukuran'] ?? null,
-                    'warna' => $item['warna'] ?? null,
-                    'gambar' => $item['gambar'] ?? null,
-                ]);
-
-                if (!empty($item['varian_id'])) {
-                    ProdukVarian::where('id', $item['varian_id'])->decrement('stok', $item['jumlah']);
-                }
-            }
-
-            // 4. Simpan Pesanan Pengiriman
-            PesananPengiriman::create([
-                'pesanan_id' => $pesanan->id,
-                'kurir' => strtolower($validated['kurir']),
-                'layanan' => $matchedRate['layanan_kode'] ?? 'reg',
-                'tracking_status' => 'allocated',
-            ]);
-
-            // 5. Inisialisasi Midtrans Direct Charge Core API
-            $pembeli = [
-                'nama' => $validated['nama_lengkap'],
-                'email' => $validated['email'],
-                'telepon' => $validated['telepon'],
-            ];
-
-            $metode = strtolower($validated['metode_pembayaran']);
-            $pesananData = [
-                'nomor_pesanan' => $nomorPesanan,
-                'total' => $total,
-            ];
-
-            if ($metode === 'qris') {
-                $chargeRes = $this->midtransService->chargeQris($pesananData, $pembeli);
-            } elseif ($metode === 'mandiri') {
-                $chargeRes = $this->midtransService->chargeMandiriBill($pesananData, $pembeli);
-            } else {
-                $chargeRes = $this->midtransService->chargeBankTransfer($metode, $pesananData, $pembeli);
-            }
-
-            // 6. Simpan Detail Pesanan Pembayaran
-            PesananPembayaran::create([
-                'pesanan_id' => $pesanan->id,
-                'metode_bayar' => $chargeRes['metode_bayar'] ?? strtoupper($metode),
-                'midtrans_id' => $chargeRes['transaction_id'] ?? null,
-                'midtrans_status' => $chargeRes['status_transaksi'] ?? 'pending',
-                'nomor_va' => $chargeRes['nomor_va'] ?? null,
-                'kode_biller' => $chargeRes['kode_biller'] ?? null,
-                'qr_string' => $chargeRes['qr_string'] ?? null,
-                'qr_code_url' => $chargeRes['qr_code_url'] ?? null,
-                'waktu_kedaluwarsa' => $chargeRes['waktu_kadaluarsa'] ?? now()->addMinutes(15),
-                'instruksi_bayar' => $chargeRes['instruksi_bayar'] ?? [],
-            ]);
-
-            DB::commit();
             session()->forget('keranjang');
+            session(['nomor_pesanan_terakhir' => $pesanan->nomor_pesanan]);
 
-            return redirect()->route('faktur', ['nomorPesanan' => $nomorPesanan])
+            if (auth()->check()) {
+                \Illuminate\Support\Facades\Cache::forget('pengguna:akun:' . auth()->id());
+            }
+
+            return redirect()->route('faktur', ['nomorPesanan' => $pesanan->nomor_pesanan])
                 ->with('sukses', 'Pesanan berhasil dibuat. Silakan selesaikan pembayaran!');
 
         } catch (\Throwable $e) {
-            DB::rollBack();
             report($e);
             return redirect()->back()->with('error', 'Gagal memproses pesanan: ' . $e->getMessage());
         }

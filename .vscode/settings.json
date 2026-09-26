@@ -1,16 +1,54 @@
 {
-  "workbench.colorTheme": "Default Dark Modern",
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.formatOnSave": true,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
-  },
-  "[php]": {
-    "editor.defaultFormatter": "bmewburn.vscode-intelephense-client"
-  },
-  "files.associations": {
-    "*.blade.php": "html"
-  },
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true
+    "workbench.colorTheme": "Default Dark Modern",
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit"
+    },
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true,
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[php]": {
+        "editor.defaultFormatter": null
+    },
+    "[blade]": {
+        "editor.defaultFormatter": "shufo.vscode-blade-formatter"
+    },
+    "files.associations": {
+        "*.blade.php": "blade"
+    },
+    "tailwindCSS.includeLanguages": {
+        "blade": "html",
+        "typescript": "javascript",
+        "typescriptreact": "javascript"
+    },
+    "tailwindCSS.experimental.classRegex": [
+        [
+            "cva\\(([^)]*)\\)",
+            "[\"'`]([^\"'`]*).*?[\"'`]"
+        ],
+        [
+            "cx\\(([^)]*)\\)",
+            "(?:'|\"|`)([^']*)(?:'|\"|`)"
+        ]
+    ],
+    "intelephense.environment.includePaths": [
+        "vendor/**"
+    ],
+    "intelephense.diagnostics.undefinedClassConstants": false,
+    "intelephense.diagnostics.undefinedFunctions": false
 }

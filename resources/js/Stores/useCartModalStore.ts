@@ -3,13 +3,13 @@ import { create } from 'zustand';
 export interface VarianModalItem {
     id: number | string;
     sku?: string;
-    nama_varian: string;
+    nama_varian?: string;
     tipe_varian?: string;
     warna?: string;
     warna_hex?: string;
     ukuran?: string;
     stok?: number;
-    gambar_varian?: string;
+    gambar_varian?: string | null;
     harga_tambahan?: number;
 }
 
@@ -19,7 +19,7 @@ export interface ModalProductData {
     slug: string;
     harga_dasar: number;
     harga_diskon?: number | null;
-    gambar_utama?: string;
+    gambar_utama?: string | null;
     varian?: VarianModalItem[];
 }
 

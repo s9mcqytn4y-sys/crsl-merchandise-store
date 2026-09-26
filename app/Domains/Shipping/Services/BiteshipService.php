@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Domains\Shipping\Services;
 
 use App\Domains\Shipping\DTOs\BiteshipArea;
@@ -7,260 +9,402 @@ use App\Domains\Shipping\DTOs\BiteshipRateOption;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use RuntimeException;
 
 class BiteshipService
 {
     protected string $apiKey;
     protected string $originAreaId;
     protected string $baseUrl;
+    protected int $timeoutSeconds;
 
     public function __construct()
     {
-        $this->apiKey = config('services.biteship.api_key', '');
-        $this->originAreaId = config('services.biteship.origin_area_id', 'IDNP11KOT789311');
-        $this->baseUrl = config('services.biteship.base_url', 'https://api.biteship.com');
+        $this->apiKey = (string) config('services.biteship.api_key', '');
+        $this->originAreaId = (string) config('services.biteship.origin_area_id', 'IDNP5IDNC412IDND5043IDZ55281');
+        $this->baseUrl = rtrim((string) config('services.biteship.base_url', 'https://api.biteship.com'), '/');
+        $this->timeoutSeconds = 10;
     }
 
     /**
-     * Cari lokasi/wilayah berdasarkan kata kunci (Pencarian Area Biteship).
+     * Inisialisasi HTTP Client dengan header otentikasi resmi Biteship.
+     */
+    protected function newRequest(int $timeout = 0): \Illuminate\Http\Client\PendingRequest
+    {
+        $req = Http::withHeaders([
+            'Authorization' => $this->apiKey,
+            'Content-Type'  => 'application/json',
+        ])->timeout($timeout > 0 ? $timeout : $this->timeoutSeconds);
+
+        if (app()->isLocal()) {
+            $req = $req->withoutVerifying();
+        }
+
+        return $req;
+    }
+
+    /**
+     * Cari lokasi/wilayah berdasarkan kata kunci autocomplete.
      *
      * @param string $kataKunci
-     * @return array<int, array>
+     * @return array<int, array<string, mixed>>
      */
     public function cariArea(string $kataKunci): array
     {
         $kataKunci = trim($kataKunci);
-        if (strlen($kataKunci) < 3) {
+        if (mb_strlen($kataKunci) < 3) {
             return [];
         }
 
-        $cacheKey = 'biteship_area_' . md5(strtolower($kataKunci));
+        $cacheKey = 'biteship_area_' . hash('xxh128', mb_strtolower($kataKunci));
 
-        return Cache::remember($cacheKey, 86400, function () use ($kataKunci) {
-            try {
-                $response = Http::withHeaders([
-                    'Authorization' => $this->apiKey,
-                    'Content-Type' => 'application/json',
-                ])
-                ->timeout(10)
+        // 1. Ambil dari cache jika ada
+        if (Cache::has($cacheKey)) {
+            return (array) Cache::get($cacheKey, []);
+        }
+
+        // 2. Proteksi API Key
+        if (empty($this->apiKey)) {
+            Log::channel('single')->error('[Biteship] API Key belum dikonfigurasi di services.biteship.api_key');
+            return $this->filterFallbackAreas($kataKunci);
+        }
+
+        try {
+            $response = $this->newRequest()
                 ->get("{$this->baseUrl}/v1/maps/areas", [
                     'countries' => 'ID',
-                    'input' => $kataKunci,
-                    'type' => 'single',
+                    'input'     => $kataKunci,
+                    'type'      => 'single',
                 ]);
 
-                if ($response->successful()) {
-                    $areas = $response->json('areas', []);
-                    return array_map(function ($area) {
-                        return BiteshipArea::fromArray($area)->toArray();
-                    }, $areas);
+            if ($response->successful()) {
+                $areas = $response->json('areas', []);
+
+                if (!is_array($areas)) {
+                    return [];
                 }
 
-                Log::warning("Biteship Area Search API Non-200: " . $response->body());
-            } catch (\Throwable $e) {
-                Log::error("Biteship Area Search Exception: " . $e->getMessage());
+                $formatted = array_map(function (array $area): array {
+                    return BiteshipArea::fromArray($area)->toArray();
+                }, $areas);
+
+                // HANYA simpan ke cache jika API menghasilkan respons valid
+                if (!empty($formatted)) {
+                    Cache::put($cacheKey, $formatted, now()->addHours(24));
+                }
+
+                return $formatted;
             }
 
-            // Fallback area lokal jika API tidak dapat dijangkau
-            return $this->getFallbackAreas($kataKunci);
-        });
+            Log::warning("[Biteship Maps Error] Status {$response->status()}: {$response->body()}");
+        } catch (\Throwable $e) {
+            Log::error("[Biteship Maps Exception] {$e->getMessage()}", [
+                'keyword' => $kataKunci,
+                'trace'   => $e->getTraceAsString(),
+            ]);
+        }
+
+        // Jangan simpan fallback ke cache
+        return $this->filterFallbackAreas($kataKunci);
     }
 
     /**
-     * Kalkulasi tarif ongkir multi-kurir berdasarkan area asal & tujuan.
+     * Kalkulasi tarif ongkir multi-kurir berdasarkan bobot dan alamat tujuan.
      *
      * @param string $destinationAreaId
-     * @param array $items
+     * @param array<int, array<string, mixed>> $items
      * @param string $couriers
-     * @return array<int, array>
+     * @return array<int, array<string, mixed>>
      */
-    public function kalkulasiOngkir(string $destinationAreaId, array $items, string $couriers = 'jne,jnt,sicepat,anteraja'): array
-    {
-        if (empty($destinationAreaId)) {
-            return $this->getFallbackRates();
+    public function kalkulasiOngkir(
+        string $destinationAreaId,
+        array $items,
+        string $couriers = 'jne,jnt,sicepat,anteraja'
+    ): array {
+        $destinationAreaId = trim($destinationAreaId);
+        if (empty($destinationAreaId) || empty($items)) {
+            return [];
         }
 
-        $formattedItems = array_map(function ($item) {
+        $formattedItems = array_map(function (array $item): array {
             return [
-                'name' => $item['nama'] ?? $item['name'] ?? 'Produk CRSL',
-                'description' => $item['deskripsi'] ?? 'Merchandise CRSL Official',
-                'value' => (int)($item['harga'] ?? $item['value'] ?? 100000),
-                'quantity' => (int)($item['jumlah'] ?? $item['quantity'] ?? 1),
-                'weight' => (int)($item['berat_gram'] ?? $item['weight'] ?? 250),
+                'name'        => (string) ($item['nama'] ?? $item['name'] ?? 'Merchandise CRSL'),
+                'description' => (string) ($item['deskripsi'] ?? 'Apparel & Accessories'),
+                'value'       => max(1000, (int) ($item['harga'] ?? $item['value'] ?? 10000)),
+                'quantity'    => max(1, (int) ($item['jumlah'] ?? $item['quantity'] ?? 1)),
+                'weight'      => max(100, (int) ($item['berat_gram'] ?? $item['weight'] ?? 250)),
             ];
         }, $items);
 
+        $totalWeight = array_sum(array_map(fn($item) => ($item['weight'] ?? 250) * ($item['quantity'] ?? 1), $formattedItems));
+        $isMock = app()->isLocal() || (bool) config('services.biteship.mock', false);
+
+        if (empty($this->apiKey)) {
+            if ($isMock) {
+                return $this->getMockCouriers($totalWeight);
+            }
+            Log::error('[Biteship] API Key kosong saat memanggil kalkulasi ongkir.');
+            return [];
+        }
+
         try {
-            $response = Http::withHeaders([
-                'Authorization' => $this->apiKey,
-                'Content-Type' => 'application/json',
-            ])
-            ->timeout(10)
-            ->post("{$this->baseUrl}/v1/rates/couriers", [
-                'origin_area_id' => $this->originAreaId,
-                'destination_area_id' => $destinationAreaId,
-                'couriers' => $couriers,
-                'items' => $formattedItems,
-            ]);
+            $response = $this->newRequest()
+                ->post("{$this->baseUrl}/v1/rates/couriers", [
+                    'origin_area_id'      => $this->originAreaId,
+                    'destination_area_id' => $destinationAreaId,
+                    'couriers'            => $couriers,
+                    'items'               => $formattedItems,
+                ]);
 
             if ($response->successful()) {
                 $pricing = $response->json('pricing', []);
-                return array_map(function ($rate) {
+
+                if (!is_array($pricing) || empty($pricing)) {
+                    return $isMock ? $this->getMockCouriers($totalWeight) : [];
+                }
+
+                $rates = array_map(function (array $rate): array {
                     return BiteshipRateOption::fromArray($rate)->toArray();
                 }, $pricing);
+
+                // Sortir otomatis harga termurah di posisi paling atas
+                usort($rates, fn(array $a, array $b): int => ($a['harga'] ?? 0) <=> ($b['harga'] ?? 0));
+
+                return $rates;
             }
 
-            Log::warning("Biteship Rates API Non-200: " . $response->body());
+            if ($isMock) {
+                Log::info("[Biteship Rates] Menggunakan fallback tarif mock kurir lokal (Status {$response->status()})");
+                return $this->getMockCouriers($totalWeight);
+            }
+
+            Log::warning("[Biteship Rates Failed] Status {$response->status()}: {$response->body()}");
         } catch (\Throwable $e) {
-            Log::error("Biteship Rates Exception: " . $e->getMessage());
+            Log::error("[Biteship Rates Exception] {$e->getMessage()}");
+            if ($isMock) {
+                return $this->getMockCouriers($totalWeight);
+            }
         }
 
-        return $this->getFallbackRates();
+        return $isMock ? $this->getMockCouriers($totalWeight) : [];
     }
 
     /**
-     * Buat order pengiriman pada Biteship API.
+     * Tarif mock kurir standar khusus environment development / testing lokal.
      *
-     * @param array $dataPesanan
-     * @return array
+     * @param int $totalWeightGram
+     * @return array<int, array<string, mixed>>
+     */
+    protected function getMockCouriers(int $totalWeightGram): array
+    {
+        $weightKg = max(1, (int) ceil($totalWeightGram / 1000));
+        return [
+            [
+                'kurir_kode'    => 'jne',
+                'kurir_nama'    => 'JNE',
+                'layanan_kode'  => 'reg',
+                'layanan_nama'  => 'Reguler',
+                'kurir_layanan' => 'Reguler',
+                'nama'          => 'JNE Reguler',
+                'layanan'       => 'Reguler',
+                'harga'         => 18000 * $weightKg,
+                'estimasi'      => '2 - 3 hari',
+                'estimasi_hari' => '2 - 3 hari',
+                'etd'           => '2 - 3 hari',
+                'tipe'          => 'standard',
+                'ikon'          => '/assets/ikon/kurir-jne.svg',
+                'logo_url'      => '/assets/ikon/kurir-jne.svg',
+            ],
+            [
+                'kurir_kode'    => 'sicepat',
+                'kurir_nama'    => 'SiCepat',
+                'layanan_kode'  => 'siuntung',
+                'layanan_nama'  => 'SiUntung',
+                'kurir_layanan' => 'SiUntung',
+                'nama'          => 'SiCepat SiUntung',
+                'layanan'       => 'SiUntung',
+                'harga'         => 17000 * $weightKg,
+                'estimasi'      => '2 - 3 hari',
+                'estimasi_hari' => '2 - 3 hari',
+                'etd'           => '2 - 3 hari',
+                'tipe'          => 'standard',
+                'ikon'          => '/assets/ikon/kurir-sicepat.svg',
+                'logo_url'      => '/assets/ikon/kurir-sicepat.svg',
+            ],
+            [
+                'kurir_kode'    => 'jnt',
+                'kurir_nama'    => 'J&T Express',
+                'layanan_kode'  => 'ez',
+                'layanan_nama'  => 'EZ',
+                'kurir_layanan' => 'EZ',
+                'nama'          => 'J&T Express EZ',
+                'layanan'       => 'EZ',
+                'harga'         => 19000 * $weightKg,
+                'estimasi'      => '2 - 3 hari',
+                'estimasi_hari' => '2 - 3 hari',
+                'etd'           => '2 - 3 hari',
+                'tipe'          => 'standard',
+                'ikon'          => '/assets/ikon/kurir-jnt.svg',
+                'logo_url'      => '/assets/ikon/kurir-jnt.svg',
+            ],
+        ];
+    }
+
+    /**
+     * Buat order pickup pengiriman resmi pada Biteship API.
+     *
+     * @param array<string, mixed> $dataPesanan
+     * @return array<string, mixed>
      */
     public function buatOrderPengiriman(array $dataPesanan): array
     {
-        try {
-            $isDropship = !empty($dataPesanan['is_dropship']);
-            $shipperName = $isDropship ? ($dataPesanan['dropship_pengirim'] ?? 'Reseller CRSL') : 'CRSL Official Store';
-            $shipperPhone = $isDropship ? ($dataPesanan['dropship_telepon'] ?? '081234567890') : '081234567890';
-
-            $response = Http::withHeaders([
-                'Authorization' => $this->apiKey,
-                'Content-Type' => 'application/json',
-            ])
-            ->timeout(15)
-            ->post("{$this->baseUrl}/v1/orders", [
-                'shipper' => [
-                    'name' => $shipperName,
-                    'phone' => $shipperPhone,
-                    'email' => 'shipping@crslstore.com',
-                ],
-                'origin' => [
-                    'area_id' => $this->originAreaId,
-                    'postal_code' => (int)config('services.biteship.origin_postal_code', 55281),
-                ],
-                'destination' => [
-                    'area_id' => $dataPesanan['area_id'] ?? '',
-                    'contact_name' => $dataPesanan['nama_penerima'] ?? 'Pelanggan',
-                    'contact_phone' => $dataPesanan['telepon'] ?? '081200000000',
-                    'address' => $dataPesanan['alamat_lengkap'] ?? '',
-                    'postal_code' => (int)($dataPesanan['kode_pos'] ?? 55281),
-                ],
-                'courier' => [
-                    'company' => $dataPesanan['kurir'] ?? 'jne',
-                    'type' => $dataPesanan['layanan'] ?? 'reg',
-                ],
-                'delivery_type' => 'now',
-                'items' => $dataPesanan['items'] ?? [],
+        if (empty($this->apiKey)) {
+            $simulasiResi = strtoupper($dataPesanan['kurir'] ?? 'JNE') . '-MOCK-' . date('Ymd') . '-' . strtoupper(Str::random(6));
+            Log::channel('single')->info('[Biteship Pickup Simulation (Local)]', [
+                'resi' => $simulasiResi,
+                'data' => $dataPesanan,
             ]);
+
+            return [
+                'sukses'            => true,
+                'biteship_order_id' => 'mock_order_' . Str::uuid(),
+                'waybill_id'        => $simulasiResi,
+                'status'            => 'allocated',
+                'tracking_url'      => 'https://biteship.com/track/' . $simulasiResi,
+                'is_simulasi'       => true,
+            ];
+        }
+
+        $isDropship = !empty($dataPesanan['is_dropship']);
+        $shipperName = $isDropship ? ($dataPesanan['dropship_pengirim'] ?? 'CRSL Partner') : 'CRSL Official Store';
+        $shipperPhone = $isDropship ? ($dataPesanan['dropship_telepon'] ?? '081234567890') : '081234567890';
+
+        $payload = [
+            'shipper' => [
+                'name'  => (string) $shipperName,
+                'phone' => (string) $shipperPhone,
+                'email' => 'shipping@crslstore.com',
+            ],
+            'origin' => [
+                'area_id'     => $this->originAreaId,
+                'postal_code' => (int) config('services.biteship.origin_postal_code', 55281),
+            ],
+            'destination' => [
+                'area_id'       => (string) ($dataPesanan['area_id'] ?? ''),
+                'contact_name'  => (string) ($dataPesanan['nama_penerima'] ?? 'Pelanggan'),
+                'contact_phone' => (string) ($dataPesanan['telepon'] ?? ''),
+                'address'       => (string) ($dataPesanan['alamat_lengkap'] ?? ''),
+                'postal_code'   => (int) ($dataPesanan['kode_pos'] ?? 0),
+            ],
+            'courier' => [
+                'company' => (string) ($dataPesanan['kurir'] ?? 'jne'),
+                'type'    => (string) ($dataPesanan['layanan'] ?? 'reg'),
+            ],
+            'delivery_type' => 'now',
+            'items'         => (array) ($dataPesanan['items'] ?? []),
+        ];
+
+        try {
+            $response = $this->newRequest(15)
+                ->post("{$this->baseUrl}/v1/orders", $payload);
 
             if ($response->successful()) {
                 return [
-                    'sukses' => true,
+                    'sukses'            => true,
                     'biteship_order_id' => $response->json('id'),
-                    'waybill_id' => $response->json('courier.waybill_id'),
-                    'status' => $response->json('status', 'allocated'),
-                    'raw' => $response->json(),
+                    'waybill_id'        => $response->json('courier.waybill_id'),
+                    'status'            => $response->json('status', 'allocated'),
+                    'tracking_url'      => $response->json('courier.tracking_url'),
+                    'raw'               => $response->json(),
                 ];
             }
 
-            Log::error("Biteship Create Order Failed: " . $response->body());
-        } catch (\Throwable $e) {
-            Log::error("Biteship Create Order Exception: " . $e->getMessage());
-        }
+            Log::warning("[Biteship Create Order Error] {$response->body()}", [
+                'payload' => $payload,
+            ]);
 
-        return [
-            'sukses' => false,
-            'biteship_order_id' => 'BS-MOCK-' . time(),
-            'waybill_id' => 'RESI-MOCK-' . rand(100000, 999999),
-            'status' => 'allocated',
-            'pesan' => 'Pengiriman diproses dalam mode simulasi.',
-        ];
+            if (app()->isLocal()) {
+                $simulasiResi = strtoupper($dataPesanan['kurir'] ?? 'JNE') . '-DEV-' . date('Ymd') . '-' . strtoupper(Str::random(6));
+                Log::info("[Biteship Order Dev Fallback] Resi: {$simulasiResi}");
+                return [
+                    'sukses'            => true,
+                    'biteship_order_id' => 'dev_order_' . Str::uuid(),
+                    'waybill_id'        => $simulasiResi,
+                    'status'            => 'allocated',
+                    'tracking_url'      => 'https://biteship.com/track/' . $simulasiResi,
+                    'is_simulasi'       => true,
+                ];
+            }
+
+            return [
+                'sukses' => false,
+                'pesan'  => 'Gagal membuat order ke kurir: ' . ($response->json('error') ?? 'Terjadi kesalahan sistem ekspedisi.'),
+            ];
+        } catch (\Throwable $e) {
+            Log::error("[Biteship Dispatch Crash] {$e->getMessage()}");
+
+            if (app()->isLocal()) {
+                $simulasiResi = strtoupper($dataPesanan['kurir'] ?? 'JNE') . '-DEV-' . date('Ymd') . '-' . strtoupper(Str::random(6));
+                Log::info("[Biteship Order Dev Fallback on Exception] Resi: {$simulasiResi}");
+                return [
+                    'sukses'            => true,
+                    'biteship_order_id' => 'dev_order_' . Str::uuid(),
+                    'waybill_id'        => $simulasiResi,
+                    'status'            => 'allocated',
+                    'tracking_url'      => 'https://biteship.com/track/' . $simulasiResi,
+                    'is_simulasi'       => true,
+                ];
+            }
+
+            return [
+                'sukses' => false,
+                'pesan'  => 'Koneksi ke server ekspedisi terputus.',
+            ];
+        }
     }
 
     /**
-     * Fallback wilayah jika Biteship API tidak merespons.
+     * Filter fallback area lokal jika koneksi ke Biteship Maps terputus.
+     * Strict filter: Hanya mengembalikan data yang benar-benar cocok.
+     *
+     * @param string $kataKunci
+     * @return array<int, array<string, mixed>>
      */
-    protected function getFallbackAreas(string $kataKunci): array
+    protected function filterFallbackAreas(string $kataKunci): array
     {
         $sample = [
             [
-                'id' => 'IDNP11KOT789311',
-                'nama' => 'Condongcatur, Depok, Sleman, D.I. Yogyakarta (55281)',
-                'negara' => 'Indonesia',
-                'provinsi' => 'D.I. Yogyakarta',
-                'kota' => 'Sleman',
+                'id'        => 'IDnp647101',
+                'nama'      => 'Condongcatur, Depok, Sleman, D.I. Yogyakarta (55281)',
+                'kota'      => 'Sleman',
                 'kecamatan' => 'Depok',
-                'kelurahan' => 'Condongcatur',
-                'kode_pos' => '55281',
+                'provinsi'  => 'D.I. Yogyakarta',
+                'kode_pos'  => '55281',
             ],
             [
-                'id' => 'IDNP31KOT123456',
-                'nama' => 'Kebayoran Baru, Jakarta Selatan, DKI Jakarta (12110)',
-                'negara' => 'Indonesia',
-                'provinsi' => 'DKI Jakarta',
-                'kota' => 'Jakarta Selatan',
+                'id'        => 'IDnp317401',
+                'nama'      => 'Kebayoran Baru, Jakarta Selatan, DKI Jakarta (12110)',
+                'kota'      => 'Jakarta Selatan',
                 'kecamatan' => 'Kebayoran Baru',
-                'kelurahan' => 'Gunung',
-                'kode_pos' => '12110',
+                'provinsi'  => 'DKI Jakarta',
+                'kode_pos'  => '12110',
             ],
             [
-                'id' => 'IDNP35KOT654321',
-                'nama' => 'Coblong, Bandung, Jawa Barat (40132)',
-                'negara' => 'Indonesia',
-                'provinsi' => 'Jawa Barat',
-                'kota' => 'Bandung',
+                'id'        => 'IDnp327301',
+                'nama'      => 'Coblong, Bandung, Jawa Barat (40132)',
+                'kota'      => 'Bandung',
                 'kecamatan' => 'Coblong',
-                'kelurahan' => 'Dago',
-                'kode_pos' => '40132',
+                'provinsi'  => 'Jawa Barat',
+                'kode_pos'  => '40132',
             ],
         ];
 
-        return array_values(array_filter($sample, function ($area) use ($kataKunci) {
-            return stripos($area['nama'], $kataKunci) !== false;
-        })) ?: $sample;
-    }
-
-    /**
-     * Fallback tarif ongkir standar jika API tidak merespons.
-     */
-    protected function getFallbackRates(): array
-    {
-        return [
-            [
-                'kurir_kode' => 'jne',
-                'kurir_nama' => 'JNE Express',
-                'layanan_kode' => 'reg',
-                'layanan_nama' => 'REG (Regular Service)',
-                'harga' => 18000,
-                'estimasi_hari' => '2-3 Hari',
-                'logo_url' => '/assets/ikon/shipment-jne.svg',
-            ],
-            [
-                'kurir_kode' => 'jnt',
-                'kurir_nama' => 'J&T Express',
-                'layanan_kode' => 'ez',
-                'layanan_nama' => 'EZ (Reguler Express)',
-                'harga' => 20000,
-                'estimasi_hari' => '1-2 Hari',
-                'logo_url' => '/assets/ikon/shipment-jnt.svg',
-            ],
-            [
-                'kurir_kode' => 'sicepat',
-                'kurir_nama' => 'SiCepat Ekspres',
-                'layanan_kode' => 'siuntung',
-                'layanan_nama' => 'SIUNTUNG (Reguler)',
-                'harga' => 17000,
-                'estimasi_hari' => '2-3 Hari',
-                'logo_url' => '/assets/ikon/kurir-sicepat.svg',
-            ],
-        ];
+        // Filter ketat tanpa Elvis fallback. Jika tidak cocok, kembalikan []
+        return array_values(array_filter($sample, function (array $area) use ($kataKunci): bool {
+            return stripos($area['nama'], $kataKunci) !== false
+                || stripos($area['kecamatan'], $kataKunci) !== false
+                || stripos($area['kota'], $kataKunci) !== false
+                || stripos((string) $area['kode_pos'], $kataKunci) !== false;
+        }));
     }
 }

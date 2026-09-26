@@ -94,26 +94,131 @@ class AuthService
     }
 
     /**
-     * Login pengguna dengan email & password.
+     * Cari pengguna berdasarkan email atau nomor telepon (dengan normalisasi format).
+     */
+    public function cariPenggunaBerdasarkanIdentitas(string $identitas): ?User
+    {
+        $identitas = trim($identitas);
+        if (str_contains($identitas, '@')) {
+            return User::where('email', strtolower($identitas))->first();
+        }
+
+        $cleanPhone = preg_replace('/[^0-9]/', '', $identitas);
+        $phoneVariants = array_unique(array_filter([
+            $identitas,
+            $cleanPhone,
+            '+' . $cleanPhone,
+            str_starts_with($cleanPhone, '62') ? '0' . substr($cleanPhone, 2) : null,
+            str_starts_with($cleanPhone, '0') ? '+62' . substr($cleanPhone, 1) : null,
+            str_starts_with($cleanPhone, '0') ? '62' . substr($cleanPhone, 1) : null,
+        ]));
+
+        return User::whereIn('telepon', $phoneVariants)
+            ->orWhere('email', $identitas)
+            ->first();
+    }
+
+    /**
+     * Login pengguna dengan email atau nomor handphone & password.
      */
     public function login(string $identitas, string $password): array
     {
-        $identitas = trim($identitas);
-        $user = User::where('email', $identitas)->first();
+        $user = $this->cariPenggunaBerdasarkanIdentitas($identitas);
 
         if (!$user || !Hash::check($password, $user->password)) {
             return [
                 'sukses' => false,
-                'pesan' => 'Email atau kata sandi tidak cocok. Silakan periksa kembali.',
+                'pesan' => 'Email/Nomor HP atau kata sandi tidak cocok. Silakan periksa kembali.',
                 'status' => 401,
             ];
         }
 
         Auth::login($user, true);
 
+        // Hapus cache lama untuk memastikan state terbaru langsung aktif
+        \Illuminate\Support\Facades\Cache::forget("pengguna:akun:{$user->id}");
+        \Illuminate\Support\Facades\Cache::forget("pengguna:profil:{$user->id}");
+
         return [
             'sukses' => true,
-            'pesan' => 'Login berhasil. Selamat datang kembali ' . $user->name . '!',
+            'pesan' => 'Login berhasil. Selamat datang kembali, ' . $user->name . '!',
+            'status' => 200,
+            'user' => $user,
+        ];
+    }
+
+    /**
+     * Kirim OTP untuk proses lupa kata sandi.
+     */
+    public function mintaOtpLupaPassword(string $identitas): array
+    {
+        $user = $this->cariPenggunaBerdasarkanIdentitas($identitas);
+
+        if (!$user) {
+            return [
+                'sukses' => false,
+                'pesan' => 'Akun dengan email atau nomor HP tersebut tidak ditemukan.',
+                'status' => 404,
+            ];
+        }
+
+        try {
+            $otpCode = $this->otpService->sendPasswordResetOtp($user->email, $user->name);
+
+            return [
+                'sukses' => true,
+                'pesan' => 'Kode OTP verifikasi telah dikirim ke ' . $user->email . '.' . (app()->isLocal() ? "\n(Environment Dev: gunakan kode OTP 123456)" : ''),
+                'status' => 200,
+                'email' => $user->email,
+                'otp' => app()->isLocal() ? $otpCode : null,
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'sukses' => false,
+                'pesan' => $e->getMessage(),
+                'status' => 429,
+            ];
+        }
+    }
+
+    /**
+     * Reset kata sandi dengan kode OTP.
+     */
+    public function resetPassword(string $identitas, string $otp, string $passwordBaru): array
+    {
+        $user = $this->cariPenggunaBerdasarkanIdentitas($identitas);
+
+        if (!$user) {
+            return [
+                'sukses' => false,
+                'pesan' => 'Akun tidak ditemukan.',
+                'status' => 404,
+            ];
+        }
+
+        $isValid = $this->otpService->verifyPasswordResetOtp($user->email, $otp)
+            || $this->otpService->verifyOtp($user->email, $otp);
+
+        if (!$isValid) {
+            return [
+                'sukses' => false,
+                'pesan' => 'Kode OTP salah atau sudah kedaluwarsa (maksimal 3 kali percobaan).',
+                'status' => 400,
+            ];
+        }
+
+        $user->password = Hash::make($passwordBaru);
+        $user->save();
+
+        \Illuminate\Support\Facades\Cache::forget("pengguna:akun:{$user->id}");
+        \Illuminate\Support\Facades\Cache::forget("pengguna:profil:{$user->id}");
+
+        // Auto login setelah reset berhasil
+        Auth::login($user, true);
+
+        return [
+            'sukses' => true,
+            'pesan' => 'Kata sandi berhasil diperbarui! Anda telah masuk secara otomatis.',
             'status' => 200,
             'user' => $user,
         ];

@@ -1,10 +1,12 @@
 {
-  "recommendations": [
-    "bmewburn.vscode-intelephense-client",
-    "bradlc.vscode-tailwindcss",
-    "dbaeumer.vscode-eslint",
-    "esbenp.prettier-vscode",
-    "onecentlin.laravel-blade",
-    "amiralizadeh9480.laravel-extra-intellisense"
-  ]
+    "recommendations": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "bmewburn.vscode-intelephense-client",
+        "open-southeners.laravel-pint",
+        "shufo.vscode-blade-formatter",
+        "amiralizadeh9480.laravel-extra-intellisense",
+        "usernamehw.errorlens"
+    ]
 }

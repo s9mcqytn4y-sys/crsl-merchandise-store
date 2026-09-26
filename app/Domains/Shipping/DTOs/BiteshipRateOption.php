@@ -40,6 +40,7 @@ class BiteshipRateOption
             'harga' => $this->harga,
             'estimasi_hari' => $this->estimasiHari,
             'logo_url' => $this->logoUrl,
+            'ikon' => $this->logoUrl,
         ];
     }
 }

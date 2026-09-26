@@ -7,10 +7,9 @@ return [
     | Third Party Services
     |--------------------------------------------------------------------------
     |
-    | This file is for storing the credentials for third party services such
-    | as Resend, Postmark, AWS, and more. This file provides the de facto
-    | location for this type of information, allowing packages to have
-    | a conventional file to locate the various service credentials.
+    | File konfigurasi kredensial layanan pihak ketiga (Biteship, Midtrans, dll).
+    | Jangan pernah memanggil env() langsung di dalam Controller/Service jika
+    | aplikasi Anda menggunakan `php artisan config:cache`.
     |
     */
 
@@ -35,18 +34,28 @@ return [
         ],
     ],
 
+    // ============================================================
+    // BITESIP LOGISTICS GATEWAY
+    // ============================================================
     'biteship' => [
         'api_key' => env('BITESHIP_API_KEY'),
-        'origin_area_id' => env('BITESHIP_ORIGIN_AREA_ID', 'IDNP11KOT789311'),
-        'origin_postal_code' => env('BITESHIP_ORIGIN_POSTAL_CODE', '55281'),
-        'origin_city' => env('BITESHIP_ORIGIN_CITY', 'Sleman, D.I. Yogyakarta'),
         'base_url' => env('BITESHIP_BASE_URL', 'https://api.biteship.com'),
+        // Default area ID resmi untuk Depok, Sleman, DIY (gudang asal CRSL)
+        'origin_area_id' => env('BITESHIP_ORIGIN_AREA_ID', 'IDNP5IDNC412IDND5043IDZ55281'),
+        'origin_postal_code' => env('BITESHIP_ORIGIN_POSTAL_CODE', 55281),
+        'origin_city' => env('BITESHIP_ORIGIN_CITY', 'Sleman, D.I. Yogyakarta'),
     ],
 
+    // ============================================================
+    // MIDTRANS PAYMENT GATEWAY
+    // ============================================================
     'midtrans' => [
+        'merchant_id' => env('MIDTRANS_MERCHANT_ID'),
         'server_key' => env('MIDTRANS_SERVER_KEY'),
         'client_key' => env('MIDTRANS_CLIENT_KEY'),
-        'is_production' => env('MIDTRANS_IS_PRODUCTION', false),
+        'is_production' => (bool) env('MIDTRANS_IS_PRODUCTION', false),
+        'allowed_ip' => env('MIDTRANS_ALLOWED_IP', '103.101.228.215'),
+        'webhook_url' => env('MIDTRANS_WEBHOOK_URL'),
     ],
 
 ];

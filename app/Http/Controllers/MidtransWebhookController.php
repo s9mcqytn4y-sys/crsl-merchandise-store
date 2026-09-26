@@ -59,8 +59,8 @@ class MidtransWebhookController extends Controller
             ->first();
 
         if (!$pesanan) {
-            Log::error("Midtrans Webhook Order Not Found: {$orderId}");
-            return response()->json(['sukses' => false, 'pesan' => 'Pesanan tidak ditemukan'], 404);
+            Log::info("Midtrans Webhook Order Not Found (Test Notification or Non-Existent): {$orderId}");
+            return response()->json(['sukses' => true, 'pesan' => 'Pesanan tidak ditemukan, notifikasi diterima.'], 200);
         }
 
         // 2. Cek Idempotensi (Jika sudah lunas/akan_dikirim/dikirim, lewati)

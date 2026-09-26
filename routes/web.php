@@ -19,8 +19,9 @@ Route::get('/', [BerandaController::class, 'index'])->name('beranda');
 Route::get('/bundles/{id}/{slug?}', [BundleController::class, 'show'])->name('bundles.show');
 Route::redirect('/paket/{id}/{slug?}', '/bundles/{id}/{slug?}', 301);
 
-// Katalog & Detail Produk (crsl-store.id/products/{slug})
+// Katalog & Detail Produk (crsl-store.id/products dan /products/{slug})
 Route::get('/katalog', [KatalogController::class, 'index'])->name('katalog');
+Route::get('/products', [KatalogController::class, 'index'])->name('products');
 Route::get('/products/{slug}', [KatalogController::class, 'detail'])->name('products.detail');
 Route::get('/produk/{slug}', [KatalogController::class, 'detail'])->name('produk.detail');
 
@@ -30,19 +31,27 @@ Route::put('/keranjang/{id}', [KeranjangController::class, 'perbarui'])->name('k
 Route::delete('/keranjang/{id}', [KeranjangController::class, 'hapus'])->name('keranjang.hapus');
 Route::delete('/keranjang', [KeranjangController::class, 'kosongkan'])->name('keranjang.kosongkan');
 
-// Pembayaran & Pesanan Baru (Mendukung /pembayaran dan /checkout)
+// Pembayaran & Pesanan Baru (Mendukung /pembayaran, /checkout, dan /checkout/proses)
 Route::get('/pembayaran', [PembayaranController::class, 'index'])->name('pembayaran.index');
 Route::post('/pembayaran', [PembayaranController::class, 'proses'])->name('pembayaran.proses');
 Route::get('/checkout', [PembayaranController::class, 'index'])->name('checkout');
 Route::post('/checkout', [PembayaranController::class, 'proses'])->name('checkout.proses');
+Route::post('/checkout/proses', [PembayaranController::class, 'proses'])->name('checkout.proses.alias');
 
 // Faktur & Lacak Pesanan
-Route::get('/faktur/{nomorPesanan}', [PesananController::class, 'faktur'])->name('faktur');
+Route::get('/faktur/{nomorPesanan}', [PesananController::class, 'faktur'])->name('faktur')->where('nomorPesanan', '.*');
+Route::post('/faktur/{nomorPesanan}/ubah-alamat', [PesananController::class, 'ubahAlamat'])->name('faktur.ubah-alamat')->where('nomorPesanan', '.*');
+Route::post('/faktur/{nomorPesanan}/ganti-metode-bayar', [PesananController::class, 'gantiMetodeBayar'])->name('faktur.ganti-metode')->where('nomorPesanan', '.*');
+Route::post('/faktur/{nomorPesanan}/batalkan', [PesananController::class, 'batalkanPesanan'])->name('faktur.batalkan')->where('nomorPesanan', '.*');
+Route::post('/faktur/{nomorPesanan}/refresh-qris', [PesananController::class, 'refreshQris'])->name('faktur.refresh-qris')->where('nomorPesanan', '.*');
+Route::post('/faktur/{nomorPesanan}/simulasi-bayar', [PesananController::class, 'simulasiBayarDev'])->name('faktur.simulasi')->where('nomorPesanan', '.*');
+Route::post('/pesanan/{nomorPesanan}/konfirmasi-selesai', [PesananController::class, 'konfirmasiDiterima'])->name('pesanan.konfirmasi')->where('nomorPesanan', '.*');
 Route::get('/lacak', [PesananController::class, 'lacak'])->name('lacak');
 
 // Akun Pelanggan & Profile (crsl-store.id/account & /profile/[myinfo, delivery, account])
 Route::redirect('/akun', '/account', 301);
 Route::get('/account', [AkunController::class, 'index'])->name('account');
+Route::post('/account/klaim-pesanan', [AkunController::class, 'klaimPesananTamu'])->name('account.klaim-pesanan');
 
 Route::redirect('/profil/myinfo', '/profile/myinfo', 301);
 Route::get('/profile/myinfo', [AkunController::class, 'infoProfil'])->name('profile.myinfo');
@@ -69,11 +78,13 @@ Route::post('/api/wilayah/ongkir', [WilayahController::class, 'ongkir'])->name('
 Route::post('/api/voucher/validasi', [PembayaranController::class, 'validasiVoucher'])->name('api.voucher.validasi');
 Route::post('/api/midtrans/webhook', [MidtransWebhookController::class, 'handle'])->name('api.midtrans.webhook');
 Route::post('/api/webhooks/midtrans', [MidtransWebhookController::class, 'handle'])->name('api.webhooks.midtrans');
-Route::get('/api/pesanan/{nomorPesanan}/status', [PesananController::class, 'cekStatusRealtime'])->name('api.pesanan.status');
+Route::get('/api/pesanan/{nomorPesanan}/status', [PesananController::class, 'cekStatusRealtime'])->name('api.pesanan.status')->where('nomorPesanan', '.*');
 
 // Autentikasi & Akun
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/register', [AuthController::class, 'register'])->name('register');
 Route::post('/otp/verifikasi', [AuthController::class, 'verifyOtp'])->name('otp.verifikasi');
+Route::post('/lupa-password/minta-otp', [AuthController::class, 'mintaOtpLupaPassword'])->name('lupa-password.minta-otp');
+Route::post('/lupa-password/reset', [AuthController::class, 'resetPassword'])->name('lupa-password.reset');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::post('/profil/hapus-akun', [AuthController::class, 'hapusAkun'])->name('profil.hapus-akun');

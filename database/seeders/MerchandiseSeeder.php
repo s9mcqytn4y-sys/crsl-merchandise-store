@@ -40,18 +40,71 @@ class MerchandiseSeeder extends Seeder
         // 2. Seed Tier Loyalitas
         $tierList = [
             ['id' => 1, 'nama' => 'New Freen', 'slug' => 'new-freen', 'syarat_belanja' => 0, 'bonus_poin_masuk' => 100, 'poin_per_ulasan' => 100, 'warna_aksen' => '#3b82f6', 'urutan' => 1],
-            ['id' => 2, 'nama' => 'Bestfreen', 'slug' => 'bestfreen', 'syarat_belanja' => 500000, 'bonus_poin_masuk' => 500, 'poin_per_ulasan' => 200, 'warna_aksen' => '#e52027', 'urutan' => 2],
-            ['id' => 3, 'nama' => 'CRSL Gengs', 'slug' => 'crsl-gengs', 'syarat_belanja' => 2000000, 'bonus_poin_masuk' => 2000, 'poin_per_ulasan' => 500, 'warna_aksen' => '#eab308', 'urutan' => 3],
+            ['id' => 2, 'nama' => 'Good Freen', 'slug' => 'good-freen', 'syarat_belanja' => 200000, 'bonus_poin_masuk' => 300, 'poin_per_ulasan' => 200, 'warna_aksen' => '#10b981', 'urutan' => 2],
+            ['id' => 3, 'nama' => 'Best Freen', 'slug' => 'best-freen', 'syarat_belanja' => 500000, 'bonus_poin_masuk' => 1000, 'poin_per_ulasan' => 500, 'warna_aksen' => '#e52027', 'urutan' => 3],
         ];
 
         foreach ($tierList as $tier) {
             TierLoyalitas::updateOrCreate(['id' => $tier['id']], $tier);
         }
 
-        // 3. Seed Voucher
+        // 3. Seed Voucher Aktif
         $voucherList = [
-            ['id' => 1, 'kode' => 'CRSLBESTIE10', 'judul' => 'Diskon Sahabat 10%', 'tipe' => 'persen', 'nilai' => 10, 'min_belanja' => 100000, 'kuota' => 500, 'aktif' => true],
-            ['id' => 2, 'kode' => 'FREEONGKIR20', 'judul' => 'Potongan Ongkir Rp20.000', 'tipe' => 'ongkir', 'nilai' => 20000, 'min_belanja' => 150000, 'kuota' => 1000, 'aktif' => true],
+            [
+                'id' => 1,
+                'kode' => 'CRSLYAY25',
+                'judul' => 'PAYDAY MEMBERSHIP',
+                'tipe' => 'persen',
+                'nilai' => 25,
+                'min_belanja' => 100000,
+                'kuota' => 500,
+                'berlaku_sampai' => now()->addDays(3),
+                'aktif' => true,
+            ],
+            [
+                'id' => 2,
+                'kode' => 'FREEONGKIR10K',
+                'judul' => 'BEBAS ONGKIR 10RB',
+                'tipe' => 'ongkir',
+                'nilai' => 10000,
+                'min_belanja' => 150000,
+                'kuota' => 1000,
+                'berlaku_sampai' => now()->addDays(7),
+                'aktif' => true,
+            ],
+            [
+                'id' => 3,
+                'kode' => 'NEWADOPTER10',
+                'judul' => 'WELCOME NEW BESTIE',
+                'tipe' => 'persen',
+                'nilai' => 10,
+                'min_belanja' => 50000,
+                'kuota' => 2000,
+                'berlaku_sampai' => now()->addMonths(1),
+                'aktif' => true,
+            ],
+            [
+                'id' => 4,
+                'kode' => 'AUTO10',
+                'judul' => 'DISKON 10% PROMO KHUSUS',
+                'tipe' => 'persen',
+                'nilai' => 10,
+                'min_belanja' => 100000,
+                'kuota' => 1000,
+                'berlaku_sampai' => now()->addMonths(2),
+                'aktif' => true,
+            ],
+            [
+                'id' => 5,
+                'kode' => 'CRSLHEMAT',
+                'judul' => 'HEMAT 10% ALL ITEMS',
+                'tipe' => 'persen',
+                'nilai' => 10,
+                'min_belanja' => 150000,
+                'kuota' => 1000,
+                'berlaku_sampai' => now()->addMonths(2),
+                'aktif' => true,
+            ],
         ];
 
         foreach ($voucherList as $v) {
@@ -224,6 +277,14 @@ class MerchandiseSeeder extends Seeder
 
         foreach ($gambarList as $img) {
             GambarProduk::updateOrCreate(['id' => $img['id']], $img);
+        }
+
+        // Sinkronisasi PostgreSQL auto-increment sequence setelah seeding explicit ID
+        if (\Illuminate\Support\Facades\DB::connection()->getDriverName() === 'pgsql') {
+            $tabelList = ['kategori', 'tier_loyalitas', 'voucher', 'produk', 'produk_varian', 'produk_spesifikasi', 'gambar_produk'];
+            foreach ($tabelList as $tabel) {
+                \Illuminate\Support\Facades\DB::statement("SELECT setval(pg_get_serial_sequence('\"{$tabel}\"', 'id'), coalesce(max(id), 1)) FROM \"{$tabel}\"");
+            }
         }
     }
 }

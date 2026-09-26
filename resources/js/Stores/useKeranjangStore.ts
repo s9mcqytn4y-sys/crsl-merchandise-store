@@ -4,14 +4,25 @@ import { persist, createJSONStorage } from "zustand/middleware";
 export interface ItemKeranjang {
     id: string;
     produk_id?: number;
+    slug?: string;
     varian_id?: number | null;
     nama_produk: string;
     harga: number;
+    harga_asli?: number;
+    harga_dasar?: number;
+    stok?: number;
     gambar?: string;
     jumlah: number;
     ukuran?: string;
     warna?: string;
     sku?: string;
+    is_bundle?: boolean;
+    bundle_name?: string;
+    sub_items?: Array<{
+        nama: string;
+        variasi: string;
+        gambar?: string;
+    }>;
 }
 
 interface StateKeranjang {

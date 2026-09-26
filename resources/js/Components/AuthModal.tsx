@@ -1,17 +1,14 @@
 import React, { useState, useEffect, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { router } from "@inertiajs/react";
-import {
-    X,
-    Lock,
-    User,
-    ArrowLeft,
-    Check,
-    ChevronDown,
-    Eye,
-    EyeOff,
-} from "lucide-react";
-import { toast } from "sonner";
+import { X, ArrowLeft } from "lucide-react";
+import { toastNotifikasi } from "../Utils/toastNotifikasi";
+import LoginIdentifierStep from "./Auth/LoginIdentifierStep";
+import LoginPasswordStep from "./Auth/LoginPasswordStep";
+import RegisterStep from "./Auth/RegisterStep";
+import OtpVerifyStep from "./Auth/OtpVerifyStep";
+import ForgotPasswordStep from "./Auth/ForgotPasswordStep";
+import ResetPasswordStep from "./Auth/ResetPasswordStep";
 
 interface AuthModalProps {
     isOpen: boolean;
@@ -24,6 +21,7 @@ type AuthStep =
     | "login_identifier"
     | "login_password"
     | "forgot_password"
+    | "reset_password"
     | "register"
     | "verify_otp";
 
@@ -34,10 +32,10 @@ export default function AuthModal({
     initialTab = "login",
 }: AuthModalProps) {
     const [step, setStep] = useState<AuthStep>(
-        initialTab === "register" ? "register" : "login_identifier",
+        initialTab === "register" ? "register" : "login_identifier"
     );
     const [loading, setLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     // Form States
     const [identifier, setIdentifier] = useState("");
@@ -46,25 +44,31 @@ export default function AuthModal({
     const [regEmail, setRegEmail] = useState("");
     const [regPassword, setRegPassword] = useState("");
     const [birthDay, setBirthDay] = useState("14");
-    const [birthMonth, setBirthMonth] = useState("12");
-    const [birthYear, setBirthYear] = useState("2008");
+    const [birthMonth, setBirthMonth] = useState("09");
+    const [birthYear, setBirthYear] = useState("2003");
     const [otpCode, setOtpCode] = useState("");
     const [countdown, setCountdown] = useState(180);
 
+    // Reset Password States
+    const [resetIdentifier, setResetIdentifier] = useState("");
+    const [resetOtp, setResetOtp] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmNewPassword, setConfirmNewPassword] = useState("");
+    const [resetSuccessMessage, setResetSuccessMessage] = useState("");
+
     useEffect(() => {
         if (isOpen) {
-            setStep(
-                initialTab === "register" ? "register" : "login_identifier",
-            );
-            setShowPassword(false);
+            setStep(initialTab === "register" ? "register" : "login_identifier");
             setCountdown(180);
+            setErrors({});
+            setResetSuccessMessage("");
         }
     }, [isOpen, initialTab]);
 
     // Timer countdown untuk kirim ulang kode OTP
     useEffect(() => {
         let timer: ReturnType<typeof setInterval>;
-        if (isOpen && step === "verify_otp" && countdown > 0) {
+        if (isOpen && (step === "verify_otp" || step === "reset_password") && countdown > 0) {
             timer = setInterval(() => {
                 setCountdown((prev) => prev - 1);
             }, 1000);
@@ -81,23 +85,59 @@ export default function AuthModal({
             setRegEmail("");
             setRegPassword("");
             setOtpCode("");
+            setResetIdentifier("");
+            setResetOtp("");
+            setNewPassword("");
+            setConfirmNewPassword("");
+            setResetSuccessMessage("");
+            setErrors({});
             setLoading(false);
         }, 200);
     };
 
-    // Step 1: Validasi email/nomor hp awal sebelum input password
+    const clearFieldError = (fieldName: string) => {
+        if (errors[fieldName]) {
+            setErrors((prev) => {
+                const next = { ...prev };
+                delete next[fieldName];
+                return next;
+            });
+        }
+    };
+
+    // ─── 1. Login Identifier Step ───
     const handleNextIdentifier = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!identifier.trim()) return;
+        const trimmed = identifier.trim();
+        if (!trimmed) {
+            setErrors({ identifier: "Mohon masukkan email atau nomor handphone Anda." });
+            return;
+        }
+
+        const isEmail = trimmed.includes("@") && trimmed.includes(".");
+        const isPhone = /^[0-9+\s-]{8,16}$/.test(trimmed);
+        if (!isEmail && !isPhone) {
+            setErrors({
+                identifier:
+                    "Format email atau nomor handphone tidak valid. Contoh: bestie@crsl-store.id atau 08123456789",
+            });
+            return;
+        }
+
+        setErrors({});
         setStep("login_password");
     };
 
-    // Step 2: Proses Login dengan Kata Sandi
+    // ─── 2. Login Password Submit ───
     const handleLoginSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!password) return;
+        if (!password) {
+            setErrors({ password: "Kata sandi wajib diisi." });
+            return;
+        }
 
         setLoading(true);
+        setErrors({});
         try {
             const res = await fetch("/login", {
                 method: "POST",
@@ -106,32 +146,52 @@ export default function AuthModal({
                     Accept: "application/json",
                     "X-Requested-With": "XMLHttpRequest",
                 },
-                body: JSON.stringify({ email: identifier, password }),
+                body: JSON.stringify({ email: identifier.trim(), password }),
             });
             const data = await res.json();
             if (res.ok && (data.sukses || data.success)) {
-                toast.success(data.pesan || "Login successful! Welcome back.");
+                toastNotifikasi.sukses(data.pesan || "Login berhasil! Selamat datang kembali.");
                 onSuccessAuth?.();
                 handleClose();
-                router.reload({ only: ["auth"] });
+                router.reload();
             } else {
-                toast.error(
-                    data.pesan || "Incorrect password or account not found.",
-                );
+                const errMsg =
+                    data.pesan || data.message || "Email/Nomor HP atau kata sandi tidak cocok.";
+                setErrors({ password: errMsg });
             }
         } catch {
-            toast.error("Failed to connect to server. Please try again.");
+            setErrors({ password: "Gagal terhubung ke server. Silakan coba kembali." });
         } finally {
             setLoading(false);
         }
     };
 
-    // Step 3: Proses Daftar Akun
+    // ─── 3. Register Submit ───
     const handleRegisterSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!fullName || !regEmail || !regPassword) return;
+        const newErrors: Record<string, string> = {};
+
+        const cleanName = fullName.trim();
+        const cleanEmail = regEmail.trim().toLowerCase();
+
+        if (!cleanName) newErrors.fullName = "Nama lengkap wajib diisi.";
+        else if (cleanName.length < 3) newErrors.fullName = "Nama lengkap minimal 3 karakter.";
+
+        if (!cleanEmail) newErrors.regEmail = "Email wajib diisi.";
+        else if (!cleanEmail.includes("@") || !cleanEmail.includes("."))
+            newErrors.regEmail = "Alamat email tidak valid.";
+
+        if (!regPassword) newErrors.regPassword = "Kata sandi wajib diisi minimal 8 karakter.";
+        else if (regPassword.length < 8)
+            newErrors.regPassword = "Kata sandi minimal 8 karakter.";
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
 
         setLoading(true);
+        setErrors({});
         try {
             const res = await fetch("/register", {
                 method: "POST",
@@ -141,8 +201,9 @@ export default function AuthModal({
                     "X-Requested-With": "XMLHttpRequest",
                 },
                 body: JSON.stringify({
-                    name: fullName,
-                    email: regEmail,
+                    nama: cleanName,
+                    name: cleanName,
+                    email: cleanEmail,
                     password: regPassword,
                     password_confirmation: regPassword,
                     birth_day: birthDay,
@@ -152,30 +213,36 @@ export default function AuthModal({
             });
             const data = await res.json();
             if (res.ok && (data.sukses || data.success)) {
-                const devOtp = data.otp ? ` (OTP: ${data.otp})` : " (Gunakan OTP 123456 untuk testing)";
-                toast.success("Kode verifikasi telah dikirim ke email." + devOtp);
                 setStep("verify_otp");
                 setCountdown(180);
             } else {
-                toast.error(
-                    data.pesan || "Registration failed. Please try again.",
-                );
+                const errMsg =
+                    data.pesan || data.message || "Pendaftaran gagal. Silakan periksa data Anda.";
+                if (errMsg.toLowerCase().includes("email")) {
+                    setErrors({ regEmail: errMsg });
+                } else {
+                    setErrors({ regPassword: errMsg });
+                }
             }
         } catch {
-            toast.error("Error processing registration.");
+            setErrors({ regEmail: "Gagal terhubung ke server. Silakan coba lagi." });
         } finally {
             setLoading(false);
         }
     };
 
-    // Step 4: Verifikasi Kode OTP
+    // ─── 4. OTP Verification Submit ───
     const handleOtpSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!otpCode || otpCode.length < 4) return;
+        if (!otpCode || otpCode.length !== 6) {
+            setErrors({ otpCode: "Masukkan 6 digit kode verifikasi OTP secara lengkap." });
+            return;
+        }
 
         setLoading(true);
+        setErrors({});
         try {
-            const targetEmail = regEmail || identifier;
+            const targetEmail = (regEmail || identifier).trim().toLowerCase();
             const res = await fetch("/otp/verifikasi", {
                 method: "POST",
                 headers: {
@@ -187,28 +254,127 @@ export default function AuthModal({
             });
             const data = await res.json();
             if (res.ok && (data.sukses || data.success)) {
-                toast.success("Account successfully verified!");
+                toastNotifikasi.sukses("Akun berhasil diverifikasi! Selamat datang.");
                 onSuccessAuth?.();
                 handleClose();
-                router.reload({ only: ["auth"] });
+                router.reload();
             } else {
-                toast.error(data.pesan || "Invalid verification code.");
+                setErrors({
+                    otpCode:
+                        data.pesan ||
+                        "Kode OTP 6 digit tidak valid atau sudah kedaluwarsa. Gunakan 123456 untuk testing.",
+                });
             }
         } catch {
-            toast.error("Verification failed.");
+            setErrors({ otpCode: "Terjadi kesalahan saat memverifikasi OTP. Silakan coba kembali." });
         } finally {
             setLoading(false);
         }
     };
 
-    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regEmail);
-    const isRegisterComplete =
-        Boolean(fullName.trim()) && isEmailValid && regPassword.length >= 6;
+    // ─── 5. Forgot Password: Minta OTP ───
+    const handleForgotRequestOtp = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const target = (resetIdentifier || identifier).trim();
+        if (!target) {
+            setErrors({ resetIdentifier: "Masukkan email atau nomor HP yang terdaftar." });
+            return;
+        }
+
+        setLoading(true);
+        setErrors({});
+        try {
+            const res = await fetch("/lupa-password/minta-otp", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                body: JSON.stringify({ identitas: target }),
+            });
+            const data = await res.json();
+            if (res.ok && data.sukses) {
+                setResetIdentifier(target);
+                setResetSuccessMessage(data.pesan || "Kode OTP telah dikirim.");
+                setStep("reset_password");
+                setCountdown(180);
+            } else {
+                setErrors({
+                    resetIdentifier:
+                        data.pesan ||
+                        "Akun tidak ditemukan. Periksa kembali email atau nomor HP Anda.",
+                });
+            }
+        } catch {
+            setErrors({
+                resetIdentifier: "Gagal mengirim permintaan reset password. Coba sesaat lagi.",
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // ─── 6. Reset Password dengan OTP ───
+    const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const newErrs: Record<string, string> = {};
+
+        if (!resetOtp || resetOtp.length !== 6) {
+            newErrs.resetOtp = "Masukkan 6 digit kode OTP verifikasi.";
+        }
+        if (!newPassword || newPassword.length < 8) {
+            newErrs.newPassword = "Kata sandi baru minimal 8 karakter.";
+        }
+        if (newPassword !== confirmNewPassword) {
+            newErrs.confirmNewPassword = "Konfirmasi kata sandi tidak cocok.";
+        }
+
+        if (Object.keys(newErrs).length > 0) {
+            setErrors(newErrs);
+            return;
+        }
+
+        setLoading(true);
+        setErrors({});
+        try {
+            const res = await fetch("/lupa-password/reset", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                body: JSON.stringify({
+                    identitas: resetIdentifier,
+                    kode_otp: resetOtp,
+                    password: newPassword,
+                    password_confirmation: confirmNewPassword,
+                }),
+            });
+            const data = await res.json();
+            if (res.ok && data.sukses) {
+                toastNotifikasi.sukses("Kata sandi berhasil diperbarui! Anda telah login otomatis.");
+                onSuccessAuth?.();
+                handleClose();
+                router.reload();
+            } else {
+                setErrors({
+                    resetOtp:
+                        data.pesan ||
+                        "Kode OTP salah atau reset gagal. Gunakan 123456 untuk testing.",
+                });
+            }
+        } catch {
+            setErrors({ resetOtp: "Gagal memperbarui kata sandi. Silakan coba kembali." });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <Transition show={isOpen} as={Fragment}>
             <Dialog as="div" className="relative z-50" onClose={handleClose}>
-                {/* Backdrop Overlay */}
                 <Transition.Child
                     as={Fragment}
                     enter="ease-out duration-200"
@@ -232,28 +398,32 @@ export default function AuthModal({
                             leaveFrom="opacity-100 scale-100"
                             leaveTo="opacity-0 scale-95"
                         >
-                            <Dialog.Panel className="w-full max-w-[430px] transform overflow-hidden rounded-[28px] bg-white p-6 sm:p-8 text-left align-middle shadow-2xl transition-all border border-slate-100">
-                                {/* Header Bar Modal */}
-                                <div className="flex items-center justify-between pb-4">
+                            <Dialog.Panel className="w-full max-w-[420px] transform overflow-hidden rounded-[28px] bg-white p-6 sm:p-7 text-left align-middle shadow-2xl transition-all border border-slate-200">
+                                {/* Header Modal */}
+                                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                                     <div className="flex items-center gap-2">
-                                        {step === "login_password" && (
+                                        {(step === "login_password" || step === "forgot_password") && (
                                             <button
                                                 type="button"
-                                                onClick={() =>
-                                                    setStep("login_identifier")
-                                                }
-                                                className="p-1 -ml-1 text-slate-600 hover:text-slate-900 rounded-lg"
+                                                onClick={() => {
+                                                    setErrors({});
+                                                    setStep("login_identifier");
+                                                }}
+                                                className="p-1 -ml-1 text-slate-500 hover:text-slate-900 rounded-lg transition-colors cursor-pointer"
+                                                aria-label="Kembali ke langkah sebelumnya"
                                             >
                                                 <ArrowLeft className="w-4 h-4" />
                                             </button>
                                         )}
-                                        {step === "forgot_password" && (
+                                        {step === "reset_password" && (
                                             <button
                                                 type="button"
-                                                onClick={() =>
-                                                    setStep("login_password")
-                                                }
-                                                className="p-1 -ml-1 text-slate-600 hover:text-slate-900 rounded-lg"
+                                                onClick={() => {
+                                                    setErrors({});
+                                                    setStep("forgot_password");
+                                                }}
+                                                className="p-1 -ml-1 text-slate-500 hover:text-slate-900 rounded-lg transition-colors cursor-pointer"
+                                                aria-label="Kembali ke lupa password"
                                             >
                                                 <ArrowLeft className="w-4 h-4" />
                                             </button>
@@ -263,598 +433,154 @@ export default function AuthModal({
                                             as="h3"
                                             className="text-lg font-bold text-slate-900 tracking-tight"
                                         >
-                                            {step === "login_identifier" &&
-                                                "Login"}
-                                            {step === "login_password" &&
-                                                "Login"}
-                                            {step === "forgot_password" &&
-                                                "Forgot password"}
-                                            {step === "register" && "Register"}
-                                            {step === "verify_otp" &&
-                                                "Verify Account"}
+                                            {step === "login_identifier" && "Masuk ke Akun"}
+                                            {step === "login_password" && "Masukkan Kata Sandi"}
+                                            {step === "forgot_password" && "Lupa Kata Sandi"}
+                                            {step === "reset_password" && "Atur Ulang Kata Sandi"}
+                                            {step === "register" && "Daftar Akun CRSL"}
+                                            {step === "verify_otp" && "Verifikasi Kode OTP"}
                                         </Dialog.Title>
                                     </div>
 
                                     <button
                                         type="button"
                                         onClick={handleClose}
-                                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors focus:outline-none"
-                                        aria-label="Close dialog"
+                                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors focus:outline-none cursor-pointer"
+                                        aria-label="Tutup dialog"
                                     >
                                         <X className="w-4 h-4" />
                                     </button>
                                 </div>
 
-                                {/* ─── 1. LOGIN STEP 1: EMAIL / PHONE INPUT ─── */}
+                                {/* Step Components */}
                                 {step === "login_identifier" && (
-                                    <form
+                                    <LoginIdentifierStep
+                                        identifier={identifier}
+                                        onChangeIdentifier={(val) => {
+                                            setIdentifier(val);
+                                            clearFieldError("identifier");
+                                        }}
                                         onSubmit={handleNextIdentifier}
-                                        className="space-y-4 pt-1"
-                                    >
-                                        <div className="border border-slate-200/90 rounded-2xl px-4 py-2.5 flex items-center gap-3 bg-white focus-within:border-slate-400">
-                                            <User className="w-4 h-4 text-slate-400 shrink-0" />
-                                            <input
-                                                type="text"
-                                                value={identifier}
-                                                onChange={(e) =>
-                                                    setIdentifier(
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                placeholder="Your email/phone number"
-                                                className="w-full bg-transparent text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none"
-                                                autoFocus
-                                            />
-                                        </div>
-
-                                        <button
-                                            type="submit"
-                                            disabled={!identifier.trim()}
-                                            className={`w-full py-3.5 rounded-full text-xs sm:text-sm font-semibold transition-all ${
-                                                identifier.trim()
-                                                    ? "bg-[#E52027] hover:bg-[#CC1C22] text-white shadow-xs cursor-pointer"
-                                                    : "bg-red-200 text-white/90 cursor-not-allowed"
-                                            }`}
-                                        >
-                                            Next
-                                        </button>
-
-                                        <div className="text-center text-xs text-slate-600 pt-2">
-                                            Don't have account? Signup{" "}
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setStep("register")
-                                                }
-                                                className="text-slate-700 font-bold hover:underline"
-                                            >
-                                                here
-                                            </button>
-                                        </div>
-
-                                        <p className="text-[11px] text-center text-slate-400 leading-relaxed pt-3">
-                                            This site is protected by reCAPTCHA
-                                            and the Google{" "}
-                                            <span className="text-slate-600 font-medium">
-                                                Privacy Policy
-                                            </span>{" "}
-                                            and{" "}
-                                            <span className="text-slate-600 font-medium">
-                                                Terms of Service
-                                            </span>{" "}
-                                            apply.
-                                        </p>
-                                    </form>
+                                        onSwitchToRegister={() => {
+                                            setErrors({});
+                                            setStep("register");
+                                        }}
+                                        error={errors.identifier}
+                                        loading={loading}
+                                    />
                                 )}
 
-                                {/* ─── 2. LOGIN STEP 2: PASSWORD INPUT ─── */}
                                 {step === "login_password" && (
-                                    <form
+                                    <LoginPasswordStep
+                                        identifier={identifier}
+                                        password={password}
+                                        onChangePassword={(val) => {
+                                            setPassword(val);
+                                            clearFieldError("password");
+                                        }}
                                         onSubmit={handleLoginSubmit}
-                                        className="space-y-4 pt-1"
-                                    >
-                                        {/* Field Identifier Readonly */}
-                                        <div className="bg-slate-50 border border-slate-100 rounded-2xl px-4 py-2.5 flex items-center gap-3">
-                                            <User className="w-4 h-4 text-slate-400 shrink-0" />
-                                            <div className="min-w-0">
-                                                <span className="block text-[10px] text-slate-400">
-                                                    Your email/phone number
-                                                </span>
-                                                <span className="block text-xs font-medium text-slate-700 truncate">
-                                                    {identifier}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        {/* Field Password */}
-                                        <div className="border border-slate-200/90 rounded-2xl px-4 py-2.5 flex items-center gap-3 bg-white focus-within:border-slate-400 relative">
-                                            <Lock className="w-4 h-4 text-slate-400 shrink-0" />
-                                            <div className="flex-1">
-                                                <span className="block text-[10px] text-slate-400">
-                                                    Password
-                                                </span>
-                                                <input
-                                                    type={
-                                                        showPassword
-                                                            ? "text"
-                                                            : "password"
-                                                    }
-                                                    value={password}
-                                                    onChange={(e) =>
-                                                        setPassword(
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    placeholder="••••••••"
-                                                    className="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 focus:outline-none"
-                                                    autoFocus
-                                                />
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setShowPassword(
-                                                        !showPassword,
-                                                    )
-                                                }
-                                                className="text-slate-400 hover:text-slate-600 p-1"
-                                            >
-                                                {showPassword ? (
-                                                    <EyeOff className="w-4 h-4" />
-                                                ) : (
-                                                    <Eye className="w-4 h-4" />
-                                                )}
-                                            </button>
-                                        </div>
-
-                                        <button
-                                            type="submit"
-                                            disabled={!password || loading}
-                                            className={`w-full py-3.5 rounded-full text-xs sm:text-sm font-semibold transition-all ${
-                                                password && !loading
-                                                    ? "bg-[#E52027] hover:bg-[#CC1C22] text-white shadow-xs cursor-pointer"
-                                                    : "bg-red-200 text-white/90 cursor-not-allowed"
-                                            }`}
-                                        >
-                                            {loading
-                                                ? "Processing..."
-                                                : "Login"}
-                                        </button>
-
-                                        <div className="text-center pt-1">
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setStep("forgot_password")
-                                                }
-                                                className="text-xs font-semibold text-[#E52027] hover:underline"
-                                            >
-                                                Forgot password?
-                                            </button>
-                                        </div>
-
-                                        <div className="text-center text-xs text-slate-600 pt-2">
-                                            Don't have account? Signup{" "}
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setStep("register")
-                                                }
-                                                className="text-slate-700 font-bold hover:underline"
-                                            >
-                                                here
-                                            </button>
-                                        </div>
-
-                                        <p className="text-[11px] text-center text-slate-400 leading-relaxed pt-3">
-                                            This site is protected by reCAPTCHA
-                                            and the Google{" "}
-                                            <span className="text-slate-600 font-medium">
-                                                Privacy Policy
-                                            </span>{" "}
-                                            and{" "}
-                                            <span className="text-slate-600 font-medium">
-                                                Terms of Service
-                                            </span>{" "}
-                                            apply.
-                                        </p>
-                                    </form>
-                                )}
-
-                                {/* ─── 3. FORGOT PASSWORD STEP ─── */}
-                                {step === "forgot_password" && (
-                                    <form
-                                        onSubmit={(e) => {
-                                            e.preventDefault();
-                                            toast.info(
-                                                "Password reset link has been sent to your email.",
-                                            );
+                                        onChangeIdentifierClick={() => {
+                                            setErrors({});
                                             setStep("login_identifier");
                                         }}
-                                        className="space-y-4 pt-1"
-                                    >
-                                        <div className="border border-slate-200/90 rounded-2xl px-4 py-2.5 bg-white">
-                                            <span className="block text-[10px] text-slate-400 mb-0.5">
-                                                Your email/phone number
-                                            </span>
-                                            <input
-                                                type="text"
-                                                value={identifier}
-                                                onChange={(e) =>
-                                                    setIdentifier(
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                className="w-full bg-transparent text-xs text-slate-800 focus:outline-none font-medium"
-                                                autoFocus
-                                            />
-                                        </div>
-
-                                        <button
-                                            type="submit"
-                                            disabled={!identifier.trim()}
-                                            className="w-full py-3.5 bg-slate-500 hover:bg-slate-600 text-white rounded-full text-xs sm:text-sm font-semibold transition-all shadow-xs cursor-pointer"
-                                        >
-                                            Confirm
-                                        </button>
-                                    </form>
+                                        onForgotPasswordClick={() => {
+                                            setErrors({});
+                                            setResetIdentifier(identifier);
+                                            setStep("forgot_password");
+                                        }}
+                                        error={errors.password}
+                                        loading={loading}
+                                    />
                                 )}
 
-                                {/* ─── 4. REGISTER STEP ─── */}
+                                {step === "forgot_password" && (
+                                    <ForgotPasswordStep
+                                        identifier={resetIdentifier || identifier}
+                                        onChangeIdentifier={(val) => {
+                                            setResetIdentifier(val);
+                                            setIdentifier(val);
+                                            clearFieldError("resetIdentifier");
+                                        }}
+                                        onSubmit={handleForgotRequestOtp}
+                                        error={errors.resetIdentifier}
+                                        loading={loading}
+                                    />
+                                )}
+
+                                {step === "reset_password" && (
+                                    <ResetPasswordStep
+                                        resetSuccessMessage={resetSuccessMessage}
+                                        resetOtp={resetOtp}
+                                        newPassword={newPassword}
+                                        confirmNewPassword={confirmNewPassword}
+                                        onChangeResetOtp={(val) => {
+                                            setResetOtp(val);
+                                            clearFieldError("resetOtp");
+                                        }}
+                                        onChangeNewPassword={(val) => {
+                                            setNewPassword(val);
+                                            clearFieldError("newPassword");
+                                        }}
+                                        onChangeConfirmNewPassword={(val) => {
+                                            setConfirmNewPassword(val);
+                                            clearFieldError("confirmNewPassword");
+                                        }}
+                                        onSubmit={handleResetPasswordSubmit}
+                                        errors={errors}
+                                        loading={loading}
+                                    />
+                                )}
+
                                 {step === "register" && (
-                                    <form
+                                    <RegisterStep
+                                        fullName={fullName}
+                                        regEmail={regEmail}
+                                        regPassword={regPassword}
+                                        birthDay={birthDay}
+                                        birthMonth={birthMonth}
+                                        birthYear={birthYear}
+                                        onChangeFullName={(val) => {
+                                            setFullName(val);
+                                            clearFieldError("fullName");
+                                        }}
+                                        onChangeRegEmail={(val) => {
+                                            setRegEmail(val);
+                                            clearFieldError("regEmail");
+                                        }}
+                                        onChangeRegPassword={(val) => {
+                                            setRegPassword(val);
+                                            clearFieldError("regPassword");
+                                        }}
+                                        onChangeBirthDay={setBirthDay}
+                                        onChangeBirthMonth={setBirthMonth}
+                                        onChangeBirthYear={setBirthYear}
                                         onSubmit={handleRegisterSubmit}
-                                        className="space-y-3.5 pt-1"
-                                    >
-                                        <p className="text-xs text-slate-600 leading-relaxed pb-1">
-                                            Create account to be our member to
-                                            earn points, get free vouchers, and
-                                            hear our news earlier.
-                                        </p>
-
-                                        <div className="border border-slate-200/90 rounded-2xl px-4 py-2.5 bg-white focus-within:border-slate-400">
-                                            <input
-                                                type="text"
-                                                value={fullName}
-                                                onChange={(e) =>
-                                                    setFullName(e.target.value)
-                                                }
-                                                placeholder="Your Full Name*"
-                                                className="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 focus:outline-none font-medium"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div className="border border-slate-200/90 rounded-2xl px-4 py-2.5 flex items-center gap-3 bg-white focus-within:border-slate-400">
-                                            <User className="w-4 h-4 text-slate-400 shrink-0" />
-                                            <input
-                                                type="email"
-                                                value={regEmail}
-                                                onChange={(e) =>
-                                                    setRegEmail(e.target.value)
-                                                }
-                                                placeholder="Your email"
-                                                className="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 focus:outline-none"
-                                                required
-                                            />
-                                            {isEmailValid && (
-                                                <Check className="w-4 h-4 text-slate-700 shrink-0" />
-                                            )}
-                                        </div>
-
-                                        <div className="border border-slate-200/90 rounded-2xl px-4 py-2.5 flex items-center gap-3 bg-white focus-within:border-slate-400">
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setShowPassword(
-                                                        !showPassword,
-                                                    )
-                                                }
-                                                className="text-slate-400 hover:text-slate-600 shrink-0"
-                                            >
-                                                {showPassword ? (
-                                                    <EyeOff className="w-4 h-4" />
-                                                ) : (
-                                                    <Eye className="w-4 h-4" />
-                                                )}
-                                            </button>
-                                            <input
-                                                type={
-                                                    showPassword
-                                                        ? "text"
-                                                        : "password"
-                                                }
-                                                value={regPassword}
-                                                onChange={(e) =>
-                                                    setRegPassword(
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                placeholder="Password"
-                                                className="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 focus:outline-none"
-                                                required
-                                            />
-                                        </div>
-
-                                        {/* Dropdowns Tanggal Lahir */}
-                                        <div className="pt-1">
-                                            <label className="block text-xs font-semibold text-slate-700 mb-2">
-                                                My Birthday
-                                            </label>
-                                            <div className="grid grid-cols-3 gap-2.5">
-                                                <div className="relative">
-                                                    <select
-                                                        value={birthDay}
-                                                        onChange={(e) =>
-                                                            setBirthDay(
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        className="w-full appearance-none bg-white border border-slate-200/90 rounded-2xl px-3 py-2.5 text-xs text-slate-800 pr-8 focus:outline-none focus:border-slate-400 cursor-pointer"
-                                                    >
-                                                        {Array.from(
-                                                            { length: 31 },
-                                                            (_, i) => i + 1,
-                                                        ).map((d) => (
-                                                            <option
-                                                                key={d}
-                                                                value={String(
-                                                                    d,
-                                                                ).padStart(
-                                                                    2,
-                                                                    "0",
-                                                                )}
-                                                            >
-                                                                {String(
-                                                                    d,
-                                                                ).padStart(
-                                                                    2,
-                                                                    "0",
-                                                                )}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                                                </div>
-
-                                                <div className="relative">
-                                                    <select
-                                                        value={birthMonth}
-                                                        onChange={(e) =>
-                                                            setBirthMonth(
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        className="w-full appearance-none bg-white border border-slate-200/90 rounded-2xl px-3 py-2.5 text-xs text-slate-800 pr-8 focus:outline-none focus:border-slate-400 cursor-pointer"
-                                                    >
-                                                        {Array.from(
-                                                            { length: 12 },
-                                                            (_, i) => i + 1,
-                                                        ).map((m) => (
-                                                            <option
-                                                                key={m}
-                                                                value={String(
-                                                                    m,
-                                                                ).padStart(
-                                                                    2,
-                                                                    "0",
-                                                                )}
-                                                            >
-                                                                {String(
-                                                                    m,
-                                                                ).padStart(
-                                                                    2,
-                                                                    "0",
-                                                                )}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                                                </div>
-
-                                                <div className="relative">
-                                                    <select
-                                                        value={birthYear}
-                                                        onChange={(e) =>
-                                                            setBirthYear(
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        className="w-full appearance-none bg-white border border-slate-200/90 rounded-2xl px-3 py-2.5 text-xs text-slate-800 pr-8 focus:outline-none focus:border-slate-400 cursor-pointer"
-                                                    >
-                                                        {Array.from(
-                                                            { length: 70 },
-                                                            (_, i) => 2026 - i,
-                                                        ).map((y) => (
-                                                            <option
-                                                                key={y}
-                                                                value={String(
-                                                                    y,
-                                                                )}
-                                                            >
-                                                                {y}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <button
-                                            type="submit"
-                                            disabled={
-                                                !isRegisterComplete || loading
-                                            }
-                                            className={`w-full py-3.5 rounded-full text-xs sm:text-sm font-semibold transition-all mt-2 ${
-                                                isRegisterComplete && !loading
-                                                    ? "bg-[#D97706] hover:bg-[#B45309] text-white shadow-xs cursor-pointer"
-                                                    : "bg-red-200 text-white/90 cursor-not-allowed"
-                                            }`}
-                                        >
-                                            {loading
-                                                ? "Creating..."
-                                                : "Create New Account"}
-                                        </button>
-
-                                        <div className="text-center text-xs text-slate-600 pt-2">
-                                            Already have account? Login{" "}
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setStep("login_identifier")
-                                                }
-                                                className="text-slate-700 font-bold hover:underline"
-                                            >
-                                                here
-                                            </button>
-                                        </div>
-                                    </form>
+                                        onSwitchToLogin={() => {
+                                            setErrors({});
+                                            setStep("login_identifier");
+                                        }}
+                                        errors={errors}
+                                        loading={loading}
+                                    />
                                 )}
 
-                                {/* ─── 5. VERIFY OTP STEP ─── */}
                                 {step === "verify_otp" && (
-                                    <form
+                                    <OtpVerifyStep
+                                        targetEmail={regEmail || identifier}
+                                        otpCode={otpCode}
+                                        onChangeOtpCode={(val) => {
+                                            setOtpCode(val);
+                                            clearFieldError("otpCode");
+                                        }}
+                                        countdown={countdown}
+                                        onResendOtp={() => {
+                                            setCountdown(180);
+                                            toastNotifikasi.sukses("Kode OTP baru telah dikirim.");
+                                        }}
                                         onSubmit={handleOtpSubmit}
-                                        className="space-y-4 pt-1 text-center"
-                                    >
-                                        {/* Ilustrasi Notifikasi Smartphone */}
-                                        <div className="py-2 flex justify-center">
-                                            <svg
-                                                className="w-32 h-24 text-slate-800"
-                                                viewBox="0 0 140 100"
-                                                fill="none"
-                                                xmlns="http://www.w3.org/2000/svg"
-                                            >
-                                                <rect
-                                                    x="45"
-                                                    y="10"
-                                                    width="50"
-                                                    height="80"
-                                                    rx="10"
-                                                    stroke="#1E293B"
-                                                    strokeWidth="2.5"
-                                                    fill="#FFFFFF"
-                                                />
-                                                <circle
-                                                    cx="70"
-                                                    cy="18"
-                                                    r="2"
-                                                    fill="#1E293B"
-                                                />
-                                                <rect
-                                                    x="52"
-                                                    y="36"
-                                                    width="36"
-                                                    height="26"
-                                                    rx="4"
-                                                    stroke="#1E293B"
-                                                    strokeWidth="1.5"
-                                                />
-                                                <circle
-                                                    cx="58"
-                                                    cy="45"
-                                                    r="2.5"
-                                                    fill="#1E293B"
-                                                />
-                                                <line
-                                                    x1="65"
-                                                    y1="43"
-                                                    x2="82"
-                                                    y2="43"
-                                                    stroke="#1E293B"
-                                                    strokeWidth="2"
-                                                    strokeLinecap="round"
-                                                />
-                                                <line
-                                                    x1="65"
-                                                    y1="49"
-                                                    x2="78"
-                                                    y2="49"
-                                                    stroke="#1E293B"
-                                                    strokeWidth="1.5"
-                                                    strokeLinecap="round"
-                                                />
-                                                <path
-                                                    d="M85 24C92 28 92 40 85 44"
-                                                    stroke="#1E293B"
-                                                    strokeWidth="2"
-                                                    strokeLinecap="round"
-                                                />
-                                                <path
-                                                    d="M93 18C103 26 103 48 93 54"
-                                                    stroke="#1E293B"
-                                                    strokeWidth="2"
-                                                    strokeLinecap="round"
-                                                />
-                                            </svg>
-                                        </div>
-
-                                        <p className="text-xs text-slate-600 leading-relaxed px-2">
-                                            We've sent verification code to{" "}
-                                            <span className="font-semibold text-slate-800">
-                                                {regEmail ||
-                                                    identifier ||
-                                                    "your email"}
-                                            </span>
-                                            . Please check your Email and enter
-                                            the code here.
-                                        </p>
-
-                                        <div className="border border-slate-200/90 rounded-2xl px-4 py-3 flex items-center gap-3 bg-white focus-within:border-slate-400">
-                                            <Lock className="w-4 h-4 text-slate-400 shrink-0" />
-                                            <input
-                                                type="text"
-                                                inputMode="numeric"
-                                                maxLength={6}
-                                                value={otpCode}
-                                                onChange={(e) =>
-                                                    setOtpCode(
-                                                        e.target.value.replace(
-                                                            /\D/g,
-                                                            "",
-                                                        ),
-                                                    )
-                                                }
-                                                placeholder="Verification Code"
-                                                className="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 focus:outline-none font-semibold"
-                                                autoFocus
-                                            />
-                                        </div>
-
-                                        <div className="text-xs text-slate-500 pt-1">
-                                            <button
-                                                type="button"
-                                                disabled={countdown > 0}
-                                                onClick={() => {
-                                                    setCountdown(180);
-                                                    toast.info(
-                                                        "A new verification code has been sent.",
-                                                    );
-                                                }}
-                                                className="font-medium text-slate-600 hover:text-slate-900 disabled:opacity-75 disabled:hover:text-slate-600"
-                                            >
-                                                Resend code{" "}
-                                                {countdown > 0 &&
-                                                    `(${countdown}s)`}
-                                            </button>{" "}
-                                            if you didn't receive any message
-                                        </div>
-
-                                        <button
-                                            type="submit"
-                                            disabled={!otpCode || loading}
-                                            className={`w-full py-3.5 rounded-full text-xs sm:text-sm font-semibold transition-all mt-2 ${
-                                                otpCode && !loading
-                                                    ? "bg-[#E52027] hover:bg-[#CC1C22] text-white shadow-xs cursor-pointer"
-                                                    : "bg-red-200 text-white/90 cursor-not-allowed"
-                                            }`}
-                                        >
-                                            {loading
-                                                ? "Verifying..."
-                                                : "Confirm"}
-                                        </button>
-                                    </form>
+                                        error={errors.otpCode}
+                                        loading={loading}
+                                    />
                                 )}
                             </Dialog.Panel>
                         </Transition.Child>

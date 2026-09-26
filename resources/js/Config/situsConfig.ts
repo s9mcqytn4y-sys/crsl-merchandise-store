@@ -208,8 +208,8 @@ export const THEME_TOKENS = {
         transitionDuration: 0.3,
     },
     typography: {
-        fontBody: "'Open Sans', system-ui, -apple-system, sans-serif",
-        fontHeading: "'Roboto', system-ui, -apple-system, sans-serif",
+        fontBody: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
+        fontHeading: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
         fontMono: "'JetBrains Mono', Consolas, monospace",
         headingWeight: 700,
         subheadingWeight: 600,

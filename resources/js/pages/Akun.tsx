@@ -5,6 +5,7 @@ import KartuLoyalitas from '../Components/Akun/KartuLoyalitas';
 import KartuVoucher from '../Components/Akun/KartuVoucher';
 import PesananTab, { OrderItem } from '../Components/Akun/PesananTab';
 import WishlistTab, { WishlistItem } from '../Components/Akun/WishlistTab';
+import ModalLoyaltyTiers, { TierItem } from '../Components/Akun/ModalLoyaltyTiers';
 import { useAuthStore } from '../Stores/useAuthStore';
 
 interface AccountProps {
@@ -21,6 +22,9 @@ interface AccountProps {
     loyalty?: {
         tier?: string;
         progress_text?: string;
+        points?: number;
+        total_spend?: number;
+        tiers?: TierItem[];
     };
     vouchers?: any[];
     reseller_status?: string | null;
@@ -39,6 +43,7 @@ export default function Akun({
     flash_message,
 }: AccountProps) {
     const [tabAktif, setTabAktif] = useState<'orders' | 'wishlist'>('orders');
+    const [isLoyaltyModalOpen, setIsLoyaltyModalOpen] = useState(false);
     const openAuthModal = useAuthStore((state) => state.openAuthModal);
 
     useEffect(() => {
@@ -119,7 +124,7 @@ export default function Akun({
 
                                 <Link
                                     href="/profile/myinfo"
-                                    className="px-5 py-1.5 rounded-full border border-red-500 text-red-500 hover:bg-red-50 font-bold text-xs transition-colors"
+                                    className="px-5 py-1.5 rounded-full border border-red-500 text-red-500 hover:bg-red-50 font-bold text-xs transition-colors cursor-pointer"
                                 >
                                     Settings
                                 </Link>
@@ -131,7 +136,7 @@ export default function Akun({
                             <KartuLoyalitas
                                 tier={loyalty?.tier || 'Non-Member'}
                                 progressText={loyalty?.progress_text || 'Spend Rp 200,000 more to reach New Freen'}
-                                onLihatDetail={() => {}}
+                                onLihatDetail={() => setIsLoyaltyModalOpen(true)}
                             />
                             <KartuVoucher vouchers={vouchers} />
                         </div>
@@ -171,15 +176,27 @@ export default function Akun({
 
                     {/* Tab Content */}
                     {tabAktif === 'orders' ? (
-                        <PesananTab orders={orders} />
-                    ) : (
-                        <WishlistTab
-                            wishlists={wishlists}
-                            onBelanja={() => router.visit('/katalog')}
+                        <PesananTab
+                            orders={orders}
+                            userEmail={user?.email}
+                            userPhone={user?.phone}
                         />
+                    ) : (
+                        <WishlistTab wishlists={wishlists} />
                     )}
                 </div>
             </div>
+
+            {/* Modal Detail Loyalty Tiers (Screenshot #3) */}
+            <ModalLoyaltyTiers
+                isOpen={isLoyaltyModalOpen}
+                onClose={() => setIsLoyaltyModalOpen(false)}
+                currentTierName={loyalty?.tier}
+                currentPoints={loyalty?.points}
+                totalSpend={loyalty?.total_spend}
+                progressText={loyalty?.progress_text}
+                tiers={loyalty?.tiers}
+            />
         </StorefrontLayout>
     );
 }

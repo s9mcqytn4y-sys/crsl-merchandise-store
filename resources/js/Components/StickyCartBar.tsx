@@ -1,56 +1,74 @@
-import React from "react";
+import React, { useMemo } from "react";
+import { ShoppingCart } from "lucide-react";
 import { useKeranjangStore } from "../Stores/useKeranjangStore";
 import { formatRupiah } from "../Utils/formatters";
 
 export default function StickyCartBar() {
-    const items = useKeranjangStore((state) => state.items);
+    // Ambil aksi dan state reaktif
     const bukaKeranjang = useKeranjangStore((state) => state.bukaKeranjang);
+    const items = useKeranjangStore((state) => state.items);
     const hitungTotal = useKeranjangStore((state) => state.hitungTotal);
-    const hitungJumlahTotal = useKeranjangStore((state) => state.hitungJumlahTotal);
+    const hitungJumlahTotal = useKeranjangStore(
+        (state) => state.hitungJumlahTotal,
+    );
 
-    const totalQty = hitungJumlahTotal();
-    const totalHarga = hitungTotal();
+    // Kalkulasi reaktif dengan memoization aman
+    const totalQty = useMemo(() => {
+        if (typeof hitungJumlahTotal === "function") {
+            return hitungJumlahTotal();
+        }
+        return Array.isArray(items)
+            ? items.reduce((acc, item) => acc + (item.jumlah || 1), 0)
+            : 0;
+    }, [items, hitungJumlahTotal]);
 
+    const totalHarga = useMemo(() => {
+        if (typeof hitungTotal === "function") {
+            return hitungTotal();
+        }
+        return Array.isArray(items)
+            ? items.reduce(
+                  (acc, item) => acc + (item.harga || 0) * (item.jumlah || 1),
+                  0,
+              )
+            : 0;
+    }, [items, hitungTotal]);
+
+    // Jangan render jika keranjang kosong
     if (totalQty <= 0) return null;
 
     return (
         <div
             id="sticky-cart-bar"
-            className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-md transition-all duration-300 transform animate-in slide-in-from-bottom-5"
+            role="region"
+            aria-label="Ringkasan Keranjang Belanja"
+            className="fixed bottom-6 inset-x-0 z-40 flex justify-center px-4 pointer-events-none select-none pb-safe"
         >
             <button
                 type="button"
                 onClick={bukaKeranjang}
-                className="w-full bg-primary hover:bg-primary-hover active:scale-[0.99] text-white rounded-2xl px-5 py-3.5 shadow-2xl flex items-center justify-between transition-all duration-200 cursor-pointer border border-red-500/30"
-                aria-label={`Keranjang belanja: ${totalQty} produk, total ${formatRupiah(totalHarga)}`}
+                className="pointer-events-auto w-full max-w-85 sm:max-w-90 bg-primary hover:bg-primary-hover active:scale-[0.98] text-white rounded-2xl py-2.5 px-4 shadow-xl flex items-center justify-between transition-all duration-200 cursor-pointer border border-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white animate-in fade-in slide-in-from-bottom-4"
+                aria-label={`Buka keranjang belanja: ${totalQty} produk, total ${formatRupiah(totalHarga)}`}
             >
-                {/* Informasi Kiri: Jumlah Item & Total Harga */}
-                <div className="text-left flex flex-col">
-                    <span className="text-sm font-black tracking-tight leading-tight">
+                {/* Sisi Kiri: Deskripsi Jumlah & Subtotal */}
+                <div className="text-left flex flex-col justify-center leading-tight">
+                    <span className="text-xs sm:text-[13px] font-bold text-white tracking-normal">
                         {totalQty} Items in My Cart
                     </span>
-                    <span className="text-xs font-medium text-white/95 tabular-nums">
+                    <span className="text-xs sm:text-[13px] font-semibold text-white/95 mt-0.5 tabular-nums">
                         {formatRupiah(totalHarga)}
                     </span>
                 </div>
 
-                {/* Tombol Bulat Kanan: Icon Cart + Badge Merah Sesuai Screenshot 4 */}
-                <div className="relative flex items-center justify-center w-11 h-11 bg-white text-primary rounded-full shadow-md shrink-0">
-                    <svg
-                        className="w-5 h-5 fill-none stroke-current"
-                        viewBox="0 0 24 24"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                    >
-                        <circle cx="9" cy="21" r="1" />
-                        <circle cx="20" cy="21" r="1" />
-                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-                    </svg>
+                {/* Sisi Kanan: Lingkaran Putih + Badge Counter */}
+                <div
+                    className="relative flex items-center justify-center w-9 h-9 bg-white text-primary rounded-full shadow-xs shrink-0"
+                    aria-hidden="true"
+                >
+                    <ShoppingCart className="w-4 h-4" strokeWidth={2.4} />
 
-                    {/* Badge Angka Bulat Merah Kecil di Sudut */}
-                    <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-black rounded-full w-5 h-5 flex items-center justify-center border-2 border-white shadow-xs">
+                    {/* Counter Badge Bulat */}
+                    <span className="absolute -top-1 -right-1 bg-slate-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center border-2 border-primary shadow-2xs tabular-nums leading-none">
                         {totalQty > 99 ? "99+" : totalQty}
                     </span>
                 </div>

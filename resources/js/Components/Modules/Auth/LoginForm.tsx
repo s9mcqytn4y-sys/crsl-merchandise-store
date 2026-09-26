@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
-import { Mail, Lock } from 'lucide-react';
+import { Mail, Lock, AlertCircle, Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { router } from '@inertiajs/react';
 import Button from '../../Common/Button';
-import { toast } from 'sonner';
+import { cn } from '../../../lib/utils';
+import { loginSchema, type LoginFormData } from '../../../Validation/authSchema';
+import { toastNotifikasi } from '../../../Utils/toastNotifikasi';
 
 interface LoginFormProps {
     onSuccessLogin?: () => void;
@@ -9,50 +14,84 @@ interface LoginFormProps {
 }
 
 export default function LoginForm({ onSuccessLogin, onCloseModal }: LoginFormProps) {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [serverError, setServerError] = useState<string | null>(null);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<LoginFormData>({
+        resolver: zodResolver(loginSchema),
+        defaultValues: {
+            email: '',
+            password: '',
+        },
+    });
+
+    const onSubmit = async (formData: LoginFormData) => {
         setLoading(true);
+        setServerError(null);
+
         try {
             const res = await fetch('/login', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-                body: JSON.stringify({ email, password }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify(formData),
             });
+
             const data = await res.json();
+
             if (data.sukses) {
-                toast.success(data.pesan || 'Login berhasil!');
+                toastNotifikasi.sukses(data.pesan || 'Login berhasil!');
                 if (onSuccessLogin) onSuccessLogin();
                 onCloseModal();
-                window.location.reload();
+                router.reload();
             } else {
-                toast.error(data.pesan || 'Email atau password tidak sesuai.');
+                setServerError(data.pesan || 'Email atau password tidak sesuai.');
             }
-        } catch (err) {
-            toast.error('Gagal terhubung ke server.');
+        } catch {
+            setServerError('Terjadi kesalahan koneksi ke server.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs pt-2">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 text-xs pt-2">
+            {serverError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+                    <span>{serverError}</span>
+                </div>
+            )}
+
             <div>
                 <label className="font-bold text-slate-700 block mb-1">Email *</label>
                 <div className="relative">
                     <input
                         type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        {...register('email')}
                         placeholder="bestie@crslstore.com"
-                        className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-3 py-2.5 text-xs focus:outline-none focus:border-[#E52027]"
-                        required
+                        className={cn(
+                            "w-full bg-slate-50 border rounded-xl pl-9 pr-3 py-2.5 text-xs focus:outline-none transition-all",
+                            errors.email
+                                ? "border-red-500 bg-red-50/20"
+                                : "border-slate-300 focus:border-[#E52027]"
+                        )}
                     />
                     <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 </div>
+                {errors.email && (
+                    <p className="text-[11px] text-red-600 font-medium mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        {errors.email.message}
+                    </p>
+                )}
             </div>
 
             <div>
@@ -60,17 +99,31 @@ export default function LoginForm({ onSuccessLogin, onCloseModal }: LoginFormPro
                 <div className="relative">
                     <input
                         type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        {...register('password')}
                         placeholder="••••••••"
-                        className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-3 py-2.5 text-xs focus:outline-none focus:border-[#E52027]"
-                        required
+                        className={cn(
+                            "w-full bg-slate-50 border rounded-xl pl-9 pr-3 py-2.5 text-xs focus:outline-none transition-all",
+                            errors.password
+                                ? "border-red-500 bg-red-50/20"
+                                : "border-slate-300 focus:border-[#E52027]"
+                        )}
                     />
                     <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 </div>
+                {errors.password && (
+                    <p className="text-[11px] text-red-600 font-medium mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        {errors.password.message}
+                    </p>
+                )}
             </div>
 
-            <Button type="submit" loading={loading} className="w-full uppercase tracking-wider">
+            <Button
+                type="submit"
+                variant="primary"
+                loading={loading}
+                className="w-full py-3 mt-2 rounded-xl text-xs font-bold"
+            >
                 Masuk Sekarang
             </Button>
         </form>

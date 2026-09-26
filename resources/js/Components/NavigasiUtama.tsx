@@ -46,11 +46,7 @@ function IkonBendera({ currency }: FlagIconProps) {
     }
 }
 
-interface AuthUser {
-    id: number;
-    name: string;
-    email: string;
-}
+import { AuthUser } from "../types";
 
 interface NavigasiUtamaProps {
     isMenuOpen: boolean;
@@ -140,8 +136,9 @@ export default function NavigasiUtama({
                             height={32}
                             className="h-6 sm:h-7 md:h-8 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
                             onError={(e) => {
-                                // Fallback jika webp gagal dimuat
-                                (e.currentTarget as HTMLImageElement).src = "/assets/gambar/logo-crsl.png";
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.onerror = null;
+                                target.src = "/assets/gambar/logo-crsl.png";
                             }}
                         />
                     </Link>

@@ -1,62 +1,42 @@
 import React from "react";
 import { Link } from "@inertiajs/react";
-import { ArrowRight, Sparkles } from "lucide-react";
 
-interface KategoriAdopt {
+interface KoleksiAdopt {
     id: number;
     slug: string;
-    nama: string;
+    judul: string;
     gambar: string;
+    alt: string;
 }
 
-const DAFTAR_KATEGORI_ADOPT: KategoriAdopt[] = [
+const DAFTAR_KOLEKSI_ADOPT: KoleksiAdopt[] = [
     {
         id: 16810,
         slug: "backpack-collection",
-        nama: "Backpacks",
-        gambar: "/assets/kategori/kategori-backpack.webp",
+        judul: "Backpack Collection",
+        gambar: "/assets/gambar/banner-1.webp",
+        alt: "CRSL Backpack Collection",
     },
     {
-        id: 16811,
-        slug: "slingbag-collection",
-        nama: "Slingbags",
-        gambar: "/assets/kategori/kategori-slingbag.webp",
+        id: 16819,
+        slug: "tumbler-collection",
+        judul: "Tumbler Collection",
+        gambar: "/assets/gambar/banner-tumbler.webp",
+        alt: "CRSL Tumbler Collection",
     },
     {
         id: 16813,
         slug: "tops-collection",
-        nama: "Tops",
-        gambar: "/assets/kategori/kategori-tees.webp",
+        judul: "Apparel Collection",
+        gambar: "/assets/gambar/banner-lookbook.webp",
+        alt: "CRSL Apparel Collection",
     },
     {
-        id: 16814,
-        slug: "bottoms-collection",
-        nama: "Bottoms",
-        gambar: "/assets/kategori/kategori-pants-skirt.webp",
-    },
-    {
-        id: 16815,
-        slug: "outerwears-collection",
-        nama: "Outerwears",
-        gambar: "/assets/kategori/kategori-outerwear.webp",
-    },
-    {
-        id: 16816,
-        slug: "footwear-collection",
-        nama: "Footwears",
-        gambar: "/assets/kategori/kategori-shoes.webp",
-    },
-    {
-        id: 16817,
-        slug: "headwear-collection",
-        nama: "Headwears",
-        gambar: "/assets/kategori/kategori-hat-helmet.webp",
-    },
-    {
-        id: 16818,
-        slug: "wallet-accessories",
-        nama: "Wallet & Accessories",
-        gambar: "/assets/kategori/kategori-wallet.webp",
+        id: 16811,
+        slug: "slingbag-collection",
+        judul: "Slingbag Collection",
+        gambar: "/assets/gambar/banner-cassie.webp",
+        alt: "CRSL Slingbag Collection",
     },
 ];
 
@@ -64,76 +44,63 @@ export default function AdoptNowSection() {
     return (
         <section
             aria-labelledby="heading-adopt-now"
-            className="py-14 sm:py-20 bg-slate-50 border-t border-slate-200/80"
+            className="py-12 sm:py-16 bg-white"
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* Header Banner: Let's Adopt Now */}
-                <div className="text-center max-w-2xl mx-auto mb-10">
-                    <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-[#E52027] bg-red-100/70 px-3.5 py-1.5 rounded-full mb-3">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        Animals As Your Bestfriends
-                    </span>
+                {/* Header Sesuai Screenshot Resmi crsl-store.id */}
+                <div className="text-center mb-8 sm:mb-10">
+                    <Link
+                        href="/katalog"
+                        className="text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors inline-block tracking-wide cursor-pointer"
+                    >
+                        View All
+                    </Link>
                     <h2
                         id="heading-adopt-now"
-                        className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase tracking-tight text-slate-900"
+                        className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 mt-2"
                     >
                         Let's Adopt Now!
                     </h2>
-                    <p className="text-slate-500 text-xs sm:text-sm mt-2">
-                        Pilih merchandise karakter hewan favorit kamu sekarang
-                    </p>
                 </div>
 
-                {/* Grid Kategori: 2 Kolom Tablet/Desktop, 1 Kolom Mobile */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                    {DAFTAR_KATEGORI_ADOPT.map((kat) => (
+                {/* Grid Koleksi: 2 Kolom Responsif Desktop/Tablet, 1 Kolom Mobile */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                    {DAFTAR_KOLEKSI_ADOPT.map((koleksi) => (
                         <Link
-                            key={kat.id}
-                            href={`/katalog?kategori=${kat.slug}`}
-                            className="group relative rounded-2xl overflow-hidden aspect-[16/10] bg-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 block"
-                            aria-label={`Koleksi kategori ${kat.nama}`}
+                            key={koleksi.id}
+                            href={`/katalog?kategori=${koleksi.slug}`}
+                            className="group relative rounded-xl overflow-hidden aspect-[16/10] sm:aspect-[16/9] bg-slate-100 shadow-xs hover:shadow-lg transition-all duration-300 block"
+                            aria-label={`Lihat ${koleksi.judul}`}
                         >
+                            {/* Gambar Banner Koleksi */}
                             <img
-                                src={kat.gambar}
-                                alt={`${kat.nama} CRSL`}
-                                className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
+                                src={koleksi.gambar}
+                                alt={koleksi.alt}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                                 loading="lazy"
-                                width={600}
-                                height={375}
+                                width={800}
+                                height={450}
                                 onError={(e) => {
-                                    // Fallback ke banner umum jika kategori gambar spesifik belum ada
-                                    (e.currentTarget as HTMLImageElement).src =
-                                        "/assets/gambar/banner-1.webp";
+                                    const target = e.currentTarget as HTMLImageElement;
+                                    target.onerror = null;
+                                    target.src = "/assets/gambar/banner-1.webp";
                                 }}
                             />
-                            {/* Gradient Overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/30 to-transparent group-hover:from-slate-950/90 transition-colors" />
 
-                            {/* Content Details */}
-                            <div className="absolute inset-0 p-5 flex flex-col justify-end">
-                                <h3 className="text-base sm:text-lg font-black text-white leading-tight">
-                                    {kat.nama}
+                            {/* Gradient Overlay Gelap di Bagian Bawah */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent group-hover:from-black/85 transition-colors duration-300" />
+
+                            {/* Judul Koleksi di Pojok Kiri Bawah (Matches Screenshot 2) */}
+                            <div className="absolute bottom-5 left-5 sm:bottom-7 sm:left-7 right-5">
+                                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight drop-shadow-md leading-tight">
+                                    {koleksi.judul}
                                 </h3>
-                                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-red-300 group-hover:text-white mt-1 transition-colors">
-                                    <span>Adopt Now</span>
-                                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                                </span>
                             </div>
                         </Link>
                     ))}
-                </div>
-
-                {/* Bottom View All Link */}
-                <div className="mt-8 text-center">
-                    <Link
-                        href="/katalog"
-                        className="inline-flex items-center gap-2 text-xs sm:text-sm font-extrabold text-[#E52027] hover:text-[#CC1C22] bg-white border border-red-200 hover:border-red-300 px-6 py-3 rounded-full shadow-xs hover:shadow-md transition-all active:scale-95"
-                    >
-                        <span>Lihat Semua Produk Katalog</span>
-                        <ArrowRight className="w-4 h-4" />
-                    </Link>
                 </div>
             </div>
         </section>
     );
 }
+

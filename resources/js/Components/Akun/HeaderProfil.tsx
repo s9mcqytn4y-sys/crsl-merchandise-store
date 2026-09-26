@@ -16,10 +16,7 @@ export default function HeaderProfil({
     resellerStatus,
     onBukaPengaturan,
 }: HeaderProfilProps) {
-    const logout = useAuthStore((state) => state.logout);
-
     const handleLogout = () => {
-        logout();
         router.post('/logout');
     };
 

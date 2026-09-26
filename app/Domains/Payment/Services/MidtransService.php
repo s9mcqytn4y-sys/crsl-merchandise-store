@@ -69,7 +69,10 @@ class MidtransService
      */
     public function chargeBankTransfer(string $bank, array $pesanan, array $pembeli): array
     {
-        $bank = strtolower($bank);
+        $bank = strtolower(str_replace(['va_', 'va-'], '', trim($bank)));
+        if ($bank === 'mandiri' || $bank === 'echannel') {
+            return $this->chargeMandiriBill($pesanan, $pembeli);
+        }
         $orderId = str_replace('/', '-', $pesanan['nomor_pesanan']);
         $grossAmount = (int)round($pesanan['total']);
 
@@ -287,6 +290,47 @@ class MidtransService
             'status' => 'unknown',
             'pesan' => 'Gagal mengecek status ke Midtrans',
         ];
+    }
+
+    /**
+     * Membatalkan transaksi di server Midtrans via Cancel API (/v2/{id}/cancel).
+     */
+    public function batalkanTransaksi(string $orderId): array
+    {
+        $sanitizedOrderId = str_replace('/', '-', $orderId);
+        $authHeader = 'Basic ' . base64_encode($this->serverKey . ':');
+
+        try {
+            $httpRequest = Http::withHeaders([
+                'Accept' => 'application/json',
+                'Authorization' => $authHeader,
+            ])->timeout(10);
+
+            if (!$this->isProduction || app()->isLocal()) {
+                $httpRequest->withoutVerifying();
+            }
+
+            $response = $httpRequest->post("{$this->apiBaseUrl}/" . urlencode($sanitizedOrderId) . "/cancel");
+
+            if ($response->successful()) {
+                return [
+                    'sukses' => true,
+                    'pesan' => 'Transaksi berhasil dibatalkan di Midtrans',
+                    'data' => $response->json(),
+                ];
+            }
+
+            return [
+                'sukses' => false,
+                'pesan' => $response->json('status_message', 'Gagal membatalkan transaksi di Midtrans'),
+            ];
+        } catch (\Throwable $e) {
+            Log::error("Midtrans Cancel Exception: " . $e->getMessage());
+            return [
+                'sukses' => false,
+                'pesan' => 'Terjadi kesalahan saat membatalkan transaksi',
+            ];
+        }
     }
 
     /**

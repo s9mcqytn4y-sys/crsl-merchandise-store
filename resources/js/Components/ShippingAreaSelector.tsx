@@ -116,7 +116,7 @@ export default function ShippingAreaSelector({
         <div ref={containerRef} className="relative space-y-1.5">
             {label && (
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    {label} <span className="text-[#E52027]">*</span>
+                    {label} <span className="text-primary">*</span>
                 </label>
             )}
 
@@ -135,7 +135,7 @@ export default function ShippingAreaSelector({
                         }
                     }}
                     placeholder="Ketik min. 3 karakter: Sleman, Kebayoran, atau 55281..."
-                    className={`w-full bg-slate-50 border rounded-xl pl-10 pr-10 py-3 text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#E52027] focus:bg-white transition-all ${
+                    className={`w-full bg-slate-50 border rounded-xl pl-10 pr-10 py-3 text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-all ${
                         error
                             ? "border-rose-400 bg-rose-50/30"
                             : "border-slate-200"
@@ -149,7 +149,7 @@ export default function ShippingAreaSelector({
 
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
                     {isLoading && (
-                        <Loader2 className="w-4 h-4 text-[#E52027] animate-spin" />
+                        <Loader2 className="w-4 h-4 text-primary animate-spin" />
                     )}
                     {query && !isLoading && (
                         <button
@@ -172,7 +172,7 @@ export default function ShippingAreaSelector({
 
             {/* Dropdown Options Box */}
             {isOpen && (
-                <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-64 overflow-y-auto divide-y divide-slate-100 overscroll-contain [scrollbar-width:thin]">
+                <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-64 overflow-y-auto divide-y divide-slate-100 overscroll-contain scrollbar-thin">
                     {options.length > 0 ? (
                         options.map((option) => {
                             const isCurrent =
@@ -187,7 +187,7 @@ export default function ShippingAreaSelector({
                                         isCurrent ? "bg-red-50/50" : ""
                                     }`}
                                 >
-                                    <MapPin className="w-4 h-4 text-[#E52027] shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
+                                    <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
                                     <div className="flex-1 min-w-0">
                                         <div className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
                                             {option.nama}

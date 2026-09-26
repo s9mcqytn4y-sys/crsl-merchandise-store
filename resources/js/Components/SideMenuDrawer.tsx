@@ -11,11 +11,7 @@ interface NavigasiItem {
     badgeText?: string;
 }
 
-interface AuthUser {
-    id: number;
-    name: string;
-    email: string;
-}
+import { AuthUser } from "../types";
 
 interface SideMenuDrawerProps {
     isOpen: boolean;

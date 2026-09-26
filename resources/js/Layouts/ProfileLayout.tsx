@@ -10,6 +10,7 @@ import SideMenuDrawer from "../Components/SideMenuDrawer";
 import DrawerKeranjang from "../Components/DrawerKeranjang";
 import AuthModal from "../Components/AuthModal";
 import AddToCartModal from "../Components/AddToCartModal";
+import Footer from "../Components/Footer";
 import { useAppStore } from "../Stores/useAppStore";
 import { useKeranjangStore } from "../Stores/useKeranjangStore";
 import { useAuthStore } from "../Stores/useAuthStore";
@@ -64,23 +65,6 @@ export default function ProfileLayout({ children, activeMenu }: ProfileLayoutPro
             }
         );
     };
-
-    const paymentLogos = [
-        { nama: "QRIS", src: "/assets/ikon/payment-qris.svg" },
-        { nama: "OVO", src: "/assets/ikon/payment-ovo.svg" },
-        { nama: "Alfamart", src: "/assets/ikon/payment-alfamart.svg" },
-        { nama: "Mandiri", src: "/assets/ikon/payment-mandiri.svg" },
-        { nama: "BRI", src: "/assets/ikon/payment-bri.svg" },
-        { nama: "BNI", src: "/assets/ikon/payment-bni.svg" },
-        { nama: "Permata", src: "/assets/ikon/payment-permata.svg" },
-        { nama: "Permata Syariah", src: "/assets/ikon/payment-permata-syariah.svg" },
-        { nama: "Danamon", src: "/assets/ikon/payment-danamon.svg" },
-        { nama: "BSI", src: "/assets/ikon/payment-bsi.svg" },
-        { nama: "CIMB", src: "/assets/ikon/payment-cimb.svg" },
-        { nama: "VISA", src: "/assets/ikon/payment-visa.svg" },
-        { nama: "JCB", src: "/assets/ikon/payment-jcb.svg" },
-        { nama: "Mastercard", src: "/assets/ikon/payment-master.svg" },
-    ];
 
     return (
         <div className="min-h-screen flex flex-col bg-[#F9FAFB] text-slate-800 font-sans relative">
@@ -168,47 +152,10 @@ export default function ProfileLayout({ children, activeMenu }: ProfileLayoutPro
                         {children}
                     </div>
                 </div>
-
-                {/* Footer Payment Methods & Terms (Sesuai Screenshot 3, 4, 5) */}
-                <footer className="mt-16 pt-8 border-t border-slate-200/80">
-                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-8 text-xs text-slate-500">
-                        <div className="space-y-3">
-                            <span className="font-semibold text-slate-700 block">
-                                Payment Method
-                            </span>
-                            <div className="flex flex-wrap items-center gap-3.5 max-w-2xl">
-                                {paymentLogos.map((pm, idx) => (
-                                    <div
-                                        key={idx}
-                                        className="h-6 flex items-center justify-center opacity-85 hover:opacity-100 transition-opacity"
-                                        title={pm.nama}
-                                    >
-                                        <img
-                                            src={pm.src}
-                                            alt={pm.nama}
-                                            className="h-5 w-auto object-contain max-w-[56px]"
-                                            loading="lazy"
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="space-y-3 shrink-0">
-                            <span className="font-semibold text-slate-700 block">
-                                Terms & Conditions
-                            </span>
-                            <a
-                                href="#"
-                                onClick={(e) => e.preventDefault()}
-                                className="text-slate-600 hover:text-slate-900 underline block"
-                            >
-                                Terms & Conditions
-                            </a>
-                        </div>
-                    </div>
-                </footer>
             </main>
+
+            {/* Footer Standar Global CRSL Store */}
+            <Footer />
 
             {/* Modal Logout Konfirmasi (Sesuai Screenshot 4) */}
             {isLogoutModalOpen && (

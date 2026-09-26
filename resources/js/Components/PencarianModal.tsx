@@ -329,6 +329,8 @@ export default function PencarianModal({
                                         <img
                                             src={prod.gambar}
                                             alt={prod.nama}
+                                            width={150}
+                                            height={150}
                                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                             loading="lazy"
                                         />

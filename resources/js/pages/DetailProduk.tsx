@@ -1,338 +1,402 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { Head, Link, router } from "@inertiajs/react";
 import StorefrontLayout from "../Layouts/StorefrontLayout";
-import ShippingAreaSelector from "../Components/ShippingAreaSelector";
+import ProductGalleryMagnifier, {
+    GalleryImage,
+} from "../Components/PDP/ProductGalleryMagnifier";
+import VariantSelector, {
+    VariantItem,
+} from "../Components/PDP/VariantSelector";
+import DeliveryEstimator from "../Components/PDP/DeliveryEstimator";
+import DiscountsModal from "../Components/PDP/DiscountsModal";
+import RecentViewed from "../Components/PDP/RecentViewed";
+import StickyCartBar from "../Components/StickyCartBar";
 import {
-    Truck,
+    ShoppingBag,
+    Zap,
     MessageCircle,
     Heart,
     ShieldCheck,
-    X,
-    Plus,
-    Minus,
-    ShoppingBag,
-    Zap,
-    Package,
+    TicketPercent,
+    ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useKeranjangStore } from "../Stores/useKeranjangStore";
 import { SITUS_CONFIG } from "../Config/situsConfig";
+import { formatRupiah } from "../Utils/formatters";
 
-interface Variant {
+// ==========================================
+// 1. STRICT TYPE DEFINITIONS
+// ==========================================
+export interface ProductSpec {
     id: number | string;
-    nama_varian?: string;
-    variant_name?: string;
-    warna?: string;
-    ukuran?: string;
-    size_attribute?: string;
-    harga_tambahan?: number;
-    additional_price?: number;
-    stok?: number;
-    sku?: string;
-    gambar_varian?: string | null;
+    kunci: string;
+    nilai: string;
 }
 
-interface Specification {
+export interface NormalizedProduct {
     id: number | string;
-    kunci?: string;
-    spec_key?: string;
-    nilai?: string;
-    spec_value?: string;
-}
-
-interface ProductImage {
-    id: number | string;
-    url: string;
-    alt_teks?: string;
-    alt_text?: string;
-}
-
-interface ProductDetailData {
-    id: number;
     nama: string;
-    name?: string;
     slug: string;
-    deskripsi?: string;
-    description?: string;
-    harga_dasar: number;
-    price?: number;
-    harga_diskon?: number | null;
-    discount_price?: number | null;
-    gambar_utama?: string;
-    main_image?: string;
-    berat_gram?: number;
-    stok_total?: number;
-    stock?: number;
-    kategori?: { nama?: string; name?: string };
-    category?: { nama?: string; name?: string };
-    gambar?: ProductImage[];
-    images?: ProductImage[];
-    varian?: Variant[];
-    variants?: Variant[];
-    spesifikasi?: Specification[];
-    specifications?: Specification[];
+    kategoriNama: string;
+    hargaDasar: number;
+    hargaDiskon?: number;
+    stokTotal: number;
+    beratGram: number;
+    deskripsi: string;
+    gambarUtama: string;
+    gambar: GalleryImage[];
+    varian: VariantItem[];
+    spesifikasi: ProductSpec[];
 }
 
-interface AreaDetail {
+export interface CartPayloadItem {
     id: string;
-    nama?: string;
-    kota: string;
+    produk_id: number;
+    slug: string;
+    varian_id?: number;
+    nama_produk: string;
+    harga: number;
+    harga_asli: number;
+    gambar: string;
+    jumlah: number;
+    ukuran: string;
+    warna?: string;
+    sku: string;
 }
 
 interface ProductDetailProps {
-    produk?: ProductDetailData;
-    product?: ProductDetailData;
-    rekomendasi?: ProductDetailData[];
-    recommended?: ProductDetailData[];
+    produk?: Record<string, any>;
+    product?: Record<string, any>;
+    rekomendasi?: Array<Record<string, any>>;
+    recommended?: Array<Record<string, any>>;
 }
 
-const rupiahFormatter = new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-});
+// ==========================================
+// 2. DATA NORMALIZER (Clean Boundary Layer)
+// ==========================================
+function normalizeProduct(raw: Record<string, any> = {}): NormalizedProduct {
+    const nama = String(raw.nama || raw.name || "Produk CRSL");
+    const mainImg = String(
+        raw.gambar_utama || raw.main_image || "/assets/gambar/placeholder.webp",
+    );
 
-function formatRupiah(num: number): string {
-    return rupiahFormatter.format(num || 0);
+    const rawListImages =
+        Array.isArray(raw.gambar) && raw.gambar.length > 0
+            ? raw.gambar
+            : Array.isArray(raw.images) && raw.images.length > 0
+              ? raw.images
+              : [{ id: "main", url: mainImg, alt_teks: nama }];
+
+    const gambar: GalleryImage[] = rawListImages.map(
+        (img: any, idx: number) => ({
+            id: img.id ?? idx,
+            url: String(img.url || mainImg),
+            alt_teks: String(img.alt_teks || img.alt_text || nama),
+        }),
+    );
+
+    const rawSpecs = Array.isArray(raw.spesifikasi)
+        ? raw.spesifikasi
+        : Array.isArray(raw.specifications)
+          ? raw.specifications
+          : [];
+
+    const spesifikasi: ProductSpec[] = rawSpecs.map((s: any, idx: number) => ({
+        id: s.id ?? idx,
+        kunci: String(s.kunci || s.spec_key || "Detail"),
+        nilai: String(s.nilai || s.spec_value || "-"),
+    }));
+
+    const hargaDasar = Number(raw.harga_dasar ?? raw.price ?? 0);
+    const rawDiscount = raw.harga_diskon ?? raw.discount_price;
+    const hargaDiskon =
+        rawDiscount !== undefined && rawDiscount !== null
+            ? Number(rawDiscount)
+            : undefined;
+
+    return {
+        id: raw.id ?? "",
+        nama,
+        slug: String(raw.slug || (raw.id ? String(raw.id) : "produk-crsl")),
+        kategoriNama: String(
+            raw.kategori?.nama || raw.category?.name || "CRSL Official Merch",
+        ),
+        hargaDasar,
+        hargaDiskon,
+        stokTotal: Number(raw.stok_total ?? raw.stock ?? 0),
+        beratGram: Number(raw.berat_gram ?? raw.weight ?? 0),
+        deskripsi: String(
+            raw.deskripsi || raw.description || "Official merchandise CRSL.",
+        ),
+        gambarUtama: mainImg,
+        gambar,
+        varian: (raw.varian || raw.variants || []) as VariantItem[],
+        spesifikasi,
+    };
 }
 
-export default function ProductDetail({
+export default function DetailProduk({
     produk,
     product,
     rekomendasi = [],
     recommended = [],
 }: ProductDetailProps) {
-    const activeProduct = produk || product || ({} as ProductDetailData);
-    const listRekomendasi = rekomendasi.length > 0 ? rekomendasi : recommended;
-
-    const mainImage =
-        activeProduct.gambar_utama ||
-        activeProduct.main_image ||
-        "/assets/gambar/placeholder.webp";
-    const images: ProductImage[] =
-        activeProduct.gambar && activeProduct.gambar.length > 0
-            ? activeProduct.gambar
-            : activeProduct.images && activeProduct.images.length > 0
-              ? activeProduct.images
-              : [
-                    {
-                        id: "main",
-                        url: mainImage,
-                        alt_text: activeProduct.nama || activeProduct.name,
-                    },
-                ];
-
-    const variants: Variant[] =
-        activeProduct.varian || activeProduct.variants || [];
-    const specs: Specification[] =
-        activeProduct.spesifikasi || activeProduct.specifications || [];
-
-    const [selectedImage, setSelectedImage] = useState<string>(
-        images[0]?.url || mainImage,
+    // Normalisasi data produk aktif dan rekomendasi
+    const activeProduct = useMemo(
+        () => normalizeProduct(produk || product),
+        [produk, product],
     );
-    const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
-    const [variantError, setVariantError] = useState<string | null>(null);
+
+    const listRekomendasi = useMemo(() => {
+        const rawRecs = rekomendasi.length > 0 ? rekomendasi : recommended;
+        return rawRecs.map((r) => normalizeProduct(r));
+    }, [rekomendasi, recommended]);
+
+    // Store Keranjang
+    const tambahItemStore = useKeranjangStore((state) => state.tambahItem);
+    const cartItems = useKeranjangStore((state) => state.items);
+
+    // Hitung total nilai belanja aktif
+    const globalCartTotal = useMemo(() => {
+        if (!cartItems || !Array.isArray(cartItems)) return 0;
+        return cartItems.reduce(
+            (sum, item) =>
+                sum + (Number(item.harga) || 0) * (Number(item.jumlah) || 1),
+            0,
+        );
+    }, [cartItems]);
+
+    // Helper session storage per produk
+    const getSessionKey = useCallback(
+        (id: string | number) => `crsl_pdp_selected_${id}`,
+        [],
+    );
+
+    // State Internal
+    const [selectedVariant, setSelectedVariant] = useState<VariantItem | null>(
+        null,
+    );
+    const [selectedImage, setSelectedImage] = useState<string>(
+        activeProduct.gambarUtama,
+    );
     const [selectedSize, setSelectedSize] = useState<string>("All Size");
     const [quantity, setQuantity] = useState<number>(1);
+    const [variantError, setVariantError] = useState<string | null>(null);
+    const [isDiscountsModalOpen, setIsDiscountsModalOpen] =
+        useState<boolean>(false);
+    const [isWishlistLoading, setIsWishlistLoading] = useState<boolean>(false);
 
-    // Modals & Estimator
-    const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
-    const [deliveryCost, setDeliveryCost] = useState<number | null>(null);
-    const [selectedAreaName, setSelectedAreaName] = useState("");
-    const [isCalculatingOngkir, setIsCalculatingOngkir] = useState(false);
-
-    const tambahItemStore = useKeranjangStore((state) => state.tambahItem);
-    const bukaKeranjang = useKeranjangStore((state) => state.bukaKeranjang);
-
+    // Sinkronisasi state saat navigasi client-side berganti produk
     useEffect(() => {
-        if (images[0]?.url) {
-            setSelectedImage(images[0].url);
+        if (!activeProduct.id) return;
+
+        let saved: {
+            variantId?: string | number;
+            size?: string;
+            quantity?: number;
+        } | null = null;
+        if (typeof window !== "undefined") {
+            try {
+                const rawData = sessionStorage.getItem(
+                    getSessionKey(activeProduct.id),
+                );
+                saved = rawData ? JSON.parse(rawData) : null;
+            } catch {
+                saved = null;
+            }
         }
-    }, [activeProduct.id]);
 
-    const price = activeProduct.harga_dasar ?? activeProduct.price ?? 0;
-    const discountPrice =
-        activeProduct.harga_diskon ?? activeProduct.discount_price ?? price;
-    const isDiscounted = discountPrice && discountPrice < price;
-    const currentPrice =
-        discountPrice +
-        (selectedVariant?.harga_tambahan ||
-            selectedVariant?.additional_price ||
-            0);
-    const totalStock = activeProduct.stok_total ?? activeProduct.stock ?? 0;
-    const isOutOfStock = totalStock <= 0;
+        const matchedVariant = saved?.variantId
+            ? activeProduct.varian.find(
+                  (v) => String(v.id) === String(saved?.variantId),
+              ) || null
+            : null;
 
-    const handleAddToCart = (e: React.MouseEvent) => {
-        e.preventDefault();
+        setSelectedVariant(matchedVariant);
+        setSelectedImage(
+            matchedVariant?.gambar_varian ||
+                activeProduct.gambar[0]?.url ||
+                activeProduct.gambarUtama,
+        );
+        setSelectedSize(saved?.size || matchedVariant?.ukuran || "All Size");
+        setQuantity(saved?.quantity && saved.quantity > 0 ? saved.quantity : 1);
+        setVariantError(null);
+    }, [
+        activeProduct.id,
+        activeProduct.varian,
+        activeProduct.gambar,
+        activeProduct.gambarUtama,
+        getSessionKey,
+    ]);
+
+    // Simpan preferensi pilihan ke Session Storage
+    const persistSelection = useCallback(
+        (variantId?: string | number, size?: string, qty?: number) => {
+            if (typeof window === "undefined" || !activeProduct.id) return;
+            try {
+                sessionStorage.setItem(
+                    getSessionKey(activeProduct.id),
+                    JSON.stringify({
+                        variantId: variantId ?? selectedVariant?.id,
+                        size: size ?? selectedSize,
+                        quantity: qty ?? quantity,
+                    }),
+                );
+            } catch {
+                // Ignore storage limits / incognito security errors
+            }
+        },
+        [
+            activeProduct.id,
+            selectedVariant?.id,
+            selectedSize,
+            quantity,
+            getSessionKey,
+        ],
+    );
+
+    // Perhitungan Harga & Stok
+    const isDiscounted =
+        activeProduct.hargaDiskon !== undefined &&
+        activeProduct.hargaDiskon < activeProduct.hargaDasar;
+
+    const basePrice = isDiscounted
+        ? (activeProduct.hargaDiskon as number)
+        : activeProduct.hargaDasar;
+
+    const currentPrice = basePrice + (selectedVariant?.harga_tambahan || 0);
+    const currentStock = selectedVariant
+        ? (selectedVariant.stok ?? 0)
+        : activeProduct.stokTotal;
+    const isOutOfStock = currentStock <= 0;
+
+    // Handlers
+    const handleSelectVariant = (v: VariantItem) => {
+        setSelectedVariant(v);
+        setVariantError(null);
+        if (v.gambar_varian) setSelectedImage(v.gambar_varian);
+        const nextSize = v.ukuran || selectedSize;
+        if (v.ukuran) setSelectedSize(v.ukuran);
+        persistSelection(v.id, nextSize, quantity);
+    };
+
+    const handleQuantityChange = (newQty: number) => {
+        setQuantity(newQty);
+        persistSelection(undefined, undefined, newQty);
+    };
+
+    const handleSizeChange = (newSize: string) => {
+        setSelectedSize(newSize);
+        persistSelection(undefined, newSize, quantity);
+    };
+
+    const validatePurchase = (): boolean => {
         if (isOutOfStock) {
-            toast.error("Maaf, stok produk ini sedang habis.");
-            return;
+            toast.error("Maaf, stok produk untuk pilihan ini sedang habis.");
+            return false;
         }
-
-        if (variants.length > 0 && !selectedVariant) {
-            setVariantError("Please select WARNA");
-            toast.error("Silakan pilih varian WARNA terlebih dahulu.");
-            return;
+        if (activeProduct.varian.length > 0 && !selectedVariant) {
+            const errorMsg =
+                "Silakan tentukan pilihan varian produk terlebih dahulu.";
+            setVariantError(errorMsg);
+            toast.error(errorMsg);
+            return false;
         }
+        if (quantity > currentStock) {
+            toast.error(
+                `Kuantitas melebihi stok yang tersedia (Maks. ${currentStock} pcs).`,
+            );
+            return false;
+        }
+        return true;
+    };
 
+    const createCartPayload = (): CartPayloadItem => {
         const cartItemId = selectedVariant
             ? `${activeProduct.id}-${selectedVariant.id}`
             : String(activeProduct.id);
 
-        if (tambahItemStore) {
-            tambahItemStore({
-                id: cartItemId,
-                produk_id: activeProduct.id,
-                varian_id: selectedVariant?.id ? Number(selectedVariant.id) : undefined,
-                nama_produk:
-                    activeProduct.nama || activeProduct.name || "Produk CRSL",
-                harga: currentPrice,
-                gambar: selectedVariant?.gambar_varian || selectedImage,
-                jumlah: quantity,
-                ukuran: selectedSize,
-                warna:
-                    selectedVariant?.warna ||
-                    selectedVariant?.nama_varian ||
-                    selectedVariant?.variant_name,
-                sku: selectedVariant?.sku || `CRSL-${activeProduct.id}`,
-            });
-            toast.success("Produk berhasil masuk ke keranjang!");
-            bukaKeranjang?.();
-        } else {
-            router.post(
-                "/keranjang",
-                {
-                    produk_id: activeProduct.id,
-                    varian_id: selectedVariant?.id,
-                    jumlah: quantity,
-                    ukuran: selectedSize,
-                    warna:
-                        selectedVariant?.warna ||
-                        selectedVariant?.nama_varian ||
-                        selectedVariant?.variant_name,
-                },
-                { preserveScroll: true },
-            );
-        }
+        return {
+            id: cartItemId,
+            produk_id: Number(activeProduct.id),
+            slug: activeProduct.slug,
+            varian_id: selectedVariant?.id
+                ? Number(selectedVariant.id)
+                : undefined,
+            nama_produk: activeProduct.nama,
+            harga: currentPrice,
+            harga_asli: activeProduct.hargaDasar,
+            gambar: selectedVariant?.gambar_varian || selectedImage,
+            jumlah: quantity,
+            ukuran: selectedSize,
+            warna: selectedVariant?.warna || selectedVariant?.nama_varian,
+            sku: selectedVariant?.sku || `CRSL-${activeProduct.id}`,
+        };
+    };
+
+    const handleAddToCart = (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (!validatePurchase()) return;
+
+        tambahItemStore(createCartPayload());
+        toast.success("Produk berhasil ditambahkan ke keranjang!");
     };
 
     const handleBuyNow = (e: React.MouseEvent) => {
         e.preventDefault();
-        if (isOutOfStock) {
-            toast.error("Maaf, stok produk ini sedang habis.");
-            return;
-        }
+        if (!validatePurchase()) return;
 
-        if (variants.length > 0 && !selectedVariant) {
-            setVariantError("Please select WARNA");
-            toast.error("Silakan pilih varian WARNA terlebih dahulu.");
-            return;
-        }
+        const payload = createCartPayload();
 
-        const cartItemId = selectedVariant
-            ? `${activeProduct.id}-${selectedVariant.id}`
-            : String(activeProduct.id);
-
-        if (tambahItemStore) {
-            tambahItemStore({
-                id: cartItemId,
-                produk_id: activeProduct.id,
-                varian_id: selectedVariant?.id ? Number(selectedVariant.id) : undefined,
-                nama_produk:
-                    activeProduct.nama || activeProduct.name || "Produk CRSL",
-                harga: currentPrice,
-                gambar: selectedVariant?.gambar_varian || selectedImage,
-                jumlah: quantity,
-                ukuran: selectedSize,
-                warna:
-                    selectedVariant?.warna ||
-                    selectedVariant?.nama_varian ||
-                    selectedVariant?.variant_name,
-                sku: selectedVariant?.sku || `CRSL-${activeProduct.id}`,
-            });
-            router.visit("/pembayaran");
-        } else {
-            router.post(
-                "/keranjang",
-                {
-                    produk_id: activeProduct.id,
-                    varian_id: selectedVariant?.id,
-                    jumlah: quantity,
-                    ukuran: selectedSize,
-                    warna:
-                        selectedVariant?.warna ||
-                        selectedVariant?.nama_varian ||
-                        selectedVariant?.variant_name,
-                },
-                {
-                    onSuccess: () => router.visit("/pembayaran"),
-                },
-            );
-        }
-    };
-
-    const handleSelectDeliveryArea = async (area: AreaDetail) => {
-        setSelectedAreaName(area.nama || area.kota);
-        setIsCalculatingOngkir(true);
-        toast.info(`Menghitung estimasi ongkir ke ${area.kota}...`);
-        try {
-            const res = await fetch("/api/wilayah/ongkir", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    area_id: area.id,
-                    items: [
-                        {
-                            nama: activeProduct.nama || activeProduct.name,
-                            harga: currentPrice,
-                            jumlah: quantity,
-                            berat_gram: activeProduct.berat_gram || 250,
-                        },
-                    ],
-                }),
-            });
-            const data = await res.json();
-            if (
-                data.sukses &&
-                Array.isArray(data.data) &&
-                data.data.length > 0
-            ) {
-                setDeliveryCost(data.data[0].harga || data.data[0].biaya || 0);
-                toast.success("Estimasi ongkir berhasil didapatkan!");
-                setIsDeliveryModalOpen(false);
+        // Hanya isi session checkout instan tanpa menduplikasi ke keranjang reguler
+        if (typeof window !== "undefined") {
+            try {
+                sessionStorage.setItem(
+                    "crsl_buy_now_item",
+                    JSON.stringify(payload),
+                );
+            } catch {
+                // Ignore storage limits
             }
-        } catch {
-            toast.error("Gagal mengambil estimasi tarif ongkir.");
-        } finally {
-            setIsCalculatingOngkir(false);
         }
+        router.visit("/pembayaran?buy_now=1");
     };
 
     const handleDirectWhatsAppCS = () => {
+        const currentUrl =
+            typeof window !== "undefined" ? window.location.href : "";
         const phone = SITUS_CONFIG.whatsappCS;
         const text = encodeURIComponent(
-            `Halo tim CS CRSL, saya ingin bertanya tentang ketersediaan produk: ${activeProduct.nama || activeProduct.name} (${window.location.href})`,
+            `Halo tim CS CRSL, saya ingin bertanya seputar produk: ${activeProduct.nama}\nLink: ${currentUrl}`,
         );
-        window.open(`https://wa.me/${phone}?text=${text}`, "_blank");
+        window.open(
+            `https://wa.me/${phone}?text=${text}`,
+            "_blank",
+            "noopener,noreferrer",
+        );
     };
 
     const handleToggleWishlist = (e: React.MouseEvent) => {
         e.preventDefault();
+        if (isWishlistLoading) return;
+
+        setIsWishlistLoading(true);
         router.post(
             "/wishlist/toggle",
             { produk_id: activeProduct.id },
             {
                 preserveScroll: true,
                 onSuccess: () => toast.success("Status wishlist diperbarui!"),
+                onError: () => toast.error("Gagal memperbarui wishlist."),
+                onFinish: () => setIsWishlistLoading(false),
             },
         );
     };
 
     return (
         <StorefrontLayout>
-            <Head
-                title={`${activeProduct.nama || activeProduct.name || "Detail Produk"} - CRSL Store`}
-            />
+            <Head title={`${activeProduct.nama} - CRSL Store`} />
 
             {/* Breadcrumb Navigation */}
             <nav
@@ -355,372 +419,239 @@ export default function ProductDetail({
                     </Link>
                     <span>/</span>
                     <span className="text-slate-900 font-bold truncate max-w-xs sm:max-w-md">
-                        {activeProduct.nama || activeProduct.name}
+                        {activeProduct.nama}
                     </span>
                 </div>
             </nav>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                    {/* Kolom 1: Galeri Thumbnail */}
-                    <div className="lg:col-span-1 order-2 lg:order-1 flex lg:flex-col gap-2.5 overflow-x-auto lg:overflow-y-auto max-h-[500px] scrollbar-none">
-                        {images.map((img, idx) => (
-                            <button
-                                key={img.id || idx}
-                                type="button"
-                                onClick={() => setSelectedImage(img.url)}
-                                className={`w-16 h-16 rounded-2xl overflow-hidden border-2 shrink-0 transition-all p-0.5 bg-white ${
-                                    selectedImage === img.url
-                                        ? "border-[#E52027] shadow-xs scale-105"
-                                        : "border-slate-200 opacity-70 hover:opacity-100"
-                                }`}
-                            >
-                                <img
-                                    src={img.url}
-                                    alt={
-                                        img.alt_teks ||
-                                        img.alt_text ||
-                                        activeProduct.nama
-                                    }
-                                    className="w-full h-full object-cover rounded-xl"
-                                />
-                            </button>
-                        ))}
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+                    {/* Media Magnifier Gallery */}
+                    <div className="lg:col-span-6">
+                        <ProductGalleryMagnifier
+                            images={activeProduct.gambar}
+                            selectedImage={selectedImage}
+                            onSelectImage={setSelectedImage}
+                            productName={activeProduct.nama}
+                        />
                     </div>
 
-                    {/* Kolom 2: Gambar Utama */}
-                    <div className="lg:col-span-5 order-1 lg:order-2">
-                        <div className="aspect-square rounded-3xl bg-slate-100 border border-slate-200 overflow-hidden relative shadow-xs group">
-                            <img
-                                src={selectedImage}
-                                alt={activeProduct.nama || activeProduct.name}
-                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            />
-                            {isDiscounted && (
-                                <span className="absolute top-4 left-4 bg-[#E52027] text-white text-xs font-black px-3 py-1 rounded-full shadow-xs uppercase tracking-wider">
-                                    Special Promo
-                                </span>
-                            )}
-                            <button
-                                type="button"
-                                onClick={handleToggleWishlist}
-                                className="absolute top-4 right-4 p-2.5 rounded-full bg-white/80 hover:bg-white text-slate-700 hover:text-rose-600 shadow-xs backdrop-blur-xs transition-colors"
-                                aria-label="Simpan ke Wishlist"
-                            >
-                                <Heart className="w-5 h-5" />
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Kolom 3: Rincian Produk & Aksi Belanja */}
-                    <div className="lg:col-span-6 order-3 space-y-6 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-2xs">
-                        <div>
-                            <span className="text-[11px] font-bold text-[#E52027] uppercase tracking-wider bg-red-50 border border-red-100 px-3 py-1 rounded-full inline-block">
-                                {activeProduct.kategori?.nama ||
-                                    activeProduct.category?.name ||
-                                    "CRSL Official Merch"}
-                            </span>
-                            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mt-3 leading-tight tracking-tight">
-                                {activeProduct.nama || activeProduct.name}
-                            </h1>
-                        </div>
-
-                        {/* Harga */}
-                        <div className="flex items-baseline gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                            <span className="text-2xl sm:text-3xl font-black text-[#E52027] tabular-nums">
-                                {formatRupiah(currentPrice)}
-                            </span>
-                            {isDiscounted && (
-                                <span className="text-sm font-bold text-slate-400 line-through tabular-nums">
-                                    {formatRupiah(price)}
-                                </span>
-                            )}
-                        </div>
-
-                        {/* Estimasi Ongkos Kirim */}
-                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/90 space-y-2 text-xs">
-                            <div className="flex justify-between items-center">
-                                <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                                    <Truck className="w-4 h-4 text-[#E52027]" />
-                                    Estimasi Ongkos Kirim (Biteship)
-                                </span>
-                                <button
-                                    type="button"
-                                    onClick={() => setIsDeliveryModalOpen(true)}
-                                    className="text-blue-600 font-bold hover:underline"
-                                >
-                                    Cek Wilayah
-                                </button>
-                            </div>
-                            <p className="text-slate-500 text-[11px]">
-                                {selectedAreaName
-                                    ? `Tujuan: ${selectedAreaName}`
-                                    : "Pilih area kota tujuan untuk melihat tarif kurir resmi."}
-                            </p>
-                            {deliveryCost !== null && (
-                                <div className="font-black text-emerald-600 text-xs tabular-nums">
-                                    Mulai dari {formatRupiah(deliveryCost)}{" "}
-                                    (Reguler)
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Pilihan Varian (WARNA / SKU) */}
-                        {variants.length > 0 && (
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <label className="block text-xs font-black text-slate-800 uppercase tracking-wider">
-                                        WARNA {selectedVariant ? `: ${selectedVariant.nama_varian || selectedVariant.warna || selectedVariant.variant_name}` : ''}
-                                    </label>
-                                    {selectedVariant?.sku && (
-                                        <span className="text-[11px] font-mono text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200">
-                                            SKU: {selectedVariant.sku}
+                    {/* Panel Transaksi & Informasi Produk */}
+                    <div className="lg:col-span-6 space-y-5 bg-white p-6 sm:p-7 rounded-xl border border-slate-200/90 shadow-xs">
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <span
+                                        className={`text-xs font-semibold px-2.5 py-1 rounded ${
+                                            isOutOfStock
+                                                ? "bg-rose-50 text-rose-700 border border-rose-200"
+                                                : "bg-slate-100 text-slate-700"
+                                        }`}
+                                    >
+                                        {isOutOfStock
+                                            ? "Stok Habis"
+                                            : "Tersedia"}
+                                    </span>
+                                    {activeProduct.kategoriNama && (
+                                        <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2.5 py-1 rounded">
+                                            {activeProduct.kategoriNama}
                                         </span>
                                     )}
                                 </div>
-
-                                <div className="flex flex-wrap gap-3">
-                                    {variants.map((variant) => {
-                                        const isSelected = selectedVariant?.id === variant.id;
-                                        const variantImg = variant.gambar_varian || mainImage;
-                                        const variantName = variant.warna || variant.nama_varian || variant.variant_name || 'Varian';
-                                        return (
-                                            <button
-                                                type="button"
-                                                key={variant.id}
-                                                onClick={() => {
-                                                    setSelectedVariant(variant);
-                                                    setVariantError(null);
-                                                    if (variant.ukuran || variant.size_attribute) {
-                                                        setSelectedSize(variant.ukuran || variant.size_attribute || 'All Size');
-                                                    }
-                                                    if (variant.gambar_varian) {
-                                                        setSelectedImage(variant.gambar_varian);
-                                                    }
-                                                }}
-                                                className={`flex flex-col items-center p-2 rounded-2xl border text-center transition-all min-w-[76px] ${
-                                                    isSelected
-                                                        ? "border-[#E52027] ring-2 ring-[#E52027]/30 bg-red-50/50 shadow-xs"
-                                                        : "border-slate-200 bg-white hover:border-slate-300"
-                                                }`}
-                                            >
-                                                <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 mb-1.5 flex items-center justify-center">
-                                                    <img
-                                                        src={variantImg}
-                                                        alt={variantName}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                </div>
-                                                <span className="text-[10px] font-bold text-slate-700 uppercase tracking-tight max-w-[80px] truncate">
-                                                    {variantName}
-                                                </span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-
-                                {/* Validasi Error SKU / Varian (Screenshot 1) */}
-                                {variantError && (
-                                    <div className="p-3 bg-red-50 border border-red-200 text-[#E52027] text-xs font-bold rounded-xl animate-shake">
-                                        {variantError}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Jumlah Pembelian */}
-                        <div className="space-y-3 pt-4 border-t border-slate-100">
-                            <label className="block text-xs font-black text-slate-700 uppercase tracking-wider">
-                                Jumlah Pembelian:
-                            </label>
-                            <div className="flex items-center gap-4">
-                                <div className="flex items-center border border-slate-200 rounded-xl bg-slate-50 p-1">
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            setQuantity(
-                                                Math.max(1, quantity - 1),
-                                            )
-                                        }
-                                        className="w-8 h-8 rounded-lg bg-white shadow-2xs flex items-center justify-center font-bold text-slate-700 hover:bg-slate-100 transition-colors"
-                                        aria-label="Kurangi kuantitas"
-                                    >
-                                        <Minus className="w-3.5 h-3.5" />
-                                    </button>
-                                    <span className="w-12 text-center font-black text-sm text-slate-800 tabular-nums">
-                                        {quantity}
-                                    </span>
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            setQuantity(quantity + 1)
-                                        }
-                                        className="w-8 h-8 rounded-lg bg-white shadow-2xs flex items-center justify-center font-bold text-slate-700 hover:bg-slate-100 transition-colors"
-                                        aria-label="Tambah kuantitas"
-                                    >
-                                        <Plus className="w-3.5 h-3.5" />
-                                    </button>
-                                </div>
-                                <span
-                                    className={`text-xs font-bold px-3 py-1 rounded-full ${
-                                        isOutOfStock
-                                            ? "bg-rose-50 text-rose-600"
-                                            : "bg-emerald-50 text-emerald-700"
-                                    }`}
+                                <button
+                                    type="button"
+                                    onClick={handleToggleWishlist}
+                                    disabled={isWishlistLoading}
+                                    className="p-2 text-slate-400 hover:text-primary rounded-lg hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-50"
+                                    aria-label="Simpan ke Wishlist"
                                 >
-                                    {isOutOfStock
-                                        ? "Stok Habis"
-                                        : `Tersedia (${totalStock} pcs)`}
+                                    <Heart className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 leading-snug tracking-normal">
+                                {activeProduct.nama}
+                            </h1>
+
+                            {/* Harga */}
+                            <div className="flex items-baseline gap-2.5 pt-1">
+                                <span className="text-2xl sm:text-3xl font-bold text-slate-900 tabular-nums">
+                                    {formatRupiah(currentPrice)}
                                 </span>
+                                {isDiscounted && (
+                                    <span className="text-sm font-semibold text-slate-400 line-through tabular-nums">
+                                        {formatRupiah(activeProduct.hargaDasar)}
+                                    </span>
+                                )}
                             </div>
                         </div>
 
-                        {/* Tombol Aksi Beli */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
+                        {/* Banner Voucher Promo */}
+                        <button
+                            type="button"
+                            onClick={() => setIsDiscountsModalOpen(true)}
+                            className="w-full flex items-center justify-between px-3.5 py-3 bg-[#F8F9FA] border border-slate-200/90 rounded-lg text-left hover:border-slate-300 transition-colors cursor-pointer group"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-md bg-white border border-slate-200 flex items-center justify-center text-slate-600 shrink-0">
+                                    <TicketPercent className="w-4 h-4 text-slate-700" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-slate-800">
+                                        Kupon Diskon Tersedia
+                                    </p>
+                                    <p className="text-[11px] text-slate-500">
+                                        Gunakan voucher untuk penawaran harga
+                                        terbaik!
+                                    </p>
+                                </div>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                        </button>
+
+                        {/* Pemilih Varian & Ukuran */}
+                        <VariantSelector
+                            variants={activeProduct.varian}
+                            selectedVariant={selectedVariant}
+                            onSelectVariant={handleSelectVariant}
+                            selectedSize={selectedSize}
+                            onSelectSize={handleSizeChange}
+                            quantity={quantity}
+                            onQuantityChange={handleQuantityChange}
+                            totalStock={currentStock}
+                            errorMessage={variantError}
+                        />
+
+                        {/* Tombol Aksi Keranjang / Beli */}
+                        <div className="space-y-3 pt-2">
                             <button
                                 type="button"
                                 onClick={handleAddToCart}
                                 disabled={isOutOfStock}
-                                className="w-full py-3.5 bg-red-50 hover:bg-red-100 disabled:opacity-50 text-[#E52027] border border-red-200 font-extrabold text-xs sm:text-sm rounded-2xl transition-all flex items-center justify-center gap-2 shadow-xs active:scale-95"
+                                className="w-full h-12 bg-white hover:bg-red-50 disabled:opacity-50 text-primary border-2 border-primary font-bold text-sm rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed shadow-xs"
                             >
                                 <ShoppingBag className="w-4 h-4" />
-                                Tambah Keranjang
+                                <span>
+                                    {isOutOfStock
+                                        ? "Stok Habis"
+                                        : "Tambah ke Keranjang"}
+                                </span>
                             </button>
                             <button
                                 type="button"
                                 onClick={handleBuyNow}
                                 disabled={isOutOfStock}
-                                className="w-full py-3.5 bg-[#E52027] hover:bg-[#CC1C22] disabled:opacity-50 text-white font-extrabold text-xs sm:text-sm rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 active:scale-95"
+                                className="w-full h-12 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white font-bold text-sm rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed shadow-xs"
                             >
                                 <Zap className="w-4 h-4" />
-                                Beli Sekarang
+                                <span>Beli Sekarang</span>
                             </button>
                         </div>
 
-                        {/* Tombol WhatsApp CS */}
+                        {/* Lookbook Campaign Banner */}
+                        <div className="rounded-lg overflow-hidden border border-slate-200">
+                            <img
+                                src="/assets/gambar/banner-lookbook.webp"
+                                alt="CRSL Campaign Lookbook"
+                                className="w-full h-auto object-cover max-h-72 sm:max-h-80"
+                                loading="lazy"
+                                width={600}
+                                height={320}
+                                onError={(e) => {
+                                    (e.target as HTMLElement).style.display =
+                                        "none";
+                                }}
+                            />
+                        </div>
+
+                        {/* Estimasi Ongkir */}
+                        <DeliveryEstimator
+                            productWeight={activeProduct.beratGram}
+                            productPrice={currentPrice}
+                            productName={activeProduct.nama}
+                        />
+
+                        {/* Layanan Pelanggan WhatsApp */}
                         <button
                             type="button"
                             onClick={handleDirectWhatsAppCS}
-                            className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-2"
+                            className="w-full py-2.5 bg-white hover:bg-red-50 text-primary border border-primary font-bold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
                         >
-                            <MessageCircle className="w-4 h-4 text-emerald-600" />
-                            Tanya Produk Ini via WhatsApp
+                            <MessageCircle className="w-4 h-4 text-primary" />
+                            <span>Tanya CS CRSL?</span>
                         </button>
 
-                        {/* Deskripsi & Spesifikasi */}
-                        <div className="pt-6 border-t border-slate-100 space-y-4">
-                            <div>
-                                <h4 className="font-extrabold text-sm text-slate-900 mb-2">
-                                    Deskripsi Produk
+                        {/* Spesifikasi Teknis & Material */}
+                        {activeProduct.spesifikasi.length > 0 && (
+                            <div className="pt-4 border-t border-slate-100 space-y-2">
+                                <h4 className="font-extrabold text-sm text-slate-900">
+                                    Spesifikasi Material & Detail
                                 </h4>
-                                <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">
-                                    {activeProduct.deskripsi ||
-                                        activeProduct.description ||
-                                        "Belum ada deskripsi untuk produk ini."}
-                                </p>
-                            </div>
-
-                            {specs.length > 0 && (
-                                <div className="pt-4 border-t border-slate-100">
-                                    <h4 className="font-extrabold text-sm text-slate-900 mb-2">
-                                        Spesifikasi Material
-                                    </h4>
-                                    <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-2">
-                                        {specs.map((spec) => (
-                                            <div
-                                                key={spec.id}
-                                                className="grid grid-cols-3 text-xs border-b border-slate-200/60 pb-1.5 last:border-0 last:pb-0"
-                                            >
-                                                <span className="font-bold text-slate-500">
-                                                    {spec.kunci ||
-                                                        spec.spec_key}
-                                                </span>
-                                                <span className="col-span-2 font-semibold text-slate-800">
-                                                    {spec.nilai ||
-                                                        spec.spec_value}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
+                                <div className="bg-slate-50 rounded-lg p-3.5 border border-slate-200/80 space-y-2">
+                                    {activeProduct.spesifikasi.map((spec) => (
+                                        <div
+                                            key={spec.id}
+                                            className="grid grid-cols-3 text-xs border-b border-slate-200/60 pb-1.5 last:border-0 last:pb-0"
+                                        >
+                                            <span className="font-bold text-slate-500">
+                                                {spec.kunci}
+                                            </span>
+                                            <span className="col-span-2 font-semibold text-slate-800">
+                                                {spec.nilai}
+                                            </span>
+                                        </div>
+                                    ))}
                                 </div>
-                            )}
-
-                            <div className="pt-2 flex items-center gap-2 text-slate-500 text-xs">
-                                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                                <span>
-                                    100% Original CRSL Merchandise Guaranteed
-                                </span>
                             </div>
+                        )}
+
+                        <div className="pt-1 flex items-center gap-2 text-slate-500 text-xs">
+                            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <span>
+                                100% Produk Original Merchandise CRSL Terjamin
+                            </span>
                         </div>
                     </div>
                 </div>
 
-                {/* Rekomendasi Produk */}
-                {listRekomendasi.length > 0 && (
-                    <div className="mt-16 pt-12 border-t border-slate-200">
-                        <h2 className="text-2xl font-black text-slate-900 mb-6">
-                            Koleksi Terkait Lainnya
-                        </h2>
-                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-                            {listRekomendasi.map((item) => (
-                                <Link
-                                    key={item.id}
-                                    href={`/produk/${item.slug}`}
-                                    className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs hover:shadow-md transition-all p-3 space-y-2 group"
-                                >
-                                    <div className="aspect-square rounded-xl overflow-hidden bg-slate-100">
-                                        <img
-                                            src={
-                                                item.gambar_utama ||
-                                                item.main_image ||
-                                                "/assets/gambar/placeholder.webp"
-                                            }
-                                            alt={item.nama || item.name}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                        />
-                                    </div>
-                                    <h4 className="font-bold text-xs text-slate-900 line-clamp-1 group-hover:text-[#E52027] transition-colors">
-                                        {item.nama || item.name}
-                                    </h4>
-                                    <span className="text-xs font-black text-[#E52027] block tabular-nums">
-                                        {formatRupiah(
-                                            item.harga_diskon ??
-                                                item.harga_dasar ??
-                                                item.price ??
-                                                0,
-                                        )}
-                                    </span>
-                                </Link>
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
+                {/* Riwayat Produk Terakhir Dilihat */}
+                <RecentViewed
+                    currentProduct={{
+                        id: activeProduct.id,
+                        nama: activeProduct.nama,
+                        slug: activeProduct.slug,
+                        harga: activeProduct.hargaDasar,
+                        harga_diskon: activeProduct.hargaDiskon,
+                        gambar: activeProduct.gambarUtama,
+                    }}
+                    fallbackRecommendations={listRekomendasi.map((item) => ({
+                        id: item.id,
+                        nama: item.nama,
+                        slug: item.slug,
+                        harga: item.hargaDasar,
+                        harga_diskon: item.hargaDiskon,
+                        gambar: item.gambarUtama,
+                    }))}
+                />
+            </main>
 
-            {/* Modal Estimasi Ongkir */}
-            {isDeliveryModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
-                    <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-4 border border-slate-100">
-                        <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                            <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                                <Truck className="w-4 h-4 text-[#E52027]" /> Cek
-                                Estimasi Ongkir
-                            </h3>
-                            <button
-                                type="button"
-                                onClick={() => setIsDeliveryModalOpen(false)}
-                                className="text-slate-400 hover:text-slate-700 p-1"
-                                aria-label="Tutup modal"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <ShippingAreaSelector
-                            onSelectArea={handleSelectDeliveryArea}
-                        />
-                    </div>
-                </div>
-            )}
+            {/* Modal Kupon & Diskon */}
+            <DiscountsModal
+                isOpen={isDiscountsModalOpen}
+                onClose={() => setIsDiscountsModalOpen(false)}
+                cartTotal={
+                    globalCartTotal > 0
+                        ? globalCartTotal
+                        : currentPrice * quantity
+                }
+                onApplyVoucher={(code) => {
+                    toast.success(
+                        `Voucher ${code} berhasil dipasang ke pesanan!`,
+                    );
+                }}
+            />
+
+            <StickyCartBar />
         </StorefrontLayout>
     );
 }
