@@ -69,7 +69,7 @@ export default function AdoptNowSection() {
                         <Link
                             key={koleksi.id}
                             href={`/katalog?kategori=${koleksi.slug}`}
-                            className="group relative rounded-xl overflow-hidden aspect-[16/10] sm:aspect-[16/9] bg-slate-100 shadow-xs hover:shadow-lg transition-all duration-300 block"
+                            className="group relative rounded-xl overflow-hidden aspect-16/10 sm:aspect-video bg-slate-100 shadow-xs hover:shadow-lg transition-all duration-300 block"
                             aria-label={`Lihat ${koleksi.judul}`}
                         >
                             {/* Gambar Banner Koleksi */}
@@ -88,7 +88,7 @@ export default function AdoptNowSection() {
                             />
 
                             {/* Gradient Overlay Gelap di Bagian Bawah */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent group-hover:from-black/85 transition-colors duration-300" />
+                            <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/20 to-transparent group-hover:from-black/85 transition-colors duration-300" />
 
                             {/* Judul Koleksi di Pojok Kiri Bawah (Matches Screenshot 2) */}
                             <div className="absolute bottom-5 left-5 sm:bottom-7 sm:left-7 right-5">

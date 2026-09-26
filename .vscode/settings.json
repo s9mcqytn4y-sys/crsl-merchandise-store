@@ -1,5 +1,29 @@
 {
-    "workbench.colorTheme": "Default Dark Modern",
+    "workbench.colorTheme": "Dracula Theme",
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#1e1f29",
+        "activityBar.foreground": "#f8f8f2",
+        "activityBarBadge.background": "#ff79c6",
+        "activityBarBadge.foreground": "#1e1f29",
+        "sideBar.background": "#21222c",
+        "sideBar.foreground": "#f8f8f2",
+        "sideBarSectionHeader.background": "#191a21",
+        "sideBarSectionHeader.foreground": "#bd93f9",
+        "sideBarTitle.foreground": "#bd93f9",
+        "editorGroupHeader.tabsBackground": "#191a21",
+        "tab.activeBackground": "#282a36",
+        "tab.activeForeground": "#f8f8f2",
+        "tab.inactiveBackground": "#21222c",
+        "tab.inactiveForeground": "#6272a4",
+        "tab.border": "#191a21",
+        "statusBar.background": "#191a21",
+        "statusBar.foreground": "#f8f8f2",
+        "statusBar.noFolderBackground": "#191a21",
+        "titleBar.activeBackground": "#21222c",
+        "titleBar.activeForeground": "#f8f8f2",
+        "terminal.background": "#282a36",
+        "terminal.foreground": "#f8f8f2"
+    },
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.codeActionsOnSave": {
@@ -36,16 +60,6 @@
         "typescript": "javascript",
         "typescriptreact": "javascript"
     },
-    "tailwindCSS.experimental.classRegex": [
-        [
-            "cva\\(([^)]*)\\)",
-            "[\"'`]([^\"'`]*).*?[\"'`]"
-        ],
-        [
-            "cx\\(([^)]*)\\)",
-            "(?:'|\"|`)([^']*)(?:'|\"|`)"
-        ]
-    ],
     "intelephense.environment.includePaths": [
         "vendor/**"
     ],

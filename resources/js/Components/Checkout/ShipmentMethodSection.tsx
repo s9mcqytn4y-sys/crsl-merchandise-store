@@ -11,6 +11,8 @@ export interface CourierOption {
     biaya: number;
     etd?: string;
     ikon?: string;
+    is_mock?: boolean;
+    sumber?: string;
 }
 
 interface ShipmentMethodSectionProps {
@@ -115,6 +117,11 @@ export default function ShipmentMethodSection({
                                             ? `(${selectedCourier.etd})`
                                             : ""}
                                     </p>
+                                )}
+                                {selectedCourier.is_mock && (
+                                    <span className="inline-block mt-1 bg-amber-50 text-amber-700 text-[10px] font-bold px-1.5 py-0.2 rounded border border-amber-200">
+                                        Sandbox Simulasi
+                                    </span>
                                 )}
                             </>
                         ) : (

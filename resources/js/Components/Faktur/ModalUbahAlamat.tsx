@@ -7,12 +7,17 @@ interface ModalUbahAlamatProps {
     isOpen: boolean;
     onClose: () => void;
     nomorPesanan: string;
-    initialData: {
+    initialData?: {
         nama_penerima?: string;
         telepon?: string;
         alamat_lengkap?: string;
         catatan?: string;
     };
+    namaPenerimaDefault?: string;
+    teleponDefault?: string;
+    alamatLengkapDefault?: string;
+    catatanDefault?: string;
+    onSuccess?: () => void;
 }
 
 export default function ModalUbahAlamat({
@@ -20,25 +25,37 @@ export default function ModalUbahAlamat({
     onClose,
     nomorPesanan,
     initialData,
+    namaPenerimaDefault = "",
+    teleponDefault = "",
+    alamatLengkapDefault = "",
+    catatanDefault = "",
+    onSuccess,
 }: ModalUbahAlamatProps) {
     const [formData, setFormData] = useState({
-        nama_penerima: initialData.nama_penerima || "",
-        telepon: initialData.telepon || "",
-        alamat_lengkap: initialData.alamat_lengkap || "",
-        catatan: initialData.catatan || "",
+        nama_penerima: initialData?.nama_penerima || namaPenerimaDefault || "",
+        telepon: initialData?.telepon || teleponDefault || "",
+        alamat_lengkap: initialData?.alamat_lengkap || alamatLengkapDefault || "",
+        catatan: initialData?.catatan || catatanDefault || "",
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
             setFormData({
-                nama_penerima: initialData.nama_penerima || "",
-                telepon: initialData.telepon || "",
-                alamat_lengkap: initialData.alamat_lengkap || "",
-                catatan: initialData.catatan || "",
+                nama_penerima: initialData?.nama_penerima || namaPenerimaDefault || "",
+                telepon: initialData?.telepon || teleponDefault || "",
+                alamat_lengkap: initialData?.alamat_lengkap || alamatLengkapDefault || "",
+                catatan: initialData?.catatan || catatanDefault || "",
             });
         }
-    }, [isOpen, initialData]);
+    }, [
+        isOpen,
+        initialData,
+        namaPenerimaDefault,
+        teleponDefault,
+        alamatLengkapDefault,
+        catatanDefault,
+    ]);
 
     if (!isOpen) return null;
 
@@ -67,6 +84,7 @@ export default function ModalUbahAlamat({
                 onSuccess: () => {
                     setIsSubmitting(false);
                     toast.success("Data penerima berhasil diperbarui!");
+                    onSuccess?.();
                     onClose();
                 },
                 onError: (err) => {

@@ -19,7 +19,25 @@ export default defineConfig({
         },
     },
     build: {
-        chunkSizeWarningLimit: 1000,
+        chunkSizeWarningLimit: 2500,
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    if (id.includes('node_modules')) {
+                        if (id.includes('react') || id.includes('@inertiajs')) {
+                            return 'vendor-react';
+                        }
+                        if (id.includes('gsap')) {
+                            return 'vendor-gsap';
+                        }
+                        if (id.includes('lucide-react') || id.includes('@headlessui') || id.includes('@heroicons')) {
+                            return 'vendor-ui';
+                        }
+                        return 'vendor';
+                    }
+                },
+            },
+        },
     },
     server: {
         watch: {

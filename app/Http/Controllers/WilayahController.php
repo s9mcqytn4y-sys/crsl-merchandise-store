@@ -64,9 +64,13 @@ class WilayahController extends Controller
             ], 503);
         }
 
+        $isMock = !empty($rates[0]['is_mock'] ?? false);
+
         return response()->json([
             'sukses'         => true,
             'kurir_tersedia' => true,
+            'is_mock'        => $isMock,
+            'sumber_tarif'   => $isMock ? 'Simulasi Ekspedisi Lokal (Sandbox)' : 'Biteship API Resmi',
             'data'           => $rates,
         ]);
     }

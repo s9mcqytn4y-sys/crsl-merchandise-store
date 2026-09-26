@@ -9,6 +9,8 @@ import { createRoot } from 'react-dom/client';
 import { createInertiaApp } from '@inertiajs/react';
 import type { ResolvedComponent } from '@inertiajs/react';
 
+import ErrorBoundary from './Components/ErrorBoundary';
+
 createInertiaApp({
     title: (title) => title ? `${title} - CRSL Store` : 'CRSL Official Store',
     resolve: (name): ResolvedComponent | Promise<ResolvedComponent> => {
@@ -38,6 +40,10 @@ createInertiaApp({
         if (!el) {
             throw new Error('Root element #app tidak ditemukan.');
         }
-        createRoot(el).render(<App {...props} />);
+        createRoot(el).render(
+            <ErrorBoundary>
+                <App {...props} />
+            </ErrorBoundary>
+        );
     },
 });

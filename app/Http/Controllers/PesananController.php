@@ -8,6 +8,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,16 +20,35 @@ class PesananController extends Controller
     ) {}
 
     /**
+     * Helper normalisasi pencarian pesanan yang fleksibel (mendukung slash, dash, urlencoded).
+     */
+    protected function temukanPesanan(string $nomorPesanan, array $with = []): Pesanan
+    {
+        $decoded = trim(urldecode($nomorPesanan));
+        $versiSlash = str_replace('-', '/', $decoded);
+        $versiStrip = str_replace('/', '-', $decoded);
+
+        $query = Pesanan::query();
+        if (!empty($with)) {
+            $query->with($with);
+        }
+
+        return $query->where(function ($q) use ($decoded, $versiSlash, $versiStrip) {
+            $q->where('nomor_pesanan', $decoded)
+              ->orWhere('nomor_pesanan', $versiSlash)
+              ->orWhere('nomor_pesanan', $versiStrip)
+              ->orWhereRaw('LOWER(nomor_pesanan) = ?', [strtolower($decoded)])
+              ->orWhereRaw('LOWER(nomor_pesanan) = ?', [strtolower($versiSlash)])
+              ->orWhereRaw('LOWER(nomor_pesanan) = ?', [strtolower($versiStrip)]);
+        })->firstOrFail();
+    }
+
+    /**
      * Tampilkan halaman faktur/invoice pesanan beserta instruksi pembayaran native.
      */
     public function faktur(string $nomorPesanan): Response
     {
-        $nomorPesananAsli = str_replace('-', '/', $nomorPesanan);
-
-        $pesanan = Pesanan::with(['items', 'pembayaran', 'pengiriman'])
-            ->where('nomor_pesanan', $nomorPesananAsli)
-            ->orWhere('nomor_pesanan', $nomorPesanan)
-            ->firstOrFail();
+        $pesanan = $this->temukanPesanan($nomorPesanan, ['items', 'pembayaran', 'pengiriman']);
 
         return Inertia::render('Faktur', [
             'pesanan' => $pesanan,
@@ -41,13 +62,9 @@ class PesananController extends Controller
      */
     public function cekStatusRealtime(string $nomorPesanan): JsonResponse
     {
-        $nomorPesananAsli = str_replace('-', '/', $nomorPesanan);
-        $pesanan = Pesanan::with(['pembayaran'])
-            ->where('nomor_pesanan', $nomorPesananAsli)
-            ->orWhere('nomor_pesanan', $nomorPesanan)
-            ->first();
-
-        if (!$pesanan) {
+        try {
+            $pesanan = $this->temukanPesanan($nomorPesanan, ['pembayaran']);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['sukses' => false, 'pesan' => 'Pesanan tidak ditemukan'], 404);
         }
 
@@ -66,7 +83,7 @@ class PesananController extends Controller
 
         // Cache 3 detik untuk mencegah burst / rate limit dari polling interval pendek
         $cacheKey = "pesanan:midtrans_status:" . md5($pesanan->nomor_pesanan);
-        $res = \Illuminate\Support\Facades\Cache::remember($cacheKey, 3, function () use ($pesanan) {
+        $res = Cache::remember($cacheKey, 3, function () use ($pesanan) {
             return $this->midtransService->cekStatus($pesanan->nomor_pesanan);
         });
 
@@ -93,9 +110,11 @@ class PesananController extends Controller
         $pesanan = null;
 
         if ($nomorPesanan) {
-            $pesanan = Pesanan::with(['items', 'pembayaran', 'pengiriman'])
-                ->where('nomor_pesanan', trim($nomorPesanan))
-                ->first();
+            try {
+                $pesanan = $this->temukanPesanan($nomorPesanan, ['items', 'pembayaran', 'pengiriman']);
+            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+                $pesanan = null;
+            }
         }
 
         return Inertia::render('LacakPesanan', [
@@ -110,11 +129,7 @@ class PesananController extends Controller
      */
     public function konfirmasiDiterima(string $nomorPesanan): RedirectResponse
     {
-        $nomorPesananAsli = str_replace('-', '/', $nomorPesanan);
-
-        $pesanan = Pesanan::where('nomor_pesanan', $nomorPesananAsli)
-            ->orWhere('nomor_pesanan', $nomorPesanan)
-            ->firstOrFail();
+        $pesanan = $this->temukanPesanan($nomorPesanan);
 
         if (Auth::check() && $pesanan->pengguna_id && $pesanan->pengguna_id !== Auth::id()) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke pesanan ini.');
@@ -147,12 +162,7 @@ class PesananController extends Controller
      */
     public function ubahAlamat(Request $request, string $nomorPesanan): RedirectResponse
     {
-        $nomorPesananAsli = str_replace('-', '/', $nomorPesanan);
-
-        $pesanan = Pesanan::with(['pengiriman'])
-            ->where('nomor_pesanan', $nomorPesananAsli)
-            ->orWhere('nomor_pesanan', $nomorPesanan)
-            ->firstOrFail();
+        $pesanan = $this->temukanPesanan($nomorPesanan, ['pengiriman']);
 
         if (in_array($pesanan->status, ['dikirim', 'selesai', 'dibatalkan'])) {
             return redirect()->back()->with('error', 'Pesanan yang sudah diproses pengiriman atau dibatalkan tidak dapat diubah alamatnya.');
@@ -188,12 +198,7 @@ class PesananController extends Controller
      */
     public function gantiMetodeBayar(Request $request, string $nomorPesanan): RedirectResponse
     {
-        $nomorPesananAsli = str_replace('-', '/', $nomorPesanan);
-
-        $pesanan = Pesanan::with(['pembayaran', 'pengiriman', 'items'])
-            ->where('nomor_pesanan', $nomorPesananAsli)
-            ->orWhere('nomor_pesanan', $nomorPesanan)
-            ->firstOrFail();
+        $pesanan = $this->temukanPesanan($nomorPesanan, ['pembayaran', 'pengiriman', 'items']);
 
         if ($pesanan->status !== 'belum_bayar') {
             return redirect()->back()->with('error', 'Hanya pesanan berstatus Belum Bayar yang dapat diubah metode pembayarannya.');
@@ -265,12 +270,7 @@ class PesananController extends Controller
      */
     public function batalkanPesanan(string $nomorPesanan): RedirectResponse
     {
-        $nomorPesananAsli = str_replace('-', '/', $nomorPesanan);
-
-        $pesanan = Pesanan::with(['items', 'pembayaran'])
-            ->where('nomor_pesanan', $nomorPesananAsli)
-            ->orWhere('nomor_pesanan', $nomorPesanan)
-            ->firstOrFail();
+        $pesanan = $this->temukanPesanan($nomorPesanan, ['items', 'pembayaran']);
 
         if ($pesanan->status !== 'belum_bayar') {
             return redirect()->back()->with('error', 'Hanya pesanan yang belum dibayar yang dapat dibatalkan.');
@@ -293,8 +293,8 @@ class PesananController extends Controller
                         ['poin' => 0, 'total_belanja' => 0]
                     );
                     $loyalitas->increment('poin', $pesanan->poin_digunakan);
-                    \Illuminate\Support\Facades\Cache::forget("pengguna:akun:{$pesanan->pengguna_id}");
-                    \Illuminate\Support\Facades\Cache::forget("pengguna:profil:{$pesanan->pengguna_id}");
+                    Cache::forget("pengguna:akun:{$pesanan->pengguna_id}");
+                    Cache::forget("pengguna:profil:{$pesanan->pengguna_id}");
                 }
 
                 // 3. Kembalikan kuota voucher
@@ -327,12 +327,7 @@ class PesananController extends Controller
      */
     public function refreshQris(string $nomorPesanan): RedirectResponse
     {
-        $nomorPesananAsli = str_replace('-', '/', $nomorPesanan);
-
-        $pesanan = Pesanan::with(['pembayaran', 'pengiriman'])
-            ->where('nomor_pesanan', $nomorPesananAsli)
-            ->orWhere('nomor_pesanan', $nomorPesanan)
-            ->firstOrFail();
+        $pesanan = $this->temukanPesanan($nomorPesanan, ['pembayaran', 'pengiriman']);
 
         if ($pesanan->status !== 'belum_bayar') {
             return redirect()->back()->with('error', 'Kode QRIS tidak dapat diperbarui.');
@@ -372,11 +367,7 @@ class PesananController extends Controller
      */
     public function simulasiBayarDev(string $nomorPesanan): RedirectResponse
     {
-        $nomorPesananAsli = str_replace('-', '/', $nomorPesanan);
-
-        $pesanan = Pesanan::where('nomor_pesanan', $nomorPesananAsli)
-            ->orWhere('nomor_pesanan', $nomorPesanan)
-            ->firstOrFail();
+        $pesanan = $this->temukanPesanan($nomorPesanan);
 
         $pesanan->status = 'akan_dikirim';
         $pesanan->save();
