@@ -182,6 +182,17 @@ class BuatPesananAction
                     $varianId = null;
                 }
 
+                $itemGambar = $item['gambar'] ?? null;
+                if (empty($itemGambar) && $varianId) {
+                    $itemGambar = ProdukVarian::where('id', $varianId)->value('gambar_varian');
+                }
+                if (empty($itemGambar) && $produkId) {
+                    $itemGambar = Produk::where('id', $produkId)->value('gambar_utama');
+                }
+                if (empty($itemGambar)) {
+                    $itemGambar = '/assets/gambar/drinke-tumblr.webp';
+                }
+
                 ItemPesanan::create([
                     'pesanan_id' => $pesanan->id,
                     'produk_id' => $produkId,
@@ -192,7 +203,7 @@ class BuatPesananAction
                     'jumlah' => $item['jumlah'] ?? 1,
                     'ukuran' => $item['ukuran'] ?? null,
                     'warna' => $item['warna'] ?? null,
-                    'gambar' => $item['gambar'] ?? null,
+                    'gambar' => $itemGambar,
                 ]);
             }
 

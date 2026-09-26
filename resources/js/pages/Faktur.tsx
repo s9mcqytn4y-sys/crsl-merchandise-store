@@ -36,6 +36,8 @@ import ModalBatalPesanan from "../Components/Faktur/ModalBatalPesanan";
 import PaymentSelectModal from "../Components/Checkout/PaymentSelectModal";
 import { PaymentOption } from "../Components/Checkout/PaymentMethodSection";
 
+import PrintableA4Invoice from "../Components/Faktur/PrintableA4Invoice";
+
 interface OrderItem {
     id: number | string;
     nama_produk: string;
@@ -121,6 +123,25 @@ function formatRupiah(num: number | string | undefined | null): string {
     if (num === null || num === undefined) return "Rp 0";
     const val = typeof num === "string" ? parseFloat(num) : num;
     return rupiahFormatter.format(!isNaN(val) ? val : 0);
+}
+
+function formatTanggalIndo(dateStr?: string): string {
+    if (!dateStr) return "Hari ini";
+    try {
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        return (
+            d.toLocaleDateString("id-ID", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+            }) + " WIB"
+        );
+    } catch {
+        return dateStr;
+    }
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -224,6 +245,9 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
     }, [isChecking, cekStatusManual]);
 
     const isPendingPayment = statusPesanan === "belum_bayar";
+    const isSuccessSettled = ["akan_dikirim", "dikirim", "selesai"].includes(
+        statusPesanan.toLowerCase(),
+    );
     const isQris = Boolean(
         pembayaran.qr_code_url ||
             pembayaran.metode_bayar?.toLowerCase().includes("qris"),
@@ -332,63 +356,108 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                 title={`Faktur #${activeOrder.nomor_pesanan || ""} - CRSL Store`}
             />
 
-            {/* Header Tindakan (Web & Cetak) */}
-            <header className="bg-white border-b border-slate-200/80 py-6 print:py-2">
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest inline-flex items-center gap-1">
-                                <ReceiptText className="w-3.5 h-3.5 text-primary" />{" "}
-                                Faktur Pesanan Resmi
-                            </span>
-                            <span className="text-slate-300">•</span>
-                            <span className="text-[11px] font-mono text-slate-500">
-                                {activeOrder.created_at || "Hari ini"}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-1">
-                            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                                #{activeOrder.nomor_pesanan}
-                            </h1>
-                            <button
-                                type="button"
-                                onClick={copyInvoiceId}
-                                title="Salin nomor pesanan"
-                                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+            {/* Print Stylesheet khusus Dokumen A4 Pure Paper */}
+            <style>{`
+                @media print {
+                    @page {
+                        size: A4 portrait;
+                        margin: 10mm 15mm 15mm 15mm;
+                    }
+                    html, body {
+                        background-color: #ffffff !important;
+                        color: #0f172a !important;
+                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                    /* Sembunyikan semua elemen navigasi, floating UI, button, modal & toast */
+                    header, footer, nav, aside, [role="dialog"], .sonner-toast, button, .print\\:hidden {
+                        display: none !important;
+                    }
+                    #printable-a4-invoice {
+                        display: block !important;
+                    }
+                }
+            `}</style>
+
+            {/* 1. Dokumen Resmi Jual-Beli Khusus Cetak A4 Portrait (Pure Paper) */}
+            <PrintableA4Invoice
+                pesanan={activeOrder}
+                statusPesanan={statusPesanan}
+                formatRupiah={formatRupiah}
+                formatTanggalIndo={formatTanggalIndo}
+            />
+
+            {/* 2. Web UI Interaktif (Disembunyikan Otomatis Saat Print) */}
+            <div className="print:hidden">
+                {/* Header Tindakan Web */}
+                <header className="bg-white border-b border-slate-200/80 py-5">
+                    <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-3">
+                        <div>
+                            <Link
+                                href="/katalog"
+                                className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors"
                             >
-                                {copiedInvoice ? (
-                                    <Check className="w-4 h-4 text-emerald-600" />
-                                ) : (
-                                    <Copy className="w-4 h-4" />
-                                )}
-                            </button>
+                                <ArrowLeft className="w-3.5 h-3.5" />
+                                <span>Kembali ke Belanja</span>
+                            </Link>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest inline-flex items-center gap-1">
+                                        <ReceiptText className="w-3.5 h-3.5 text-primary" />{" "}
+                                        Faktur Pesanan Resmi
+                                    </span>
+                                    <span className="text-slate-300">•</span>
+                                    <span className="text-[11px] font-semibold text-slate-500">
+                                        {formatTanggalIndo(activeOrder.created_at)}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                                        #{activeOrder.nomor_pesanan}
+                                    </h1>
+                                    <button
+                                        type="button"
+                                        onClick={copyInvoiceId}
+                                        title="Salin nomor pesanan"
+                                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                                        aria-label="Salin nomor pesanan"
+                                    >
+                                        {copiedInvoice ? (
+                                            <Check className="w-4 h-4 text-emerald-600" />
+                                        ) : (
+                                            <Copy className="w-4 h-4" />
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
+                                <StatusBadge status={statusPesanan} />
+                                <button
+                                    type="button"
+                                    onClick={() => window.print()}
+                                    className="inline-flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-2xs cursor-pointer min-h-[38px]"
+                                >
+                                    <Printer className="w-3.5 h-3.5 text-slate-500" />
+                                    Cetak Faktur
+                                </button>
+                            </div>
                         </div>
                     </div>
+                </header>
 
-                    <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end print:hidden">
-                        <StatusBadge status={statusPesanan} />
-                        <button
-                            type="button"
-                            onClick={() => window.print()}
-                            className="inline-flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-2xs cursor-pointer"
-                        >
-                            <Printer className="w-3.5 h-3.5 text-slate-500" />
-                            Cetak Faktur
-                        </button>
-                    </div>
-                </div>
-            </header>
-
-            {/* Konten Utama 2 Kolom */}
-            <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 print:py-4 print:px-0">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                    {/* KOLOM KIRI (7 Kolom): Status, Aksi Pembayaran & Progres */}
-                    <div className="lg:col-span-7 space-y-6">
-                        {/* Banner Pelunasan */}
-                        {isSettled &&
-                            statusPesanan !== "dibatalkan" &&
-                            statusPesanan !== "expired" && (
-                                <div className="bg-emerald-50/90 border border-emerald-200 p-6 rounded-3xl shadow-2xs space-y-4 print:hidden">
+                {/* Konten Utama 2 Kolom */}
+                <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                        {/* KOLOM KIRI (7 Kolom): Status, Aksi Pembayaran & Progres */}
+                        <div className="lg:col-span-7 space-y-6">
+                            {/* Banner Pelunasan (Hanya muncul jika benar-benar lunas) */}
+                            {isSuccessSettled && (
+                                <div className="bg-emerald-50/90 border border-emerald-200 p-6 rounded-3xl shadow-2xs space-y-4">
                                     <div className="flex items-start gap-4">
                                         <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
                                             <CheckCircle2 className="w-6 h-6" />
@@ -534,6 +603,9 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                                             instruksiBayar={
                                                 pembayaran.instruksi_bayar
                                             }
+                                            nomorPesanan={
+                                                activeOrder.nomor_pesanan
+                                            }
                                         />
                                     )}
 
@@ -574,10 +646,10 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                             </div>
                             <div className="flex items-center gap-2">
                                 <a
-                                    href="https://wa.me/6281234567890?text=Halo%20CRSL%2C%20saya%20butuh%20bantuan%20terkait%20pesanan%20"
+                                    href={`https://wa.me/6281234567890?text=Halo%20CRSL%2C%20saya%20butuh%20bantuan%20terkait%20pesanan%20${encodeURIComponent(activeOrder.nomor_pesanan || "")}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
+                                    className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl transition-colors cursor-pointer min-h-[38px]"
                                 >
                                     <span>Chat CS WhatsApp</span>
                                     <ExternalLink className="w-3 h-3" />
@@ -596,6 +668,8 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                     {/* KOLOM KANAN (5 Kolom): Rincian Pengiriman & Item */}
                     <div className="lg:col-span-5">
                         <RincianFaktur
+                            nomorPesanan={activeOrder.nomor_pesanan}
+                            status={statusPesanan}
                             items={orderItems}
                             subtotal={activeOrder.subtotal}
                             ongkir={activeOrder.ongkir}
@@ -694,6 +768,7 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                     </div>
                 </div>
             )}
+            </div>
         </StorefrontLayout>
     );
 }

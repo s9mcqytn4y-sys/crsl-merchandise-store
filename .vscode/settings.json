@@ -64,5 +64,13 @@
         "vendor/**"
     ],
     "intelephense.diagnostics.undefinedClassConstants": false,
-    "intelephense.diagnostics.undefinedFunctions": false
+    "intelephense.diagnostics.undefinedFunctions": false,
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/node_modules/**": true,
+        "**/vendor/**": true,
+        "**/storage/**": true,
+        "**/public/build/**": true
+    }
 }

@@ -207,7 +207,7 @@ export default function HeroCarousel({
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
             onMouseMove={handleMouseMove}
-            className="relative w-full h-130 sm:h-145 lg:h-160 overflow-hidden bg-slate-950 select-none focus:outline-hidden"
+            className="relative w-full h-[calc(100dvh-5rem)] min-h-[540px] max-h-[960px] overflow-hidden bg-slate-950 select-none focus:outline-hidden"
             aria-label="Carousel Banner Utama CRSL"
         >
             {/* Track Slider Banner */}
@@ -260,11 +260,11 @@ export default function HeroCarousel({
                                         <Link
                                             href={slide.tautan}
                                             tabIndex={isCurrent ? 0 : -1}
-                                            className="hero-btn inline-flex items-center gap-2.5 bg-white hover:bg-primary text-slate-900 hover:text-white font-extrabold text-xs sm:text-sm px-6 py-3.5 rounded-full shadow-lg transition-all duration-200 active:scale-95 group/btn cursor-pointer"
+                                            className="hero-btn inline-flex items-center gap-2.5 bg-primary hover:bg-primary-hover text-white font-extrabold text-xs sm:text-sm px-7 py-3.5 rounded-full shadow-lg transition-all duration-200 active:scale-95 group/btn cursor-pointer"
                                             aria-label={`${slide.tombol} - ${slide.judul}`}
                                         >
                                             <span>{slide.tombol}</span>
-                                            <ArrowRight className="w-4 h-4 text-primary group-hover/btn:text-white transition-colors" />
+                                            <ArrowRight className="w-4 h-4 text-white group-hover/btn:translate-x-1 transition-transform" />
                                         </Link>
                                     </div>
                                 </div>
@@ -273,45 +273,6 @@ export default function HeroCarousel({
                     );
                 })}
             </div>
-
-            {/* Tombol Navigasi Kiri / Kanan (A11y Touch-Friendly) */}
-            {activeSlides.length > 1 && (
-                <>
-                    <button
-                        type="button"
-                        onClick={goToPrev}
-                        aria-label="Slide sebelumnya"
-                        className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-slate-900/40 hover:bg-slate-900/70 border border-white/10 text-white flex items-center justify-center backdrop-blur-xs transition-all duration-200 active:scale-95 cursor-pointer z-10"
-                    >
-                        <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    <button
-                        type="button"
-                        onClick={goToNext}
-                        aria-label="Slide berikutnya"
-                        className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-slate-900/40 hover:bg-slate-900/70 border border-white/10 text-white flex items-center justify-center backdrop-blur-xs transition-all duration-200 active:scale-95 cursor-pointer z-10"
-                    >
-                        <ChevronRight className="w-5 h-5" />
-                    </button>
-
-                    {/* Indikator Baris Bawah */}
-                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2.5 z-10">
-                        {activeSlides.map((_, idx) => (
-                            <button
-                                key={idx}
-                                type="button"
-                                onClick={() => setCurrentIndex(idx)}
-                                aria-label={`Pindah ke slide ${idx + 1}`}
-                                className={`h-2 transition-all duration-300 rounded-full cursor-pointer ${
-                                    idx === currentIndex
-                                        ? "w-8 bg-primary"
-                                        : "w-2 bg-white/40 hover:bg-white/70"
-                                }`}
-                            />
-                        ))}
-                    </div>
-                </>
-            )}
         </section>
     );
 }

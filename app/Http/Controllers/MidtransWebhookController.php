@@ -155,6 +155,22 @@ class MidtransWebhookController extends Controller
 
                 Log::info("Pesanan Lunas & Express Shipping Allocated: {$pesanan->nomor_pesanan}");
 
+            } elseif ($transactionStatus === 'pending') {
+                if ($pembayaran) {
+                    $pembayaran->midtrans_status = 'pending';
+                    if (!empty($payload['va_numbers'][0]['va_number'])) {
+                        $pembayaran->nomor_va = $payload['va_numbers'][0]['va_number'];
+                    } elseif (!empty($payload['permata_va_number'])) {
+                        $pembayaran->nomor_va = $payload['permata_va_number'];
+                    }
+                    if (!empty($payload['qr_string'])) {
+                        $pembayaran->qr_string = $payload['qr_string'];
+                    }
+                    $pembayaran->payment_payload = $payload;
+                    $pembayaran->save();
+                }
+                Log::info("Pesanan Status Pending & VA/QR Synced: {$pesanan->nomor_pesanan}");
+
             } elseif (in_array($transactionStatus, ['deny', 'cancel', 'expire'])) {
                 // STATUS DIBATALKAN / EXPIRED
                 $pesanan->status = 'dibatalkan';

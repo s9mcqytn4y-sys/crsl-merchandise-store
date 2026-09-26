@@ -24,6 +24,7 @@ Route::get('/katalog', [KatalogController::class, 'index'])->name('katalog');
 Route::get('/products', [KatalogController::class, 'index'])->name('products');
 Route::get('/products/{slug}', [KatalogController::class, 'detail'])->name('products.detail');
 Route::get('/produk/{slug}', [KatalogController::class, 'detail'])->name('produk.detail');
+Route::post('/pesan-produk', [KatalogController::class, 'kirimPesanProduk'])->name('produk.pesan');
 
 // Manajemen Keranjang Belanja (Session)
 Route::post('/keranjang', [KeranjangController::class, 'tambah'])->name('keranjang.tambah');

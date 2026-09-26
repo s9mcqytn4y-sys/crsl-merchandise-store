@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Head } from "@inertiajs/react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import StorefrontLayout from "../Layouts/StorefrontLayout";
 import HeroCarousel from "../Components/HeroCarousel";
 import PreOrderSection from "../Components/Beranda/PreOrderSection";
@@ -10,6 +12,8 @@ import ProductGridSection, {
 } from "../Components/Beranda/ProductGridSection";
 import AdoptNowSection from "../Components/Beranda/AdoptNowSection";
 import { SITUS_CONFIG } from "../Config/situsConfig";
+
+gsap.registerPlugin(ScrollTrigger);
 
 interface Kategori {
     id: number;
@@ -33,21 +37,55 @@ export default function Beranda({
     produkPromo,
     produkPreOrder,
 }: BerandaProps) {
+    const mainRef = useRef<HTMLDivElement>(null);
+
     const produkTampil =
         produkBestSeller && produkBestSeller.length > 0
             ? produkBestSeller
             : produkTerbaru;
 
+    useEffect(() => {
+        if (!mainRef.current) return;
+
+        const ctx = gsap.context(() => {
+            // Animasi reveal bertahap yang smooth untuk setiap seksi beranda
+            const revealSections =
+                gsap.utils.toArray<HTMLElement>(".gsap-section-reveal");
+
+            revealSections.forEach((sec) => {
+                gsap.fromTo(
+                    sec,
+                    { opacity: 0.9, y: 24 },
+                    {
+                        opacity: 1,
+                        y: 0,
+                        duration: 0.7,
+                        ease: "power2.out",
+                        scrollTrigger: {
+                            trigger: sec,
+                            start: "top 88%",
+                            toggleActions: "play none none reverse",
+                        },
+                    },
+                );
+            });
+        }, mainRef);
+
+        return () => ctx.revert();
+    }, []);
+
     return (
         <StorefrontLayout>
             <Head title="CRSL Official Merchandise Store - Animals as your Bestfriends!" />
 
-            <div className="space-y-0">
-                {/* 1. HERO CAROUSEL */}
+            <div ref={mainRef} className="space-y-0">
+                {/* 1. HERO CAROUSEL FIT-TO-SCREEN */}
                 <HeroCarousel slides={SITUS_CONFIG.heroSlidesCMS} />
 
-                {/* 2. PRE-ORDER SECTION DENGAN DATA VALID & DINAMIS */}
-                <PreOrderSection produk={produkPreOrder} />
+                {/* 2. PRE-ORDER SECTION */}
+                <div className="gsap-section-reveal">
+                    <PreOrderSection produk={produkPreOrder} />
+                </div>
 
                 {/* 3. SECTION DIVIDER BACK TO SCHOOL */}
                 <PemisahSeksi
@@ -57,11 +95,13 @@ export default function Beranda({
                 />
 
                 {/* 4. BTS MUST-HAVE BUNDLE SECTION */}
-                <BundleSection />
+                <div className="gsap-section-reveal">
+                    <BundleSection />
+                </div>
 
                 {/* 5. NEW ARRIVAL SECTION DIVIDER & GRID */}
                 {produkTerbaru && produkTerbaru.length > 0 && (
-                    <>
+                    <div className="gsap-section-reveal">
                         <PemisahSeksi
                             src="/assets/gambar/banner-new-arrival.webp"
                             alt="New Arrival CRSL Collection"
@@ -73,12 +113,12 @@ export default function Beranda({
                             linkHref="/katalog?urutan=terbaru"
                             linkLabel="Lihat Semua New Arrival"
                         />
-                    </>
+                    </div>
                 )}
 
                 {/* 6. BEST SELLER SECTION DIVIDER & GRID */}
                 {produkTampil && produkTampil.length > 0 && (
-                    <>
+                    <div className="gsap-section-reveal">
                         <PemisahSeksi
                             src="/assets/gambar/banner-best-seller.webp"
                             alt="Best Seller CRSL Collection"
@@ -90,12 +130,12 @@ export default function Beranda({
                             linkHref="/katalog?urutan=terlaris"
                             linkLabel="Lihat Semua Best Seller"
                         />
-                    </>
+                    </div>
                 )}
 
                 {/* 7. ALL DAY PROMO SECTION DIVIDER & GRID */}
                 {produkPromo && produkPromo.length > 0 && (
-                    <>
+                    <div className="gsap-section-reveal">
                         <PemisahSeksi
                             src="/assets/gambar/banner-all-day-promo.webp"
                             alt="All Day Promo CRSL"
@@ -108,11 +148,13 @@ export default function Beranda({
                             linkLabel="Lihat Semua Promo"
                             dark={false}
                         />
-                    </>
+                    </div>
                 )}
 
                 {/* 8. LET'S ADOPT NOW - CATEGORY TILES */}
-                <AdoptNowSection />
+                <div className="gsap-section-reveal">
+                    <AdoptNowSection />
+                </div>
             </div>
         </StorefrontLayout>
     );

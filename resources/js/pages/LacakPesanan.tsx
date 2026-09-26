@@ -12,6 +12,10 @@ import {
     Check,
     CreditCard,
     ArrowRight,
+    MapPin,
+    ExternalLink,
+    Calendar,
+    Radio,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -25,6 +29,22 @@ interface OrderItem {
     quantity?: number;
     gambar?: string;
     ukuran?: string;
+}
+
+interface TrackingHistoryItem {
+    note: string;
+    updated_at: string;
+    status?: string;
+}
+
+interface BiteshipTrackingData {
+    sukses: boolean;
+    waybill_id?: string;
+    kurir?: string;
+    status?: string;
+    link?: string;
+    history?: TrackingHistoryItem[];
+    is_mock?: boolean;
 }
 
 interface OrderDetail {
@@ -54,6 +74,7 @@ interface TrackOrderProps {
     orderNumber?: string;
     pesanan?: OrderDetail | null;
     order?: OrderDetail | null;
+    tracking?: BiteshipTrackingData | null;
 }
 
 const rupiahFormatter = new Intl.NumberFormat("id-ID", {
@@ -64,6 +85,21 @@ const rupiahFormatter = new Intl.NumberFormat("id-ID", {
 
 function formatRupiah(num: number): string {
     return rupiahFormatter.format(num || 0);
+}
+
+function formatTanggal(isoString: string): string {
+    try {
+        const d = new Date(isoString);
+        return d.toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    } catch {
+        return isoString;
+    }
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -117,6 +153,7 @@ export default function TrackOrder({
     orderNumber = "",
     pesanan = null,
     order = null,
+    tracking = null,
 }: TrackOrderProps) {
     const activeNumber = nomorPesanan || orderNumber || "";
     const activeOrder = pesanan || order || null;
@@ -147,7 +184,6 @@ export default function TrackOrder({
         }
     };
 
-    // Kalkulasi index tahapan aktif
     const getStepIndex = (status: string) => {
         switch (status.toLowerCase()) {
             case "belum_bayar":
@@ -165,6 +201,7 @@ export default function TrackOrder({
 
     const currentStep = activeOrder ? getStepIndex(activeOrder.status) : 0;
     const orderItems = activeOrder?.items || activeOrder?.item || [];
+    const trackingHistory = tracking?.history || [];
 
     return (
         <StorefrontLayout>
@@ -173,7 +210,7 @@ export default function TrackOrder({
             {/* Header Area & Form Lacak */}
             <div className="bg-slate-50 border-b border-slate-200/80 py-10">
                 <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-                    <div className="w-12 h-12 rounded-2xl bg-red-50 text-[#E52027] flex items-center justify-center mx-auto mb-3">
+                    <div className="w-12 h-12 rounded-2xl bg-red-50 text-primary flex items-center justify-center mx-auto mb-3">
                         <Truck className="w-6 h-6" />
                     </div>
                     <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
@@ -182,7 +219,7 @@ export default function TrackOrder({
                     <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-md mx-auto">
                         Masukkan Nomor Invoice Pesanan Anda (contoh:{" "}
                         <code>INV/CRSL/...</code>) untuk memantau status
-                        pengiriman.
+                        pengiriman secara real-time.
                     </p>
 
                     <form
@@ -195,14 +232,14 @@ export default function TrackOrder({
                                 value={inputNumber}
                                 onChange={(e) => setInputNumber(e.target.value)}
                                 placeholder="Nomor Pesanan / Invoice..."
-                                className="w-full bg-white border border-slate-300 text-slate-900 text-xs sm:text-sm font-semibold rounded-2xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#E52027] shadow-2xs"
+                                className="w-full bg-white border border-slate-300 text-slate-900 text-xs sm:text-sm font-semibold rounded-2xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary shadow-2xs"
                                 required
                             />
                             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                         </div>
                         <button
                             type="submit"
-                            className="bg-[#E52027] hover:bg-[#CC1C22] active:scale-95 text-white text-xs sm:text-sm font-bold px-6 py-3 rounded-2xl shadow-xs transition-all"
+                            className="bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs sm:text-sm font-bold px-6 py-3 rounded-2xl shadow-xs transition-all cursor-pointer"
                         >
                             Lacak
                         </button>
@@ -243,7 +280,7 @@ export default function TrackOrder({
                                 </h3>
                                 <p className="text-xs text-slate-400 mt-0.5">
                                     Total Tagihan:{" "}
-                                    <strong className="text-[#E52027] font-bold">
+                                    <strong className="text-primary font-bold">
                                         {formatRupiah(activeOrder.total)}
                                     </strong>
                                 </p>
@@ -256,10 +293,9 @@ export default function TrackOrder({
                         {/* Visual Step Timeline */}
                         <div className="py-2">
                             <div className="grid grid-cols-4 gap-2 text-center text-xs relative">
-                                {/* Connecting Bar */}
                                 <div className="absolute top-4 left-[12.5%] right-[12.5%] h-0.5 bg-slate-200 -z-0" />
                                 <div
-                                    className="absolute top-4 left-[12.5%] h-0.5 bg-[#E52027] -z-0 transition-all duration-500"
+                                    className="absolute top-4 left-[12.5%] h-0.5 bg-primary -z-0 transition-all duration-500"
                                     style={{
                                         width: `${Math.max(0, Math.min(3, currentStep - 1)) * 33.33}%`,
                                     }}
@@ -267,7 +303,7 @@ export default function TrackOrder({
 
                                 {/* Step 1 */}
                                 <div className="space-y-2 relative z-10">
-                                    <div className="w-8 h-8 rounded-full bg-[#E52027] text-white font-bold flex items-center justify-center mx-auto text-xs shadow-xs">
+                                    <div className="w-8 h-8 rounded-full bg-primary text-white font-bold flex items-center justify-center mx-auto text-xs shadow-xs">
                                         1
                                     </div>
                                     <p className="font-bold text-slate-900 text-[11px] sm:text-xs">
@@ -280,7 +316,7 @@ export default function TrackOrder({
                                     <div
                                         className={`w-8 h-8 rounded-full font-bold flex items-center justify-center mx-auto text-xs transition-colors ${
                                             currentStep >= 2
-                                                ? "bg-[#E52027] text-white shadow-xs"
+                                                ? "bg-primary text-white shadow-xs"
                                                 : "bg-slate-100 text-slate-400 border border-slate-200"
                                         }`}
                                     >
@@ -302,7 +338,7 @@ export default function TrackOrder({
                                     <div
                                         className={`w-8 h-8 rounded-full font-bold flex items-center justify-center mx-auto text-xs transition-colors ${
                                             currentStep >= 3
-                                                ? "bg-[#E52027] text-white shadow-xs"
+                                                ? "bg-primary text-white shadow-xs"
                                                 : "bg-slate-100 text-slate-400 border border-slate-200"
                                         }`}
                                     >
@@ -324,7 +360,7 @@ export default function TrackOrder({
                                     <div
                                         className={`w-8 h-8 rounded-full font-bold flex items-center justify-center mx-auto text-xs transition-colors ${
                                             currentStep >= 4
-                                                ? "bg-[#E52027] text-white shadow-xs"
+                                                ? "bg-primary text-white shadow-xs"
                                                 : "bg-slate-100 text-slate-400 border border-slate-200"
                                         }`}
                                     >
@@ -343,42 +379,92 @@ export default function TrackOrder({
                             </div>
                         </div>
 
-                        {/* Info Resi Ekspedisi */}
+                        {/* Info Resi Ekspedisi & Biteship API Details */}
                         {activeOrder.pengiriman?.nomor_resi && (
-                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/90 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                                <div>
-                                    <span className="text-[11px] text-slate-500 font-semibold block">
-                                        Ekspedisi:{" "}
-                                        {(
-                                            activeOrder.pengiriman.kurir ||
-                                            "Kurir Standar"
-                                        ).toUpperCase()}{" "}
-                                        (
-                                        {activeOrder.pengiriman.layanan ||
-                                            "REG"}
-                                        )
-                                    </span>
-                                    <div className="font-mono font-black text-sm text-slate-900 mt-0.5">
-                                        Resi:{" "}
-                                        {activeOrder.pengiriman.nomor_resi}
+                            <div className="space-y-3">
+                                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/90 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                    <div>
+                                        <span className="text-[11px] text-slate-500 font-semibold block">
+                                            Ekspedisi:{" "}
+                                            {(
+                                                activeOrder.pengiriman.kurir ||
+                                                "Kurir Standar"
+                                            ).toUpperCase()}{" "}
+                                            (
+                                            {activeOrder.pengiriman.layanan ||
+                                                "REG"}
+                                            )
+                                        </span>
+                                        <div className="font-mono font-black text-sm text-slate-900 mt-0.5">
+                                            Resi:{" "}
+                                            {activeOrder.pengiriman.nomor_resi}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                handleCopyResi(
+                                                    activeOrder.pengiriman
+                                                        ?.nomor_resi!,
+                                                )
+                                            }
+                                            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:border-slate-300 px-3 py-2 rounded-xl transition-colors shadow-2xs cursor-pointer"
+                                        >
+                                            {copied ? (
+                                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                            ) : (
+                                                <Copy className="w-3.5 h-3.5" />
+                                            )}
+                                            {copied ? "Tersalin" : "Salin Resi"}
+                                        </button>
+                                        {tracking?.link && (
+                                            <a
+                                                href={tracking.link}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="inline-flex items-center gap-1 text-xs font-bold text-primary bg-red-50 hover:bg-red-100 border border-red-200/80 px-3 py-2 rounded-xl transition-colors shadow-2xs"
+                                            >
+                                                <ExternalLink className="w-3.5 h-3.5" />
+                                                Biteship Live
+                                            </a>
+                                        )}
                                     </div>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        handleCopyResi(
-                                            activeOrder.pengiriman?.nomor_resi!,
-                                        )
-                                    }
-                                    className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:border-slate-300 px-3 py-2 rounded-xl transition-colors shadow-2xs"
-                                >
-                                    {copied ? (
-                                        <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                    ) : (
-                                        <Copy className="w-3.5 h-3.5" />
-                                    )}
-                                    {copied ? "Tersalin" : "Salin Resi"}
-                                </button>
+
+                                {/* Real-time Biteship Timeline Logs */}
+                                {trackingHistory.length > 0 && (
+                                    <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-5 space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
+                                                <Radio className="w-4 h-4 text-emerald-500 animate-pulse" />
+                                                <span>Aktivitas Pengiriman Terakhir (Biteship API)</span>
+                                            </div>
+                                            {tracking?.is_mock && (
+                                                <span className="text-[10px] font-semibold text-slate-400 bg-white px-2 py-0.5 rounded-md border border-slate-200">
+                                                    Mode Dev Simulasi
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <div className="relative pl-6 space-y-5 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+                                            {trackingHistory.map((log, idx) => (
+                                                <div key={idx} className="relative group">
+                                                    <div className={`absolute -left-6 top-1 w-3.5 h-3.5 rounded-full border-2 border-white shadow-xs ${idx === 0 ? "bg-primary ring-2 ring-red-100" : "bg-slate-300"}`} />
+                                                    <div>
+                                                        <p className={`text-xs ${idx === 0 ? "font-bold text-slate-900" : "font-medium text-slate-600"}`}>
+                                                            {log.note}
+                                                        </p>
+                                                        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-0.5">
+                                                            <Calendar className="w-3 h-3 text-slate-400" />
+                                                            <span>{formatTanggal(log.updated_at)}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -394,7 +480,7 @@ export default function TrackOrder({
                                 </div>
                                 <Link
                                     href={`/faktur/${activeOrder.nomor_pesanan || activeOrder.order_number}`}
-                                    className="inline-flex items-center gap-1.5 bg-[#E52027] hover:bg-[#CC1C22] text-white text-xs font-bold px-4 py-2 rounded-xl transition-colors shrink-0 shadow-xs"
+                                    className="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-hover text-white text-xs font-bold px-4 py-2 rounded-xl transition-colors shrink-0 shadow-xs cursor-pointer"
                                 >
                                     <CreditCard className="w-3.5 h-3.5" />
                                     Bayar Sekarang
@@ -461,7 +547,7 @@ export default function TrackOrder({
                             </Link>
                             <Link
                                 href={`/faktur/${activeOrder.nomor_pesanan || activeOrder.order_number}`}
-                                className="text-[#E52027] hover:underline font-bold inline-flex items-center gap-1"
+                                className="text-primary hover:underline font-bold inline-flex items-center gap-1"
                             >
                                 Lihat Faktur Lengkap{" "}
                                 <ArrowRight className="w-3.5 h-3.5" />

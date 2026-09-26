@@ -33,4 +33,9 @@ class ItemKeranjang extends Model
     {
         return $this->belongsTo(ProdukVarian::class, 'produk_varian_id');
     }
+
+    public function produk_varian(): BelongsTo
+    {
+        return $this->belongsTo(ProdukVarian::class, 'produk_varian_id');
+    }
 }

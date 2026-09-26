@@ -1,0 +1,21 @@
+{
+    "servers": {
+        "playwright": {
+            "type": "stdio",
+            "command": "npx",
+            "args": ["@playwright/mcp@latest", "--headless", "--browser=chrome"]
+        },
+        "inspo": {
+            "type": "http",
+            "url": "https://inspomcp.dev/api/mcp"
+        },
+        "context7": {
+            "type": "sse",
+            "url": "https://mcp.context7.com/mcp",
+            "headers": {
+                "Authorization": "Bearer ctx7sk-e35e2cce-cf15-4a7d-988d-6d86d42c082d",
+                "Accept": "application/json, text/event-stream"
+            }
+        }
+    }
+}

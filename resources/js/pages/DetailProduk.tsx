@@ -9,6 +9,7 @@ import VariantSelector, {
 } from "../Components/PDP/VariantSelector";
 import DeliveryEstimator from "../Components/PDP/DeliveryEstimator";
 import DiscountsModal from "../Components/PDP/DiscountsModal";
+import InquiryModal from "../Components/PDP/InquiryModal";
 import RecentViewed from "../Components/PDP/RecentViewed";
 import StickyCartBar from "../Components/StickyCartBar";
 import {
@@ -185,6 +186,7 @@ export default function DetailProduk({
     const [variantError, setVariantError] = useState<string | null>(null);
     const [isDiscountsModalOpen, setIsDiscountsModalOpen] =
         useState<boolean>(false);
+    const [isInquiryModalOpen, setIsInquiryModalOpen] = useState<boolean>(false);
     const [isWishlistLoading, setIsWishlistLoading] = useState<boolean>(false);
 
     // Sinkronisasi state saat navigasi client-side berganti produk
@@ -571,15 +573,25 @@ export default function DetailProduk({
                             productName={activeProduct.nama}
                         />
 
-                        {/* Layanan Pelanggan WhatsApp */}
-                        <button
-                            type="button"
-                            onClick={handleDirectWhatsAppCS}
-                            className="w-full py-2.5 bg-white hover:bg-red-50 text-primary border border-primary font-bold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                        >
-                            <MessageCircle className="w-4 h-4 text-primary" />
-                            <span>Tanya CS CRSL?</span>
-                        </button>
+                        {/* Layanan Tanya Produk & WhatsApp CS */}
+                        <div className="grid grid-cols-2 gap-2.5">
+                            <button
+                                type="button"
+                                onClick={() => setIsInquiryModalOpen(true)}
+                                className="w-full py-2.5 min-h-11 bg-white hover:bg-red-50 text-primary border border-primary font-bold text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                            >
+                                <MessageCircle className="w-4 h-4 text-primary" />
+                                <span>Tanya Produk</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleDirectWhatsAppCS}
+                                className="w-full py-2.5 min-h-11 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 font-bold text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                            >
+                                <MessageCircle className="w-4 h-4 text-emerald-600" />
+                                <span>WhatsApp CS</span>
+                            </button>
+                        </div>
 
                         {/* Spesifikasi Teknis & Material */}
                         {activeProduct.spesifikasi.length > 0 && (
@@ -649,6 +661,15 @@ export default function DetailProduk({
                         `Voucher ${code} berhasil dipasang ke pesanan!`,
                     );
                 }}
+            />
+
+            {/* Modal Inquiry Pertanyaan Produk */}
+            <InquiryModal
+                isOpen={isInquiryModalOpen}
+                onClose={() => setIsInquiryModalOpen(false)}
+                produkId={activeProduct.id}
+                namaProduk={activeProduct.nama}
+                selectedVariantName={selectedVariant?.nama_varian}
             />
 
             <StickyCartBar />

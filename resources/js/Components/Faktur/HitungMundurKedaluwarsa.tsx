@@ -42,9 +42,12 @@ export default function HitungMundurKedaluwarsa({
         return () => clearInterval(timer);
     }, [sisaDetik, onExpired]);
 
-    const menit = Math.floor(sisaDetik / 60);
+    const jam = Math.floor(sisaDetik / 3600);
+    const menit = Math.floor((sisaDetik % 3600) / 60);
     const detik = sisaDetik % 60;
-    const formatWaktu = `${String(menit).padStart(2, "0")}:${String(detik).padStart(2, "0")}`;
+    const formatWaktu = jam > 0
+        ? `${String(jam).padStart(2, "0")}:${String(menit).padStart(2, "0")}:${String(detik).padStart(2, "0")}`
+        : `${String(menit).padStart(2, "0")}:${String(detik).padStart(2, "0")}`;
 
     const isUrgent = sisaDetik < 180 && sisaDetik > 0;
     const isExpired = sisaDetik === 0;

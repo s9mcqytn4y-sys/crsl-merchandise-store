@@ -239,6 +239,7 @@ class PembayaranController extends Controller
                     'jumlah'      => (int)($it['jumlah'] ?? 1),
                     'warna'       => $it['warna'] ?? null,
                     'ukuran'      => $it['ukuran'] ?? null,
+                    'gambar'      => $it['gambar'] ?? ($it['gambar_utama'] ?? null),
                 ];
             }
         } else {

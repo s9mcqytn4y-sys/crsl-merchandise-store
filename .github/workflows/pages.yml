@@ -1,0 +1,92 @@
+name: Deploy GitHub Pages Documentation
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare Static Artifacts
+        run: |
+          mkdir -p _site
+          cp -r public/assets _site/ 2>/dev/null || true
+          cat << 'EOF' > _site/index.html
+          <!DOCTYPE html>
+          <html lang="id">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>CRSL Store v2 - Official Merchandise Store Showcase</title>
+            <script src="https://cdn.tailwindcss.com"></script>
+            <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+            <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+          </head>
+          <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between">
+            <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md px-6 py-4 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="font-black text-xl tracking-tight text-white">&lt;ROSL Official</span>
+                <span class="text-xs bg-red-600/20 text-red-400 font-bold px-2 py-0.5 rounded-full border border-red-500/30">v2.0 Modular Monolith</span>
+              </div>
+              <a href="https://github.com/s9mcqytn4y-sys/crsl-merchandise-store" class="text-xs font-bold text-slate-300 hover:text-white bg-slate-800 px-4 py-2 rounded-xl transition">GitHub Repository</a>
+            </header>
+            <main class="max-w-4xl mx-auto px-6 py-16 text-center space-y-8">
+              <div class="inline-flex items-center gap-2 bg-red-950/60 border border-red-500/30 text-red-400 px-4 py-1.5 rounded-full text-xs font-bold">
+                E-Commerce Merchandise Store
+              </div>
+              <h1 class="text-4xl sm:text-6xl font-black tracking-tight text-white">
+                CRSL Official Store <span class="text-red-500">v2</span>
+              </h1>
+              <p class="text-slate-400 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+                Platform e-commerce merchandise resmi berbasis Laravel 13.x, Inertia.js (React 19 + TypeScript), Tailwind CSS v4, PostgreSQL, Midtrans Direct Charge & Biteship Logistics.
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left pt-6">
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+                  <div class="text-red-400 font-bold text-sm mb-1">Architecture</div>
+                  <div class="text-xs text-slate-400">Modular Monolith Laravel 13 with Domain Layer (Auth, Cart, Order, Inventory, Shipping, Payment).</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+                  <div class="text-red-400 font-bold text-sm mb-1">Frontend Stack</div>
+                  <div class="text-xs text-slate-400">React 19 + Inertia.js + Tailwind CSS v4 + Zustand v5 + GSAP 3 Parallax & Micro-interactions.</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+                  <div class="text-red-400 font-bold text-sm mb-1">Commercial Standards</div>
+                  <div class="text-xs text-slate-400">Two-phase inventory locking, Biteship live tracking, Midtrans QRIS/VA, & A4 Pure Paper Printable Invoice.</div>
+                </div>
+              </div>
+            </main>
+            <footer class="border-t border-slate-900 text-center py-6 text-xs text-slate-600">
+              &copy; 2026 CRSL Official Merchandise Store. All rights reserved.
+            </footer>
+          </body>
+          </html>
+          EOF
+
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '_site'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

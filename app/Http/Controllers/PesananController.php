@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domains\Payment\Services\MidtransService;
+use App\Domains\Shipping\Services\BiteshipService;
 use App\Models\Pesanan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -16,7 +17,8 @@ use Inertia\Response;
 class PesananController extends Controller
 {
     public function __construct(
-        protected MidtransService $midtransService
+        protected MidtransService $midtransService,
+        protected BiteshipService $biteshipService
     ) {}
 
     /**
@@ -48,7 +50,51 @@ class PesananController extends Controller
      */
     public function faktur(string $nomorPesanan): Response
     {
-        $pesanan = $this->temukanPesanan($nomorPesanan, ['items', 'pembayaran', 'pengiriman']);
+        $pesanan = $this->temukanPesanan($nomorPesanan, ['items.produk', 'items.varian', 'pembayaran', 'pengiriman']);
+
+        // Proteksi Otorisasi: cegah akses silang akun jika pesanan terikat pada pengguna lain
+        if (Auth::check() && $pesanan->pengguna_id && $pesanan->pengguna_id !== Auth::id()) {
+            abort(403, 'Anda tidak memiliki hak akses untuk melihat faktur pesanan ini.');
+        }
+
+        // Auto-sync nomor_va / qr_string / status Midtrans jika belum terisi pada pesanan yang belum bayar
+        if ($pesanan->status === 'belum_bayar' && $pesanan->pembayaran) {
+            $perluSync = empty($pesanan->pembayaran->nomor_va) && empty($pesanan->pembayaran->qr_string);
+            if ($perluSync) {
+                try {
+                    $midtransRes = $this->midtransService->cekStatus($pesanan->nomor_pesanan);
+                    if (!empty($midtransRes['sukses']) && !empty($midtransRes['raw'])) {
+                        $raw = $midtransRes['raw'];
+                        $diupdate = false;
+
+                        if (!empty($raw['va_numbers'][0]['va_number'])) {
+                            $pesanan->pembayaran->nomor_va = $raw['va_numbers'][0]['va_number'];
+                            $diupdate = true;
+                        } elseif (!empty($raw['permata_va_number'])) {
+                            $pesanan->pembayaran->nomor_va = $raw['permata_va_number'];
+                            $diupdate = true;
+                        }
+
+                        if (!empty($raw['qr_string'])) {
+                            $pesanan->pembayaran->qr_string = $raw['qr_string'];
+                            $diupdate = true;
+                        }
+
+                        if (!empty($midtransRes['status_pesanan']) && $midtransRes['status_pesanan'] !== $pesanan->status) {
+                            $pesanan->status = $midtransRes['status_pesanan'];
+                            $pesanan->save();
+                        }
+
+                        if ($diupdate) {
+                            $pesanan->pembayaran->save();
+                            $pesanan->load('pembayaran');
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("Gagal auto-sync Midtrans di faktur: " . $e->getMessage());
+                }
+            }
+        }
 
         return Inertia::render('Faktur', [
             'pesanan' => $pesanan,
@@ -87,10 +133,26 @@ class PesananController extends Controller
             return $this->midtransService->cekStatus($pesanan->nomor_pesanan);
         });
 
-        if ($res['sukses'] && !empty($res['status_pesanan'])) {
-            if ($res['status_pesanan'] === 'akan_dikirim' && $pesanan->status === 'belum_bayar') {
+        if ($res['sukses'] && !empty($res['raw'])) {
+            $raw = $res['raw'];
+            if ($pesanan->pembayaran && empty($pesanan->pembayaran->nomor_va)) {
+                if (!empty($raw['va_numbers'][0]['va_number'])) {
+                    $pesanan->pembayaran->nomor_va = $raw['va_numbers'][0]['va_number'];
+                    $pesanan->pembayaran->save();
+                } elseif (!empty($raw['permata_va_number'])) {
+                    $pesanan->pembayaran->nomor_va = $raw['permata_va_number'];
+                    $pesanan->pembayaran->save();
+                }
+            }
+
+            if (!empty($res['status_pesanan']) && $res['status_pesanan'] === 'akan_dikirim' && $pesanan->status === 'belum_bayar') {
                 $pesanan->status = 'akan_dikirim';
                 $pesanan->save();
+                if ($pesanan->pembayaran) {
+                    $pesanan->pembayaran->midtrans_status = 'settlement';
+                    $pesanan->pembayaran->waktu_bayar = now();
+                    $pesanan->pembayaran->save();
+                }
             }
         }
 
@@ -102,16 +164,24 @@ class PesananController extends Controller
     }
 
     /**
-     * Halaman lacak status pesanan & resi kurir.
+     * Halaman lacak status pesanan & resi kurir terintegrasi Biteship API.
      */
     public function lacak(Request $request): Response
     {
         $nomorPesanan = $request->input('nomor');
         $pesanan = null;
+        $tracking = null;
 
         if ($nomorPesanan) {
             try {
                 $pesanan = $this->temukanPesanan($nomorPesanan, ['items', 'pembayaran', 'pengiriman']);
+                if ($pesanan && $pesanan->pengiriman && !empty($pesanan->pengiriman->nomor_resi)) {
+                    $kurir = $pesanan->pengiriman->kurir ?? 'jne';
+                    $tracking = $this->biteshipService->lacakPengiriman(
+                        (string) $pesanan->pengiriman->nomor_resi,
+                        (string) $kurir
+                    );
+                }
             } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
                 $pesanan = null;
             }
@@ -119,8 +189,9 @@ class PesananController extends Controller
 
         return Inertia::render('LacakPesanan', [
             'nomorPesanan' => $nomorPesanan,
-            'pesanan' => $pesanan,
-            'keranjang' => session()->get('keranjang', []),
+            'pesanan'      => $pesanan,
+            'tracking'     => $tracking,
+            'keranjang'    => session()->get('keranjang', []),
         ]);
     }
 

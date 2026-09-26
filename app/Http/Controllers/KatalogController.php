@@ -154,4 +154,27 @@ class KatalogController extends Controller
             'keranjang' => session()->get('keranjang', []),
         ]);
     }
+
+    /**
+     * Menyimpan diskusi atau pesan pertanyaan produk dari pengguna.
+     */
+    public function kirimPesanProduk(Request $request)
+    {
+        $validated = $request->validate([
+            'produk_id' => 'required',
+            'nama_produk' => 'required|string|max:255',
+            'varian' => 'nullable|string|max:150',
+            'pesan' => 'required|string|max:1000',
+        ]);
+
+        \App\Models\PesanProduk::create([
+            'pengguna_id' => auth()->id(),
+            'produk_id' => $validated['produk_id'],
+            'nama_produk' => $validated['nama_produk'],
+            'varian' => $validated['varian'] ?? 'Default',
+            'pesan' => $validated['pesan'],
+        ]);
+
+        return back()->with('pesan_sukses', 'Pesan pertanyaan produk Anda telah terkirim.');
+    }
 }

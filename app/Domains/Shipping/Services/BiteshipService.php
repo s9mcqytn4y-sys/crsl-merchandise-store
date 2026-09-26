@@ -9,6 +9,7 @@ use App\Domains\Shipping\DTOs\BiteshipRateOption;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 class BiteshipService
@@ -302,17 +303,29 @@ class BiteshipService
         $isDropship = !empty($dataPesanan['is_dropship']);
         $shipperName = $isDropship ? ($dataPesanan['dropship_pengirim'] ?? 'CRSL Partner') : 'CRSL Official Store';
         $shipperPhone = $isDropship ? ($dataPesanan['dropship_telepon'] ?? '081234567890') : '081234567890';
+        $kurirKode = strtolower((string) ($dataPesanan['kurir'] ?? 'jne'));
+        $layananKode = strtolower((string) ($dataPesanan['layanan'] ?? 'reg'));
 
         $payload = [
+            'shipper_contact_name'  => (string) $shipperName,
+            'shipper_contact_phone' => (string) $shipperPhone,
+            'shipper_contact_email' => 'shipping@crslstore.com',
             'shipper' => [
                 'name'  => (string) $shipperName,
                 'phone' => (string) $shipperPhone,
                 'email' => 'shipping@crslstore.com',
             ],
+            'origin_area_id'     => $this->originAreaId,
+            'origin_postal_code' => (int) config('services.biteship.origin_postal_code', 55281),
             'origin' => [
                 'area_id'     => $this->originAreaId,
                 'postal_code' => (int) config('services.biteship.origin_postal_code', 55281),
             ],
+            'destination_area_id'       => (string) ($dataPesanan['area_id'] ?? ''),
+            'destination_contact_name'  => (string) ($dataPesanan['nama_penerima'] ?? 'Pelanggan'),
+            'destination_contact_phone' => (string) ($dataPesanan['telepon'] ?? ''),
+            'destination_address'       => (string) ($dataPesanan['alamat_lengkap'] ?? ''),
+            'destination_postal_code'   => (int) ($dataPesanan['kode_pos'] ?? 0),
             'destination' => [
                 'area_id'       => (string) ($dataPesanan['area_id'] ?? ''),
                 'contact_name'  => (string) ($dataPesanan['nama_penerima'] ?? 'Pelanggan'),
@@ -320,9 +333,11 @@ class BiteshipService
                 'address'       => (string) ($dataPesanan['alamat_lengkap'] ?? ''),
                 'postal_code'   => (int) ($dataPesanan['kode_pos'] ?? 0),
             ],
+            'courier_company' => $kurirKode,
+            'courier_type'    => $layananKode,
             'courier' => [
-                'company' => (string) ($dataPesanan['kurir'] ?? 'jne'),
-                'type'    => (string) ($dataPesanan['layanan'] ?? 'reg'),
+                'company' => $kurirKode,
+                'type'    => $layananKode,
             ],
             'delivery_type' => 'now',
             'items'         => (array) ($dataPesanan['items'] ?? []),
@@ -430,5 +445,91 @@ class BiteshipService
                 || stripos($area['kota'], $kataKunci) !== false
                 || stripos((string) $area['kode_pos'], $kataKunci) !== false;
         }));
+    }
+
+    /**
+     * Lacak pengiriman paket via Biteship Tracking API.
+     *
+     * @param string $waybillId Nomor resi pengiriman
+     * @param string $courierCode Kode kurir (jne, jnt, sicepat, anteraja)
+     * @return array<string, mixed>
+     */
+    public function lacakPengiriman(string $waybillId, string $courierCode = 'jne'): array
+    {
+        $waybillId = trim($waybillId);
+        $courierCode = strtolower(trim($courierCode));
+
+        if (empty($waybillId)) {
+            return [
+                'sukses' => false,
+                'pesan'  => 'Nomor resi tidak valid.',
+            ];
+        }
+
+        // Cache 60 detik agar tidak membebani rate limit Biteship
+        $cacheKey = "biteship_track_{$courierCode}_{$waybillId}";
+
+        return Cache::remember($cacheKey, 60, function () use ($waybillId, $courierCode) {
+            if (empty($this->apiKey) || str_contains($waybillId, 'MOCK') || str_contains($waybillId, 'DEV')) {
+                return $this->getMockTracking($waybillId, $courierCode);
+            }
+
+            try {
+                $response = $this->newRequest(15)
+                    ->get("{$this->baseUrl}/v1/trackings/{$waybillId}/couriers/{$courierCode}");
+
+                if ($response->successful()) {
+                    $json = $response->json();
+                    return [
+                        'sukses'     => true,
+                        'waybill_id' => $waybillId,
+                        'kurir'      => $courierCode,
+                        'status'     => $json['status'] ?? 'allocated',
+                        'history'    => $json['history'] ?? [],
+                        'link'       => $json['link'] ?? "https://biteship.com/track/{$waybillId}",
+                        'raw'        => $json,
+                    ];
+                }
+
+                Log::warning("[Biteship Tracking Error] Status {$response->status()}: {$response->body()}");
+
+                return $this->getMockTracking($waybillId, $courierCode);
+            } catch (\Throwable $e) {
+                Log::error("[Biteship Tracking Exception] {$e->getMessage()}");
+                return $this->getMockTracking($waybillId, $courierCode);
+            }
+        });
+    }
+
+    /**
+     * Riwayat tracking simulasi untuk testing dev / fallback.
+     */
+    protected function getMockTracking(string $waybillId, string $courierCode): array
+    {
+        return [
+            'sukses'     => true,
+            'is_mock'    => true,
+            'waybill_id' => $waybillId,
+            'kurir'      => strtoupper($courierCode),
+            'status'     => 'on_process',
+            'link'       => "https://biteship.com/track/{$waybillId}",
+            'history'    => [
+                [
+                    'note'       => 'Paket telah diserahkan ke kurir ' . strtoupper($courierCode) . ' di Drop Point Sleman.',
+                    'updated_at' => now()->subHours(6)->toIso8601String(),
+                    'status'     => 'allocated',
+                ],
+                [
+                    'note'       => 'Paket telah tiba di Sorting Hub Yogyakarta.',
+                    'updated_at' => now()->subHours(4)->toIso8601String(),
+                    'status'     => 'picking_up',
+                ],
+                [
+                    'note'       => 'Paket sedang dalam perjalanan menuju kota tujuan.',
+                    'updated_at' => now()->subHours(1)->toIso8601String(),
+                    'status'     => 'on_process',
+                ],
+            ],
+        ];
     }
 }

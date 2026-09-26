@@ -31,9 +31,9 @@ class BundleController extends Controller
                     'harga' => 299000,
                     'gambar' => '/assets/gambar/bundle-miflo-cover.webp',
                     'varian' => [
-                        ['id' => 1011, 'nama' => 'Pink Pastel', 'hex' => '#ec4899', 'sku' => 'CRSL-BND-MFL-PNK'],
-                        ['id' => 1012, 'nama' => 'Black Charcoal', 'hex' => '#1e293b', 'sku' => 'CRSL-BND-MFL-BLK'],
-                        ['id' => 1013, 'nama' => 'Sage Green', 'hex' => '#15803d', 'sku' => 'CRSL-BND-MFL-SGE'],
+                        ['id' => 1011, 'nama' => 'Pink Pastel', 'hex' => '#ec4899', 'sku' => 'CRSL-BND-MFL-PNK', 'stok' => 14],
+                        ['id' => 1012, 'nama' => 'Black Charcoal', 'hex' => '#1e293b', 'sku' => 'CRSL-BND-MFL-BLK', 'stok' => 8],
+                        ['id' => 1013, 'nama' => 'Sage Green', 'hex' => '#15803d', 'sku' => 'CRSL-BND-MFL-SGE', 'stok' => 0], // Muted / Habis
                     ],
                 ],
                 [
@@ -42,9 +42,9 @@ class BundleController extends Controller
                     'harga' => 44100,
                     'gambar' => '/assets/gambar/cassie-wallet.webp',
                     'varian' => [
-                        ['id' => 1021, 'nama' => 'Chilo Pink', 'hex' => '#ec4899', 'sku' => 'CRSL-BND-RPY-CHL'],
-                        ['id' => 1022, 'nama' => 'Odin Green', 'hex' => '#15803d', 'sku' => 'CRSL-BND-RPY-ODN'],
-                        ['id' => 1023, 'nama' => 'Choco Brown', 'hex' => '#78350f', 'sku' => 'CRSL-BND-RPY-CHC'],
+                        ['id' => 1021, 'nama' => 'Chilo Pink', 'hex' => '#ec4899', 'sku' => 'CRSL-BND-RPY-CHL', 'stok' => 25],
+                        ['id' => 1022, 'nama' => 'Odin Green', 'hex' => '#15803d', 'sku' => 'CRSL-BND-RPY-ODN', 'stok' => 19],
+                        ['id' => 1023, 'nama' => 'Choco Brown', 'hex' => '#78350f', 'sku' => 'CRSL-BND-RPY-CHC', 'stok' => 0], // Muted / Habis
                     ],
                 ],
             ],
@@ -75,9 +75,9 @@ class BundleController extends Controller
                     'harga' => 345000,
                     'gambar' => '/assets/gambar/bundle-haru-cover.webp',
                     'varian' => [
-                        ['id' => 2011, 'nama' => 'Brown Plaid', 'hex' => '#78350f', 'sku' => 'CRSL-BND-HRU-BRN'],
-                        ['id' => 2012, 'nama' => 'Blue Plaid', 'hex' => '#3b82f6', 'sku' => 'CRSL-BND-HRU-BLU'],
-                        ['id' => 2013, 'nama' => 'Grey Tartan', 'hex' => '#64748b', 'sku' => 'CRSL-BND-HRU-GRY'],
+                        ['id' => 2011, 'nama' => 'Brown Plaid', 'hex' => '#78350f', 'sku' => 'CRSL-BND-HRU-BRN', 'stok' => 12],
+                        ['id' => 2012, 'nama' => 'Blue Plaid', 'hex' => '#3b82f6', 'sku' => 'CRSL-BND-HRU-BLU', 'stok' => 0], // Muted / Habis
+                        ['id' => 2013, 'nama' => 'Grey Tartan', 'hex' => '#64748b', 'sku' => 'CRSL-BND-HRU-GRY', 'stok' => 5],
                     ],
                 ],
                 [
@@ -86,8 +86,8 @@ class BundleController extends Controller
                     'harga' => 50000,
                     'gambar' => '/assets/gambar/banner-2.webp',
                     'varian' => [
-                        ['id' => 2021, 'nama' => 'Squad 5 Karakter', 'hex' => '#eab308', 'sku' => 'CRSL-BND-PIN-SQD'],
-                        ['id' => 2022, 'nama' => 'Duo Besties Edition', 'hex' => '#ec4899', 'sku' => 'CRSL-BND-PIN-DUO'],
+                        ['id' => 2021, 'nama' => 'Squad 5 Karakter', 'hex' => '#eab308', 'sku' => 'CRSL-BND-PIN-SQD', 'stok' => 30],
+                        ['id' => 2022, 'nama' => 'Duo Besties Edition', 'hex' => '#ec4899', 'sku' => 'CRSL-BND-PIN-DUO', 'stok' => 20],
                     ],
                 ],
             ],
