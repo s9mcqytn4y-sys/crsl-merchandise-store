@@ -3,8 +3,12 @@ import { Head, router } from "@inertiajs/react";
 import StorefrontLayout from "../Layouts/StorefrontLayout";
 import { SlidersHorizontal, RotateCcw, X, Search } from "lucide-react";
 import ProductCard, { ProductData } from "../Components/Common/ProductCard";
-import CircularCategoriesBar, { CircularCategoryItem } from "../Components/Catalog/CircularCategoriesBar";
-import FilterSortDrawer, { FilterValues } from "../Components/Catalog/FilterSortDrawer";
+import CircularCategoriesBar, {
+    CircularCategoryItem,
+} from "../Components/Catalog/CircularCategoriesBar";
+import FilterSortDrawer, {
+    FilterValues,
+} from "../Components/Catalog/FilterSortDrawer";
 import StickyCartBar from "../Components/StickyCartBar";
 
 interface CatalogProps {
@@ -101,7 +105,9 @@ export default function Catalog({
     };
 
     // Temukan nama kategori aktif
-    const activeCategoryObj = listKategori.find((c) => c.slug === activeCategorySlug);
+    const activeCategoryObj = listKategori.find(
+        (c) => c.slug === activeCategorySlug,
+    );
     const categoryTitle =
         activeCategorySlug === "all-products" || !activeCategoryObj
             ? "All Products"
@@ -120,7 +126,6 @@ export default function Catalog({
     return (
         <StorefrontLayout>
             <Head title="Products - CRSL Official Store - Animals as your bestfriends!" />
-
 
             {/* 2. Circular Horizontal Category Carousel Sesuai Screenshot 1 */}
             <CircularCategoriesBar
@@ -143,7 +148,7 @@ export default function Catalog({
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Cari produk merchandise favoritmu..."
-                            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-full text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#E52027] focus:bg-white transition-colors"
+                            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-full text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-primary focus:bg-white transition-colors"
                         />
                     </div>
                     {searchQuery && (
@@ -175,13 +180,13 @@ export default function Catalog({
                     <button
                         type="button"
                         onClick={() => setIsFilterOpen(true)}
-                        className="inline-flex items-center gap-2 px-4 py-2 border border-[#E52027] text-[#E52027] hover:bg-[#E52027] hover:text-white rounded-full text-xs sm:text-[13px] font-bold tracking-tight transition-all duration-150 shadow-2xs cursor-pointer active:scale-98"
+                        className="inline-flex items-center gap-2 px-4 py-2 border border-primary text-primary hover:bg-primary hover:text-white rounded-full text-xs sm:text-[13px] font-bold tracking-tight transition-all duration-150 shadow-2xs cursor-pointer active:scale-98"
                         aria-label="Buka Filter dan Pengurutan"
                     >
                         <SlidersHorizontal className="w-3.5 h-3.5" />
                         <span>Filter &amp; Sort</span>
                         {activeFilterCount > 0 && (
-                            <span className="w-4 h-4 rounded-full bg-[#E52027] text-white text-[10px] flex items-center justify-center font-bold">
+                            <span className="w-4 h-4 rounded-full bg-primary text-white text-[10px] flex items-center justify-center font-bold">
                                 {activeFilterCount}
                             </span>
                         )}
@@ -191,26 +196,29 @@ export default function Catalog({
                 {/* Active Filter Badges */}
                 {activeFilterCount > 0 && (
                     <div className="flex flex-wrap items-center gap-2 mb-6">
-                        <span className="text-xs text-slate-400">Filter Aktif:</span>
+                        <span className="text-xs text-slate-400">
+                            Filter Aktif:
+                        </span>
                         {activeFilter.warna && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-[#E52027] rounded-full text-xs font-semibold">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-primary rounded-full text-xs font-semibold">
                                 Warna: {activeFilter.warna}
                             </span>
                         )}
                         {activeFilter.ukuran && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-[#E52027] rounded-full text-xs font-semibold">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-primary rounded-full text-xs font-semibold">
                                 Ukuran: {activeFilter.ukuran}
                             </span>
                         )}
                         {(activeFilter.min_harga || activeFilter.max_harga) && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-[#E52027] rounded-full text-xs font-semibold">
-                                Harga: Rp {activeFilter.min_harga || 0} - Rp {activeFilter.max_harga || "Max"}
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-primary rounded-full text-xs font-semibold">
+                                Harga: Rp {activeFilter.min_harga || 0} - Rp{" "}
+                                {activeFilter.max_harga || "Max"}
                             </span>
                         )}
                         <button
                             type="button"
                             onClick={handleResetAllFilters}
-                            className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-[#E52027] underline ml-2 cursor-pointer"
+                            className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-primary underline ml-2 cursor-pointer"
                         >
                             <RotateCcw className="w-3 h-3" />
                             <span>Reset Filter</span>
@@ -232,19 +240,20 @@ export default function Catalog({
                 ) : (
                     /* Empty State */
                     <div className="py-16 text-center space-y-4 max-w-md mx-auto">
-                        <div className="w-16 h-16 rounded-2xl bg-red-50 text-[#E52027] flex items-center justify-center mx-auto">
+                        <div className="w-16 h-16 rounded-2xl bg-red-50 text-primary flex items-center justify-center mx-auto">
                             <SlidersHorizontal className="w-8 h-8" />
                         </div>
                         <h3 className="text-base sm:text-lg font-bold text-slate-900">
                             Tidak Ada Produk yang Cocok
                         </h3>
                         <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-                            Coba sesuaikan filter warna, ukuran, atau rentang harga untuk menemukan produk yang kamu inginkan.
+                            Coba sesuaikan filter warna, ukuran, atau rentang
+                            harga untuk menemukan produk yang kamu inginkan.
                         </p>
                         <button
                             type="button"
                             onClick={handleResetAllFilters}
-                            className="inline-flex items-center gap-2 bg-[#E52027] text-white text-xs font-bold px-5 py-2.5 rounded-full hover:bg-[#CC1C22] transition-colors shadow-xs"
+                            className="inline-flex items-center gap-2 bg-primary text-white text-xs font-bold px-5 py-2.5 rounded-full hover:bg-primary-hover transition-colors shadow-xs"
                         >
                             <RotateCcw className="w-3.5 h-3.5" />
                             <span>Reset Semua Filter</span>
@@ -260,7 +269,8 @@ export default function Catalog({
                 filters={{
                     urutkan: (activeFilter.urutkan as string) || "featured",
                     tipe: (activeFilter.tipe as string) || "all_products",
-                    ketersediaan: (activeFilter.ketersediaan as string) || "all",
+                    ketersediaan:
+                        (activeFilter.ketersediaan as string) || "all",
                     min_harga: activeFilter.min_harga || "",
                     max_harga: activeFilter.max_harga || "",
                     warna: (activeFilter.warna as string) || "",

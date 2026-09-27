@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Link, router } from "@inertiajs/react";
 import {
     Package,
@@ -14,7 +14,6 @@ import {
     ArrowUpRight,
     ShoppingBag,
     Link2,
-    CreditCard,
 } from "lucide-react";
 import { formatRupiah } from "../../Utils/formatters";
 import ModalCariPesanan from "./ModalCariPesanan";
@@ -25,6 +24,7 @@ export interface OrderProductItem {
     nama_produk?: string;
     varian?: string;
     ukuran?: string;
+    warna?: string;
     gambar?: string;
     harga: number;
     jumlah: number;
@@ -32,7 +32,7 @@ export interface OrderProductItem {
 
 export interface OrderItem {
     id: number | string;
-    order_number: string;
+    order_number?: string;
     nomor_pesanan?: string;
     created_at: string;
     status: string;
@@ -59,6 +59,16 @@ const STATUS_FILTERS = [
     { key: "selesai", label: "Selesai" },
     { key: "dibatalkan", label: "Dibatalkan" },
 ];
+
+/** Ekstraksi status normalisasi */
+const getRawStatus = (order: OrderItem): string => {
+    return (order.status_raw || order.status || "").toLowerCase();
+};
+
+/** Ekstraksi order number seragam */
+const getOrderNumber = (order: OrderItem): string => {
+    return order.order_number || order.nomor_pesanan || String(order.id);
+};
 
 function OrderStatusBadge({
     statusRaw,
@@ -129,33 +139,31 @@ export default function PesananTab({
         string | null
     >(null);
 
-    // Hitung jumlah order per status untuk badge filter tab
+    // Hitung jumlah order per status untuk badge tab filter
     const statusCounts = useMemo(() => {
         const counts: Record<string, number> = { all: orders.length };
         orders.forEach((order) => {
-            const statusKey = (
-                order.status_raw ||
-                order.status ||
-                ""
-            ).toLowerCase();
+            const statusKey = getRawStatus(order);
             counts[statusKey] = (counts[statusKey] || 0) + 1;
         });
         return counts;
     }, [orders]);
 
     const filteredOrders = useMemo(() => {
-        return orders.filter((order) => {
-            if (selectedStatus === "all") return true;
-            const currentStatus = (
-                order.status_raw ||
-                order.status ||
-                ""
-            ).toLowerCase();
-            return currentStatus === selectedStatus.toLowerCase();
-        });
+        if (selectedStatus === "all") return orders;
+        return orders.filter(
+            (order) => getRawStatus(order) === selectedStatus.toLowerCase(),
+        );
     }, [orders, selectedStatus]);
 
     const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize));
+
+    // Cegah currentPage out of bounds jika data berubah dari luar
+    useEffect(() => {
+        if (currentPage > totalPages) {
+            setCurrentPage(totalPages);
+        }
+    }, [totalPages, currentPage]);
 
     const paginatedOrders = useMemo(() => {
         const start = (currentPage - 1) * pageSize;
@@ -222,7 +230,7 @@ export default function PesananTab({
                 </div>
             </div>
 
-            {/* Filter Tabs Horizontal yang Responsif */}
+            {/* Filter Tabs Horizontal */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none border-b border-slate-200/70">
                 {STATUS_FILTERS.map((tab) => {
                     const isActive = selectedStatus === tab.key;
@@ -245,7 +253,7 @@ export default function PesananTab({
                             <span>{tab.label}</span>
                             {count > 0 && (
                                 <span
-                                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
                                         isActive
                                             ? "bg-white/20 text-white"
                                             : "bg-slate-200/80 text-slate-700"
@@ -271,7 +279,11 @@ export default function PesananTab({
                     <p className="text-xs text-slate-500 mt-1 max-w-sm">
                         {selectedStatus === "all"
                             ? "Anda belum melakukan transaksi belanja apapun di CRSL Store."
-                            : `Tidak ditemukan transaksi dengan filter status "${STATUS_FILTERS.find((f) => f.key === selectedStatus)?.label}".`}
+                            : `Tidak ditemukan transaksi dengan filter status "${
+                                  STATUS_FILTERS.find(
+                                      (f) => f.key === selectedStatus,
+                                  )?.label
+                              }".`}
                     </p>
                     <Link
                         href="/katalog"
@@ -284,11 +296,7 @@ export default function PesananTab({
             ) : (
                 <div className="space-y-4">
                     {paginatedOrders.map((order) => {
-                        const orderNumber =
-                            order.order_number ||
-                            order.nomor_pesanan ||
-                            String(order.id);
-
+                        const orderNumber = getOrderNumber(order);
                         const items =
                             order.items ||
                             order.order_items ||
@@ -298,198 +306,246 @@ export default function PesananTab({
                         const sisaVarianItem = Math.max(0, items.length - 1);
                         const isProcessingConfirm =
                             processingOrderNumber === orderNumber;
+                        const statusRaw = getRawStatus(order);
 
                         const namaProduk =
                             itemUtama?.nama ||
                             itemUtama?.nama_produk ||
                             "Produk CRSL Merchandise";
+
                         const varianProduk =
                             itemUtama?.varian ||
                             [itemUtama?.warna, itemUtama?.ukuran]
                                 .filter(Boolean)
                                 .join(" / ");
 
-                                        const fakturSlug = orderNumber.replace(/\//g, "-");
+                        const fakturSlug = encodeURIComponent(
+                            orderNumber.replace(/\//g, "-"),
+                        );
 
-                                        return (
-                                            <div
-                                                key={order.id}
-                                                className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-xs hover:border-slate-300 transition-all"
-                                            >
-                                                {/* Header Kartu Pesanan */}
-                                                <div className="px-5 py-3.5 bg-slate-50/70 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
-                                                    <div className="flex items-center gap-2.5 flex-wrap">
-                                                        <span className="font-mono font-bold text-slate-900 bg-white border border-slate-200/80 px-2.5 py-1 rounded-lg select-all">
-                                                            #{orderNumber}
-                                                        </span>
-                                                        <span className="text-slate-300">
-                                                            •
-                                                        </span>
-                                                        <span className="text-slate-500 font-medium">
-                                                            {order.created_at}
-                                                        </span>
-                                                    </div>
+                        return (
+                            <div
+                                key={order.id}
+                                className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-xs hover:border-slate-300 transition-all"
+                            >
+                                {/* Header Kartu Pesanan */}
+                                <div className="px-5 py-3.5 bg-slate-50/70 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+                                    <div className="flex items-center gap-2.5 flex-wrap">
+                                        <span className="font-mono font-bold text-slate-900 bg-white border border-slate-200/80 px-2.5 py-1 rounded-lg select-all">
+                                            #{orderNumber}
+                                        </span>
+                                        <span className="text-slate-300">
+                                            •
+                                        </span>
+                                        <span className="text-slate-500 font-medium">
+                                            {order.created_at}
+                                        </span>
+                                    </div>
 
-                                                    <div className="flex items-center gap-2">
-                                                        <OrderStatusBadge
-                                                            statusRaw={order.status_raw}
-                                                            statusLabel={order.status}
+                                    <div className="flex items-center gap-2">
+                                        <OrderStatusBadge
+                                            statusRaw={order.status_raw}
+                                            statusLabel={order.status}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Konten Produk & Aksi */}
+                                <div className="p-4 sm:p-5 space-y-4">
+                                    {itemUtama ? (
+                                        <div className="flex items-center justify-between gap-3 sm:gap-4">
+                                            <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+                                                {/* Thumbnail Gambar Produk */}
+                                                <div className="relative w-16 h-16 sm:w-18 sm:h-18 rounded-xl bg-slate-100 border border-slate-200/80 shrink-0 overflow-hidden flex items-center justify-center">
+                                                    {itemUtama.gambar ? (
+                                                        <img
+                                                            src={(() => {
+                                                                const g =
+                                                                    itemUtama.gambar.trim();
+                                                                if (
+                                                                    g.startsWith(
+                                                                        "http://",
+                                                                    ) ||
+                                                                    g.startsWith(
+                                                                        "https://",
+                                                                    ) ||
+                                                                    g.startsWith(
+                                                                        "data:",
+                                                                    )
+                                                                )
+                                                                    return g;
+                                                                if (
+                                                                    g.startsWith(
+                                                                        "/storage/",
+                                                                    )
+                                                                )
+                                                                    return g;
+                                                                if (
+                                                                    g.startsWith(
+                                                                        "storage/",
+                                                                    )
+                                                                )
+                                                                    return `/${g}`;
+                                                                if (
+                                                                    g.startsWith(
+                                                                        "/",
+                                                                    )
+                                                                )
+                                                                    return g;
+                                                                return `/storage/${g}`;
+                                                            })()}
+                                                            alt={namaProduk}
+                                                            loading="lazy"
+                                                            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                                                            onError={(e) => {
+                                                                const target =
+                                                                    e.currentTarget;
+                                                                target.onerror =
+                                                                    null;
+                                                                // Fallback SVG netral langsung tanpa ketergantungan file lokal eksternal
+                                                                target.src =
+                                                                    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21 16-4-4a3.5 3.5 0 0 0-4.95 0L4 20'/%3E%3Cpath d='m14.5 13.5 1-1a3.5 3.5 0 0 1 4.95 0L21 13'/%3E%3Ccircle cx='9' cy='8' r='2'/%3E%3Crect width='18' height='18' x='3' y='3' rx='2'/%3E%3C/svg%3E";
+                                                                target.className =
+                                                                    "w-7 h-7 text-slate-300 opacity-60";
+                                                            }}
                                                         />
-                                                    </div>
+                                                    ) : (
+                                                        <Package className="w-7 h-7 text-slate-300 stroke-[1.5]" />
+                                                    )}
                                                 </div>
 
-                                                {/* Area Konten Produk */}
-                                                <div className="p-5 space-y-4">
-                                                    {itemUtama ? (
-                                                        <div className="flex items-start sm:items-center justify-between gap-4">
-                                                            <div className="flex items-center gap-3.5 min-w-0">
-                                                                <div className="w-16 h-16 rounded-xl bg-slate-50 border border-slate-200/80 shrink-0 overflow-hidden flex items-center justify-center p-0.5">
-                                                                    {itemUtama.gambar ? (
-                                                                        <img
-                                                                            src={
-                                                                                itemUtama.gambar.startsWith("http") || itemUtama.gambar.startsWith("/")
-                                                                                    ? itemUtama.gambar
-                                                                                    : `/storage/${itemUtama.gambar}`
-                                                                            }
-                                                                            alt={namaProduk}
-                                                                            className="w-full h-full object-cover rounded-lg"
-                                                                            onError={(e) => {
-                                                                                const target =
-                                                                                    e.currentTarget;
-                                                                                target.onerror =
-                                                                                    null;
-                                                                                target.src =
-                                                                                    "/assets/gambar/placeholder.webp";
-                                                                            }}
-                                                                        />
-                                                                    ) : (
-                                                                        <Package className="w-6 h-6 text-slate-300" />
-                                                                    )}
-                                                                </div>
+                                                {/* Detail Deskripsi Produk */}
+                                                <div className="min-w-0 space-y-1">
+                                                    <h5 className="text-xs sm:text-sm font-bold text-slate-900 line-clamp-1 leading-snug">
+                                                        {namaProduk}
+                                                    </h5>
 
-                                                                <div className="min-w-0 space-y-0.5">
-                                                                    <h5 className="text-xs sm:text-sm font-bold text-slate-900 line-clamp-1">
-                                                                        {namaProduk}
-                                                                    </h5>
-                                                                    {varianProduk && (
-                                                                        <p className="text-[11px] text-slate-500">
-                                                                            Varian / Ukuran:{" "}
-                                                                            <span className="font-semibold text-slate-700">
-                                                                                {varianProduk}
-                                                                            </span>
-                                                                        </p>
-                                                                    )}
-                                                                    {sisaVarianItem > 0 && (
-                                                                        <p className="text-[11px] font-semibold text-slate-400 inline-flex items-center gap-1">
-                                                                            +{sisaVarianItem}{" "}
-                                                                            item produk lainnya
-                                                                        </p>
-                                                                    )}
-                                                                </div>
-                                                            </div>
+                                                    {varianProduk ? (
+                                                        <p className="text-[11px] text-slate-500 truncate">
+                                                            Varian:{" "}
+                                                            <span className="font-medium text-slate-700">
+                                                                {varianProduk}
+                                                            </span>
+                                                        </p>
+                                                    ) : null}
 
-                                                            <div className="text-right shrink-0">
-                                                                <p className="text-xs sm:text-sm font-black text-slate-900 tabular-nums">
-                                                                    {formatRupiah(
-                                                                        itemUtama.harga,
-                                                                    )}
-                                                                </p>
-                                                                <p className="text-[11px] text-slate-400 mt-0.5 font-medium">
-                                                                    {itemUtama.jumlah} barang
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-xs">
-                                                            <div className="flex items-center gap-2 text-slate-600">
-                                                                <Package className="w-4 h-4 text-slate-400" />
-                                                                <span>
-                                                                    Rincian pesanan (
-                                                                    {order.item_count || 1}{" "}
-                                                                    produk)
-                                                                </span>
-                                                            </div>
-                                                            <Link
-                                                                href={`/faktur/${fakturSlug}`}
-                                                                className="text-[11px] font-bold text-slate-800 hover:text-primary inline-flex items-center gap-1"
-                                                            >
-                                                                Lihat Faktur{" "}
-                                                                <ArrowUpRight className="w-3.5 h-3.5" />
-                                                            </Link>
+                                                    {sisaVarianItem > 0 && (
+                                                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100/90 text-slate-600 text-[10px] font-semibold">
+                                                            +{sisaVarianItem}{" "}
+                                                            produk lainnya
                                                         </div>
                                                     )}
-
-                                                    {/* Footer Kartu & Tombol Aksi Transaksi */}
-                                                    <div className="pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                                        <div className="text-xs text-slate-500">
-                                                            Total Tagihan:{" "}
-                                                            <span className="font-black text-sm sm:text-base text-slate-900 tabular-nums ml-1">
-                                                                {formatRupiah(order.total)}
-                                                            </span>
-                                                        </div>
-
-                                                        <div className="flex flex-wrap items-center gap-2 self-stretch sm:self-auto justify-end">
-                                                            {/* Tombol Sekunder: Lacak Paket (untuk pesanan yang sudah dibayar/sedang diproses/dikirim) */}
-                                                            {["akan_dikirim", "dikirim", "selesai"].includes(order.status_raw || "") && (
-                                                                <Link
-                                                                    href={`/lacak?nomor=${encodeURIComponent(orderNumber)}`}
-                                                                    className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 active:scale-95 text-xs font-bold text-slate-700 transition-all shadow-2xs"
-                                                                >
-                                                                    <Truck className="w-3.5 h-3.5 text-primary" />
-                                                                    <span>Lacak Paket</span>
-                                                                </Link>
-                                                            )}
-
-                                                            {/* Tombol Utama: Lihat Faktur Resmi */}
-                                                            <Link
-                                                                href={`/faktur/${fakturSlug}`}
-                                                                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-bold transition-all shadow-2xs"
-                                                            >
-                                                                <ReceiptText className="w-3.5 h-3.5 text-slate-300" />
-                                                                <span>Lihat Faktur Resmi</span>
-                                                            </Link>
-
-                                                            {/* Opsi Tindakan Belum Bayar */}
-                                                            {order.status_raw === "belum_bayar" && (
-                                                                <Link
-                                                                    href={`/faktur/${fakturSlug}`}
-                                                                    className="flex-1 sm:flex-initial inline-flex items-center justify-center px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
-                                                                >
-                                                                    Bayar Sekarang
-                                                                </Link>
-                                                            )}
-
-                                                            {order.status_raw === "dikirim" && (
-                                                                <button
-                                                                    type="button"
-                                                                    disabled={
-                                                                        isProcessingConfirm
-                                                                    }
-                                                                    onClick={() =>
-                                                                        handleConfirmOrder(
-                                                                            orderNumber,
-                                                                        )
-                                                                    }
-                                                                    className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
-                                                                >
-                                                                    {isProcessingConfirm ? (
-                                                                        <>
-                                                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                                                            Memproses...
-                                                                        </>
-                                                                    ) : (
-                                                                        "Konfirmasi Selesai"
-                                                                    )}
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
                                                 </div>
                                             </div>
-                                        );
+
+                                            {/* Total Harga Item */}
+                                            <div className="text-right shrink-0">
+                                                <p className="text-xs sm:text-sm font-black text-slate-900 tabular-nums tracking-tight">
+                                                    {formatRupiah(
+                                                        itemUtama.harga,
+                                                    )}
+                                                </p>
+                                                <span className="inline-block text-[11px] font-medium text-slate-500 mt-0.5">
+                                                    {itemUtama.jumlah}x barang
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center justify-between p-3.5 bg-slate-50/80 rounded-xl border border-dashed border-slate-200 text-xs">
+                                            <div className="flex items-center gap-2 text-slate-600">
+                                                <Package className="w-4 h-4 text-slate-400" />
+                                                <span>
+                                                    Rincian pesanan (
+                                                    {order.item_count || 1}{" "}
+                                                    produk)
+                                                </span>
+                                            </div>
+                                            <Link
+                                                href={`/faktur/${fakturSlug}`}
+                                                className="text-[11px] font-bold text-slate-800 hover:text-primary inline-flex items-center gap-1 transition-colors"
+                                            >
+                                                Lihat Faktur{" "}
+                                                <ArrowUpRight className="w-3.5 h-3.5" />
+                                            </Link>
+                                        </div>
+                                    )}
+
+                                    {/* Footer & Tombol Aksi */}
+                                    <div className="pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                        <div className="flex items-baseline justify-between sm:justify-start gap-2 text-xs text-slate-500">
+                                            <span>Total Tagihan:</span>
+                                            <span className="font-black text-sm sm:text-base text-slate-900 tabular-nums tracking-tight">
+                                                {formatRupiah(order.total)}
+                                            </span>
+                                        </div>
+
+                                        <div className="flex flex-wrap items-center gap-2 self-stretch sm:self-auto justify-end">
+                                            {/* Lacak Paket */}
+                                            {[
+                                                "akan_dikirim",
+                                                "dikirim",
+                                                "selesai",
+                                            ].includes(statusRaw) && (
+                                                <Link
+                                                    href={`/lacak?nomor=${encodeURIComponent(orderNumber)}`}
+                                                    className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 text-xs font-bold text-slate-700 transition-all shadow-2xs"
+                                                >
+                                                    <Truck className="w-3.5 h-3.5 text-primary shrink-0" />
+                                                    <span>Lacak Paket</span>
+                                                </Link>
+                                            )}
+
+                                            {/* Lihat Faktur */}
+                                            <Link
+                                                href={`/faktur/${fakturSlug}`}
+                                                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-bold transition-all shadow-2xs"
+                                            >
+                                                <ReceiptText className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                                                <span>Lihat Faktur</span>
+                                            </Link>
+
+                                            {/* Bayar Sekarang */}
+                                            {statusRaw === "belum_bayar" && (
+                                                <Link
+                                                    href={`/faktur/${fakturSlug}`}
+                                                    className="flex-1 sm:flex-initial inline-flex items-center justify-center px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-bold transition-all shadow-xs"
+                                                >
+                                                    Bayar Sekarang
+                                                </Link>
+                                            )}
+
+                                            {/* Konfirmasi Selesai */}
+                                            {statusRaw === "dikirim" && (
+                                                <button
+                                                    type="button"
+                                                    disabled={
+                                                        isProcessingConfirm
+                                                    }
+                                                    onClick={() =>
+                                                        handleConfirmOrder(
+                                                            orderNumber,
+                                                        )
+                                                    }
+                                                    className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+                                                >
+                                                    {isProcessingConfirm ? (
+                                                        <>
+                                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                            Memproses...
+                                                        </>
+                                                    ) : (
+                                                        "Konfirmasi Selesai"
+                                                    )}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
                     })}
 
-                    {/* Pagination Bar (Maks 5 Pesanan per Halaman) */}
+                    {/* Pagination */}
                     {totalPages > 1 && (
                         <div className="p-4 bg-white rounded-2xl border border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
                             <span className="text-xs text-slate-500 font-medium">
@@ -529,7 +585,8 @@ export default function PesananTab({
                                 {Array.from({ length: totalPages }).map(
                                     (_, idx) => {
                                         const pageNum = idx + 1;
-                                        const isActive = pageNum === currentPage;
+                                        const isActive =
+                                            pageNum === currentPage;
                                         return (
                                             <button
                                                 key={pageNum}
@@ -568,7 +625,7 @@ export default function PesananTab({
                 </div>
             )}
 
-            {/* Modal Cari & Tautkan Pesanan Tamu */}
+            {/* Modal Tautkan Pesanan Tamu */}
             <ModalCariPesanan
                 isOpen={isFindOrderModalOpen}
                 onClose={() => setIsFindOrderModalOpen(false)}

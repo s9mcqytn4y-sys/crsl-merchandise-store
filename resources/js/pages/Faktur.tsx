@@ -12,18 +12,16 @@ import {
     Truck,
     XCircle,
     ShoppingBag,
-    AlertCircle,
-    PackageCheck,
-    ReceiptText,
     CreditCard,
     Copy,
     Check,
     ArrowLeft,
     RotateCcw,
     HelpCircle,
-    FileText,
-    ShieldCheck,
     ExternalLink,
+    ShieldAlert,
+    AlertCircle,
+    type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import HitungMundurKedaluwarsa from "../Components/Faktur/HitungMundurKedaluwarsa";
@@ -35,7 +33,6 @@ import ModalUbahAlamat from "../Components/Faktur/ModalUbahAlamat";
 import ModalBatalPesanan from "../Components/Faktur/ModalBatalPesanan";
 import PaymentSelectModal from "../Components/Checkout/PaymentSelectModal";
 import { PaymentOption } from "../Components/Checkout/PaymentMethodSection";
-
 import PrintableA4Invoice from "../Components/Faktur/PrintableA4Invoice";
 
 interface OrderItem {
@@ -126,7 +123,7 @@ function formatRupiah(num: number | string | undefined | null): string {
 }
 
 function formatTanggalIndo(dateStr?: string): string {
-    if (!dateStr) return "Hari ini";
+    if (!dateStr) return "-";
     try {
         const d = new Date(dateStr);
         if (isNaN(d.getTime())) return dateStr;
@@ -144,61 +141,82 @@ function formatTanggalIndo(dateStr?: string): string {
     }
 }
 
+interface StatusConfig {
+    label: string;
+    icon: LucideIcon;
+    variant: string;
+    iconColor: string;
+}
+
+const STATUS_CONFIG: Record<string, StatusConfig> = {
+    belum_bayar: {
+        label: "Menunggu Pembayaran",
+        icon: Clock,
+        variant: "bg-amber-50 text-amber-900 border-amber-200/80",
+        iconColor: "text-amber-600",
+    },
+    akan_dikirim: {
+        label: "Diproses",
+        icon: CheckCircle2,
+        variant: "bg-emerald-50 text-emerald-900 border-emerald-200/80",
+        iconColor: "text-emerald-600",
+    },
+    dikirim: {
+        label: "Dalam Pengiriman",
+        icon: Truck,
+        variant: "bg-sky-50 text-sky-900 border-sky-200/80",
+        iconColor: "text-sky-600",
+    },
+    selesai: {
+        label: "Selesai",
+        icon: CheckCircle2,
+        variant: "bg-emerald-50 text-emerald-900 border-emerald-200/80",
+        iconColor: "text-emerald-600",
+    },
+    dibatalkan: {
+        label: "Dibatalkan",
+        icon: XCircle,
+        variant: "bg-rose-50 text-rose-900 border-rose-200/80",
+        iconColor: "text-rose-600",
+    },
+    expired: {
+        label: "Kedaluwarsa",
+        icon: XCircle,
+        variant: "bg-slate-100 text-slate-700 border-slate-200",
+        iconColor: "text-slate-500",
+    },
+};
+
 function StatusBadge({ status }: { status: string }) {
-    switch (status?.toLowerCase()) {
-        case "belum_bayar":
-            return (
-                <span className="bg-amber-50 text-amber-800 border border-amber-200/90 font-bold px-3 py-1 rounded-full text-xs inline-flex items-center gap-1.5 shadow-2xs">
-                    <Clock className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
-                    Menunggu Pembayaran
-                </span>
-            );
-        case "akan_dikirim":
-            return (
-                <span className="bg-emerald-50 text-emerald-800 border border-emerald-200/90 font-bold px-3 py-1 rounded-full text-xs inline-flex items-center gap-1.5 shadow-2xs">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    Sudah Bayar / Diproses
-                </span>
-            );
-        case "dikirim":
-            return (
-                <span className="bg-indigo-50 text-indigo-800 border border-indigo-200/90 font-bold px-3 py-1 rounded-full text-xs inline-flex items-center gap-1.5 shadow-2xs">
-                    <Truck className="w-3.5 h-3.5 text-indigo-600" />
-                    Dalam Pengiriman
-                </span>
-            );
-        case "selesai":
-            return (
-                <span className="bg-blue-50 text-blue-800 border border-blue-200/90 font-bold px-3 py-1 rounded-full text-xs inline-flex items-center gap-1.5 shadow-2xs">
-                    <PackageCheck className="w-3.5 h-3.5 text-blue-600" />
-                    Selesai
-                </span>
-            );
-        case "dibatalkan":
-        case "expired":
-            return (
-                <span className="bg-rose-50 text-rose-800 border border-rose-200/90 font-bold px-3 py-1 rounded-full text-xs inline-flex items-center gap-1.5 shadow-2xs">
-                    <XCircle className="w-3.5 h-3.5 text-rose-600" />
-                    Pesanan Dibatalkan / Kedaluwarsa
-                </span>
-            );
-        default:
-            return (
-                <span className="bg-slate-100 text-slate-700 font-bold px-3 py-1 rounded-full text-xs inline-flex items-center gap-1.5">
-                    <AlertCircle className="w-3.5 h-3.5" />
-                    {status || "Unknown"}
-                </span>
-            );
-    }
+    const key = status?.toLowerCase().trim();
+    const current = STATUS_CONFIG[key] ?? {
+        label: status || "Unknown",
+        icon: AlertCircle,
+        variant: "bg-slate-100 text-slate-700 border-slate-200",
+        iconColor: "text-slate-500",
+    };
+
+    const Icon = current.icon;
+
+    return (
+        <span
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${current.variant} select-none`}
+        >
+            <Icon
+                className={`w-3.5 h-3.5 shrink-0 ${current.iconColor}`}
+                aria-hidden="true"
+            />
+            <span>{current.label}</span>
+        </span>
+    );
 }
 
 export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
-    const activeOrder = useMemo(() => pesanan || ({} as OrderData), [pesanan]);
+    const activeOrder = pesanan ?? ({} as OrderData);
     const pembayaran = activeOrder.pembayaran || {};
     const pengiriman = activeOrder.pengiriman || {};
     const orderItems = activeOrder.items || [];
 
-    // State Modals
     const [isEditAddressOpen, setIsEditAddressOpen] = useState(false);
     const [isCancelOrderOpen, setIsCancelOrderOpen] = useState(false);
     const [isChangePaymentOpen, setIsChangePaymentOpen] = useState(false);
@@ -207,7 +225,6 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
     const [copiedTotal, setCopiedTotal] = useState(false);
     const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
 
-    // Auto-clean keranjang dan checkout state jika pesanan baru
     useEffect(() => {
         if (is_baru) {
             useKeranjangStore.getState().kosongkan();
@@ -215,10 +232,18 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
         }
     }, [is_baru]);
 
-    // Polling status pembayaran realtime via usePaymentStatusPolling
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape" && isTermsModalOpen) {
+                setIsTermsModalOpen(false);
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isTermsModalOpen]);
+
     const {
         status: statusPesanan,
-        isSettled,
         isChecking,
         cekStatusManual,
     } = usePaymentStatusPolling(
@@ -231,8 +256,10 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                     ["akan_dikirim", "dikirim", "selesai"].includes(statusBaru)
                 ) {
                     toast.success(
-                        "🎉 Pembayaran terverifikasi! Pesanan Anda segera disiapkan.",
-                        { duration: 5000 },
+                        "Pembayaran terverifikasi! Pesanan Anda segera disiapkan.",
+                        {
+                            duration: 5000,
+                        },
                     );
                 }
             },
@@ -244,46 +271,47 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
         await cekStatusManual();
     }, [isChecking, cekStatusManual]);
 
-    const isPendingPayment = statusPesanan === "belum_bayar";
+    const statusNormalized = (statusPesanan || "").toLowerCase();
+    const isPendingPayment = statusNormalized === "belum_bayar";
     const isSuccessSettled = ["akan_dikirim", "dikirim", "selesai"].includes(
-        statusPesanan.toLowerCase(),
+        statusNormalized,
     );
+    const isTerminated = ["dibatalkan", "expired"].includes(statusNormalized);
+
     const isQris = Boolean(
         pembayaran.qr_code_url ||
-            pembayaran.metode_bayar?.toLowerCase().includes("qris"),
+        pembayaran.metode_bayar?.toLowerCase().includes("qris"),
     );
     const isMandiriBill = Boolean(
         pembayaran.kode_biller ||
-            pembayaran.metode_bayar?.toLowerCase().includes("mandiri"),
+        pembayaran.metode_bayar?.toLowerCase().includes("mandiri"),
     );
 
     const batasWaktuPembayaran =
         pembayaran.waktu_kedaluwarsa || pembayaran.batas_waktu;
 
-    // Batas waktu pesanan otomatis batal (24 jam dari created_at)
-    const batasWaktuOrder24Jam = useMemo(() => {
-        if (!activeOrder.created_at) return undefined;
-        const d = new Date(activeOrder.created_at);
-        d.setHours(d.getHours() + 24);
-        return d.toISOString();
-    }, [activeOrder.created_at]);
-
-    // Copy handlers
-    const copyInvoiceId = () => {
-        navigator.clipboard.writeText(activeOrder.nomor_pesanan);
-        setCopiedInvoice(true);
-        toast.success("Nomor Pesanan berhasil disalin!");
-        setTimeout(() => setCopiedInvoice(false), 2000);
+    const copyInvoiceId = async () => {
+        try {
+            await navigator.clipboard.writeText(activeOrder.nomor_pesanan);
+            setCopiedInvoice(true);
+            toast.success("Nomor pesanan berhasil disalin");
+            setTimeout(() => setCopiedInvoice(false), 2000);
+        } catch {
+            toast.error("Gagal menyalin nomor pesanan");
+        }
     };
 
-    const copyTotalAmount = () => {
-        navigator.clipboard.writeText(String(activeOrder.total));
-        setCopiedTotal(true);
-        toast.success("Total Nominal berhasil disalin!");
-        setTimeout(() => setCopiedTotal(false), 2000);
+    const copyTotalAmount = async () => {
+        try {
+            await navigator.clipboard.writeText(String(activeOrder.total));
+            setCopiedTotal(true);
+            toast.success("Total tagihan berhasil disalin");
+            setTimeout(() => setCopiedTotal(false), 2000);
+        } catch {
+            toast.error("Gagal menyalin nominal");
+        }
     };
 
-    // Handler refresh QRIS
     const handleRefreshQris = () => {
         if (isRefreshingQris) return;
         setIsRefreshingQris(true);
@@ -293,14 +321,14 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
             {
                 preserveScroll: true,
                 onSuccess: () => {
-                    toast.success("Kode QRIS baru berhasil diperbarui!");
+                    toast.success("Kode QRIS berhasil diperbarui");
                     setIsRefreshingQris(false);
                 },
                 onError: (err) => {
                     toast.error(
                         typeof err === "string"
                             ? err
-                            : "Gagal memperbarui QRIS. Silakan coba lagi.",
+                            : "Gagal memperbarui QRIS",
                     );
                     setIsRefreshingQris(false);
                 },
@@ -308,47 +336,39 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
         );
     };
 
-    // Handler konfirmasi ganti metode pembayaran
     const handleConfirmChangePayment = (metode: PaymentOption) => {
         setIsChangePaymentOpen(false);
-        const toastId = toast.loading("Memperbarui metode pembayaran ke Midtrans...");
+        const toastId = toast.loading("Memperbarui metode pembayaran...");
 
         router.post(
             `/faktur/${encodeURIComponent(activeOrder.nomor_pesanan)}/ganti-metode-bayar`,
-            {
-                metode_pembayaran: metode.id,
-            },
+            { metode_pembayaran: metode.id },
             {
                 preserveScroll: true,
                 onSuccess: () => {
                     toast.dismiss(toastId);
-                    toast.success(`Metode pembayaran berhasil diubah ke ${metode.nama}!`);
+                    toast.success(`Metode pembayaran diubah ke ${metode.nama}`);
                 },
                 onError: (err) => {
                     toast.dismiss(toastId);
                     toast.error(
                         typeof err === "string"
                             ? err
-                            : "Gagal mengubah metode pembayaran. Silakan coba lagi.",
+                            : "Gagal mengubah metode pembayaran",
                     );
                 },
             },
         );
     };
 
-    // Data alamat untuk modal ubah alamat
+    const recipientPayload = pengiriman.json_payload;
     const recipientName =
-        pengiriman.json_payload?.nama_penerima ||
-        pengiriman.penerima ||
-        "Pelanggan";
+        recipientPayload?.nama_penerima || pengiriman.penerima || "Pelanggan";
     const recipientPhone =
-        pengiriman.json_payload?.telepon || pengiriman.telepon || "";
+        recipientPayload?.telepon || pengiriman.telepon || "";
     const recipientAddress =
-        pengiriman.json_payload?.alamat_lengkap ||
-        pengiriman.alamat_lengkap ||
-        "";
-    const currentNotes =
-        activeOrder.catatan || pengiriman.json_payload?.catatan || "";
+        recipientPayload?.alamat_lengkap || pengiriman.alamat_lengkap || "";
+    const currentNotes = activeOrder.catatan || recipientPayload?.catatan || "";
 
     return (
         <StorefrontLayout>
@@ -356,21 +376,16 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                 title={`Faktur #${activeOrder.nomor_pesanan || ""} - CRSL Store`}
             />
 
-            {/* Print Stylesheet khusus Dokumen A4 Pure Paper */}
             <style>{`
                 @media print {
-                    @page {
-                        size: A4 portrait;
-                        margin: 10mm 15mm 15mm 15mm;
-                    }
+                    @page { size: A4 portrait; margin: 10mm 15mm; }
                     html, body {
                         background-color: #ffffff !important;
                         color: #0f172a !important;
-                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+                        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
                     }
-                    /* Sembunyikan semua elemen navigasi, floating UI, button, modal & toast */
                     header, footer, nav, aside, [role="dialog"], .sonner-toast, button, .print\\:hidden {
                         display: none !important;
                     }
@@ -380,7 +395,6 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                 }
             `}</style>
 
-            {/* 1. Dokumen Resmi Jual-Beli Khusus Cetak A4 Portrait (Pure Paper) */}
             <PrintableA4Invoice
                 pesanan={activeOrder}
                 statusPesanan={statusPesanan}
@@ -388,46 +402,63 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                 formatTanggalIndo={formatTanggalIndo}
             />
 
-            {/* 2. Web UI Interaktif (Disembunyikan Otomatis Saat Print) */}
             <div className="print:hidden">
-                {/* Header Tindakan Web */}
-                <header className="bg-white border-b border-slate-200/80 py-5">
-                    <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-3">
+                <header className="bg-white border-b border-slate-200 py-5">
+                    <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-4">
                         <div>
                             <Link
                                 href="/katalog"
-                                className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors"
+                                className="group inline-flex items-center gap-1.5 -ml-1 px-2 py-1 rounded-md text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
                             >
-                                <ArrowLeft className="w-3.5 h-3.5" />
+                                <ArrowLeft className="w-3.5 h-3.5 transition-transform duration-150 ease-out group-hover:-translate-x-0.5" />
                                 <span>Kembali ke Belanja</span>
                             </Link>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest inline-flex items-center gap-1">
-                                        <ReceiptText className="w-3.5 h-3.5 text-primary" />{" "}
-                                        Faktur Pesanan Resmi
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2 text-xs text-slate-500">
+                                    <span className="font-medium text-slate-700">
+                                        Faktur Pesanan
                                     </span>
-                                    <span className="text-slate-300">•</span>
-                                    <span className="text-[11px] font-semibold text-slate-500">
-                                        {formatTanggalIndo(activeOrder.created_at)}
+                                    <span
+                                        className="text-slate-300"
+                                        aria-hidden="true"
+                                    >
+                                        •
                                     </span>
+                                    <time dateTime={activeOrder.created_at}>
+                                        {formatTanggalIndo(
+                                            activeOrder.created_at,
+                                        )}
+                                    </time>
                                 </div>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                                        #{activeOrder.nomor_pesanan}
+
+                                <div className="flex items-center gap-2">
+                                    <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900 font-mono">
+                                        <span className="text-slate-400 select-none">
+                                            #
+                                        </span>
+                                        <span>{activeOrder.nomor_pesanan}</span>
                                     </h1>
+
                                     <button
                                         type="button"
                                         onClick={copyInvoiceId}
-                                        title="Salin nomor pesanan"
-                                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                                        title={
+                                            copiedInvoice
+                                                ? "Tersalin!"
+                                                : "Salin nomor pesanan"
+                                        }
                                         aria-label="Salin nomor pesanan"
+                                        className={`inline-flex items-center justify-center p-1.5 rounded-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 ${
+                                            copiedInvoice
+                                                ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                                                : "text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                                        }`}
                                     >
                                         {copiedInvoice ? (
-                                            <Check className="w-4 h-4 text-emerald-600" />
+                                            <Check className="w-4 h-4 text-emerald-600 animate-in zoom-in-75 duration-150" />
                                         ) : (
                                             <Copy className="w-4 h-4" />
                                         )}
@@ -437,336 +468,462 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
 
                             <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
                                 <StatusBadge status={statusPesanan} />
+
                                 <button
                                     type="button"
                                     onClick={() => window.print()}
-                                    className="inline-flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-2xs cursor-pointer min-h-9.5"
+                                    className="group inline-flex items-center gap-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-xs font-medium px-3.5 py-2 rounded-lg shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
                                 >
-                                    <Printer className="w-3.5 h-3.5 text-slate-500" />
-                                    Cetak Faktur
+                                    <Printer className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-700 transition-colors" />
+                                    <span>Cetak Faktur</span>
                                 </button>
                             </div>
                         </div>
                     </div>
                 </header>
 
-                {/* Konten Utama 2 Kolom */}
                 <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                        {/* KOLOM KIRI (7 Kolom): Status, Aksi Pembayaran & Progres */}
-                        <div className="lg:col-span-7 space-y-6">
-                            {/* Banner Pelunasan (Hanya muncul jika benar-benar lunas) */}
+                        <div className="lg:col-span-7 space-y-5">
+                            {/* Settlement State */}
                             {isSuccessSettled && (
-                                <div className="bg-emerald-50/90 border border-emerald-200 p-6 rounded-3xl shadow-2xs space-y-4">
-                                    <div className="flex items-start gap-4">
-                                        <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
-                                            <CheckCircle2 className="w-6 h-6" />
+                                <div className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-5 sm:p-6 space-y-4">
+                                    <div className="flex items-start gap-3.5">
+                                        <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                                            <CheckCircle2 className="w-5 h-5" />
                                         </div>
                                         <div className="space-y-1">
-                                            <h2 className="font-black text-lg text-emerald-950 tracking-tight">
-                                                Pembayaran Sukses Diverifikasi!
+                                            <h2 className="text-base sm:text-lg font-semibold text-emerald-950 tracking-tight">
+                                                Pembayaran Berhasil Diverifikasi
                                             </h2>
-                                            <p className="text-xs text-emerald-800 leading-relaxed">
-                                                Pesanan Anda sedang dikemas dan
-                                                disiapkan oleh tim logistik CRSL
-                                                Store. Resi pengiriman otomatis
-                                                aktif setelah kurir melakukan
-                                                pick-up.
+                                            <p className="text-xs sm:text-sm text-emerald-800 leading-relaxed">
+                                                Pesanan Anda sedang dipersiapkan
+                                                oleh tim logistik CRSL Store.
+                                                Nomor resi pengiriman akan
+                                                diperbarui otomatis setelah
+                                                paket diserahkan ke pihak
+                                                ekspedisi.
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="pt-2 flex flex-wrap gap-2.5">
+
+                                    <div className="pt-1 flex flex-wrap gap-2.5">
                                         <Link
                                             href={`/lacak?nomor=${encodeURIComponent(activeOrder.nomor_pesanan || "")}`}
-                                            className="inline-flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs"
+                                            className="inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-medium text-xs px-4 py-2 rounded-lg transition-colors shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700"
                                         >
                                             <Truck className="w-3.5 h-3.5" />
-                                            Lacak Pengiriman
+                                            <span>Lacak Pengiriman</span>
                                         </Link>
                                         <Link
                                             href="/katalog"
-                                            className="inline-flex items-center gap-1.5 bg-white border border-emerald-300 hover:bg-emerald-100/50 text-emerald-900 font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-2xs"
+                                            className="inline-flex items-center gap-2 bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-900 font-medium text-xs px-4 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700"
                                         >
                                             <ShoppingBag className="w-3.5 h-3.5 text-emerald-700" />
-                                            Belanja Lagi
+                                            <span>Belanja Lagi</span>
                                         </Link>
                                     </div>
                                 </div>
                             )}
 
-                        {/* Modul Instruksi Pembayaran (Hanya tampil jika belum lunas) */}
-                        {isPendingPayment && (
-                            <section className="bg-white border border-slate-200/90 rounded-3xl shadow-xs overflow-hidden print:hidden">
-                                <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-slate-50/50">
-                                    <div className="space-y-1">
-                                        <div className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700">
-                                            <CreditCard className="w-4 h-4" />
-                                            {pembayaran.metode_bayar ||
-                                                "Midtrans Core API"}
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <div className="text-xl font-black text-slate-900">
-                                                {formatRupiah(activeOrder.total)}
+                            {/* Pending Payment State */}
+                            {isPendingPayment && (
+                                <section className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+                                    <div className="p-5 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-slate-50/60">
+                                        <div className="space-y-1">
+                                            <div className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600">
+                                                <CreditCard className="w-3.5 h-3.5 text-slate-500" />
+                                                <span>
+                                                    {pembayaran.metode_bayar ||
+                                                        "Metode Pembayaran"}
+                                                </span>
                                             </div>
+
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight tabular-nums">
+                                                    {formatRupiah(
+                                                        activeOrder.total,
+                                                    )}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={copyTotalAmount}
+                                                    aria-label="Salin nominal total pembayaran"
+                                                    className="min-w-16 text-xs text-slate-600 hover:text-slate-900 font-medium inline-flex items-center justify-center gap-1 px-2 py-1 rounded-md hover:bg-slate-200/60 transition-colors"
+                                                >
+                                                    {copiedTotal ? (
+                                                        <>
+                                                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                                            <span className="text-emerald-700">
+                                                                Tersalin
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Copy className="w-3.5 h-3.5 text-slate-400" />
+                                                            <span>Salin</span>
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-wrap items-center gap-2.5">
+                                            <HitungMundurKedaluwarsa
+                                                batasWaktu={
+                                                    batasWaktuPembayaran
+                                                }
+                                                createdAt={
+                                                    activeOrder.created_at
+                                                }
+                                                onExpired={
+                                                    handleManualCheckStatus
+                                                }
+                                            />
+
                                             <button
                                                 type="button"
-                                                onClick={copyTotalAmount}
-                                                className="text-[11px] text-primary hover:text-primary-hover font-bold inline-flex items-center gap-1 ml-1"
+                                                onClick={
+                                                    handleManualCheckStatus
+                                                }
+                                                disabled={isChecking}
+                                                className="inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
                                             >
-                                                {copiedTotal ? (
-                                                    <Check className="w-3 h-3 text-emerald-600" />
-                                                ) : (
-                                                    <Copy className="w-3 h-3" />
-                                                )}
-                                                <span>{copiedTotal ? "Tersalin" : "Salin"}</span>
+                                                <RefreshCw
+                                                    className={`w-3.5 h-3.5 text-slate-500 ${isChecking ? "animate-spin" : ""}`}
+                                                />
+                                                <span>
+                                                    {isChecking
+                                                        ? "Memeriksa..."
+                                                        : "Cek Status"}
+                                                </span>
                                             </button>
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                                        <HitungMundurKedaluwarsa
-                                            batasWaktu={batasWaktuPembayaran}
-                                            createdAt={activeOrder.created_at}
-                                            onExpired={handleManualCheckStatus}
-                                        />
-
-                                        <button
-                                            type="button"
-                                            onClick={handleManualCheckStatus}
-                                            disabled={isChecking}
-                                            className="inline-flex items-center justify-center gap-1.5 bg-white hover:bg-slate-50 active:scale-95 text-slate-800 border border-slate-300 text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-2xs disabled:opacity-50 cursor-pointer"
-                                        >
-                                            <RefreshCw
-                                                className={`w-3.5 h-3.5 text-slate-500 ${isChecking ? "animate-spin" : ""}`}
-                                            />
-                                            {isChecking
-                                                ? "Memeriksa..."
-                                                : "Cek Status"}
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Dual Countdown Alert Banner (Order Expiry 24h vs QRIS Expiry 15m) */}
-                                {isQris && (
-                                    <div className="px-6 py-3 bg-amber-50/60 border-b border-amber-100 flex flex-wrap items-center justify-between gap-3 text-xs">
-                                        <div className="flex items-center gap-2 text-amber-900">
-                                            <Clock className="w-4 h-4 text-amber-600 shrink-0" />
-                                            <span>
-                                                Masa aktif QR Code <strong>15 Menit</strong>. Pesanan dibatalkan otomatis jika belum lunas dalam <strong>24 Jam</strong>.
-                                            </span>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={handleRefreshQris}
-                                            disabled={isRefreshingQris}
-                                            className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-900 bg-amber-200/80 hover:bg-amber-300/80 px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
-                                        >
-                                            <RotateCcw className={`w-3.5 h-3.5 ${isRefreshingQris ? "animate-spin" : ""}`} />
-                                            <span>{isRefreshingQris ? "Memperbarui..." : "Perbarui QRIS"}</span>
-                                        </button>
-                                    </div>
-                                )}
-
-                                <div className="p-6 space-y-6">
                                     {isQris && (
-                                        <InstruksiQris
-                                            qrCodeUrl={pembayaran.qr_code_url}
-                                            qrString={pembayaran.qr_string}
-                                            nomorPesanan={
-                                                activeOrder.nomor_pesanan
-                                            }
-                                            instruksiBayar={
-                                                pembayaran.instruksi_bayar
-                                            }
-                                        />
+                                        <div className="px-5 sm:px-6 py-3 bg-amber-50/70 border-b border-amber-200/60 flex flex-wrap items-center justify-between gap-3 text-xs">
+                                            <div className="flex items-center gap-2 text-amber-950">
+                                                <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                                                <p>
+                                                    Masa aktif QRIS{" "}
+                                                    <strong className="font-semibold">
+                                                        15 Menit
+                                                    </strong>
+                                                    . Lakukan perpanjangan kode
+                                                    jika waktu habis tanpa
+                                                    membatalkan pesanan.
+                                                </p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={handleRefreshQris}
+                                                disabled={isRefreshingQris}
+                                                className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-900 bg-amber-100 hover:bg-amber-200 px-2.5 py-1 rounded-md transition-colors disabled:opacity-50"
+                                            >
+                                                <RotateCcw
+                                                    className={`w-3.5 h-3.5 ${isRefreshingQris ? "animate-spin" : ""}`}
+                                                />
+                                                <span>
+                                                    {isRefreshingQris
+                                                        ? "Memperbarui..."
+                                                        : "Perbarui QRIS"}
+                                                </span>
+                                            </button>
+                                        </div>
                                     )}
 
-                                    {isMandiriBill && (
-                                        <InstruksiMandiriBill
-                                            kodeBiller={pembayaran.kode_biller}
-                                            billKey={
-                                                pembayaran.bill_key ||
-                                                pembayaran.nomor_va
-                                            }
-                                            instruksiBayar={
-                                                pembayaran.instruksi_bayar
-                                            }
-                                        />
-                                    )}
+                                    <div className="p-5 sm:p-6 space-y-6">
+                                        {isQris && (
+                                            <InstruksiQris
+                                                qrCodeUrl={
+                                                    pembayaran.qr_code_url
+                                                }
+                                                qrString={pembayaran.qr_string}
+                                                nomorPesanan={
+                                                    activeOrder.nomor_pesanan
+                                                }
+                                                instruksiBayar={
+                                                    pembayaran.instruksi_bayar
+                                                }
+                                            />
+                                        )}
 
-                                    {!isQris && !isMandiriBill && (
-                                        <InstruksiVirtualAccount
-                                            metodeBayar={
-                                                pembayaran.metode_bayar
-                                            }
-                                            nomorVa={pembayaran.nomor_va}
-                                            instruksiBayar={
-                                                pembayaran.instruksi_bayar
-                                            }
-                                            nomorPesanan={
-                                                activeOrder.nomor_pesanan
-                                            }
-                                        />
-                                    )}
+                                        {isMandiriBill && (
+                                            <InstruksiMandiriBill
+                                                kodeBiller={
+                                                    pembayaran.kode_biller
+                                                }
+                                                billKey={
+                                                    pembayaran.bill_key ||
+                                                    pembayaran.nomor_va
+                                                }
+                                                instruksiBayar={
+                                                    pembayaran.instruksi_bayar
+                                                }
+                                            />
+                                        )}
 
-                                    {/* Action Buttons: Ganti Metode Bayar & Batalkan Pesanan */}
-                                    <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsChangePaymentOpen(true)}
-                                            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2.5 rounded-xl transition-colors cursor-pointer"
+                                        {!isQris && !isMandiriBill && (
+                                            <InstruksiVirtualAccount
+                                                metodeBayar={
+                                                    pembayaran.metode_bayar
+                                                }
+                                                nomorVa={pembayaran.nomor_va}
+                                                instruksiBayar={
+                                                    pembayaran.instruksi_bayar
+                                                }
+                                                nomorPesanan={
+                                                    activeOrder.nomor_pesanan
+                                                }
+                                            />
+                                        )}
+
+                                        <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setIsChangePaymentOpen(true)
+                                                }
+                                                className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-lg transition-colors"
+                                            >
+                                                <CreditCard className="w-3.5 h-3.5 text-slate-500" />
+                                                <span>
+                                                    Ganti Metode Pembayaran
+                                                </span>
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setIsCancelOrderOpen(true)
+                                                }
+                                                className="inline-flex items-center gap-1.5 text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-3 py-2 rounded-lg transition-colors"
+                                            >
+                                                <XCircle className="w-3.5 h-3.5" />
+                                                <span>Batalkan Pesanan</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </section>
+                            )}
+
+                            {/* Terminated State (Dibatalkan / Expired) */}
+                            {isTerminated && (
+                                <section className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
+                                    <div className="flex items-start gap-3.5">
+                                        <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 flex items-center justify-center shrink-0">
+                                            <XCircle className="w-5 h-5 text-slate-500" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <h2 className="text-base sm:text-lg font-semibold text-slate-900 tracking-tight">
+                                                Pesanan Ini Telah Berakhir
+                                            </h2>
+                                            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                                Faktur ini berstatus{" "}
+                                                <strong className="text-slate-800">
+                                                    {statusNormalized ===
+                                                    "dibatalkan"
+                                                        ? "Dibatalkan"
+                                                        : "Kedaluwarsa"}
+                                                </strong>
+                                                . Tagihan pembayaran tidak lagi
+                                                aktif dan pesanan tidak dapat
+                                                diproses lebih lanjut.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-2">
+                                        <Link
+                                            href="/katalog"
+                                            className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs px-4 py-2.5 rounded-lg transition-colors"
                                         >
-                                            <CreditCard className="w-3.5 h-3.5 text-slate-500" />
-                                            <span>Ganti Metode Pembayaran</span>
-                                        </button>
+                                            <ShoppingBag className="w-3.5 h-3.5" />
+                                            <span>Buat Pesanan Baru</span>
+                                        </Link>
+                                    </div>
+                                </section>
+                            )}
 
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsCancelOrderOpen(true)}
-                                            className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
-                                        >
-                                            <XCircle className="w-3.5 h-3.5" />
-                                            <span>Batalkan Pesanan</span>
-                                        </button>
+                            {/* Customer Support Banner */}
+                            <aside
+                                aria-label="Bantuan Pembayaran"
+                                className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-slate-600"
+                            >
+                                <div className="flex items-start sm:items-center gap-3">
+                                    <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center shrink-0 shadow-xs">
+                                        <HelpCircle
+                                            className="w-4 h-4 text-slate-500"
+                                            aria-hidden="true"
+                                        />
+                                    </div>
+                                    <div className="space-y-0.5">
+                                        <p className="font-semibold text-slate-900 leading-snug">
+                                            Mengalami Kendala Pembayaran?
+                                        </p>
+                                        <p className="text-slate-500 text-[11px] leading-relaxed">
+                                            Tim Customer Service resmi CRSL siap
+                                            membantu kendala Anda.
+                                        </p>
                                     </div>
                                 </div>
-                            </section>
-                        )}
 
-                        {/* Banner Bantuan & Info Layanan */}
-                        <div className="bg-slate-50 border border-slate-200/80 rounded-3xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-slate-600 print:hidden">
-                            <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center shrink-0 text-primary shadow-2xs">
-                                    <HelpCircle className="w-5 h-5" />
+                                <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t border-slate-200/60 sm:border-0">
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setIsTermsModalOpen(true)
+                                        }
+                                        className="text-slate-500 hover:text-slate-900 font-medium text-[11px] underline-offset-4 hover:underline rounded px-1.5 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                                    >
+                                        S&K Pembayaran
+                                    </button>
+
+                                    <a
+                                        href={`https://wa.me/6281234567890?text=Halo%20CRSL%2C%20saya%20butuh%20bantuan%20terkait%20pesanan%20${encodeURIComponent(activeOrder.nomor_pesanan || "")}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-3.5 py-2 rounded-lg transition-colors shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+                                    >
+                                        <span>Chat CS WhatsApp</span>
+                                        <ExternalLink
+                                            className="w-3.5 h-3.5 opacity-80"
+                                            aria-hidden="true"
+                                        />
+                                    </a>
                                 </div>
-                                <div>
-                                    <p className="font-bold text-slate-900">Mengalami Kendala Pembayaran?</p>
-                                    <p className="text-slate-500 text-[11px]">Tim Customer Service CRSL siap membantu via WhatsApp Official.</p>
+                            </aside>
+                        </div>
+
+                        {/* Order Summary & Shipping Details Column */}
+                        <div className="lg:col-span-5">
+                            <RincianFaktur
+                                nomorPesanan={activeOrder.nomor_pesanan}
+                                status={statusPesanan}
+                                items={orderItems}
+                                subtotal={activeOrder.subtotal}
+                                ongkir={activeOrder.ongkir}
+                                diskon={activeOrder.diskon}
+                                total={activeOrder.total}
+                                pengiriman={pengiriman}
+                                isDropship={activeOrder.is_dropship}
+                                dropshipPengirim={activeOrder.dropship_pengirim}
+                                dropshipTelepon={activeOrder.dropship_telepon}
+                                asuransiPengiriman={
+                                    activeOrder.asuransi_pengiriman
+                                }
+                                biayaAsuransi={activeOrder.biaya_asuransi}
+                                formatRupiah={formatRupiah}
+                                onOpenEditRecipient={() =>
+                                    setIsEditAddressOpen(true)
+                                }
+                            />
+                        </div>
+                    </div>
+                </main>
+
+                <ModalUbahAlamat
+                    isOpen={isEditAddressOpen}
+                    onClose={() => setIsEditAddressOpen(false)}
+                    nomorPesanan={activeOrder.nomor_pesanan}
+                    namaPenerimaDefault={recipientName}
+                    teleponDefault={recipientPhone}
+                    alamatLengkapDefault={recipientAddress}
+                    catatanDefault={currentNotes}
+                    onSuccess={() => {
+                        router.reload({ only: ["pesanan"] });
+                    }}
+                />
+
+                <ModalBatalPesanan
+                    isOpen={isCancelOrderOpen}
+                    onClose={() => setIsCancelOrderOpen(false)}
+                    nomorPesanan={activeOrder.nomor_pesanan}
+                    total={activeOrder.total}
+                    onSuccess={() => {
+                        router.reload({ only: ["pesanan"] });
+                    }}
+                />
+
+                <PaymentSelectModal
+                    isOpen={isChangePaymentOpen}
+                    onClose={() => setIsChangePaymentOpen(false)}
+                    selectedPaymentId={
+                        pembayaran.metode_bayar?.toLowerCase() || "qris"
+                    }
+                    onConfirmPayment={handleConfirmChangePayment}
+                />
+
+                {isTermsModalOpen && (
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="terms-modal-title"
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200"
+                    >
+                        <div className="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 space-y-4 shadow-xl border border-slate-200">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                <div className="flex items-center gap-2">
+                                    <ShieldAlert className="w-4 h-4 text-slate-700" />
+                                    <h3
+                                        id="terms-modal-title"
+                                        className="font-semibold text-sm text-slate-900"
+                                    >
+                                        Syarat & Ketentuan Pembayaran
+                                    </h3>
                                 </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <a
-                                    href={`https://wa.me/6281234567890?text=Halo%20CRSL%2C%20saya%20butuh%20bantuan%20terkait%20pesanan%20${encodeURIComponent(activeOrder.nomor_pesanan || "")}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl transition-colors cursor-pointer min-h-9.5"
-                                >
-                                    <span>Chat CS WhatsApp</span>
-                                    <ExternalLink className="w-3 h-3" />
-                                </a>
                                 <button
                                     type="button"
-                                    onClick={() => setIsTermsModalOpen(true)}
-                                    className="text-slate-500 hover:text-slate-800 font-semibold px-2 py-1 text-[11px]"
+                                    onClick={() => setIsTermsModalOpen(false)}
+                                    aria-label="Tutup jendela syarat dan ketentuan"
+                                    className="p-1 text-slate-400 hover:text-slate-700 rounded-md transition-colors"
                                 >
-                                    S&K Pembayaran
+                                    <XCircle className="w-4 h-4" />
+                                </button>
+                            </div>
+
+                            <div className="space-y-2.5 text-xs text-slate-600 leading-relaxed max-h-72 overflow-y-auto pr-1">
+                                <p>
+                                    1. Pesanan yang belum diselesaikan
+                                    dicadangkan selama <strong>24 jam</strong>{" "}
+                                    sejak faktur terbit.
+                                </p>
+                                <p>
+                                    2. Khusus metode <strong>QRIS</strong>, masa
+                                    aktif scan adalah <strong>15 menit</strong>.
+                                    Anda dapat memperbarui kode jika waktu habis
+                                    tanpa membatalkan order.
+                                </p>
+                                <p>
+                                    3. Penggantian metode pembayaran dapat
+                                    dilakukan kapan saja sebelum transaksi
+                                    berstatus lunas.
+                                </p>
+                                <p>
+                                    4. Jika pesanan dibatalkan, kuota voucher
+                                    dan koin loyalty point otomatis dikembalikan
+                                    ke akun Anda.
+                                </p>
+                                <p>
+                                    5. Pesanan lunas langsung dialokasikan ke
+                                    antrean logistik dan tidak dapat dibatalkan
+                                    sepihak.
+                                </p>
+                            </div>
+
+                            <div className="pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsTermsModalOpen(false)}
+                                    className="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 rounded-lg transition-colors text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
+                                >
+                                    Saya Mengerti
                                 </button>
                             </div>
                         </div>
                     </div>
-
-                    {/* KOLOM KANAN (5 Kolom): Rincian Pengiriman & Item */}
-                    <div className="lg:col-span-5">
-                        <RincianFaktur
-                            nomorPesanan={activeOrder.nomor_pesanan}
-                            status={statusPesanan}
-                            items={orderItems}
-                            subtotal={activeOrder.subtotal}
-                            ongkir={activeOrder.ongkir}
-                            diskon={activeOrder.diskon}
-                            total={activeOrder.total}
-                            pengiriman={pengiriman}
-                            isDropship={activeOrder.is_dropship}
-                            dropshipPengirim={activeOrder.dropship_pengirim}
-                            dropshipTelepon={activeOrder.dropship_telepon}
-                            asuransiPengiriman={activeOrder.asuransi_pengiriman}
-                            biayaAsuransi={activeOrder.biaya_asuransi}
-                            formatRupiah={formatRupiah}
-                            onOpenEditRecipient={() => setIsEditAddressOpen(true)}
-                        />
-                    </div>
-                </div>
-            </main>
-
-            {/* Modal Edit Alamat Penerima */}
-            <ModalUbahAlamat
-                isOpen={isEditAddressOpen}
-                onClose={() => setIsEditAddressOpen(false)}
-                nomorPesanan={activeOrder.nomor_pesanan}
-                namaPenerimaDefault={recipientName}
-                teleponDefault={recipientPhone}
-                alamatLengkapDefault={recipientAddress}
-                catatanDefault={currentNotes}
-                onSuccess={() => {
-                    router.reload({ only: ["pesanan"] });
-                }}
-            />
-
-            {/* Modal Batalkan Pesanan */}
-            <ModalBatalPesanan
-                isOpen={isCancelOrderOpen}
-                onClose={() => setIsCancelOrderOpen(false)}
-                nomorPesanan={activeOrder.nomor_pesanan}
-                total={activeOrder.total}
-                onSuccess={() => {
-                    router.reload({ only: ["pesanan"] });
-                }}
-            />
-
-            {/* Modal Ganti Metode Pembayaran */}
-            <PaymentSelectModal
-                isOpen={isChangePaymentOpen}
-                onClose={() => setIsChangePaymentOpen(false)}
-                selectedPaymentId={pembayaran.metode_bayar?.toLowerCase() || "qris"}
-                onConfirmPayment={handleConfirmChangePayment}
-            />
-
-            {/* Modal Syarat & Ketentuan Pembayaran */}
-            {isTermsModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-                    <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-xl border border-slate-200">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                            <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
-                                <ShieldCheck className="w-5 h-5 text-primary" />
-                                Syarat & Ketentuan Pembayaran CRSL
-                            </h3>
-                            <button
-                                type="button"
-                                onClick={() => setIsTermsModalOpen(false)}
-                                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg"
-                            >
-                                <XCircle className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <div className="space-y-3 text-xs text-slate-600 leading-relaxed max-h-80 overflow-y-auto pr-1">
-                            <p>
-                                1. Pesanan yang belum dibayar akan dicadangkan selama <strong>24 jam</strong> sejak pembuatan faktur.
-                            </p>
-                            <p>
-                                2. Khusus metode <strong>QRIS</strong>, QR Code berlaku selama <strong>15 menit</strong>. Anda dapat menekan tombol <em>"Perbarui QRIS"</em> jika QR Code kedaluwarsa tanpa membatalkan nomor pesanan.
-                            </p>
-                            <p>
-                                3. Penggantian metode pembayaran dapat dilakukan kapan saja selama pesanan belum lunas melalui tombol <em>"Ganti Metode Pembayaran"</em>.
-                            </p>
-                            <p>
-                                4. Jika pesanan dibatalkan, kuota voucher dan saldo loyalty point yang terpakai akan dikembalikan secara otomatis ke akun Anda.
-                            </p>
-                            <p>
-                                5. Pesanan yang sudah lunas tidak dapat dibatalkan secara sepihak dan langsung diteruskan ke proses packing logistik.
-                            </p>
-                        </div>
-                        <div className="pt-2">
-                            <button
-                                type="button"
-                                onClick={() => setIsTermsModalOpen(false)}
-                                className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-2.5 rounded-xl transition-colors cursor-pointer text-xs"
-                            >
-                                Saya Mengerti
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+                )}
             </div>
         </StorefrontLayout>
     );

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domains\Pembayaran\Services\MidtransService;
-use App\Domains\Pengiriman\Services\BiteshipService;
+use App\Domains\Pengiriman\Jobs\AlokasiPengirimanBiteshipJob;
 use App\Mail\KonfirmasiPesananMail;
 use App\Models\ItemPesanan;
 use App\Models\PenggunaLoyalitas;
@@ -11,19 +11,20 @@ use App\Models\Pesanan;
 use App\Models\PesananPembayaran;
 use App\Models\PesananPengiriman;
 use App\Models\ProdukVarian;
+use App\Models\Voucher;
 use App\Models\VoucherTerpakai;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 
 class MidtransWebhookController extends Controller
 {
     public function __construct(
-        protected MidtransService $midtransService,
-        protected BiteshipService $biteshipService
+        protected MidtransService $midtransService
     ) {}
 
     /**
@@ -32,14 +33,14 @@ class MidtransWebhookController extends Controller
     public function handle(Request $request): JsonResponse
     {
         $payload = $request->all();
-        Log::info("Midtrans Webhook Received: ", $payload);
+        Log::info("Midtrans Webhook Received", ['order_id' => $payload['order_id'] ?? null]);
 
-        $orderId = $payload['order_id'] ?? '';
+        $orderId = (string)($payload['order_id'] ?? '');
         $statusCode = (string)($payload['status_code'] ?? '');
         $grossAmount = (string)($payload['gross_amount'] ?? '');
-        $signatureKey = $payload['signature_key'] ?? '';
-        $transactionStatus = $payload['transaction_status'] ?? '';
-        $fraudStatus = $payload['fraud_status'] ?? 'accept';
+        $signatureKey = (string)($payload['signature_key'] ?? '');
+        $transactionStatus = (string)($payload['transaction_status'] ?? '');
+        $fraudStatus = (string)($payload['fraud_status'] ?? 'accept');
 
         if (empty($orderId) || empty($signatureKey)) {
             return response()->json(['sukses' => false, 'pesan' => 'Payload tidak lengkap'], 400);
@@ -47,35 +48,49 @@ class MidtransWebhookController extends Controller
 
         // 1. Verifikasi Signature SHA-512
         if (!$this->midtransService->verifikasiSignature($orderId, $statusCode, $grossAmount, $signatureKey)) {
-            Log::warning("Midtrans Webhook Invalid Signature for Order: {$orderId}");
+            Log::warning("Midtrans Webhook Invalid Signature: {$orderId}");
             return response()->json(['sukses' => false, 'pesan' => 'Signature Key tidak valid'], 403);
         }
 
-        // Midtrans mengirim order_id dengan replace '/' menjadi '-'
-        // Kita ubah kembali ke format asli jika perlu, atau cari berdasarkan nomor_pesanan
         $nomorPesananAsli = str_replace('-', '/', $orderId);
-        $pesanan = Pesanan::where('nomor_pesanan', $nomorPesananAsli)
-            ->orWhere('nomor_pesanan', $orderId)
-            ->first();
 
-        if (!$pesanan) {
-            Log::info("Midtrans Webhook Order Not Found (Test Notification or Non-Existent): {$orderId}");
-            return response()->json(['sukses' => true, 'pesan' => 'Pesanan tidak ditemukan, notifikasi diterima.'], 200);
-        }
+        // 2. Transaksi Database dengan Row Locking
+        $needsDispatchShipping = false;
+        $orderToDispatch = null;
 
-        // 2. Cek Idempotensi (Jika sudah lunas/akan_dikirim/dikirim, lewati)
-        if (in_array($pesanan->status, ['akan_dikirim', 'dikirim', 'selesai'])) {
-            Log::info("Midtrans Webhook Idempotent Skip for Order: {$pesanan->nomor_pesanan}");
-            return response()->json(['sukses' => true, 'pesan' => 'Pesanan sudah diproses sebelumnya']);
-        }
-
-        DB::beginTransaction();
         try {
-            $pembayaran = PesananPembayaran::where('pesanan_id', $pesanan->id)->first();
-            $pengiriman = PesananPengiriman::where('pesanan_id', $pesanan->id)->first();
+            DB::beginTransaction();
 
+            /** @var Pesanan|null $pesanan */
+            $pesanan = Pesanan::with(['pengguna', 'pengiriman'])
+                ->where('nomor_pesanan', $nomorPesananAsli)
+                ->orWhere('nomor_pesanan', $orderId)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$pesanan) {
+                DB::rollBack();
+                Log::info("Midtrans Webhook Order Not Found: {$orderId}");
+                return response()->json(['sukses' => true, 'pesan' => 'Pesanan tidak ditemukan'], 200);
+            }
+
+            // Validasi Kesesuaian Nominal (Anti-Tampering)
+            if ((int)round($pesanan->total) !== (int)round((float)$grossAmount)) {
+                DB::rollBack();
+                Log::error("Midtrans Webhook Amount Mismatch for {$orderId}: DB={$pesanan->total}, Webhook={$grossAmount}");
+                return response()->json(['sukses' => false, 'pesan' => 'Nominal tagihan tidak sesuai'], 422);
+            }
+
+            // Cek Idempotensi
+            if (in_array($pesanan->status, ['akan_dikirim', 'dikirim', 'selesai', 'dibatalkan'])) {
+                DB::rollBack();
+                return response()->json(['sukses' => true, 'pesan' => 'Pesanan sudah diproses sebelumnya']);
+            }
+
+            $pembayaran = PesananPembayaran::where('pesanan_id', $pesanan->id)->first();
+
+            // A. STATUS SUKSES (Settlement / Capture)
             if (in_array($transactionStatus, ['settlement', 'capture']) && $fraudStatus === 'accept') {
-                // STATUS SETTLEMENT / SUKSES BAYAR
                 $pesanan->status = 'akan_dikirim';
                 $pesanan->save();
 
@@ -86,54 +101,7 @@ class MidtransWebhookController extends Controller
                     $pembayaran->save();
                 }
 
-                // UNIFIED LOGISTICS PIPELINE: Otomatis Alokasi Order Pengiriman ke Biteship API
-                if ($pengiriman) {
-                    $alamat = null;
-                    if ($pesanan->pengguna_id) {
-                        $alamat = DB::table('alamat_pengguna')
-                            ->where('pengguna_id', $pesanan->pengguna_id)
-                            ->orderByDesc('adalah_utama')
-                            ->first();
-                    }
-
-                    // Ambil detail item dengan bobot gram aktual dari relasi produk
-                    $items = ItemPesanan::where('pesanan_id', $pesanan->id)->with('produk')->get()->map(function ($item) {
-                        $beratGram = (int)($item->produk->berat_gram ?? 250);
-                        return [
-                            'name' => $item->nama_produk,
-                            'value' => (int)$item->harga,
-                            'quantity' => $item->jumlah,
-                            'weight' => $beratGram > 0 ? $beratGram : 250,
-                        ];
-                    })->toArray();
-
-                    $dataBiteship = [
-                        'area_id' => $alamat->area_id ?? 'IDNP11KOT789311',
-                        'nama_penerima' => $alamat->nama_penerima ?? ($pesanan->pengguna->name ?? 'Pelanggan CRSL Official'),
-                        'telepon' => $alamat->telepon ?? '081234567890',
-                        'alamat_lengkap' => $alamat->alamat_lengkap ?? 'Condongcatur, Sleman, D.I. Yogyakarta',
-                        'kode_pos' => $alamat->kode_pos ?? '55281',
-                        'kurir' => strtolower($pengiriman->kurir ?? 'jne'),
-                        'layanan' => strtolower($pengiriman->layanan ?? 'reg'),
-                        'items' => $items,
-                        'is_dropship' => (bool)$pesanan->is_dropship,
-                        'dropship_pengirim' => $pesanan->dropship_pengirim,
-                        'dropship_telepon' => $pesanan->dropship_telepon,
-                    ];
-
-                    $resBiteship = $this->biteshipService->buatOrderPengiriman($dataBiteship);
-                    $pengiriman->biteship_order_id = $resBiteship['biteship_order_id'] ?? null;
-                    $pengiriman->nomor_resi = !empty($resBiteship['waybill_id']) 
-                        ? $resBiteship['waybill_id'] 
-                        : (strtoupper($pengiriman->kurir ?? 'JNE') . '-' . date('Ymd') . '-' . strtoupper(Str::random(6)));
-                    $pengiriman->tracking_status = $resBiteship['status'] ?? 'allocated';
-                    $pengiriman->json_payload = $resBiteship;
-                    $pengiriman->save();
-
-                    Log::info("Biteship Order Allocated: Resi {$pengiriman->nomor_resi} for Order {$pesanan->nomor_pesanan}");
-                }
-
-                // UPDATE POIN LOYALITAS PELANGGAN
+                // Tambah Poin Loyalitas Pelanggan
                 if ($pesanan->pengguna_id && $pesanan->poin_didapat > 0) {
                     $loyalitas = PenggunaLoyalitas::firstOrCreate(
                         ['pengguna_id' => $pesanan->pengguna_id],
@@ -143,21 +111,14 @@ class MidtransWebhookController extends Controller
                     $loyalitas->total_belanja += $pesanan->total;
                     $loyalitas->save();
 
-                    \Illuminate\Support\Facades\Cache::forget("pengguna:akun:{$pesanan->pengguna_id}");
-                    \Illuminate\Support\Facades\Cache::forget("pengguna:profil:{$pesanan->pengguna_id}");
+                    Cache::forget("pengguna:akun:{$pesanan->pengguna_id}");
+                    Cache::forget("pengguna:profil:{$pesanan->pengguna_id}");
                 }
 
-                // EMAIL NOTIFIKASI PEMBAYARAN BERHASIL
-                if ($pesanan->pengguna && $pesanan->pengguna->email) {
-                    try {
-                        Mail::to($pesanan->pengguna->email)->send(new KonfirmasiPesananMail($pesanan));
-                    } catch (\Throwable $e) {
-                        Log::error("Failed to send order confirmation email: " . $e->getMessage());
-                    }
-                }
+                $needsDispatchShipping = true;
+                $orderToDispatch = $pesanan;
 
-                Log::info("Pesanan Lunas & Express Shipping Allocated: {$pesanan->nomor_pesanan}");
-
+            // B. STATUS PENDING
             } elseif ($transactionStatus === 'pending') {
                 if ($pembayaran) {
                     $pembayaran->midtrans_status = 'pending';
@@ -172,10 +133,9 @@ class MidtransWebhookController extends Controller
                     $pembayaran->payment_payload = $payload;
                     $pembayaran->save();
                 }
-                Log::info("Pesanan Status Pending & VA/QR Synced: {$pesanan->nomor_pesanan}");
 
+            // C. STATUS BATAL / EXPIRED
             } elseif (in_array($transactionStatus, ['deny', 'cancel', 'expire'])) {
-                // STATUS DIBATALKAN / EXPIRED
                 $pesanan->status = 'dibatalkan';
                 $pesanan->save();
 
@@ -185,42 +145,72 @@ class MidtransWebhookController extends Controller
                     $pembayaran->save();
                 }
 
-                // SKENARIO ROLLBACK: Kembalikan Stok Varian Produk
+                // Rollback Stok Varian
                 $items = ItemPesanan::where('pesanan_id', $pesanan->id)->get();
                 foreach ($items as $item) {
                     if ($item->produk_varian_id) {
-                        ProdukVarian::where('id', $item->produk_varian_id)
-                            ->increment('stok', $item->jumlah);
+                        ProdukVarian::where('id', $item->produk_varian_id)->increment('stok', $item->jumlah);
                     }
                 }
 
-                // SKENARIO ROLLBACK: Kembalikan Saldo Poin Loyalitas
+                // Rollback Poin Loyalitas
                 if ($pesanan->pengguna_id && $pesanan->poin_digunakan > 0) {
                     $loyalitas = PenggunaLoyalitas::firstOrCreate(
                         ['pengguna_id' => $pesanan->pengguna_id],
                         ['poin' => 0, 'total_belanja' => 0]
                     );
                     $loyalitas->increment('poin', $pesanan->poin_digunakan);
-                    \Illuminate\Support\Facades\Cache::forget("pengguna:akun:{$pesanan->pengguna_id}");
-                    \Illuminate\Support\Facades\Cache::forget("pengguna:profil:{$pesanan->pengguna_id}");
+                    Cache::forget("pengguna:akun:{$pesanan->pengguna_id}");
+                    Cache::forget("pengguna:profil:{$pesanan->pengguna_id}");
                 }
 
-                // SKENARIO ROLLBACK: Kembalikan Kuota Voucher
+                // Rollback Kuota Voucher
                 if ($pesanan->kode_voucher) {
-                    \App\Models\Voucher::where('kode', $pesanan->kode_voucher)->increment('kuota', 1);
+                    Voucher::where('kode', $pesanan->kode_voucher)->increment('kuota', 1);
                     VoucherTerpakai::where('pesanan_id', $pesanan->id)->delete();
                 }
-
-                Log::info("Pesanan Dibatalkan & Stok/Loyalitas/Voucher Rollback: {$pesanan->nomor_pesanan}");
             }
 
             DB::commit();
-            return response()->json(['sukses' => true, 'pesan' => 'Webhook Midtrans berhasil diproses']);
 
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error("Midtrans Webhook Exception: " . $e->getMessage());
+            Log::error("Midtrans Webhook DB Exception: " . $e->getMessage());
             return response()->json(['sukses' => false, 'pesan' => 'Terjadi kesalahan sistem'], 500);
         }
+
+        // 3. Dispatch Asynchronous Queue Job (Biteship & Email) di Luar DB Transaction
+        if ($needsDispatchShipping && $orderToDispatch) {
+            $this->dispatchPengirimanDanNotifikasi($orderToDispatch);
+        }
+
+        return response()->json(['sukses' => true, 'pesan' => 'Webhook berhasil diproses']);
+    }
+
+    /**
+     * Mengantrekan pembuatan order Biteship dan email konfirmasi ke Background Worker.
+     */
+    protected function dispatchPengirimanDanNotifikasi(Pesanan $pesanan): void
+    {
+        $savedAddress = is_array($pesanan->pengiriman?->json_payload) ? $pesanan->pengiriman->json_payload : [];
+        $targetEmail = $pesanan->pengguna?->email ?? ($savedAddress['email'] ?? null);
+
+        if ($targetEmail) {
+            // Pola Chained Queue: Biteship dieksekusi dulu -> Setelah waybill_id terbit, kirim Email beresinya
+            Bus::chain([
+                new AlokasiPengirimanBiteshipJob($pesanan->id),
+                function () use ($pesanan, $targetEmail) {
+                    $pesananSegar = Pesanan::with(['pengiriman', 'itemPesanan.produk'])->find($pesanan->id);
+                    if ($pesananSegar) {
+                        Mail::to($targetEmail)->send(new KonfirmasiPesananMail($pesananSegar));
+                    }
+                },
+            ])->dispatch();
+        } else {
+            // Jika tidak ada email tujuan, cukup alokasikan kurir
+            AlokasiPengirimanBiteshipJob::dispatch($pesanan->id);
+        }
+
+        Log::info("Asynchronous Dispatch Queued: Biteship & Email untuk Order {$pesanan->nomor_pesanan}");
     }
 }

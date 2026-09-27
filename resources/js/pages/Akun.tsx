@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Head, Link } from '@inertiajs/react';
-import StorefrontLayout from '../Layouts/StorefrontLayout';
-import KartuLoyalitas from '../Components/Akun/KartuLoyalitas';
-import KartuVoucher from '../Components/Akun/KartuVoucher';
-import PesananTab, { OrderItem } from '../Components/Akun/PesananTab';
-import WishlistTab, { WishlistItem } from '../Components/Akun/WishlistTab';
-import ModalLoyaltyTiers, { TierItem } from '../Components/Akun/ModalLoyaltyTiers';
-import { useAuthStore } from '../Stores/useAuthStore';
+import React, { useState, useEffect } from "react";
+import { Head, Link } from "@inertiajs/react";
+import StorefrontLayout from "../Layouts/StorefrontLayout";
+import KartuLoyalitas from "../Components/Akun/KartuLoyalitas";
+import KartuVoucher from "../Components/Akun/KartuVoucher";
+import PesananTab, { OrderItem } from "../Components/Akun/PesananTab";
+import WishlistTab, { WishlistItem } from "../Components/Akun/WishlistTab";
+import ModalLoyaltyTiers, {
+    TierItem,
+} from "../Components/Akun/ModalLoyaltyTiers";
+import { useAuthStore } from "../Stores/useAuthStore";
 
 interface AccountProps {
     user?: {
@@ -42,77 +44,98 @@ export default function Akun({
     harusBukaLogin = false,
     flash_message,
 }: AccountProps) {
-    const [tabAktif, setTabAktif] = useState<'orders' | 'wishlist'>('orders');
+    const [tabAktif, setTabAktif] = useState<"orders" | "wishlist">("orders");
     const [isLoyaltyModalOpen, setIsLoyaltyModalOpen] = useState(false);
     const openAuthModal = useAuthStore((state) => state.openAuthModal);
 
-    useEffect(() => {
-        if (harusBukaLogin && !user) {
-            openAuthModal('login');
-        }
-    }, [harusBukaLogin, user, openAuthModal]);
-
     const isGuest = !user;
+
+    useEffect(() => {
+        if (harusBukaLogin && isGuest) {
+            openAuthModal("login");
+        }
+    }, [harusBukaLogin, isGuest, openAuthModal]);
 
     return (
         <StorefrontLayout>
-            <Head title={isGuest ? "My Account - CRSL Official Store" : `My Account - ${user.name}`} />
+            <Head
+                title={
+                    isGuest
+                        ? "My Account - CRSL Official Store"
+                        : `My Account - ${user?.name || "Member"}`
+                }
+            />
 
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-6">
-                {/* Toast Notification (Sesuai Screenshot 2: "✓ Login Success") */}
+                {/* Flash Toast Notification */}
                 {flash_message && (
-                    <div className="flex justify-center -mt-2 mb-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div className="bg-slate-700/90 text-white px-8 py-2.5 rounded-xl text-xs sm:text-sm font-semibold shadow-xl backdrop-blur-xs flex items-center gap-2">
-                            <span>✓</span>
+                    <div
+                        role="status"
+                        aria-live="polite"
+                        className="fixed top-5 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-2 duration-300"
+                    >
+                        <div className="bg-slate-800/90 text-white px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold shadow-xl backdrop-blur-xs flex items-center gap-2">
+                            <span className="text-emerald-400">✓</span>
                             <span>{flash_message}</span>
                         </div>
                     </div>
                 )}
 
-                {/* 1. GUEST USER INTERFACE (Sesuai Screenshot 1) */}
+                {/* Guest Interface */}
                 {isGuest ? (
-                    <div className="space-y-6">
-                        {/* Title My Account */}
-                        <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">
+                    <section
+                        aria-labelledby="heading-guest"
+                        className="space-y-6"
+                    >
+                        <h1
+                            id="heading-guest"
+                            className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight"
+                        >
                             My Account
                         </h1>
 
-                        {/* Banner Join as a Member */}
                         <div className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-100 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-5">
                             <div className="space-y-1 max-w-xl">
                                 <h2 className="text-sm sm:text-base font-bold text-slate-800">
                                     Join as a member to get more benefits
                                 </h2>
                                 <p className="text-xs text-slate-500 leading-relaxed">
-                                    As a CRSL member, enjoy exclusive benefits, discounts, and earn points effortlessly with our free loyalty program.
+                                    As a CRSL member, enjoy exclusive benefits,
+                                    discounts, and earn points effortlessly with
+                                    our free loyalty program.
                                 </p>
                             </div>
 
                             <div className="flex items-center gap-3 shrink-0">
                                 <button
                                     type="button"
-                                    onClick={() => openAuthModal('login')}
+                                    onClick={() => openAuthModal("login")}
                                     className="px-6 py-2 rounded-full border border-red-500 text-red-500 hover:bg-red-50 font-bold text-xs transition-colors cursor-pointer"
                                 >
                                     Login
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => openAuthModal('register')}
+                                    onClick={() => openAuthModal("register")}
                                     className="px-6 py-2 rounded-full bg-primary hover:bg-primary-hover active:scale-95 text-white font-bold text-xs shadow-xs transition-all cursor-pointer"
                                 >
                                     Signup
                                 </button>
                             </div>
                         </div>
-                    </div>
+                    </section>
                 ) : (
-                    /* 2. LOGGED-IN USER INTERFACE (Sesuai Screenshot 2) */
-                    <div className="space-y-6">
-                        {/* Header Greeting Row */}
+                    /* Logged-in User Interface */
+                    <section
+                        aria-labelledby="heading-user"
+                        className="space-y-6"
+                    >
                         <div className="flex flex-wrap items-center justify-between gap-4">
-                            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-                                Hi {user.name}
+                            <h1
+                                id="heading-user"
+                                className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight"
+                            >
+                                Hi {user?.name || "Customer"}
                             </h1>
 
                             <div className="flex items-center gap-3">
@@ -131,42 +154,54 @@ export default function Akun({
                             </div>
                         </div>
 
-                        {/* Loyalty & Vouchers 2-Col Grid (Screenshot 2) */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                             <KartuLoyalitas
-                                tier={loyalty?.tier || 'Non-Member'}
-                                progressText={loyalty?.progress_text || 'Spend Rp 200,000 more to reach New Freen'}
-                                onLihatDetail={() => setIsLoyaltyModalOpen(true)}
+                                tier={loyalty?.tier || "Non-Member"}
+                                progressText={loyalty?.progress_text}
+                                onLihatDetail={() =>
+                                    setIsLoyaltyModalOpen(true)
+                                }
                             />
                             <KartuVoucher vouchers={vouchers} />
                         </div>
-                    </div>
+                    </section>
                 )}
 
-                {/* 3. TABS CONTAINER: Orders & Wishlist (Screenshot 1 & 2) */}
+                {/* Tabs Container */}
                 <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-100 shadow-xs space-y-6">
-                    {/* Tabs Navigation */}
                     <div className="border-b border-slate-200">
-                        <div className="flex space-x-12 -mb-px">
+                        <div
+                            role="tablist"
+                            aria-label="Navigasi Akun"
+                            className="flex space-x-12 -mb-px"
+                        >
                             <button
+                                role="tab"
+                                id="tab-orders"
+                                aria-selected={tabAktif === "orders"}
+                                aria-controls="panel-orders"
                                 type="button"
-                                onClick={() => setTabAktif('orders')}
+                                onClick={() => setTabAktif("orders")}
                                 className={`pb-3 text-sm font-bold tracking-tight transition-all cursor-pointer relative ${
-                                    tabAktif === 'orders'
-                                        ? 'text-slate-900 border-b-2 border-slate-900'
-                                        : 'text-slate-500 hover:text-slate-800'
+                                    tabAktif === "orders"
+                                        ? "text-slate-900 border-b-2 border-slate-900"
+                                        : "text-slate-500 hover:text-slate-800"
                                 }`}
                             >
                                 Orders
                             </button>
 
                             <button
+                                role="tab"
+                                id="tab-wishlist"
+                                aria-selected={tabAktif === "wishlist"}
+                                aria-controls="panel-wishlist"
                                 type="button"
-                                onClick={() => setTabAktif('wishlist')}
+                                onClick={() => setTabAktif("wishlist")}
                                 className={`pb-3 text-sm font-bold tracking-tight transition-all cursor-pointer relative ${
-                                    tabAktif === 'wishlist'
-                                        ? 'text-slate-900 border-b-2 border-slate-900'
-                                        : 'text-slate-500 hover:text-slate-800'
+                                    tabAktif === "wishlist"
+                                        ? "text-slate-900 border-b-2 border-slate-900"
+                                        : "text-slate-500 hover:text-slate-800"
                                 }`}
                             >
                                 Wishlist
@@ -174,20 +209,26 @@ export default function Akun({
                         </div>
                     </div>
 
-                    {/* Tab Content */}
-                    {tabAktif === 'orders' ? (
-                        <PesananTab
-                            orders={orders}
-                            userEmail={user?.email}
-                            userPhone={user?.phone}
-                        />
-                    ) : (
-                        <WishlistTab wishlists={wishlists} />
-                    )}
+                    <div
+                        role="tabpanel"
+                        id={`panel-${tabAktif}`}
+                        aria-labelledby={`tab-${tabAktif}`}
+                        tabIndex={0}
+                        className="focus:outline-none"
+                    >
+                        {tabAktif === "orders" ? (
+                            <PesananTab
+                                orders={orders}
+                                userEmail={user?.email}
+                                userPhone={user?.phone}
+                            />
+                        ) : (
+                            <WishlistTab wishlists={wishlists} />
+                        )}
+                    </div>
                 </div>
             </div>
 
-            {/* Modal Detail Loyalty Tiers (Screenshot #3) */}
             <ModalLoyaltyTiers
                 isOpen={isLoyaltyModalOpen}
                 onClose={() => setIsLoyaltyModalOpen(false)}

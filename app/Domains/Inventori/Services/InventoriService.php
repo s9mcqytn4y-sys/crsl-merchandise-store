@@ -103,4 +103,38 @@ class InventoriService
 
         return false;
     }
+
+    /**
+     * Mengembalikan stok varian produk secara massal berdasarkan array item.
+     * Digunakan pada skenario kompensasi pembatalan pesanan atau kegagalan gateway.
+     *
+     * @param array $items Array item pesanan/keranjang [{varian_id, jumlah}, ...]
+     * @return bool
+     */
+    public function kembalikanStok(array $items): bool
+    {
+        foreach ($items as $item) {
+            $varianId = $item['varian_id'] ?? $item['produk_varian_id'] ?? $item['id'] ?? null;
+            $jumlah = (int)($item['jumlah'] ?? $item['quantity'] ?? 0);
+
+            if (!$varianId || $jumlah <= 0) {
+                continue;
+            }
+
+            // Kunci baris varian untuk memastikan integritas data saat kompensasi
+            $varian = ProdukVarian::where('id', $varianId)
+                ->lockForUpdate()
+                ->first();
+
+            if ($varian) {
+                $varian->increment('stok', $jumlah);
+
+                Log::info("Inventori Rollback: Stok varian ID {$varianId} berhasil dikembalikan {$jumlah}, total sekarang: {$varian->fresh()->stok}");
+            } else {
+                Log::warning("Inventori Rollback: Gagal mengembalikan stok, varian ID {$varianId} tidak ditemukan.");
+            }
+        }
+
+        return true;
+    }
 }

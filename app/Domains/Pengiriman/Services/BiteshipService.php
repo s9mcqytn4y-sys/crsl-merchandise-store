@@ -285,7 +285,7 @@ class BiteshipService
     {
         if (empty($this->apiKey)) {
             $simulasiResi = strtoupper($dataPesanan['kurir'] ?? 'JNE') . '-MOCK-' . date('Ymd') . '-' . strtoupper(Str::random(6));
-            Log::channel('single')->info('[Biteship Pickup Simulation (Local)]', [
+            Log::channel('single')->info('[Biteship Pickup Simulation (No Key)]', [
                 'resi' => $simulasiResi,
                 'data' => $dataPesanan,
             ]);
@@ -303,49 +303,61 @@ class BiteshipService
         $isDropship = !empty($dataPesanan['is_dropship']);
         $shipperName = $isDropship ? ($dataPesanan['dropship_pengirim'] ?? 'CRSL Partner') : 'CRSL Official Store';
         $shipperPhone = $isDropship ? ($dataPesanan['dropship_telepon'] ?? '081234567890') : '081234567890';
+        $originAddress = (string) config('services.biteship.origin_address', 'Jl. Affandi No. 20, Condongcatur, Sleman, D.I. Yogyakarta');
+        $originPostalCode = (int) config('services.biteship.origin_postal_code', 55281);
+
         $kurirKode = strtolower((string) ($dataPesanan['kurir'] ?? 'jne'));
         $layananKode = strtolower((string) ($dataPesanan['layanan'] ?? 'reg'));
 
+        // Payload yang telah disesuaikan penuh dengan Biteship API v1
         $payload = [
-            'shipper_contact_name'  => (string) $shipperName,
-            'shipper_contact_phone' => (string) $shipperPhone,
-            'shipper_contact_email' => 'shipping@crslstore.com',
-            'shipper' => [
-                'name'  => (string) $shipperName,
-                'phone' => (string) $shipperPhone,
-                'email' => 'shipping@crslstore.com',
-            ],
-            'origin_area_id'     => $this->originAreaId,
-            'origin_postal_code' => (int) config('services.biteship.origin_postal_code', 55281),
+            // 1. Data Asal (Origin / Pickup)
+            'origin_contact_name'  => (string) $shipperName,
+            'origin_contact_phone' => (string) $shipperPhone,
+            'origin_contact_email' => 'shipping@crslstore.com',
+            'origin_address'       => $originAddress,
+            'origin_postal_code'   => $originPostalCode,
+            'origin_area_id'       => $this->originAreaId,
+
             'origin' => [
-                'area_id'     => $this->originAreaId,
-                'postal_code' => (int) config('services.biteship.origin_postal_code', 55281),
+                'contact_name'  => (string) $shipperName,
+                'contact_phone' => (string) $shipperPhone,
+                'contact_email' => 'shipping@crslstore.com',
+                'address'       => $originAddress,
+                'postal_code'   => $originPostalCode,
+                'area_id'       => $this->originAreaId,
             ],
-            'destination_area_id'       => (string) ($dataPesanan['area_id'] ?? ''),
+
+            // 2. Data Tujuan (Destination)
             'destination_contact_name'  => (string) ($dataPesanan['nama_penerima'] ?? 'Pelanggan'),
-            'destination_contact_phone' => (string) ($dataPesanan['telepon'] ?? ''),
+            'destination_contact_phone' => (string) ($dataPesanan['telepon'] ?? '081234567890'),
+            'destination_contact_email' => (string) ($dataPesanan['email'] ?? 'customer@crslstore.com'),
             'destination_address'       => (string) ($dataPesanan['alamat_lengkap'] ?? ''),
             'destination_postal_code'   => (int) ($dataPesanan['kode_pos'] ?? 0),
+            'destination_area_id'       => (string) ($dataPesanan['area_id'] ?? ''),
+
             'destination' => [
-                'area_id'       => (string) ($dataPesanan['area_id'] ?? ''),
                 'contact_name'  => (string) ($dataPesanan['nama_penerima'] ?? 'Pelanggan'),
-                'contact_phone' => (string) ($dataPesanan['telepon'] ?? ''),
+                'contact_phone' => (string) ($dataPesanan['telepon'] ?? '081234567890'),
+                'contact_email' => (string) ($dataPesanan['email'] ?? 'customer@crslstore.com'),
                 'address'       => (string) ($dataPesanan['alamat_lengkap'] ?? ''),
                 'postal_code'   => (int) ($dataPesanan['kode_pos'] ?? 0),
+                'area_id'       => (string) ($dataPesanan['area_id'] ?? ''),
             ],
+
+            // 3. Konfigurasi Kurir & Waktu
             'courier_company' => $kurirKode,
             'courier_type'    => $layananKode,
             'courier' => [
                 'company' => $kurirKode,
                 'type'    => $layananKode,
             ],
-            'delivery_type' => 'now',
-            'items'         => (array) ($dataPesanan['items'] ?? []),
+            'delivery_type'   => 'now',
+            'items'           => (array) ($dataPesanan['items'] ?? []),
         ];
 
         try {
-            $response = $this->newRequest(15)
-                ->post("{$this->baseUrl}/v1/orders", $payload);
+            $response = $this->newRequest(15)->post("{$this->baseUrl}/v1/orders", $payload);
 
             if ($response->successful()) {
                 return [
@@ -353,8 +365,7 @@ class BiteshipService
                     'biteship_order_id' => $response->json('id'),
                     'waybill_id'        => $response->json('courier.waybill_id'),
                     'status'            => $response->json('status', 'allocated'),
-                    'tracking_url'      => $response->json('courier.tracking_url'),
-                    'raw'               => $response->json(),
+                    'tracking_url' => $response->json('courier.link') ?? $response->json('courier.tracking_url'),                    'raw'               => $response->json(),
                 ];
             }
 
@@ -363,7 +374,7 @@ class BiteshipService
             ]);
 
             if (app()->isLocal()) {
-                $simulasiResi = strtoupper($dataPesanan['kurir'] ?? 'JNE') . '-DEV-' . date('Ymd') . '-' . strtoupper(Str::random(6));
+                $simulasiResi = strtoupper($kurirKode) . '-DEV-' . date('Ymd') . '-' . strtoupper(Str::random(6));
                 Log::info("[Biteship Order Dev Fallback] Resi: {$simulasiResi}");
                 return [
                     'sukses'            => true,
@@ -383,7 +394,7 @@ class BiteshipService
             Log::error("[Biteship Dispatch Crash] {$e->getMessage()}");
 
             if (app()->isLocal()) {
-                $simulasiResi = strtoupper($dataPesanan['kurir'] ?? 'JNE') . '-DEV-' . date('Ymd') . '-' . strtoupper(Str::random(6));
+                $simulasiResi = strtoupper($kurirKode) . '-DEV-' . date('Ymd') . '-' . strtoupper(Str::random(6));
                 Log::info("[Biteship Order Dev Fallback on Exception] Resi: {$simulasiResi}");
                 return [
                     'sukses'            => true,

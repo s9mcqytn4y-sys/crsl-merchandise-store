@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Domains\Inventori\Services\InventoriService;
 use App\Domains\Pembayaran\Services\MidtransService;
+use App\Domains\Pengiriman\Jobs\AlokasiPengirimanBiteshipJob;
 use App\Domains\Pengiriman\Services\BiteshipService;
 use App\Models\Pesanan;
 use Illuminate\Http\JsonResponse;
@@ -18,7 +20,8 @@ class PesananController extends Controller
 {
     public function __construct(
         protected MidtransService $midtransService,
-        protected BiteshipService $biteshipService
+        protected BiteshipService $biteshipService,
+        protected InventoriService $inventoriService
     ) {}
 
     /**
@@ -109,7 +112,7 @@ class PesananController extends Controller
     public function cekStatusRealtime(string $nomorPesanan): JsonResponse
     {
         try {
-            $pesanan = $this->temukanPesanan($nomorPesanan, ['pembayaran']);
+            $pesanan = $this->temukanPesanan($nomorPesanan, ['pembayaran', 'pengiriman']);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['sukses' => false, 'pesan' => 'Pesanan tidak ditemukan'], 404);
         }
@@ -148,11 +151,29 @@ class PesananController extends Controller
             if (!empty($res['status_pesanan']) && $res['status_pesanan'] === 'akan_dikirim' && $pesanan->status === 'belum_bayar') {
                 $pesanan->status = 'akan_dikirim';
                 $pesanan->save();
+
                 if ($pesanan->pembayaran) {
                     $pesanan->pembayaran->midtrans_status = 'settlement';
                     $pesanan->pembayaran->waktu_bayar = now();
                     $pesanan->pembayaran->save();
                 }
+
+                // Tambah Poin Loyalitas Pelanggan
+                if ($pesanan->pengguna_id && $pesanan->poin_didapat > 0) {
+                    $loyalitas = \App\Models\PenggunaLoyalitas::firstOrCreate(
+                        ['pengguna_id' => $pesanan->pengguna_id],
+                        ['poin' => 0, 'total_belanja' => 0]
+                    );
+                    $loyalitas->poin += $pesanan->poin_didapat;
+                    $loyalitas->total_belanja += $pesanan->total;
+                    $loyalitas->save();
+
+                    Cache::forget("pengguna:akun:{$pesanan->pengguna_id}");
+                    Cache::forget("pengguna:profil:{$pesanan->pengguna_id}");
+                }
+
+                // Dispatch Job agar resi kurir otomatis dibuat meskipun ter-trigger dari polling faktur
+                AlokasiPengirimanBiteshipJob::dispatch($pesanan->id);
             }
         }
 
@@ -242,8 +263,8 @@ class PesananController extends Controller
             $loyalitas->total_belanja += (float)$pesanan->total;
             $loyalitas->save();
 
-            \Illuminate\Support\Facades\Cache::forget("pengguna:akun:{$pesanan->pengguna_id}");
-            \Illuminate\Support\Facades\Cache::forget("pengguna:profil:{$pesanan->pengguna_id}");
+            Cache::forget("pengguna:akun:{$pesanan->pengguna_id}");
+            Cache::forget("pengguna:profil:{$pesanan->pengguna_id}");
         }
 
         return redirect()->back()->with('sukses', "Pesanan {$pesanan->nomor_pesanan} telah selesai. Terima kasih!");
@@ -370,13 +391,13 @@ class PesananController extends Controller
 
         try {
             DB::transaction(function () use ($pesanan) {
-                // 1. Kembalikan stok varian produk
-                foreach ($pesanan->items as $item) {
-                    if ($item->produk_varian_id) {
-                        \App\Models\ProdukVarian::where('id', $item->produk_varian_id)
-                            ->increment('stok', $item->jumlah);
-                    }
-                }
+                // 1. Kembalikan stok menggunakan InventoriService
+                $itemsArray = $pesanan->items->map(fn($item) => [
+                    'varian_id' => $item->produk_varian_id,
+                    'jumlah'    => $item->jumlah,
+                ])->toArray();
+
+                $this->inventoriService->kembalikanStok($itemsArray);
 
                 // 2. Kembalikan poin loyalitas jika digunakan
                 if ($pesanan->pengguna_id && $pesanan->poin_digunakan > 0) {
@@ -470,8 +491,8 @@ class PesananController extends Controller
         }
 
         if ($pesanan->pengguna_id) {
-            \Illuminate\Support\Facades\Cache::forget("pengguna:akun:{$pesanan->pengguna_id}");
-            \Illuminate\Support\Facades\Cache::forget("pengguna:profil:{$pesanan->pengguna_id}");
+            Cache::forget("pengguna:akun:{$pesanan->pengguna_id}");
+            Cache::forget("pengguna:profil:{$pesanan->pengguna_id}");
         }
 
         return redirect()->back()->with('sukses', 'Simulasi pembayaran berhasil! Status pesanan kini: Perlu Dikirim.');

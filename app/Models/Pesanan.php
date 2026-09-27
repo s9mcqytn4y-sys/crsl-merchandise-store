@@ -60,6 +60,11 @@ class Pesanan extends Model
         return $this->hasMany(ItemPesanan::class, 'pesanan_id');
     }
 
+    public function itemPesanan(): HasMany
+    {
+        return $this->hasMany(ItemPesanan::class, 'pesanan_id');
+    }
+
     public function pengiriman(): HasOne
     {
         return $this->hasOne(PesananPengiriman::class, 'pesanan_id');
