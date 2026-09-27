@@ -1,6 +1,6 @@
 import React, { useState, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { X, Tag, Check, AlertCircle } from "lucide-react";
+import { X, Tag, Check, AlertCircle, Loader2 } from "lucide-react";
 import { formatRupiah } from "../../Utils/formatters";
 
 export interface VoucherItem {
@@ -10,7 +10,10 @@ export interface VoucherItem {
     tipe: string;
     nilai: number;
     min_belanja: number;
+    minimal_belanja?: number;
+    maksimal_diskon?: number;
     discount?: string;
+    sudah_dipakai?: boolean;
 }
 
 interface VoucherSelectModalProps {
@@ -32,8 +35,9 @@ export default function VoucherSelectModal({
 }: VoucherSelectModalProps) {
     const [manualCode, setManualCode] = useState("");
     const [manualError, setManualError] = useState("");
+    const [isLoadingManual, setIsLoadingManual] = useState(false);
 
-    const handleApplyManual = (e: React.FormEvent) => {
+    const handleApplyManual = async (e: React.FormEvent) => {
         e.preventDefault();
         setManualError("");
 
@@ -43,28 +47,87 @@ export default function VoucherSelectModal({
             return;
         }
 
-        const found = vouchers.find((v) => v.kode.toUpperCase() === codeClean);
-        if (!found) {
-            setManualError("Kode voucher tidak valid atau sudah kedaluwarsa.");
-            return;
-        }
+        setIsLoadingManual(true);
+        try {
+            const csrfToken =
+                (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || "";
 
-        if (subtotal < found.min_belanja) {
-            setManualError(
-                `Minimal belanja untuk voucher ini adalah ${formatRupiah(found.min_belanja)}.`
-            );
-            return;
-        }
+            const res = await fetch("/api/voucher/validasi", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRF-TOKEN": csrfToken,
+                },
+                body: JSON.stringify({
+                    kode: codeClean,
+                    subtotal: subtotal,
+                }),
+            });
 
-        onApplyVoucher(found);
-        setManualCode("");
-        onClose();
+            const data = await res.json();
+            if (!res.ok || !data.sukses) {
+                setManualError(data.pesan || "Kode voucher tidak dapat digunakan.");
+                return;
+            }
+
+            const verifiedVoucher: VoucherItem = {
+                id: data.id || Date.now(),
+                kode: data.kode,
+                judul: data.judul,
+                tipe: data.tipe,
+                nilai: Number(data.nilai) || 0,
+                min_belanja: Number(data.min_belanja) || 0,
+                minimal_belanja: Number(data.min_belanja) || 0,
+                maksimal_diskon: Number(data.maksimal_diskon) || 0,
+                discount:
+                    data.tipe === "persen"
+                        ? `${data.nilai}%`
+                        : formatRupiah(data.nilai),
+            };
+
+            onApplyVoucher(verifiedVoucher);
+            setManualCode("");
+            onClose();
+        } catch {
+            const found = vouchers.find((v) => v.kode.toUpperCase() === codeClean);
+            if (!found) {
+                setManualError("Kode voucher tidak valid atau sudah kedaluwarsa.");
+                return;
+            }
+
+            const minBelanja = Number(found.min_belanja ?? found.minimal_belanja ?? 0);
+            if (subtotal < minBelanja) {
+                setManualError(
+                    `Minimal belanja untuk voucher ini adalah ${formatRupiah(minBelanja)}.`
+                );
+                return;
+            }
+
+            if (found.sudah_dipakai) {
+                setManualError("Voucher ini telah digunakan oleh akun Anda.");
+                return;
+            }
+
+            onApplyVoucher(found);
+            setManualCode("");
+            onClose();
+        } finally {
+            setIsLoadingManual(false);
+        }
     };
 
     const handleSelectVoucher = (voucher: VoucherItem) => {
-        if (subtotal < voucher.min_belanja) {
+        if (voucher.sudah_dipakai) {
+            setManualError("Voucher ini sudah pernah digunakan sebelumnya.");
+            return;
+        }
+
+        const minBelanja = Number(voucher.min_belanja ?? voucher.minimal_belanja ?? 0);
+        if (subtotal < minBelanja) {
             setManualError(
-                `Minimal belanja untuk voucher ini adalah ${formatRupiah(voucher.min_belanja)}.`
+                `Minimal belanja untuk voucher ini adalah ${formatRupiah(minBelanja)}.`
             );
             return;
         }
@@ -138,9 +201,17 @@ export default function VoucherSelectModal({
                                         />
                                         <button
                                             type="submit"
-                                            className="px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+                                            disabled={isLoadingManual}
+                                            className="px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors cursor-pointer shrink-0 disabled:opacity-50 flex items-center gap-1.5"
                                         >
-                                            Terapkan
+                                            {isLoadingManual ? (
+                                                <>
+                                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                    <span>Memeriksa...</span>
+                                                </>
+                                            ) : (
+                                                <span>Terapkan</span>
+                                            )}
                                         </button>
                                     </div>
                                     {manualError && (
@@ -185,7 +256,8 @@ export default function VoucherSelectModal({
                                     ) : (
                                         vouchers.map((v) => {
                                             const isSelected = appliedVoucher?.id === v.id;
-                                            const isEligible = subtotal >= v.min_belanja;
+                                            const minBelanja = Number(v.min_belanja ?? v.minimal_belanja ?? 0);
+                                            const isEligible = subtotal >= minBelanja && !v.sudah_dipakai;
 
                                             return (
                                                 <div
@@ -210,8 +282,14 @@ export default function VoucherSelectModal({
                                                                 </span>
                                                             </div>
                                                             <p className="text-[11px] text-slate-500">
-                                                                Min. belanja {formatRupiah(v.min_belanja)}
+                                                                Min. belanja {formatRupiah(minBelanja)}
+                                                                {v.maksimal_diskon ? ` • Maks. ${formatRupiah(v.maksimal_diskon)}` : ""}
                                                             </p>
+                                                            {v.sudah_dipakai && (
+                                                                <span className="inline-block text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded font-semibold">
+                                                                    Sudah pernah dipakai oleh akun Anda
+                                                                </span>
+                                                            )}
                                                         </div>
 
                                                         {isSelected ? (
@@ -224,12 +302,14 @@ export default function VoucherSelectModal({
                                                                 type="button"
                                                                 disabled={!isEligible}
                                                                 className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
-                                                                    isEligible
+                                                                    v.sudah_dipakai
+                                                                        ? "bg-amber-100 text-amber-800 cursor-not-allowed"
+                                                                        : isEligible
                                                                         ? "bg-slate-900 text-white hover:bg-slate-800"
                                                                         : "bg-slate-200 text-slate-400 cursor-not-allowed"
                                                                 }`}
                                                             >
-                                                                Pakai
+                                                                {v.sudah_dipakai ? "Terpakai" : isEligible ? "Pakai" : "Belum Cukup"}
                                                             </button>
                                                         )}
                                                     </div>

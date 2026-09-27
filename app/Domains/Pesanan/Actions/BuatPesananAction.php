@@ -93,8 +93,9 @@ class BuatPesananAction
                     throw new Exception("Voucher tidak valid atau sudah tidak aktif.");
                 }
 
-                if ($voucher->minimal_belanja && $subtotal < $voucher->minimal_belanja) {
-                    throw new Exception("Subtotal belanja belum memenuhi syarat minimum voucher ini.");
+                $minBelanja = (float)($voucher->min_belanja ?? $voucher->minimal_belanja ?? 0);
+                if ($minBelanja > 0 && $subtotal < $minBelanja) {
+                    throw new Exception("Subtotal belanja belum memenuhi syarat minimum voucher ini (min: Rp " . number_format($minBelanja, 0, ',', '.') . ").");
                 }
 
                 if ($penggunaId) {
@@ -115,9 +116,9 @@ class BuatPesananAction
                 }
 
                 // Hitung diskon riil (nominal atau persentase)
-                if (isset($voucher->tipe) && $voucher->tipe === 'persentase') {
-                    $diskonKalkulasi = ($subtotal * ($voucher->nilai / 100));
-                    $diskonVoucher = $voucher->maksimal_diskon ? min($diskonKalkulasi, (float)$voucher->maksimal_diskon) : $diskonKalkulasi;
+                if (isset($voucher->tipe) && in_array($voucher->tipe, ['persen', 'persentase'])) {
+                    $diskonKalkulasi = round($subtotal * ($voucher->nilai / 100));
+                    $diskonVoucher = !empty($voucher->maksimal_diskon) ? min($diskonKalkulasi, (float)$voucher->maksimal_diskon) : $diskonKalkulasi;
                 } else {
                     $diskonVoucher = (float)($voucher->nilai ?? $voucher->nominal ?? 0);
                 }
@@ -335,8 +336,11 @@ class BuatPesananAction
                 throw new Exception("Produk atau varian tidak ditemukan di database.");
             }
 
-            // Harga WAJIB bersumber dari DB: varian > produk
+            // Harga WAJIB bersumber dari DB: varian > produk > harga dasar produk + tambahan
             $hargaDb = (float)($varian?->harga ?? $produk?->harga ?? 0);
+            if ($hargaDb <= 0 && $produk) {
+                $hargaDb = (float)($produk->harga_diskon ?? $produk->harga_dasar ?? 0) + (float)($varian?->harga_tambahan ?? 0);
+            }
             if ($hargaDb <= 0) {
                 throw new Exception("Harga produk tidak valid.");
             }
@@ -344,11 +348,12 @@ class BuatPesananAction
             $subtotal += ($hargaDb * $jumlah);
 
             $gambar = $varian?->gambar_varian ?? $produk?->gambar_utama ?? '/assets/gambar/drinke-tumblr.webp';
+            $namaVarian = $varian?->nama_varian ?? $varian?->nama ?? '';
 
             $items[] = [
                 'produk_id' => $produk?->id,
                 'varian_id' => $varian?->id,
-                'nama_produk' => $varian ? ($produk->nama . ' - ' . $varian->nama) : ($produk->nama ?? 'Produk'),
+                'nama_produk' => $varian && $namaVarian !== '' ? ($produk->nama . ' - ' . $namaVarian) : ($produk->nama ?? 'Produk'),
                 'sku' => $varian?->sku ?? $produk?->sku ?? ('CRSL-' . ($produk?->id ?? 'ITEM')),
                 'harga' => $hargaDb,
                 'jumlah' => $jumlah,

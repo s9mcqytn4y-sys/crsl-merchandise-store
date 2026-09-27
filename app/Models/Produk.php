@@ -41,6 +41,13 @@ class Produk extends Model
         'terjual' => 'integer',
     ];
 
+    protected $appends = ['harga'];
+
+    public function getHargaAttribute(): float
+    {
+        return (float) ($this->harga_diskon ?? $this->harga_dasar ?? 0);
+    }
+
     public function kategori(): BelongsTo
     {
         return $this->belongsTo(Kategori::class, 'kategori_id');

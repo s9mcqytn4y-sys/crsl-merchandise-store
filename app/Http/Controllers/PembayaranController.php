@@ -107,24 +107,37 @@ class PembayaranController extends Controller
 
         $subtotal = collect($keranjang)->sum(fn ($item) => ($item['harga'] ?? 0) * ($item['jumlah'] ?? 1));
 
+        $usedVoucherIds = auth()->check()
+            ? \App\Models\VoucherTerpakai::where('pengguna_id', auth()->id())->pluck('voucher_id')->all()
+            : [];
+
         // Ambil voucher aktif dari database
         $vouchers = Voucher::where('aktif', true)
             ->where(function ($q) {
                 $q->whereNull('berlaku_sampai')
                   ->orWhere('berlaku_sampai', '>=', now());
             })
+            ->where(function ($q) {
+                $q->whereNull('kuota')
+                  ->orWhere('kuota', '>', 0);
+            })
             ->get()
-            ->map(function ($v) {
+            ->map(function ($v) use ($usedVoucherIds) {
+                $isUsed = in_array($v->id, $usedVoucherIds);
+                $minBelanja = (float) ($v->min_belanja ?? $v->minimal_belanja ?? 0);
                 return [
-                    'id'          => $v->id,
-                    'kode'        => $v->kode,
-                    'code'        => $v->kode,
-                    'judul'       => $v->judul,
-                    'title'       => $v->judul,
-                    'tipe'        => $v->tipe,
-                    'nilai'       => (float) $v->nilai,
-                    'min_belanja' => (float) $v->min_belanja,
-                    'discount'    => $v->tipe === 'persen' ? "{$v->nilai}%" : 'Rp ' . number_format($v->nilai, 0, ',', '.'),
+                    'id'              => $v->id,
+                    'kode'            => $v->kode,
+                    'code'            => $v->kode,
+                    'judul'           => $v->judul,
+                    'title'           => $v->judul,
+                    'tipe'            => $v->tipe,
+                    'nilai'           => (float) $v->nilai,
+                    'min_belanja'     => $minBelanja,
+                    'minimal_belanja' => $minBelanja,
+                    'maksimal_diskon' => (float) ($v->maksimal_diskon ?? 0),
+                    'discount'        => in_array($v->tipe, ['persen', 'persentase']) ? "{$v->nilai}%" : 'Rp ' . number_format($v->nilai, 0, ',', '.'),
+                    'sudah_dipakai'   => $isUsed,
                 ];
             })
             ->all();
@@ -161,10 +174,7 @@ class PembayaranController extends Controller
         $kode = strtoupper(trim($request->input('kode')));
         $subtotal = (float)$request->input('subtotal');
 
-        $cacheKey = "voucher:detail:{$kode}";
-        $voucher = \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function () use ($kode) {
-            return Voucher::where('kode', $kode)->where('aktif', true)->first();
-        });
+        $voucher = Voucher::where('kode', $kode)->where('aktif', true)->first();
 
         if (!$voucher) {
             return response()->json([
@@ -189,23 +199,48 @@ class PembayaranController extends Controller
             ], 422);
         }
 
-        // Cek minimum belanja
-        if ($subtotal < (float)$voucher->min_belanja) {
+        // Cek riwayat penggunaan akun jika user sedang login
+        if (auth()->check()) {
+            $sudahPernahPakai = \App\Models\VoucherTerpakai::where('voucher_id', $voucher->id)
+                ->where('pengguna_id', auth()->id())
+                ->exists();
+
+            if ($sudahPernahPakai) {
+                return response()->json([
+                    'sukses' => false,
+                    'pesan' => "Voucher {$voucher->kode} telah digunakan sebelumnya oleh akun Anda."
+                ], 422);
+            }
+        }
+
+        // Cek minimum belanja (dukung min_belanja & minimal_belanja)
+        $minBelanja = (float)($voucher->min_belanja ?? $voucher->minimal_belanja ?? 0);
+        if ($minBelanja > 0 && $subtotal < $minBelanja) {
             return response()->json([
                 'sukses' => false,
-                'pesan' => 'Minimum belanja Rp ' . number_format($voucher->min_belanja, 0, ',', '.') . ' untuk voucher ini.'
+                'pesan' => 'Minimum belanja Rp ' . number_format($minBelanja, 0, ',', '.') . ' untuk voucher ini.'
             ], 422);
         }
 
-        $nilaiDiskon = ($voucher->tipe === 'persen')
-            ? round($subtotal * ($voucher->nilai / 100))
-            : (float)$voucher->nilai;
+        // Hitung diskon riil (nominal atau persentase dengan capping maksimal diskon)
+        if (in_array($voucher->tipe, ['persen', 'persentase'])) {
+            $diskonKalkulasi = round($subtotal * ($voucher->nilai / 100));
+            $nilaiDiskon = !empty($voucher->maksimal_diskon)
+                ? min($diskonKalkulasi, (float)$voucher->maksimal_diskon)
+                : $diskonKalkulasi;
+        } else {
+            $nilaiDiskon = (float)($voucher->nilai ?? $voucher->nominal ?? 0);
+        }
 
         return response()->json([
             'sukses' => true,
+            'id' => $voucher->id,
             'kode' => $voucher->kode,
             'judul' => $voucher->judul,
             'tipe' => $voucher->tipe,
+            'nilai' => (float)$voucher->nilai,
+            'min_belanja' => $minBelanja,
+            'maksimal_diskon' => (float)($voucher->maksimal_diskon ?? 0),
             'nilai_diskon' => (float)$nilaiDiskon,
             'pesan' => "Voucher {$voucher->judul} Terpasang! Hemat Rp " . number_format($nilaiDiskon, 0, ',', '.') . "!",
         ]);
@@ -274,10 +309,16 @@ class PembayaranController extends Controller
                 $voucher = Voucher::where('kode', strtoupper(trim($validated['kode_voucher'])))
                     ->where('aktif', true)
                     ->first();
-                if ($voucher && $subtotalAwal >= (float)$voucher->min_belanja) {
-                    $diskon = ($voucher->tipe === 'persen')
-                        ? round($subtotalAwal * ($voucher->nilai / 100))
-                        : (float)$voucher->nilai;
+                $minBelanja = (float)($voucher?->min_belanja ?? $voucher?->minimal_belanja ?? 0);
+                if ($voucher && $subtotalAwal >= $minBelanja) {
+                    if (in_array($voucher->tipe, ['persen', 'persentase'])) {
+                        $diskonKalkulasi = round($subtotalAwal * ($voucher->nilai / 100));
+                        $diskon = !empty($voucher->maksimal_diskon)
+                            ? min($diskonKalkulasi, (float)$voucher->maksimal_diskon)
+                            : $diskonKalkulasi;
+                    } else {
+                        $diskon = (float)($voucher->nilai ?? $voucher->nominal ?? 0);
+                    }
                 }
             }
 
@@ -285,6 +326,7 @@ class PembayaranController extends Controller
             $pesanan = $this->buatPesananAction->execute(
                 dataInput: array_merge($validated, [
                     'nilai_diskon' => $diskon,
+                    'use_loyalty_point' => !empty($request->input('use_loyalty_point')),
                     'is_dropship' => !empty($request->input('is_dropship')),
                     'dropship_pengirim' => $request->input('dropship_pengirim'),
                     'dropship_telepon' => $request->input('dropship_telepon'),
@@ -302,10 +344,10 @@ class PembayaranController extends Controller
 
             if (auth()->check()) {
                 \Illuminate\Support\Facades\Cache::forget('pengguna:akun:' . auth()->id());
+                \Illuminate\Support\Facades\Cache::forget('pengguna:profil:' . auth()->id());
             }
 
-            $urlNomorPesanan = str_replace('/', '-', $pesanan->nomor_pesanan);
-            return redirect()->route('faktur', ['nomorPesanan' => $urlNomorPesanan])
+            return redirect()->route('faktur', ['nomorPesanan' => $pesanan->nomor_pesanan])
                 ->with('sukses', 'Pesanan berhasil dibuat. Silakan selesaikan pembayaran!');
 
         } catch (\Throwable $e) {

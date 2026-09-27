@@ -18,6 +18,7 @@ class Voucher extends Model
         'tipe',
         'nilai',
         'min_belanja',
+        'maksimal_diskon',
         'syarat_kurir',
         'kuota',
         'berlaku_dari',
@@ -28,11 +29,19 @@ class Voucher extends Model
     protected $casts = [
         'nilai' => 'float',
         'min_belanja' => 'float',
+        'maksimal_diskon' => 'float',
         'kuota' => 'integer',
         'aktif' => 'boolean',
         'berlaku_dari' => 'datetime',
         'berlaku_sampai' => 'datetime',
     ];
+
+    protected $appends = ['minimal_belanja'];
+
+    public function getMinimalBelanjaAttribute(): float
+    {
+        return (float) ($this->attributes['min_belanja'] ?? 0);
+    }
 
     public function pemakaian(): HasMany
     {

@@ -33,6 +33,19 @@ class ProdukVarian extends Model
         'stok' => 'integer',
     ];
 
+    protected $appends = ['harga', 'nama'];
+
+    public function getHargaAttribute(): float
+    {
+        $baseHarga = (float) ($this->produk?->harga_diskon ?? $this->produk?->harga_dasar ?? 0);
+        return $baseHarga + (float) ($this->harga_tambahan ?? 0);
+    }
+
+    public function getNamaAttribute(): string
+    {
+        return (string) ($this->nama_varian ?? '');
+    }
+
     public function produk(): BelongsTo
     {
         return $this->belongsTo(Produk::class, 'produk_id');

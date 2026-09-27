@@ -12,6 +12,7 @@ import { Toaster, toast } from "sonner";
 import { useCheckoutStore } from "../Stores/useCheckoutStore";
 import { useKeranjangStore } from "../Stores/useKeranjangStore";
 import { checkoutFormSchema } from "../Validation/checkoutSchema";
+import { formatRupiah } from "../Utils/formatters";
 
 import AddressSection from "../Components/Checkout/AddressSection";
 import AddressSelectModal, {
@@ -406,8 +407,13 @@ export default function Pembayaran({
         );
 
         const voucherDiscount = appliedVoucher
-            ? appliedVoucher.tipe === "persen"
-                ? (computedSubtotal * Number(appliedVoucher.nilai)) / 100
+            ? appliedVoucher.tipe === "persen" || appliedVoucher.tipe === "persentase"
+                ? appliedVoucher.maksimal_diskon && Number(appliedVoucher.maksimal_diskon) > 0
+                    ? Math.min(
+                          (computedSubtotal * Number(appliedVoucher.nilai)) / 100,
+                          Number(appliedVoucher.maksimal_diskon),
+                      )
+                    : (computedSubtotal * Number(appliedVoucher.nilai)) / 100
                 : Number(appliedVoucher.nilai) || 0
             : 0;
 
@@ -447,6 +453,23 @@ export default function Pembayaran({
         selectedCourier?.biaya,
         hasInsurance,
     ]);
+
+    // Otomatis lepaskan voucher jika subtotal belanja turun di bawah syarat minimum
+    useEffect(() => {
+        if (appliedVoucher) {
+            const minBelanja = Number(
+                appliedVoucher.min_belanja ??
+                    appliedVoucher.minimal_belanja ??
+                    0,
+            );
+            if (minBelanja > 0 && calculation.subtotal < minBelanja) {
+                setAppliedVoucher(null);
+                toast.warning(
+                    `Voucher ${appliedVoucher.kode} dilepas karena subtotal belanja kurang dari ${formatRupiah(minBelanja)}.`,
+                );
+            }
+        }
+    }, [calculation.subtotal, appliedVoucher]);
 
     // 7. Navigation & Form Actions
     const handleBack = useCallback(() => {
