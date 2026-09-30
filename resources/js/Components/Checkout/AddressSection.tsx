@@ -1,4 +1,3 @@
-import React from "react";
 import { AddressItem } from "./AddressSelectModal";
 import { AlertCircle, Gift } from "lucide-react";
 import ShippingAreaSelector, { AreaOption } from "../ShippingAreaSelector";

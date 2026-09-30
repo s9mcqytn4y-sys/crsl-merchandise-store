@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Link, router } from "@inertiajs/react";
 import {
     Package,
@@ -14,9 +14,12 @@ import {
     ArrowUpRight,
     ShoppingBag,
     Link2,
+    AlertCircle,
 } from "lucide-react";
+import { toast } from "sonner";
 import { formatRupiah } from "../../Utils/formatters";
 import ModalCariPesanan from "./ModalCariPesanan";
+import { cn } from "../../lib/utils";
 
 export interface OrderProductItem {
     id: number | string;
@@ -25,7 +28,7 @@ export interface OrderProductItem {
     varian?: string;
     ukuran?: string;
     warna?: string;
-    gambar?: string;
+    gambar?: string | null;
     harga: number;
     jumlah: number;
 }
@@ -49,6 +52,7 @@ interface PesananTabProps {
     onCariPesanan?: () => void;
     userEmail?: string;
     userPhone?: string;
+    className?: string;
 }
 
 const STATUS_FILTERS = [
@@ -62,13 +66,58 @@ const STATUS_FILTERS = [
 
 /** Ekstraksi status normalisasi */
 const getRawStatus = (order: OrderItem): string => {
-    return (order.status_raw || order.status || "").toLowerCase();
+    return (order.status_raw || order.status || "").toLowerCase().trim();
 };
 
 /** Ekstraksi order number seragam */
 const getOrderNumber = (order: OrderItem): string => {
-    return order.order_number || order.nomor_pesanan || String(order.id);
+    return order.nomor_pesanan || order.order_number || String(order.id);
 };
+
+/** Helper URL slug yang aman dari pemenggalan path web server */
+const getSafeOrderSlug = (orderNumber: string): string => {
+    return encodeURIComponent(orderNumber.replace(/[^a-zA-Z0-9-_]/g, "-"));
+};
+
+/** Normalisasi path media gambar produk */
+function normalizeMediaUrl(url?: string | null): string {
+    if (!url) return "";
+    const clean = url.trim();
+    if (
+        clean.startsWith("http://") ||
+        clean.startsWith("https://") ||
+        clean.startsWith("data:")
+    ) {
+        return clean;
+    }
+    if (clean.startsWith("/storage/")) return clean;
+    if (clean.startsWith("storage/")) return `/${clean}`;
+    if (clean.startsWith("/")) return clean;
+    return `/storage/${clean}`;
+}
+
+/** Format tanggal standar bahasa Indonesia */
+function formatTanggalIndo(dateStr: string): string {
+    if (!dateStr) return "-";
+    try {
+        const normalized = dateStr.includes("T")
+            ? dateStr
+            : dateStr.replace(" ", "T");
+        const d = new Date(normalized);
+        if (isNaN(d.getTime())) return dateStr;
+        return (
+            d.toLocaleDateString("id-ID", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+            }) + " WIB"
+        );
+    } catch {
+        return dateStr;
+    }
+}
 
 function OrderStatusBadge({
     statusRaw,
@@ -77,33 +126,41 @@ function OrderStatusBadge({
     statusRaw?: string;
     statusLabel: string;
 }) {
-    const raw = (statusRaw || statusLabel || "").toLowerCase();
+    const raw = (statusRaw || statusLabel || "").toLowerCase().trim();
 
     switch (raw) {
         case "belum_bayar":
             return (
-                <span className="bg-amber-50 text-amber-800 border border-amber-200/90 font-bold px-2.5 py-1 rounded-full text-[11px] inline-flex items-center gap-1.5 shadow-2xs">
+                <span className="bg-amber-50 text-amber-900 border border-amber-200/90 font-bold px-2.5 py-1 rounded-full text-[11px] inline-flex items-center gap-1.5 shadow-2xs">
                     <Clock className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
                     Belum Bayar
                 </span>
             );
+        case "menunggu_verifikasi_manual":
+        case "challenge":
+            return (
+                <span className="bg-amber-100 text-amber-950 border border-amber-300 font-bold px-2.5 py-1 rounded-full text-[11px] inline-flex items-center gap-1.5 shadow-2xs">
+                    <AlertCircle className="w-3.5 h-3.5 text-amber-700" />
+                    Verifikasi CS
+                </span>
+            );
         case "akan_dikirim":
             return (
-                <span className="bg-emerald-50 text-emerald-800 border border-emerald-200/90 font-bold px-2.5 py-1 rounded-full text-[11px] inline-flex items-center gap-1.5 shadow-2xs">
+                <span className="bg-emerald-50 text-emerald-900 border border-emerald-200/90 font-bold px-2.5 py-1 rounded-full text-[11px] inline-flex items-center gap-1.5 shadow-2xs">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                     Diproses
                 </span>
             );
         case "dikirim":
             return (
-                <span className="bg-indigo-50 text-indigo-800 border border-indigo-200/90 font-bold px-2.5 py-1 rounded-full text-[11px] inline-flex items-center gap-1.5 shadow-2xs">
+                <span className="bg-indigo-50 text-indigo-900 border border-indigo-200/90 font-bold px-2.5 py-1 rounded-full text-[11px] inline-flex items-center gap-1.5 shadow-2xs">
                     <Truck className="w-3.5 h-3.5 text-indigo-600" />
                     Dalam Pengiriman
                 </span>
             );
         case "selesai":
             return (
-                <span className="bg-blue-50 text-blue-800 border border-blue-200/90 font-bold px-2.5 py-1 rounded-full text-[11px] inline-flex items-center gap-1.5 shadow-2xs">
+                <span className="bg-blue-50 text-blue-900 border border-blue-200/90 font-bold px-2.5 py-1 rounded-full text-[11px] inline-flex items-center gap-1.5 shadow-2xs">
                     <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
                     Selesai
                 </span>
@@ -111,9 +168,9 @@ function OrderStatusBadge({
         case "dibatalkan":
         case "expired":
             return (
-                <span className="bg-rose-50 text-rose-800 border border-rose-200/90 font-bold px-2.5 py-1 rounded-full text-[11px] inline-flex items-center gap-1.5 shadow-2xs">
+                <span className="bg-rose-50 text-rose-900 border border-rose-200/90 font-bold px-2.5 py-1 rounded-full text-[11px] inline-flex items-center gap-1.5 shadow-2xs">
                     <XCircle className="w-3.5 h-3.5 text-rose-600" />
-                    Dibatalkan
+                    {raw === "expired" ? "Kedaluwarsa" : "Dibatalkan"}
                 </span>
             );
         default:
@@ -130,6 +187,7 @@ export default function PesananTab({
     onCariPesanan,
     userEmail,
     userPhone,
+    className,
 }: PesananTabProps) {
     const [selectedStatus, setSelectedStatus] = useState("all");
     const [currentPage, setCurrentPage] = useState(1);
@@ -139,26 +197,63 @@ export default function PesananTab({
         string | null
     >(null);
 
-    // Hitung jumlah order per status untuk badge tab filter
+    // Hitung counter tab pesanan secara tepat
     const statusCounts = useMemo(() => {
-        const counts: Record<string, number> = { all: orders.length };
+        const counts: Record<string, number> = {
+            all: orders.length,
+            belum_bayar: 0,
+            akan_dikirim: 0,
+            dikirim: 0,
+            selesai: 0,
+            dibatalkan: 0,
+        };
+
         orders.forEach((order) => {
-            const statusKey = getRawStatus(order);
-            counts[statusKey] = (counts[statusKey] || 0) + 1;
+            const raw = getRawStatus(order);
+            if (raw === "belum_bayar") {
+                counts.belum_bayar = (counts.belum_bayar || 0) + 1;
+            } else if (
+                [
+                    "akan_dikirim",
+                    "menunggu_verifikasi_manual",
+                    "challenge",
+                ].includes(raw)
+            ) {
+                counts.akan_dikirim = (counts.akan_dikirim || 0) + 1;
+            } else if (raw === "dikirim") {
+                counts.dikirim = (counts.dikirim || 0) + 1;
+            } else if (raw === "selesai") {
+                counts.selesai = (counts.selesai || 0) + 1;
+            } else if (["dibatalkan", "expired"].includes(raw)) {
+                counts.dibatalkan = (counts.dibatalkan || 0) + 1;
+            }
         });
+
         return counts;
     }, [orders]);
 
+    // Filter daftar pesanan sesuai status tab
     const filteredOrders = useMemo(() => {
         if (selectedStatus === "all") return orders;
-        return orders.filter(
-            (order) => getRawStatus(order) === selectedStatus.toLowerCase(),
-        );
+
+        return orders.filter((order) => {
+            const raw = getRawStatus(order);
+            if (selectedStatus === "akan_dikirim") {
+                return [
+                    "akan_dikirim",
+                    "menunggu_verifikasi_manual",
+                    "challenge",
+                ].includes(raw);
+            }
+            if (selectedStatus === "dibatalkan") {
+                return ["dibatalkan", "expired"].includes(raw);
+            }
+            return raw === selectedStatus.toLowerCase();
+        });
     }, [orders, selectedStatus]);
 
     const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize));
 
-    // Cegah currentPage out of bounds jika data berubah dari luar
     useEffect(() => {
         if (currentPage > totalPages) {
             setCurrentPage(totalPages);
@@ -175,30 +270,43 @@ export default function PesananTab({
         setCurrentPage(1);
     };
 
-    const handleConfirmOrder = (orderNumber: string) => {
+    // Konfirmasi Penerimaan Pesanan (Sesuai route web.php pesanan.konfirmasi)
+    const handleConfirmOrder = useCallback((orderNumber: string) => {
         if (
-            !confirm(
-                "Pastikan seluruh paket pesanan sudah diterima dan sesuai. Selesaikan pesanan ini?",
+            !window.confirm(
+                `Konfirmasi penerimaan barang untuk Pesanan #${orderNumber}?\nPoin loyalitas akan otomatis ditambahkan ke akun Anda.`,
             )
         ) {
             return;
         }
 
         setProcessingOrderNumber(orderNumber);
+        const safeSlug = getSafeOrderSlug(orderNumber);
+
+        // Path yang benar sesuai routes/web.php: /pesanan/{nomorPesanan}/konfirmasi-selesai
         router.post(
-            `/pesanan/${encodeURIComponent(orderNumber)}/konfirmasi`,
+            `/pesanan/${safeSlug}/konfirmasi-selesai`,
             {},
             {
                 preserveScroll: true,
+                onSuccess: () => {
+                    toast.success(
+                        `Pesanan #${orderNumber} berhasil diselesaikan. Terima kasih!`,
+                    );
+                },
+                onError: (err) => {
+                    const firstErr = Object.values(err)[0] as string;
+                    toast.error(firstErr || "Gagal mengonfirmasi pesanan.");
+                },
                 onFinish: () => setProcessingOrderNumber(null),
             },
         );
-    };
+    }, []);
 
     return (
-        <div className="space-y-6 pt-1">
+        <div className={cn("space-y-6 pt-1 select-none", className)}>
             {/* Header Tindakan & Search */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-slate-200/90 shadow-2xs">
                 <div>
                     <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
                         Pesanan Saya
@@ -215,8 +323,8 @@ export default function PesananTab({
                         onClick={() => setIsFindOrderModalOpen(true)}
                         className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 px-3.5 py-2.5 rounded-xl transition-all shadow-2xs active:scale-95 cursor-pointer"
                     >
-                        <Link2 className="w-3.5 h-3.5 text-primary" />
-                        Tautkan Pesanan Tamu
+                        <Link2 className="w-3.5 h-3.5 text-[#E52027]" />
+                        <span>Tautkan Pesanan Tamu</span>
                     </button>
 
                     <Link
@@ -224,14 +332,18 @@ export default function PesananTab({
                         onClick={onCariPesanan}
                         className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-4 py-2.5 rounded-xl transition-all shadow-2xs active:scale-95 shrink-0"
                     >
-                        <Search className="w-3.5 h-3.5 text-primary" />
-                        Lacak Resi Cepat
+                        <Search className="w-3.5 h-3.5 text-[#E52027]" />
+                        <span>Lacak Resi Cepat</span>
                     </Link>
                 </div>
             </div>
 
-            {/* Filter Tabs Horizontal */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none border-b border-slate-200/70">
+            {/* Filter Tabs Horizontal WAI-ARIA */}
+            <div
+                role="tablist"
+                aria-label="Filter status pesanan"
+                className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar border-b border-slate-200/70"
+            >
                 {STATUS_FILTERS.map((tab) => {
                     const isActive = selectedStatus === tab.key;
                     const count =
@@ -242,22 +354,26 @@ export default function PesananTab({
                     return (
                         <button
                             key={tab.key}
+                            role="tab"
+                            aria-selected={isActive}
                             type="button"
                             onClick={() => handleStatusChange(tab.key)}
-                            className={`inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold whitespace-nowrap rounded-xl transition-all cursor-pointer ${
+                            className={cn(
+                                "inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold whitespace-nowrap rounded-2xl transition-all cursor-pointer",
                                 isActive
                                     ? "bg-slate-900 text-white shadow-xs"
-                                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
-                            }`}
+                                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80",
+                            )}
                         >
                             <span>{tab.label}</span>
                             {count > 0 && (
                                 <span
-                                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
+                                    className={cn(
+                                        "px-1.5 py-0.5 rounded-full text-[10px] font-black font-mono",
                                         isActive
                                             ? "bg-white/20 text-white"
-                                            : "bg-slate-200/80 text-slate-700"
-                                    }`}
+                                            : "bg-slate-200 text-slate-700",
+                                    )}
                                 >
                                     {count}
                                 </span>
@@ -269,28 +385,24 @@ export default function PesananTab({
 
             {/* Daftar Pesanan atau Empty State */}
             {filteredOrders.length === 0 ? (
-                <div className="py-16 px-4 bg-white border border-slate-200/80 rounded-2xl flex flex-col items-center justify-center text-center shadow-2xs">
-                    <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-100 text-slate-300 flex items-center justify-center mb-3">
+                <div className="py-16 px-4 bg-white border border-slate-200/80 rounded-3xl flex flex-col items-center justify-center text-center shadow-2xs">
+                    <div className="w-16 h-16 rounded-3xl bg-slate-50 border border-slate-100 text-slate-300 flex items-center justify-center mb-3">
                         <Package className="w-8 h-8 stroke-[1.5]" />
                     </div>
                     <h4 className="text-sm font-bold text-slate-900">
                         Tidak Ada Pesanan
                     </h4>
-                    <p className="text-xs text-slate-500 mt-1 max-w-sm">
+                    <p className="text-xs text-slate-500 mt-1 max-w-sm leading-relaxed">
                         {selectedStatus === "all"
-                            ? "Anda belum melakukan transaksi belanja apapun di CRSL Store."
-                            : `Tidak ditemukan transaksi dengan filter status "${
-                                  STATUS_FILTERS.find(
-                                      (f) => f.key === selectedStatus,
-                                  )?.label
-                              }".`}
+                            ? "Anda belum memiliki riwayat transaksi belanja di CRSL Store."
+                            : `Tidak ditemukan pesanan pada filter "${STATUS_FILTERS.find((f) => f.key === selectedStatus)?.label}".`}
                     </p>
                     <Link
                         href="/katalog"
-                        className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl transition-all shadow-xs active:scale-95"
+                        className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-[#E52027] hover:bg-[#CC1C22] text-white text-xs font-bold rounded-xl transition-all shadow-xs active:scale-95"
                     >
                         <ShoppingBag className="w-3.5 h-3.5" />
-                        Jelajahi Produk
+                        <span>Jelajahi Produk</span>
                     </Link>
                 </div>
             ) : (
@@ -307,6 +419,7 @@ export default function PesananTab({
                         const isProcessingConfirm =
                             processingOrderNumber === orderNumber;
                         const statusRaw = getRawStatus(order);
+                        const safeSlug = getSafeOrderSlug(orderNumber);
 
                         const namaProduk =
                             itemUtama?.nama ||
@@ -319,14 +432,14 @@ export default function PesananTab({
                                 .filter(Boolean)
                                 .join(" / ");
 
-                        const fakturSlug = encodeURIComponent(
-                            orderNumber.replace(/\//g, "-"),
-                        );
+                        const isHoldManual =
+                            statusRaw === "menunggu_verifikasi_manual" ||
+                            statusRaw === "challenge";
 
                         return (
                             <div
                                 key={order.id}
-                                className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-xs hover:border-slate-300 transition-all"
+                                className="bg-white rounded-3xl border border-slate-200/90 overflow-hidden shadow-xs hover:border-slate-300 transition-all"
                             >
                                 {/* Header Kartu Pesanan */}
                                 <div className="px-5 py-3.5 bg-slate-50/70 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
@@ -338,7 +451,9 @@ export default function PesananTab({
                                             •
                                         </span>
                                         <span className="text-slate-500 font-medium">
-                                            {order.created_at}
+                                            {formatTanggalIndo(
+                                                order.created_at,
+                                            )}
                                         </span>
                                     </div>
 
@@ -350,50 +465,37 @@ export default function PesananTab({
                                     </div>
                                 </div>
 
+                                {/* Banner Informasi Verifikasi Manual */}
+                                {isHoldManual && (
+                                    <div className="px-5 py-2.5 bg-amber-50/80 border-b border-amber-200/70 flex items-center justify-between text-xs text-amber-900">
+                                        <div className="flex items-center gap-2">
+                                            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                                            <span>
+                                                Pembayaran sedang dalam
+                                                peninjauan verifikasi CS.
+                                            </span>
+                                        </div>
+                                        <Link
+                                            href={`/faktur/${safeSlug}`}
+                                            className="text-amber-950 font-bold underline hover:text-amber-800 text-[11px]"
+                                        >
+                                            Kirim Bukti
+                                        </Link>
+                                    </div>
+                                )}
+
                                 {/* Konten Produk & Aksi */}
                                 <div className="p-4 sm:p-5 space-y-4">
                                     {itemUtama ? (
                                         <div className="flex items-center justify-between gap-3 sm:gap-4">
                                             <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
                                                 {/* Thumbnail Gambar Produk */}
-                                                <div className="relative w-16 h-16 sm:w-18 sm:h-18 rounded-xl bg-slate-100 border border-slate-200/80 shrink-0 overflow-hidden flex items-center justify-center">
+                                                <div className="relative w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-slate-100 border border-slate-200/80 shrink-0 overflow-hidden flex items-center justify-center">
                                                     {itemUtama.gambar ? (
                                                         <img
-                                                            src={(() => {
-                                                                const g =
-                                                                    itemUtama.gambar.trim();
-                                                                if (
-                                                                    g.startsWith(
-                                                                        "http://",
-                                                                    ) ||
-                                                                    g.startsWith(
-                                                                        "https://",
-                                                                    ) ||
-                                                                    g.startsWith(
-                                                                        "data:",
-                                                                    )
-                                                                )
-                                                                    return g;
-                                                                if (
-                                                                    g.startsWith(
-                                                                        "/storage/",
-                                                                    )
-                                                                )
-                                                                    return g;
-                                                                if (
-                                                                    g.startsWith(
-                                                                        "storage/",
-                                                                    )
-                                                                )
-                                                                    return `/${g}`;
-                                                                if (
-                                                                    g.startsWith(
-                                                                        "/",
-                                                                    )
-                                                                )
-                                                                    return g;
-                                                                return `/storage/${g}`;
-                                                            })()}
+                                                            src={normalizeMediaUrl(
+                                                                itemUtama.gambar,
+                                                            )}
                                                             alt={namaProduk}
                                                             loading="lazy"
                                                             className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
@@ -402,9 +504,6 @@ export default function PesananTab({
                                                                     e.currentTarget;
                                                                 target.onerror =
                                                                     null;
-                                                                // Fallback SVG netral langsung tanpa ketergantungan file lokal eksternal
-                                                                target.src =
-                                                                    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21 16-4-4a3.5 3.5 0 0 0-4.95 0L4 20'/%3E%3Cpath d='m14.5 13.5 1-1a3.5 3.5 0 0 1 4.95 0L21 13'/%3E%3Ccircle cx='9' cy='8' r='2'/%3E%3Crect width='18' height='18' x='3' y='3' rx='2'/%3E%3C/svg%3E";
                                                                 target.className =
                                                                     "w-7 h-7 text-slate-300 opacity-60";
                                                             }}
@@ -440,7 +539,7 @@ export default function PesananTab({
 
                                             {/* Total Harga Item */}
                                             <div className="text-right shrink-0">
-                                                <p className="text-xs sm:text-sm font-black text-slate-900 tabular-nums tracking-tight">
+                                                <p className="text-xs sm:text-sm font-black text-slate-900 tabular-nums tracking-tight font-mono">
                                                     {formatRupiah(
                                                         itemUtama.harga,
                                                     )}
@@ -451,7 +550,7 @@ export default function PesananTab({
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="flex items-center justify-between p-3.5 bg-slate-50/80 rounded-xl border border-dashed border-slate-200 text-xs">
+                                        <div className="flex items-center justify-between p-3.5 bg-slate-50/80 rounded-2xl border border-dashed border-slate-200 text-xs">
                                             <div className="flex items-center gap-2 text-slate-600">
                                                 <Package className="w-4 h-4 text-slate-400" />
                                                 <span>
@@ -461,10 +560,10 @@ export default function PesananTab({
                                                 </span>
                                             </div>
                                             <Link
-                                                href={`/faktur/${fakturSlug}`}
-                                                className="text-[11px] font-bold text-slate-800 hover:text-primary inline-flex items-center gap-1 transition-colors"
+                                                href={`/faktur/${safeSlug}`}
+                                                className="text-[11px] font-bold text-slate-800 hover:text-[#E52027] inline-flex items-center gap-1 transition-colors"
                                             >
-                                                Lihat Faktur{" "}
+                                                <span>Lihat Faktur</span>
                                                 <ArrowUpRight className="w-3.5 h-3.5" />
                                             </Link>
                                         </div>
@@ -474,7 +573,7 @@ export default function PesananTab({
                                     <div className="pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                         <div className="flex items-baseline justify-between sm:justify-start gap-2 text-xs text-slate-500">
                                             <span>Total Tagihan:</span>
-                                            <span className="font-black text-sm sm:text-base text-slate-900 tabular-nums tracking-tight">
+                                            <span className="font-black text-sm sm:text-base text-slate-900 tabular-nums tracking-tight font-mono">
                                                 {formatRupiah(order.total)}
                                             </span>
                                         </div>
@@ -490,14 +589,14 @@ export default function PesananTab({
                                                     href={`/lacak?nomor=${encodeURIComponent(orderNumber)}`}
                                                     className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 text-xs font-bold text-slate-700 transition-all shadow-2xs"
                                                 >
-                                                    <Truck className="w-3.5 h-3.5 text-primary shrink-0" />
+                                                    <Truck className="w-3.5 h-3.5 text-[#E52027] shrink-0" />
                                                     <span>Lacak Paket</span>
                                                 </Link>
                                             )}
 
                                             {/* Lihat Faktur */}
                                             <Link
-                                                href={`/faktur/${fakturSlug}`}
+                                                href={`/faktur/${safeSlug}`}
                                                 className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-bold transition-all shadow-2xs"
                                             >
                                                 <ReceiptText className="w-3.5 h-3.5 text-slate-300 shrink-0" />
@@ -507,8 +606,8 @@ export default function PesananTab({
                                             {/* Bayar Sekarang */}
                                             {statusRaw === "belum_bayar" && (
                                                 <Link
-                                                    href={`/faktur/${fakturSlug}`}
-                                                    className="flex-1 sm:flex-initial inline-flex items-center justify-center px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-bold transition-all shadow-xs"
+                                                    href={`/faktur/${safeSlug}`}
+                                                    className="flex-1 sm:flex-initial inline-flex items-center justify-center px-4 py-2 rounded-xl bg-[#E52027] hover:bg-[#CC1C22] active:scale-95 text-white text-xs font-bold transition-all shadow-xs"
                                                 >
                                                     Bayar Sekarang
                                                 </Link>
@@ -531,10 +630,14 @@ export default function PesananTab({
                                                     {isProcessingConfirm ? (
                                                         <>
                                                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                                            Memproses...
+                                                            <span>
+                                                                Memproses...
+                                                            </span>
                                                         </>
                                                     ) : (
-                                                        "Konfirmasi Selesai"
+                                                        <span>
+                                                            Konfirmasi Selesai
+                                                        </span>
                                                     )}
                                                 </button>
                                             )}
@@ -594,11 +697,12 @@ export default function PesananTab({
                                                 onClick={() =>
                                                     setCurrentPage(pageNum)
                                                 }
-                                                className={`min-w-8 h-8 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                                className={cn(
+                                                    "min-w-8 h-8 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer font-mono",
                                                     isActive
                                                         ? "bg-slate-900 text-white shadow-xs"
-                                                        : "border border-slate-200 text-slate-700 hover:bg-slate-50"
-                                                }`}
+                                                        : "border border-slate-200 text-slate-700 hover:bg-slate-50",
+                                                )}
                                             >
                                                 {pageNum}
                                             </button>

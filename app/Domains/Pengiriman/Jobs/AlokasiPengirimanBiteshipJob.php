@@ -92,7 +92,7 @@ class AlokasiPengirimanBiteshipJob implements ShouldQueue, ShouldBeUnique
             ->toArray();
 
         $dataBiteship = [
-            'area_id'           => $savedAddress['area_id'] ?? 'IDNP11KOT789311',
+            'area_id'           => $savedAddress['area_id'] ?? 'IDNP6IDNC147IDND830IDZ10560',
             'nama_penerima'     => $savedAddress['nama_penerima'] ?? ($pesanan->pengguna->name ?? 'Pelanggan'),
             'telepon'           => $savedAddress['telepon'] ?? '081234567890',
             'alamat_lengkap'    => $savedAddress['alamat_lengkap'] ?? '',

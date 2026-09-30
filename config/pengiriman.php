@@ -7,16 +7,12 @@ return [
     |--------------------------------------------------------------------------
     | Konfigurasi Kurir & Ekspedisi Pengiriman Resmi CRSL Store
     |--------------------------------------------------------------------------
-    |
-    | Mendukung integrasi Biteship API dengan fallback tarif flat terkalibrasi
-    | saat lingkungan local/sandbox development.
-    |
     */
     'kurir' => [
         [
             'id'          => 'jne',
             'kurir_kode'  => 'jne',
-            'nama'        => 'JNE Reguler',
+            'nama'        => 'JNE Express',
             'layanan'     => 'Reguler (2 - 3 hari kerja)',
             'biaya'       => 18000,
             'ikon'        => '/assets/ikon/kurir-jne.svg',
@@ -25,7 +21,7 @@ return [
         [
             'id'          => 'sicepat',
             'kurir_kode'  => 'sicepat',
-            'nama'        => 'SiCepat SiUntung',
+            'nama'        => 'SiCepat Ekspres',
             'layanan'     => 'SiUntung (2 - 3 hari kerja)',
             'biaya'       => 17000,
             'ikon'        => '/assets/ikon/kurir-sicepat.svg',
@@ -34,22 +30,42 @@ return [
         [
             'id'          => 'jnt',
             'kurir_kode'  => 'jnt',
-            'nama'        => 'J&T Express EZ',
+            'nama'        => 'J&T Express',
             'layanan'     => 'EZ (2 - 3 hari kerja)',
             'biaya'       => 19000,
             'ikon'        => '/assets/ikon/kurir-jnt.svg',
             'aktif'       => true,
         ],
+        [
+            'id'          => 'pos',
+            'kurir_kode'  => 'pos',
+            'nama'        => 'POS Indonesia',
+            'layanan'     => 'Pos Reguler (2 - 4 hari kerja)',
+            'biaya'       => 15000,
+            'ikon'        => '/assets/ikon/kurir-pos.svg',
+            'aktif'       => true,
+        ],
+        [
+            'id'          => 'tiki',
+            'kurir_kode'  => 'tiki',
+            'nama'        => 'TIKI',
+            'layanan'     => 'Regular Service (2 - 3 hari kerja)',
+            'biaya'       => 17000,
+            'ikon'        => '/assets/ikon/kurir-tiki.svg',
+            'aktif'       => true,
+        ],
     ],
 
     /*
-    | Default asal pengiriman (Warehouse CRSL Store Yogyakarta)
+    | Default asal pengiriman (Warehouse CRSL Johar Baru, Jakarta Pusat)
     */
     'asal' => [
-        'area_id'      => 'IDNP11KOT789311', // Sleman / Yogyakarta
-        'provinsi'     => 'DI Yogyakarta',
-        'kota'         => 'Kabupaten Sleman',
-        'kecamatan'    => 'Depok',
-        'kode_pos'     => '55281',
+        'area_id'      => env('BITESHIP_ORIGIN_AREA_ID', 'IDNP6IDNC147IDND830IDZ10560'),
+        'city_id'      => env('RAJAONGKIR_ORIGIN_CITY_ID', '152'), // 152 = Jakarta Pusat
+        'provinsi'     => env('SHIPPING_ORIGIN_PROVINCE', 'DKI Jakarta'),
+        'kota'         => env('SHIPPING_ORIGIN_CITY', 'Jakarta Pusat'),
+        'kecamatan'    => env('SHIPPING_ORIGIN_SUBDISTRICT', 'Johar Baru'),
+        'kode_pos'     => env('SHIPPING_ORIGIN_POSTAL_CODE', '10560'),
+        'alamat'       => env('SHIPPING_ORIGIN_ADDRESS', 'Jl. Percetakan Negara 2, Johar Baru'),
     ],
 ];

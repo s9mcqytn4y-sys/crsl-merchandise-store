@@ -1,5 +1,19 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import {
+    useState,
+    useEffect,
+    useCallback,
+    useMemo,
+    Fragment,
+} from "react";
 import { Head, Link, router } from "@inertiajs/react";
+import {
+    Dialog,
+    DialogPanel,
+    DialogTitle,
+    DialogBackdrop,
+    Transition,
+    TransitionChild,
+} from "@headlessui/react";
 import StorefrontLayout from "../Layouts/StorefrontLayout";
 import { usePaymentStatusPolling } from "../Hooks/usePaymentStatusPolling";
 import { useKeranjangStore } from "../Stores/useKeranjangStore";
@@ -21,6 +35,9 @@ import {
     ExternalLink,
     ShieldAlert,
     AlertCircle,
+    MessageCircle,
+    PackageCheck,
+    X,
     type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -34,6 +51,9 @@ import ModalBatalPesanan from "../Components/Faktur/ModalBatalPesanan";
 import PaymentSelectModal from "../Components/Checkout/PaymentSelectModal";
 import { PaymentOption } from "../Components/Checkout/PaymentMethodSection";
 import PrintableA4Invoice from "../Components/Faktur/PrintableA4Invoice";
+import { formatRupiah } from "../Utils/formatters";
+import { SITUS_CONFIG } from "../Config/situsConfig";
+import { cn } from "../lib/utils";
 
 interface OrderItem {
     id: number | string;
@@ -42,6 +62,7 @@ interface OrderItem {
     jumlah: number;
     ukuran?: string;
     warna?: string;
+    sku?: string;
     gambar?: string;
 }
 
@@ -55,6 +76,22 @@ interface PaymentDetail {
     instruksi_bayar?: string[];
     waktu_kedaluwarsa?: string;
     batas_waktu?: string;
+    waktu_bayar?: string;
+}
+
+interface ShippingPayload {
+    nama_penerima?: string;
+    telepon?: string;
+    email?: string;
+    alamat_lengkap?: string;
+    catatan?: string;
+    kota?: string;
+    kecamatan?: string;
+    provinsi?: string;
+    kode_pos?: string;
+    is_dropship?: boolean;
+    dropship_pengirim?: string;
+    dropship_telepon?: string;
 }
 
 interface ShippingDetail {
@@ -66,16 +103,7 @@ interface ShippingDetail {
     telepon?: string;
     email?: string;
     catatan?: string;
-    json_payload?: {
-        nama_penerima?: string;
-        telepon?: string;
-        email?: string;
-        alamat_lengkap?: string;
-        catatan?: string;
-        is_dropship?: boolean;
-        dropship_pengirim?: string;
-        dropship_telepon?: string;
-    };
+    json_payload?: ShippingPayload | string;
 }
 
 interface OrderData {
@@ -83,6 +111,8 @@ interface OrderData {
     nomor_pesanan: string;
     status:
         | "belum_bayar"
+        | "menunggu_verifikasi_manual"
+        | "challenge"
         | "akan_dikirim"
         | "dikirim"
         | "selesai"
@@ -92,6 +122,8 @@ interface OrderData {
     subtotal: number;
     ongkir: number;
     diskon?: number;
+    kode_voucher?: string | null;
+    poin_digunakan?: number;
     total: number;
     catatan?: string;
     created_at?: string;
@@ -101,31 +133,42 @@ interface OrderData {
     is_dropship?: boolean;
     dropship_pengirim?: string;
     dropship_telepon?: string;
+    asuransiPengiriman?: boolean;
     asuransi_pengiriman?: boolean;
+    biayaAsuransi?: number;
     biaya_asuransi?: number;
 }
 
 interface InvoiceProps {
     pesanan: OrderData;
     is_baru?: boolean;
+    className?: string;
 }
 
-const rupiahFormatter = new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-});
+const FALLBACK_IMAGE = "/assets/gambar/banner-1.webp";
 
-function formatRupiah(num: number | string | undefined | null): string {
-    if (num === null || num === undefined) return "Rp 0";
-    const val = typeof num === "string" ? parseFloat(num) : num;
-    return rupiahFormatter.format(!isNaN(val) ? val : 0);
+function normalizeMediaUrl(url?: string | null): string {
+    if (!url) return FALLBACK_IMAGE;
+    const clean = url.trim();
+    if (
+        clean.startsWith("http://") ||
+        clean.startsWith("https://") ||
+        clean.startsWith("data:")
+    ) {
+        return clean;
+    }
+    if (clean.startsWith("/storage/")) return clean;
+    if (clean.startsWith("storage/")) return `/${clean}`;
+    if (clean.startsWith("/")) return clean;
+    return `/storage/${clean}`;
 }
 
 function formatTanggalIndo(dateStr?: string): string {
     if (!dateStr) return "-";
     try {
-        const d = new Date(dateStr);
+        const d = new Date(
+            dateStr.includes("T") ? dateStr : dateStr.replace(" ", "T"),
+        );
         if (isNaN(d.getTime())) return dateStr;
         return (
             d.toLocaleDateString("id-ID", {
@@ -152,37 +195,51 @@ const STATUS_CONFIG: Record<string, StatusConfig> = {
     belum_bayar: {
         label: "Menunggu Pembayaran",
         icon: Clock,
-        variant: "bg-amber-50 text-amber-900 border-amber-200/80",
+        variant: "bg-amber-50 text-amber-900 border-amber-200/90 font-bold",
         iconColor: "text-amber-600",
     },
+    menunggu_verifikasi_manual: {
+        label: "Verifikasi Manual CS",
+        icon: AlertCircle,
+        variant: "bg-amber-100 text-amber-950 border-amber-300 font-bold",
+        iconColor: "text-amber-700",
+    },
+    challenge: {
+        label: "Tinjauan Keamanan",
+        icon: ShieldAlert,
+        variant: "bg-amber-100 text-amber-950 border-amber-300 font-bold",
+        iconColor: "text-amber-700",
+    },
     akan_dikirim: {
-        label: "Diproses",
+        label: "Diproses Penjual",
         icon: CheckCircle2,
-        variant: "bg-emerald-50 text-emerald-900 border-emerald-200/80",
+        variant:
+            "bg-emerald-50 text-emerald-900 border-emerald-200/90 font-bold",
         iconColor: "text-emerald-600",
     },
     dikirim: {
         label: "Dalam Pengiriman",
         icon: Truck,
-        variant: "bg-sky-50 text-sky-900 border-sky-200/80",
-        iconColor: "text-sky-600",
+        variant: "bg-indigo-50 text-indigo-900 border-indigo-200/90 font-bold",
+        iconColor: "text-indigo-600",
     },
     selesai: {
-        label: "Selesai",
+        label: "Pesanan Selesai",
         icon: CheckCircle2,
-        variant: "bg-emerald-50 text-emerald-900 border-emerald-200/80",
+        variant:
+            "bg-emerald-50 text-emerald-900 border-emerald-200/90 font-bold",
         iconColor: "text-emerald-600",
     },
     dibatalkan: {
-        label: "Dibatalkan",
+        label: "Pesanan Dibatalkan",
         icon: XCircle,
-        variant: "bg-rose-50 text-rose-900 border-rose-200/80",
+        variant: "bg-rose-50 text-rose-900 border-rose-200/90 font-bold",
         iconColor: "text-rose-600",
     },
     expired: {
-        label: "Kedaluwarsa",
+        label: "Tagihan Kedaluwarsa",
         icon: XCircle,
-        variant: "bg-slate-100 text-slate-700 border-slate-200",
+        variant: "bg-slate-100 text-slate-700 border-slate-200 font-bold",
         iconColor: "text-slate-500",
     },
 };
@@ -190,9 +247,9 @@ const STATUS_CONFIG: Record<string, StatusConfig> = {
 function StatusBadge({ status }: { status: string }) {
     const key = status?.toLowerCase().trim();
     const current = STATUS_CONFIG[key] ?? {
-        label: status || "Unknown",
+        label: status || "Status Tidak Diketahui",
         icon: AlertCircle,
-        variant: "bg-slate-100 text-slate-700 border-slate-200",
+        variant: "bg-slate-100 text-slate-700 border-slate-200 font-bold",
         iconColor: "text-slate-500",
     };
 
@@ -200,10 +257,16 @@ function StatusBadge({ status }: { status: string }) {
 
     return (
         <span
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${current.variant} select-none`}
+            className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs border shadow-2xs select-none",
+                current.variant,
+            )}
         >
             <Icon
-                className={`w-3.5 h-3.5 shrink-0 ${current.iconColor}`}
+                className={cn(
+                    "w-3.5 h-3.5 shrink-0 stroke-[2.2]",
+                    current.iconColor,
+                )}
                 aria-hidden="true"
             />
             <span>{current.label}</span>
@@ -211,11 +274,18 @@ function StatusBadge({ status }: { status: string }) {
     );
 }
 
-export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
+export default function Faktur({ pesanan, is_baru, className }: InvoiceProps) {
     const activeOrder = pesanan ?? ({} as OrderData);
     const pembayaran = activeOrder.pembayaran || {};
     const pengiriman = activeOrder.pengiriman || {};
-    const orderItems = activeOrder.items || [];
+
+    // Normalisasi gambar item pesanan
+    const orderItems = useMemo<OrderItem[]>(() => {
+        return (activeOrder.items || []).map((item) => ({
+            ...item,
+            gambar: normalizeMediaUrl(item.gambar),
+        }));
+    }, [activeOrder.items]);
 
     const [isEditAddressOpen, setIsEditAddressOpen] = useState(false);
     const [isCancelOrderOpen, setIsCancelOrderOpen] = useState(false);
@@ -225,22 +295,13 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
     const [copiedTotal, setCopiedTotal] = useState(false);
     const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
 
+    // Reset store keranjang & form checkout jika diarahkan dari pemesanan baru
     useEffect(() => {
         if (is_baru) {
             useKeranjangStore.getState().kosongkan();
             useCheckoutStore.getState().resetCheckoutState();
         }
     }, [is_baru]);
-
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape" && isTermsModalOpen) {
-                setIsTermsModalOpen(false);
-            }
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isTermsModalOpen]);
 
     const {
         status: statusPesanan,
@@ -251,17 +312,21 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
         activeOrder.status || "belum_bayar",
         {
             intervalMs: 4000,
+            autoReloadInertia: true,
             onSettled: (statusBaru) => {
                 if (
                     ["akan_dikirim", "dikirim", "selesai"].includes(statusBaru)
                 ) {
                     toast.success(
-                        "Pembayaran terverifikasi! Pesanan Anda segera disiapkan.",
-                        {
-                            duration: 5000,
-                        },
+                        "Pembayaran berhasil diverifikasi! Pesanan Anda segera diproses.",
                     );
                 }
+            },
+            onHold: (_statusBaru, pesan) => {
+                toast.warning(
+                    pesan ||
+                        "Pembayaran Anda sedang dalam verifikasi manual tim CS.",
+                );
             },
         },
     );
@@ -273,13 +338,21 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
 
     const statusNormalized = (statusPesanan || "").toLowerCase();
     const isPendingPayment = statusNormalized === "belum_bayar";
+    const isHoldManual = [
+        "menunggu_verifikasi_manual",
+        "challenge",
+        "suspect_underpaid",
+    ].includes(statusNormalized);
     const isSuccessSettled = ["akan_dikirim", "dikirim", "selesai"].includes(
         statusNormalized,
     );
     const isTerminated = ["dibatalkan", "expired"].includes(statusNormalized);
 
+    const hasWaybill = Boolean(pengiriman.nomor_resi);
+
     const isQris = Boolean(
         pembayaran.qr_code_url ||
+        pembayaran.qr_string ||
         pembayaran.metode_bayar?.toLowerCase().includes("qris"),
     );
     const isMandiriBill = Boolean(
@@ -290,14 +363,26 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
     const batasWaktuPembayaran =
         pembayaran.waktu_kedaluwarsa || pembayaran.batas_waktu;
 
+    // Normalisasi slug yang aman terhadap pembatasan server web
+    const safeOrderSlug = useMemo(() => {
+        return encodeURIComponent(
+            (activeOrder.nomor_pesanan || "").replace(/[^a-zA-Z0-9-_]/g, "-"),
+        );
+    }, [activeOrder.nomor_pesanan]);
+
+    // Sanitasi nomor telepon CS WhatsApp
+    const cleanCsPhone = useMemo(() => {
+        return (SITUS_CONFIG.whatsappCS || "").replace(/\D/g, "");
+    }, []);
+
     const copyInvoiceId = async () => {
         try {
             await navigator.clipboard.writeText(activeOrder.nomor_pesanan);
             setCopiedInvoice(true);
-            toast.success("Nomor pesanan berhasil disalin");
+            toast.success("Nomor pesanan berhasil disalin ke papan klip!");
             setTimeout(() => setCopiedInvoice(false), 2000);
         } catch {
-            toast.error("Gagal menyalin nomor pesanan");
+            toast.error("Gagal menyalin nomor pesanan.");
         }
     };
 
@@ -305,30 +390,30 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
         try {
             await navigator.clipboard.writeText(String(activeOrder.total));
             setCopiedTotal(true);
-            toast.success("Total tagihan berhasil disalin");
+            toast.success("Nomor total tagihan berhasil disalin!");
             setTimeout(() => setCopiedTotal(false), 2000);
         } catch {
-            toast.error("Gagal menyalin nominal");
+            toast.error("Gagal menyalin nominal tagihan.");
         }
     };
 
     const handleRefreshQris = () => {
-        if (isRefreshingQris) return;
+        if (isRefreshingQris || !safeOrderSlug) return;
         setIsRefreshingQris(true);
         router.post(
-            `/faktur/${encodeURIComponent(activeOrder.nomor_pesanan)}/refresh-qris`,
+            `/faktur/${safeOrderSlug}/refresh-qris`,
             {},
             {
                 preserveScroll: true,
                 onSuccess: () => {
-                    toast.success("Kode QRIS berhasil diperbarui");
+                    toast.success("Kode QRIS berhasil diperbarui!");
                     setIsRefreshingQris(false);
                 },
                 onError: (err) => {
                     toast.error(
                         typeof err === "string"
                             ? err
-                            : "Gagal memperbarui QRIS",
+                            : "Gagal memperbarui QRIS.",
                     );
                     setIsRefreshingQris(false);
                 },
@@ -341,39 +426,69 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
         const toastId = toast.loading("Memperbarui metode pembayaran...");
 
         router.post(
-            `/faktur/${encodeURIComponent(activeOrder.nomor_pesanan)}/ganti-metode-bayar`,
+            `/faktur/${safeOrderSlug}/ganti-metode-bayar`,
             { metode_pembayaran: metode.id },
             {
                 preserveScroll: true,
                 onSuccess: () => {
                     toast.dismiss(toastId);
-                    toast.success(`Metode pembayaran diubah ke ${metode.nama}`);
+                    toast.success(
+                        `Metode pembayaran berhasil diubah ke ${metode.nama}!`,
+                    );
                 },
                 onError: (err) => {
                     toast.dismiss(toastId);
                     toast.error(
                         typeof err === "string"
                             ? err
-                            : "Gagal mengubah metode pembayaran",
+                            : "Gagal mengubah saluran pembayaran.",
                     );
                 },
             },
         );
     };
 
-    const recipientPayload = pengiriman.json_payload;
+    // Safe parser untuk json_payload pengiriman
+    const parsedPayload = useMemo<ShippingPayload>(() => {
+        const raw = pengiriman.json_payload;
+        if (!raw) return {};
+        if (typeof raw === "object") return raw;
+        try {
+            return JSON.parse(raw);
+        } catch {
+            return {};
+        }
+    }, [pengiriman.json_payload]);
+
     const recipientName =
-        recipientPayload?.nama_penerima || pengiriman.penerima || "Pelanggan";
-    const recipientPhone =
-        recipientPayload?.telepon || pengiriman.telepon || "";
+        parsedPayload.nama_penerima || pengiriman.penerima || "Pelanggan CRSL";
+    const recipientPhone = parsedPayload.telepon || pengiriman.telepon || "";
     const recipientAddress =
-        recipientPayload?.alamat_lengkap || pengiriman.alamat_lengkap || "";
-    const currentNotes = activeOrder.catatan || recipientPayload?.catatan || "";
+        parsedPayload.alamat_lengkap || pengiriman.alamat_lengkap || "";
+    const currentNotes = activeOrder.catatan || parsedPayload.catatan || "";
+
+    const lockedRegionText = useMemo(() => {
+        return [
+            parsedPayload.kecamatan,
+            parsedPayload.kota,
+            parsedPayload.provinsi,
+            parsedPayload.kode_pos,
+        ]
+            .filter(Boolean)
+            .join(", ");
+    }, [parsedPayload]);
+
+    const isInsuranceActive = Boolean(
+        activeOrder.asuransiPengiriman || activeOrder.asuransi_pengiriman,
+    );
+    const insuranceAmount = Number(
+        activeOrder.biayaAsuransi || activeOrder.biaya_asuransi || 0,
+    );
 
     return (
         <StorefrontLayout>
             <Head
-                title={`Faktur #${activeOrder.nomor_pesanan || ""} - CRSL Store`}
+                title={`Faktur #${activeOrder.nomor_pesanan || ""} - CRSL Official Store`}
             />
 
             <style>{`
@@ -402,24 +517,25 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                 formatTanggalIndo={formatTanggalIndo}
             />
 
-            <div className="print:hidden">
-                <header className="bg-white border-b border-slate-200 py-5">
-                    <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-4">
+            <div className={cn("print:hidden select-none", className)}>
+                {/* Header Faktur */}
+                <header className="bg-white border-b border-slate-200/90 py-4 sm:py-5 shadow-2xs">
+                    <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-3 sm:space-y-4">
                         <div>
                             <Link
                                 href="/katalog"
-                                className="group inline-flex items-center gap-1.5 -ml-1 px-2 py-1 rounded-md text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
+                                className="group inline-flex items-center gap-1.5 -ml-1 px-2.5 py-1 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
                             >
-                                <ArrowLeft className="w-3.5 h-3.5 transition-transform duration-150 ease-out group-hover:-translate-x-0.5" />
+                                <ArrowLeft className="w-3.5 h-3.5 transition-transform duration-150 ease-out group-hover:-translate-x-0.5 stroke-[2.2]" />
                                 <span>Kembali ke Belanja</span>
                             </Link>
                         </div>
 
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                            <div className="space-y-1">
-                                <div className="flex items-center gap-2 text-xs text-slate-500">
-                                    <span className="font-medium text-slate-700">
-                                        Faktur Pesanan
+                            <div className="space-y-1 min-w-0">
+                                <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                                    <span className="font-bold text-slate-800">
+                                        Faktur Tagihan
                                     </span>
                                     <span
                                         className="text-slate-300"
@@ -434,9 +550,9 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                                     </time>
                                 </div>
 
-                                <div className="flex items-center gap-2">
-                                    <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900 font-mono">
-                                        <span className="text-slate-400 select-none">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <h1 className="text-lg sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 font-mono break-all sm:break-normal">
+                                        <span className="text-[#E52027] select-none">
                                             #
                                         </span>
                                         <span>{activeOrder.nomor_pesanan}</span>
@@ -451,30 +567,31 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                                                 : "Salin nomor pesanan"
                                         }
                                         aria-label="Salin nomor pesanan"
-                                        className={`inline-flex items-center justify-center p-1.5 rounded-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 ${
+                                        className={cn(
+                                            "inline-flex items-center justify-center p-1.5 rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] shrink-0 cursor-pointer shadow-2xs",
                                             copiedInvoice
-                                                ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-                                                : "text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-                                        }`}
+                                                ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-300"
+                                                : "text-slate-400 hover:text-slate-700 hover:bg-slate-100",
+                                        )}
                                     >
                                         {copiedInvoice ? (
-                                            <Check className="w-4 h-4 text-emerald-600 animate-in zoom-in-75 duration-150" />
+                                            <Check className="w-4 h-4 text-emerald-600 stroke-[2.5]" />
                                         ) : (
-                                            <Copy className="w-4 h-4" />
+                                            <Copy className="w-4 h-4 stroke-[2]" />
                                         )}
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
+                            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end shrink-0">
                                 <StatusBadge status={statusPesanan} />
 
                                 <button
                                     type="button"
                                     onClick={() => window.print()}
-                                    className="group inline-flex items-center gap-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-xs font-medium px-3.5 py-2 rounded-lg shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
+                                    className="group inline-flex items-center gap-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 text-xs font-bold px-3.5 py-2 rounded-2xl shadow-2xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer"
                                 >
-                                    <Printer className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-700 transition-colors" />
+                                    <Printer className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-800 stroke-[2.2]" />
                                     <span>Cetak Faktur</span>
                                 </button>
                             </div>
@@ -482,27 +599,107 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                     </div>
                 </header>
 
-                <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                {/* Konten Utama */}
+                <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+                        {/* Kolom Kiri: Panduan & Status Transaksi */}
                         <div className="lg:col-span-7 space-y-5">
-                            {/* Settlement State */}
-                            {isSuccessSettled && (
-                                <div className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-5 sm:p-6 space-y-4">
+                            {/* State 1: Verifikasi Manual CS */}
+                            {isHoldManual && (
+                                <section className="bg-amber-50/90 border border-amber-300 rounded-3xl p-5 sm:p-6 space-y-4 shadow-2xs">
                                     <div className="flex items-start gap-3.5">
-                                        <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                                            <CheckCircle2 className="w-5 h-5" />
+                                        <div className="w-10 h-10 rounded-2xl bg-amber-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                                            <AlertCircle className="w-5 h-5 stroke-[2.2]" />
                                         </div>
                                         <div className="space-y-1">
-                                            <h2 className="text-base sm:text-lg font-semibold text-emerald-950 tracking-tight">
-                                                Pembayaran Berhasil Diverifikasi
+                                            <h2 className="text-base sm:text-lg font-black text-amber-950 tracking-tight">
+                                                Pembayaran Dalam Tinjauan Tim CS
                                             </h2>
-                                            <p className="text-xs sm:text-sm text-emerald-800 leading-relaxed">
-                                                Pesanan Anda sedang dipersiapkan
-                                                oleh tim logistik CRSL Store.
-                                                Nomor resi pengiriman akan
-                                                diperbarui otomatis setelah
-                                                paket diserahkan ke pihak
-                                                ekspedisi.
+                                            <p className="text-xs sm:text-sm text-amber-900 leading-relaxed font-medium">
+                                                Sistem mendeteksi transaksi
+                                                memerlukan peninjauan manual
+                                                (seperti selisih nominal unik
+                                                transfer). Dana Anda aman dan
+                                                pesanan sedang diperiksa
+                                                langsung oleh tim CS resmi kami.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-1 flex flex-wrap gap-2.5">
+                                        <a
+                                            href={`https://wa.me/${cleanCsPhone}?text=${encodeURIComponent(
+                                                `Halo Tim CS CRSL, saya ingin konfirmasi pembayaran pesanan: #${activeOrder.nomor_pesanan}`,
+                                            )}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs px-4 py-2.5 rounded-2xl transition-all shadow-xs cursor-pointer active:scale-95"
+                                        >
+                                            <MessageCircle className="w-4 h-4 stroke-[2.2]" />
+                                            <span>
+                                                Kirim Bukti Transfer via
+                                                WhatsApp
+                                            </span>
+                                        </a>
+
+                                        <button
+                                            type="button"
+                                            onClick={handleManualCheckStatus}
+                                            disabled={isChecking}
+                                            className="inline-flex items-center gap-1.5 bg-white hover:bg-amber-100/50 border border-amber-300 text-amber-950 text-xs font-bold px-4 py-2.5 rounded-2xl transition-colors disabled:opacity-50 cursor-pointer shadow-2xs"
+                                        >
+                                            <RefreshCw
+                                                className={cn(
+                                                    "w-3.5 h-3.5 stroke-[2.2]",
+                                                    isChecking &&
+                                                        "animate-spin",
+                                                )}
+                                            />
+                                            <span>
+                                                {isChecking
+                                                    ? "Memeriksa..."
+                                                    : "Periksa Ulang Status"}
+                                            </span>
+                                        </button>
+                                    </div>
+                                </section>
+                            )}
+
+                            {/* State 2: Lunas & Terverifikasi */}
+                            {isSuccessSettled && (
+                                <div className="bg-emerald-50/80 border border-emerald-200/90 rounded-3xl p-5 sm:p-6 space-y-4 shadow-2xs">
+                                    <div className="flex items-start gap-3.5">
+                                        <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                                            {hasWaybill ? (
+                                                <PackageCheck className="w-5 h-5 stroke-[2.2]" />
+                                            ) : (
+                                                <CheckCircle2 className="w-5 h-5 stroke-[2.2]" />
+                                            )}
+                                        </div>
+                                        <div className="space-y-1">
+                                            <h2 className="text-base sm:text-lg font-black text-emerald-950 tracking-tight">
+                                                {hasWaybill
+                                                    ? "Pembayaran Diterima & Resi Diterbitkan"
+                                                    : "Pembayaran Berhasil Diverifikasi"}
+                                            </h2>
+                                            <p className="text-xs sm:text-sm text-emerald-800 leading-relaxed font-medium">
+                                                {hasWaybill ? (
+                                                    <>
+                                                        Pesanan Anda telah
+                                                        disiapkan oleh tim
+                                                        logistik dan nomor resi
+                                                        ekspedisi{" "}
+                                                        <strong className="font-black text-emerald-950 uppercase font-mono">
+                                                            {pengiriman.kurir}
+                                                        </strong>{" "}
+                                                        telah aktif. Pantau
+                                                        pergerakan pengiriman
+                                                        paket Anda secara
+                                                        real-time.
+                                                    </>
+                                                ) : (
+                                                    "Pesanan Anda sedang dipersiapkan oleh tim gudang CRSL Official. Nomor resi pengiriman akan terbit otomatis saat paket diserahkan ke kurir."
+                                                )}
                                             </p>
                                         </div>
                                     </div>
@@ -510,37 +707,37 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                                     <div className="pt-1 flex flex-wrap gap-2.5">
                                         <Link
                                             href={`/lacak?nomor=${encodeURIComponent(activeOrder.nomor_pesanan || "")}`}
-                                            className="inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-medium text-xs px-4 py-2 rounded-lg transition-colors shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700"
+                                            className="inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs px-4 py-2.5 rounded-2xl transition-all shadow-xs active:scale-95"
                                         >
-                                            <Truck className="w-3.5 h-3.5" />
+                                            <Truck className="w-4 h-4 stroke-[2.2]" />
                                             <span>Lacak Pengiriman</span>
                                         </Link>
                                         <Link
                                             href="/katalog"
-                                            className="inline-flex items-center gap-2 bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-900 font-medium text-xs px-4 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700"
+                                            className="inline-flex items-center gap-2 bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-900 font-bold text-xs px-4 py-2.5 rounded-2xl transition-all shadow-2xs active:scale-95"
                                         >
-                                            <ShoppingBag className="w-3.5 h-3.5 text-emerald-700" />
+                                            <ShoppingBag className="w-4 h-4 text-emerald-700 stroke-[2.2]" />
                                             <span>Belanja Lagi</span>
                                         </Link>
                                     </div>
                                 </div>
                             )}
 
-                            {/* Pending Payment State */}
+                            {/* State 3: Menunggu Pembayaran Aktif */}
                             {isPendingPayment && (
-                                <section className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
-                                    <div className="p-5 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-slate-50/60">
+                                <section className="bg-white border border-slate-200/90 rounded-3xl shadow-2xs overflow-hidden">
+                                    <div className="p-5 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-slate-50/70">
                                         <div className="space-y-1">
-                                            <div className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600">
-                                                <CreditCard className="w-3.5 h-3.5 text-slate-500" />
+                                            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600">
+                                                <CreditCard className="w-4 h-4 text-slate-500 stroke-[2.2]" />
                                                 <span>
                                                     {pembayaran.metode_bayar ||
-                                                        "Metode Pembayaran"}
+                                                        "Saluran Pembayaran"}
                                                 </span>
                                             </div>
 
                                             <div className="flex items-center gap-2">
-                                                <span className="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight tabular-nums">
+                                                <span className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight tabular-nums font-mono">
                                                     {formatRupiah(
                                                         activeOrder.total,
                                                     )}
@@ -549,18 +746,18 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                                                     type="button"
                                                     onClick={copyTotalAmount}
                                                     aria-label="Salin nominal total pembayaran"
-                                                    className="min-w-16 text-xs text-slate-600 hover:text-slate-900 font-medium inline-flex items-center justify-center gap-1 px-2 py-1 rounded-md hover:bg-slate-200/60 transition-colors"
+                                                    className="text-xs text-slate-600 hover:text-slate-900 font-bold inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl hover:bg-slate-200/70 transition-colors cursor-pointer"
                                                 >
                                                     {copiedTotal ? (
                                                         <>
-                                                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                                            <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
                                                             <span className="text-emerald-700">
                                                                 Tersalin
                                                             </span>
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <Copy className="w-3.5 h-3.5 text-slate-400" />
+                                                            <Copy className="w-3.5 h-3.5 text-slate-400 stroke-[2]" />
                                                             <span>Salin</span>
                                                         </>
                                                     )}
@@ -587,10 +784,14 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                                                     handleManualCheckStatus
                                                 }
                                                 disabled={isChecking}
-                                                className="inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
+                                                className="inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 text-xs font-bold px-3.5 py-2 rounded-2xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs cursor-pointer active:scale-95"
                                             >
                                                 <RefreshCw
-                                                    className={`w-3.5 h-3.5 text-slate-500 ${isChecking ? "animate-spin" : ""}`}
+                                                    className={cn(
+                                                        "w-3.5 h-3.5 stroke-[2.2]",
+                                                        isChecking &&
+                                                            "animate-spin",
+                                                    )}
                                                 />
                                                 <span>
                                                     {isChecking
@@ -602,27 +803,31 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                                     </div>
 
                                     {isQris && (
-                                        <div className="px-5 sm:px-6 py-3 bg-amber-50/70 border-b border-amber-200/60 flex flex-wrap items-center justify-between gap-3 text-xs">
-                                            <div className="flex items-center gap-2 text-amber-950">
-                                                <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                                        <div className="px-5 sm:px-6 py-3 bg-amber-50/80 border-b border-amber-200/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+                                            <div className="flex items-center gap-2 text-amber-950 font-medium">
+                                                <Clock className="w-4 h-4 text-amber-600 shrink-0 stroke-[2.2]" />
                                                 <p>
-                                                    Masa aktif QRIS{" "}
-                                                    <strong className="font-semibold">
+                                                    Masa aktif kode QRIS adalah{" "}
+                                                    <strong className="font-bold font-mono">
                                                         15 Menit
                                                     </strong>
-                                                    . Lakukan perpanjangan kode
-                                                    jika waktu habis tanpa
-                                                    membatalkan pesanan.
+                                                    . Perbarui barcode jika
+                                                    waktu habis tanpa
+                                                    membatalkan order.
                                                 </p>
                                             </div>
                                             <button
                                                 type="button"
                                                 onClick={handleRefreshQris}
                                                 disabled={isRefreshingQris}
-                                                className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-900 bg-amber-100 hover:bg-amber-200 px-2.5 py-1 rounded-md transition-colors disabled:opacity-50"
+                                                className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-950 bg-amber-200/70 hover:bg-amber-200 px-3 py-1.5 rounded-xl transition-colors disabled:opacity-50 cursor-pointer shadow-2xs"
                                             >
                                                 <RotateCcw
-                                                    className={`w-3.5 h-3.5 ${isRefreshingQris ? "animate-spin" : ""}`}
+                                                    className={cn(
+                                                        "w-3.5 h-3.5 stroke-[2.2]",
+                                                        isRefreshingQris &&
+                                                            "animate-spin",
+                                                    )}
                                                 />
                                                 <span>
                                                     {isRefreshingQris
@@ -645,6 +850,12 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                                                 }
                                                 instruksiBayar={
                                                     pembayaran.instruksi_bayar
+                                                }
+                                                isDevMode={Boolean(
+                                                    import.meta.env.DEV,
+                                                )}
+                                                onRefreshQris={
+                                                    handleRefreshQris
                                                 }
                                             />
                                         )}
@@ -676,6 +887,12 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                                                 nomorPesanan={
                                                     activeOrder.nomor_pesanan
                                                 }
+                                                isDevMode={Boolean(
+                                                    import.meta.env.DEV,
+                                                )}
+                                                onRefreshVa={
+                                                    handleManualCheckStatus
+                                                }
                                             />
                                         )}
 
@@ -685,9 +902,9 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                                                 onClick={() =>
                                                     setIsChangePaymentOpen(true)
                                                 }
-                                                className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-lg transition-colors"
+                                                className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2.5 rounded-2xl transition-colors cursor-pointer shadow-2xs active:scale-95"
                                             >
-                                                <CreditCard className="w-3.5 h-3.5 text-slate-500" />
+                                                <CreditCard className="w-4 h-4 text-slate-500 stroke-[2.2]" />
                                                 <span>
                                                     Ganti Metode Pembayaran
                                                 </span>
@@ -698,9 +915,9 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                                                 onClick={() =>
                                                     setIsCancelOrderOpen(true)
                                                 }
-                                                className="inline-flex items-center gap-1.5 text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-3 py-2 rounded-lg transition-colors"
+                                                className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-4 py-2.5 rounded-2xl transition-colors cursor-pointer active:scale-95"
                                             >
-                                                <XCircle className="w-3.5 h-3.5" />
+                                                <XCircle className="w-4 h-4 stroke-[2.2]" />
                                                 <span>Batalkan Pesanan</span>
                                             </button>
                                         </div>
@@ -708,87 +925,94 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                                 </section>
                             )}
 
-                            {/* Terminated State (Dibatalkan / Expired) */}
+                            {/* State 4: Pesanan Selesai / Batal / Expired */}
                             {isTerminated && (
-                                <section className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
+                                <section className="bg-white border border-slate-200/90 rounded-3xl p-6 space-y-4 shadow-2xs">
                                     <div className="flex items-start gap-3.5">
-                                        <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 flex items-center justify-center shrink-0">
-                                            <XCircle className="w-5 h-5 text-slate-500" />
+                                        <div className="w-10 h-10 rounded-2xl bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center shrink-0 shadow-2xs">
+                                            <XCircle className="w-5 h-5 stroke-[2.2]" />
                                         </div>
                                         <div className="space-y-1">
-                                            <h2 className="text-base sm:text-lg font-semibold text-slate-900 tracking-tight">
+                                            <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
                                                 Pesanan Ini Telah Berakhir
                                             </h2>
-                                            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
                                                 Faktur ini berstatus{" "}
-                                                <strong className="text-slate-800">
+                                                <strong className="text-slate-900 font-bold">
                                                     {statusNormalized ===
                                                     "dibatalkan"
                                                         ? "Dibatalkan"
                                                         : "Kedaluwarsa"}
                                                 </strong>
                                                 . Tagihan pembayaran tidak lagi
-                                                aktif dan pesanan tidak dapat
-                                                diproses lebih lanjut.
+                                                aktif dan pesanan tidak diproses
+                                                lebih lanjut.
                                             </p>
                                         </div>
                                     </div>
 
-                                    <div className="pt-2">
+                                    <div className="pt-1">
                                         <Link
                                             href="/katalog"
-                                            className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs px-4 py-2.5 rounded-lg transition-colors"
+                                            className="inline-flex items-center gap-2 bg-[#E52027] hover:bg-[#CC1C22] text-white font-bold text-xs px-5 py-2.5 rounded-2xl transition-all shadow-xs active:scale-95"
                                         >
-                                            <ShoppingBag className="w-3.5 h-3.5" />
+                                            <ShoppingBag className="w-4 h-4 stroke-[2.2]" />
                                             <span>Buat Pesanan Baru</span>
                                         </Link>
                                     </div>
                                 </section>
                             )}
 
-                            {/* Customer Support Banner */}
+                            {/* Banner Customer Service Adaptif */}
                             <aside
-                                aria-label="Bantuan Pembayaran"
-                                className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-slate-600"
+                                aria-label="Bantuan Layanan Pelanggan"
+                                className="bg-slate-50 border border-slate-200/90 rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-slate-600 shadow-2xs"
                             >
                                 <div className="flex items-start sm:items-center gap-3">
-                                    <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center shrink-0 shadow-xs">
+                                    <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200/90 flex items-center justify-center shrink-0 shadow-2xs">
                                         <HelpCircle
-                                            className="w-4 h-4 text-slate-500"
+                                            className="w-5 h-5 text-[#E52027] stroke-[2.2]"
                                             aria-hidden="true"
                                         />
                                     </div>
                                     <div className="space-y-0.5">
-                                        <p className="font-semibold text-slate-900 leading-snug">
-                                            Mengalami Kendala Pembayaran?
+                                        <p className="font-black text-slate-900 text-xs sm:text-sm">
+                                            {isSuccessSettled
+                                                ? "Ada Pertanyaan Mengenai Pesanan Anda?"
+                                                : "Mengalami Kendala Pembayaran?"}
                                         </p>
-                                        <p className="text-slate-500 text-[11px] leading-relaxed">
-                                            Tim Customer Service resmi CRSL siap
-                                            membantu kendala Anda.
+                                        <p className="text-slate-500 text-[11px] leading-relaxed font-medium">
+                                            {isSuccessSettled
+                                                ? "Tim CS dan logistik resmi CRSL siap membantu pengecekan paket dan resi."
+                                                : "Tim Customer Service siap membantu konfirmasi status pembayaran Anda."}
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t border-slate-200/60 sm:border-0">
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            setIsTermsModalOpen(true)
-                                        }
-                                        className="text-slate-500 hover:text-slate-900 font-medium text-[11px] underline-offset-4 hover:underline rounded px-1.5 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
-                                    >
-                                        S&K Pembayaran
-                                    </button>
+                                <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t border-slate-200/60 sm:border-0 shrink-0">
+                                    {isPendingPayment && (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setIsTermsModalOpen(true)
+                                            }
+                                            className="text-slate-500 hover:text-slate-900 font-bold text-[11px] underline-offset-4 hover:underline rounded-lg px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer"
+                                        >
+                                            S&amp;K Pembayaran
+                                        </button>
+                                    )}
 
                                     <a
-                                        href={`https://wa.me/6281234567890?text=Halo%20CRSL%2C%20saya%20butuh%20bantuan%20terkait%20pesanan%20${encodeURIComponent(activeOrder.nomor_pesanan || "")}`}
+                                        href={`https://wa.me/${cleanCsPhone}?text=${encodeURIComponent(
+                                            `Halo Tim CS CRSL, saya butuh bantuan terkait faktur pesanan #${activeOrder.nomor_pesanan}`,
+                                        )}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-3.5 py-2 rounded-lg transition-colors shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+                                        className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-2xl transition-all shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 cursor-pointer active:scale-95"
                                     >
                                         <span>Chat CS WhatsApp</span>
                                         <ExternalLink
-                                            className="w-3.5 h-3.5 opacity-80"
+                                            className="w-3.5 h-3.5 stroke-[2.5]"
                                             aria-hidden="true"
                                         />
                                     </a>
@@ -796,8 +1020,8 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                             </aside>
                         </div>
 
-                        {/* Order Summary & Shipping Details Column */}
-                        <div className="lg:col-span-5">
+                        {/* Kolom Kanan: Rincian Tagihan & Pengiriman */}
+                        <div className="lg:col-span-5 lg:sticky lg:top-6 space-y-4">
                             <RincianFaktur
                                 nomorPesanan={activeOrder.nomor_pesanan}
                                 status={statusPesanan}
@@ -806,14 +1030,14 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                                 ongkir={activeOrder.ongkir}
                                 diskon={activeOrder.diskon}
                                 total={activeOrder.total}
+                                kodeVoucher={activeOrder.kode_voucher}
+                                poinDigunakan={activeOrder.poin_digunakan}
                                 pengiriman={pengiriman}
                                 isDropship={activeOrder.is_dropship}
                                 dropshipPengirim={activeOrder.dropship_pengirim}
                                 dropshipTelepon={activeOrder.dropship_telepon}
-                                asuransiPengiriman={
-                                    activeOrder.asuransi_pengiriman
-                                }
-                                biayaAsuransi={activeOrder.biaya_asuransi}
+                                asuransiPengiriman={isInsuranceActive}
+                                biayaAsuransi={insuranceAmount}
                                 formatRupiah={formatRupiah}
                                 onOpenEditRecipient={() =>
                                     setIsEditAddressOpen(true)
@@ -823,6 +1047,7 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                     </div>
                 </main>
 
+                {/* Modals Terintegrasi */}
                 <ModalUbahAlamat
                     isOpen={isEditAddressOpen}
                     onClose={() => setIsEditAddressOpen(false)}
@@ -831,6 +1056,7 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                     teleponDefault={recipientPhone}
                     alamatLengkapDefault={recipientAddress}
                     catatanDefault={currentNotes}
+                    wilayahTerkunci={lockedRegionText}
                     onSuccess={() => {
                         router.reload({ only: ["pesanan"] });
                     }}
@@ -855,75 +1081,122 @@ export default function Faktur({ pesanan, is_baru }: InvoiceProps) {
                     onConfirmPayment={handleConfirmChangePayment}
                 />
 
-                {isTermsModalOpen && (
-                    <div
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="terms-modal-title"
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200"
+                {/* Modal Syarat & Ketentuan Pembayaran Headless UI WAI-ARIA */}
+                <Transition show={isTermsModalOpen} as={Fragment}>
+                    <Dialog
+                        as="div"
+                        id="modal-terms-pembayaran"
+                        className="relative z-50 select-none"
+                        onClose={() => setIsTermsModalOpen(false)}
                     >
-                        <div className="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 space-y-4 shadow-xl border border-slate-200">
-                            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                                <div className="flex items-center gap-2">
-                                    <ShieldAlert className="w-4 h-4 text-slate-700" />
-                                    <h3
-                                        id="terms-modal-title"
-                                        className="font-semibold text-sm text-slate-900"
-                                    >
-                                        Syarat & Ketentuan Pembayaran
-                                    </h3>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setIsTermsModalOpen(false)}
-                                    aria-label="Tutup jendela syarat dan ketentuan"
-                                    className="p-1 text-slate-400 hover:text-slate-700 rounded-md transition-colors"
-                                >
-                                    <XCircle className="w-4 h-4" />
-                                </button>
-                            </div>
+                        <TransitionChild
+                            as={Fragment}
+                            enter="ease-out duration-200"
+                            enterFrom="opacity-0"
+                            enterTo="opacity-100"
+                            leave="ease-in duration-150"
+                            leaveFrom="opacity-100"
+                            leaveTo="opacity-0"
+                        >
+                            <DialogBackdrop className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity" />
+                        </TransitionChild>
 
-                            <div className="space-y-2.5 text-xs text-slate-600 leading-relaxed max-h-72 overflow-y-auto pr-1">
-                                <p>
-                                    1. Pesanan yang belum diselesaikan
-                                    dicadangkan selama <strong>24 jam</strong>{" "}
-                                    sejak faktur terbit.
-                                </p>
-                                <p>
-                                    2. Khusus metode <strong>QRIS</strong>, masa
-                                    aktif scan adalah <strong>15 menit</strong>.
-                                    Anda dapat memperbarui kode jika waktu habis
-                                    tanpa membatalkan order.
-                                </p>
-                                <p>
-                                    3. Penggantian metode pembayaran dapat
-                                    dilakukan kapan saja sebelum transaksi
-                                    berstatus lunas.
-                                </p>
-                                <p>
-                                    4. Jika pesanan dibatalkan, kuota voucher
-                                    dan koin loyalty point otomatis dikembalikan
-                                    ke akun Anda.
-                                </p>
-                                <p>
-                                    5. Pesanan lunas langsung dialokasikan ke
-                                    antrean logistik dan tidak dapat dibatalkan
-                                    sepihak.
-                                </p>
-                            </div>
-
-                            <div className="pt-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsTermsModalOpen(false)}
-                                    className="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 rounded-lg transition-colors text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
+                        <div className="fixed inset-0 z-10 overflow-y-auto">
+                            <div className="flex min-h-full items-center justify-center p-3 sm:p-4 text-center">
+                                <TransitionChild
+                                    as={Fragment}
+                                    enter="ease-out duration-200"
+                                    enterFrom="opacity-0 scale-95 -translate-y-2"
+                                    enterTo="opacity-100 scale-100 translate-y-0"
+                                    leave="ease-in duration-150"
+                                    leaveFrom="opacity-100 scale-100 translate-y-0"
+                                    leaveTo="opacity-0 scale-95 -translate-y-2"
                                 >
-                                    Saya Mengerti
-                                </button>
+                                    <DialogPanel className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-200/90 text-left transition-all space-y-4">
+                                        <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="w-8 h-8 rounded-xl bg-red-50 text-[#E52027] border border-red-100 flex items-center justify-center shrink-0">
+                                                    <ShieldAlert className="w-4 h-4 stroke-[2.2]" />
+                                                </div>
+                                                <DialogTitle
+                                                    as="h3"
+                                                    className="font-black text-sm sm:text-base text-slate-900 tracking-tight"
+                                                >
+                                                    Syarat &amp; Ketentuan
+                                                    Pembayaran
+                                                </DialogTitle>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setIsTermsModalOpen(false)
+                                                }
+                                                aria-label="Tutup jendela syarat dan ketentuan"
+                                                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                            >
+                                                <X className="w-4 h-4 stroke-[2.2]" />
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-3 text-xs text-slate-600 leading-relaxed max-h-72 overflow-y-auto pr-1 no-scrollbar font-medium">
+                                            <p>
+                                                1. Pesanan yang belum
+                                                diselesaikan dicadangkan selama{" "}
+                                                <strong className="text-slate-900 font-bold font-mono">
+                                                    24 jam
+                                                </strong>{" "}
+                                                sejak faktur terbit.
+                                            </p>
+                                            <p>
+                                                2. Khusus metode{" "}
+                                                <strong className="text-slate-900 font-bold">
+                                                    QRIS
+                                                </strong>
+                                                , masa aktif pindai adalah{" "}
+                                                <strong className="text-slate-900 font-bold font-mono">
+                                                    15 menit
+                                                </strong>
+                                                . Anda dapat memperbarui kode
+                                                jika waktu habis tanpa
+                                                membatalkan order.
+                                            </p>
+                                            <p>
+                                                3. Penggantian metode pembayaran
+                                                dapat dilakukan kapan saja
+                                                sebelum transaksi berstatus
+                                                lunas.
+                                            </p>
+                                            <p>
+                                                4. Jika pesanan dibatalkan,
+                                                kuota voucher diskon dan Koin
+                                                Loyalitas otomatis dikembalikan
+                                                ke akun Anda.
+                                            </p>
+                                            <p>
+                                                5. Pesanan yang sudah lunas
+                                                langsung dialokasikan ke antrean
+                                                gudang dan tidak dapat
+                                                dibatalkan sepihak.
+                                            </p>
+                                        </div>
+
+                                        <div className="pt-2 border-t border-slate-100">
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setIsTermsModalOpen(false)
+                                                }
+                                                className="w-full bg-[#E52027] hover:bg-[#CC1C22] text-white font-bold py-2.5 rounded-2xl transition-all text-xs shadow-md shadow-red-500/20 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer"
+                                            >
+                                                Saya Mengerti
+                                            </button>
+                                        </div>
+                                    </DialogPanel>
+                                </TransitionChild>
                             </div>
                         </div>
-                    </div>
-                )}
+                    </Dialog>
+                </Transition>
             </div>
         </StorefrontLayout>
     );

@@ -295,7 +295,7 @@ class BiteshipService
                 'biteship_order_id' => 'mock_order_' . Str::uuid(),
                 'waybill_id'        => $simulasiResi,
                 'status'            => 'allocated',
-                'tracking_url'      => 'https://biteship.com/track/' . $simulasiResi,
+                'tracking_url'      => 'https://track.biteship.com/' . $simulasiResi,
                 'is_simulasi'       => true,
             ];
         }
@@ -381,7 +381,7 @@ class BiteshipService
                     'biteship_order_id' => 'dev_order_' . Str::uuid(),
                     'waybill_id'        => $simulasiResi,
                     'status'            => 'allocated',
-                    'tracking_url'      => 'https://biteship.com/track/' . $simulasiResi,
+                    'tracking_url'      => 'https://track.biteship.com/' . $simulasiResi,
                     'is_simulasi'       => true,
                 ];
             }
@@ -401,7 +401,7 @@ class BiteshipService
                     'biteship_order_id' => 'dev_order_' . Str::uuid(),
                     'waybill_id'        => $simulasiResi,
                     'status'            => 'allocated',
-                    'tracking_url'      => 'https://biteship.com/track/' . $simulasiResi,
+                    'tracking_url'      => 'https://track.biteship.com/' . $simulasiResi,
                     'is_simulasi'       => true,
                 ];
             }
@@ -424,12 +424,20 @@ class BiteshipService
     {
         $sample = [
             [
-                'id'        => 'IDnp647101',
+                'id'        => 'IDNP5IDNC412IDND5043IDZ55281',
                 'nama'      => 'Condongcatur, Depok, Sleman, D.I. Yogyakarta (55281)',
                 'kota'      => 'Sleman',
                 'kecamatan' => 'Depok',
                 'provinsi'  => 'D.I. Yogyakarta',
                 'kode_pos'  => '55281',
+            ],
+            [
+                'id'        => 'IDNP6IDNC147IDND830IDZ10560',
+                'nama'      => 'Johar Baru, Jakarta Pusat, DKI Jakarta (10560)',
+                'kota'      => 'Jakarta Pusat',
+                'kecamatan' => 'Johar Baru',
+                'provinsi'  => 'DKI Jakarta',
+                'kode_pos'  => '10560',
             ],
             [
                 'id'        => 'IDnp317401',
@@ -497,7 +505,7 @@ class BiteshipService
                         'kurir'      => $courierCode,
                         'status'     => $json['status'] ?? 'allocated',
                         'history'    => $json['history'] ?? [],
-                        'link'       => $json['link'] ?? "https://biteship.com/track/{$waybillId}",
+                        'link'       => $json['link'] ?? "https://track.biteship.com/{$waybillId}",
                         'raw'        => $json,
                     ];
                 }
@@ -523,7 +531,7 @@ class BiteshipService
             'waybill_id' => $waybillId,
             'kurir'      => strtoupper($courierCode),
             'status'     => 'on_process',
-            'link'       => "https://biteship.com/track/{$waybillId}",
+            'link'       => "https://track.biteship.com/{$waybillId}",
             'history'    => [
                 [
                     'note'       => 'Paket telah diserahkan ke kurir ' . strtoupper($courierCode) . ' di Drop Point Sleman.',

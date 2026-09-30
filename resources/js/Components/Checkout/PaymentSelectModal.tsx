@@ -1,13 +1,36 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { X, Check, ChevronDown, ChevronUp, AlertCircle, ArrowLeft } from "lucide-react";
+import {
+    useState,
+    useEffect,
+    useMemo,
+    useCallback,
+    Fragment,
+} from "react";
+import {
+    Dialog,
+    DialogPanel,
+    DialogTitle,
+    DialogBackdrop,
+    Transition,
+    TransitionChild,
+} from "@headlessui/react";
+import {
+    X,
+    Check,
+    ChevronDown,
+    ChevronUp,
+    ArrowLeft,
+    CreditCard,
+} from "lucide-react";
 import { PaymentOption } from "./PaymentMethodSection";
 import { toast } from "sonner";
+import { cn } from "../../lib/utils";
 
 interface PaymentSelectModalProps {
-    isOpen: boolean;
+    isOpen?: boolean;
     onClose: () => void;
-    selectedPaymentId: string;
+    selectedPaymentId?: string;
     onConfirmPayment: (method: PaymentOption) => void;
+    className?: string;
 }
 
 export interface BankVAItem {
@@ -22,7 +45,7 @@ const VA_BANKS: BankVAItem[] = [
     {
         id: "va_bca",
         nama: "BCA",
-        subjudul: "Virtual Account BCA (Automated)",
+        subjudul: "Virtual Account BCA (Otomatis)",
         ikon: "/assets/ikon/payment-bca.svg",
         tipe: "bank_transfer",
     },
@@ -57,55 +80,35 @@ const VA_BANKS: BankVAItem[] = [
 ];
 
 export default function PaymentSelectModal({
-    isOpen,
+    isOpen = false,
     onClose,
-    selectedPaymentId,
+    selectedPaymentId = "qris",
     onConfirmPayment,
+    className,
 }: PaymentSelectModalProps) {
+    const isVisible = Boolean(isOpen);
     const [temporaryId, setTemporaryId] = useState<string>(selectedPaymentId);
     const [isOtherExpanded, setIsOtherExpanded] = useState<boolean>(true);
     const [showingVaSubmenu, setShowingVaSubmenu] = useState<boolean>(false);
+    const [failedIcons, setFailedIcons] = useState<Record<string, boolean>>({});
 
     // Sinkronisasi state saat modal dibuka
     useEffect(() => {
-        if (isOpen) {
+        if (isVisible) {
             setTemporaryId(selectedPaymentId);
             setShowingVaSubmenu(selectedPaymentId.startsWith("va_"));
             setIsOtherExpanded(true);
         }
-    }, [isOpen, selectedPaymentId]);
+    }, [isVisible, selectedPaymentId]);
 
-    // Aksesibilitas: Keyboard Escape & Lock Body Scroll
-    useEffect(() => {
-        if (!isOpen) return;
-
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape") {
-                if (showingVaSubmenu) {
-                    setShowingVaSubmenu(false);
-                } else {
-                    onClose();
-                }
-            }
-        };
-
-        const originalOverflow = document.body.style.overflow;
-        document.body.style.overflow = "hidden";
-        window.addEventListener("keydown", handleKeyDown);
-
-        return () => {
-            document.body.style.overflow = originalOverflow;
-            window.removeEventListener("keydown", handleKeyDown);
-        };
-    }, [isOpen, onClose, showingVaSubmenu]);
-
-    // Cari item yang sedang dipilih
+    // Cari entitas metode pembayaran aktif
     const selectedItem = useMemo<PaymentOption | null>(() => {
         if (temporaryId === "qris") {
             return {
                 id: "qris",
-                nama: "QRIS",
-                subjudul: "GoPay, OVO, Dana, ShopeePay & Mobile Banking",
+                nama: "QRIS (GoPay, OVO, Dana, ShopeePay)",
+                subjudul:
+                    "Mendukung semua aplikasi e-wallet & m-banking berstandar QRIS",
                 tipe: "qris",
                 ikon: "/assets/ikon/payment-qris.svg",
             };
@@ -126,7 +129,7 @@ export default function PaymentSelectModal({
             return {
                 id: "ovo",
                 nama: "OVO",
-                subjudul: "Pembayaran Instan via OVO",
+                subjudul: "Pembayaran instan via aplikasi OVO",
                 tipe: "qris",
                 ikon: "/assets/ikon/payment-ovo.svg",
             };
@@ -135,8 +138,8 @@ export default function PaymentSelectModal({
         if (temporaryId === "credit_card") {
             return {
                 id: "credit_card",
-                nama: "Credit/Debit Card",
-                subjudul: "Visa, Mastercard, JCB",
+                nama: "Kartu Kredit / Debit Online",
+                subjudul: "Visa, Mastercard, JCB berlogo 3D Secure",
                 tipe: "credit_card",
                 ikon: "/assets/ikon/payment-visa.svg",
             };
@@ -145,8 +148,8 @@ export default function PaymentSelectModal({
         if (temporaryId === "alfamart") {
             return {
                 id: "alfamart",
-                nama: "Alfamart",
-                subjudul: "Gerai Alfamart / AlfaMIDI",
+                nama: "Alfamart / AlfaMIDI",
+                subjudul: "Bayar di gerai Alfamart terdekat",
                 tipe: "cstore",
                 ikon: "/assets/ikon/payment-alfamart.svg",
             };
@@ -155,8 +158,8 @@ export default function PaymentSelectModal({
         if (temporaryId === "akulaku") {
             return {
                 id: "akulaku",
-                nama: "Akulaku",
-                subjudul: "Cicilan Akulaku PayLater",
+                nama: "Akulaku PayLater",
+                subjudul: "Cicilan belanja online instan via Akulaku",
                 tipe: "paylater",
                 ikon: "",
             };
@@ -172,7 +175,9 @@ export default function PaymentSelectModal({
         }
 
         if (id === "alfamart" || id === "akulaku" || id === "credit_card") {
-            toast.info(`${id === "credit_card" ? "Credit Card" : id.toUpperCase()} saat ini dalam mode Sandbox Midtrans. Disarankan menggunakan QRIS atau Virtual Account.`);
+            toast.info(
+                `${id === "credit_card" ? "Kartu Kredit" : id.toUpperCase()} saat ini dalam mode Sandbox Midtrans. Disarankan menggunakan QRIS atau Virtual Account.`,
+            );
         }
 
         setTemporaryId(id);
@@ -183,256 +188,441 @@ export default function PaymentSelectModal({
             onConfirmPayment(selectedItem);
             onClose();
         } else {
-            toast.error("Silakan pilih metode pembayaran terlebih dahulu");
+            toast.error("Silakan pilih saluran pembayaran terlebih dahulu.");
         }
     }, [selectedItem, onConfirmPayment, onClose]);
 
-    if (!isOpen) return null;
+    const handleIconError = (id: string) => {
+        setFailedIcons((prev) => ({ ...prev, [id]: true }));
+    };
 
     const isVaSelected = temporaryId.startsWith("va_");
 
     return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="payment-modal-title"
-            onClick={onClose}
-        >
-            <div
-                className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]"
-                onClick={(e) => e.stopPropagation()}
+        <Transition show={isVisible} as={Fragment}>
+            <Dialog
+                as="div"
+                id="modal-pilih-metode-pembayaran"
+                className={cn("relative z-50 select-none", className)}
+                onClose={() => {
+                    if (showingVaSubmenu) {
+                        setShowingVaSubmenu(false);
+                    } else {
+                        onClose();
+                    }
+                }}
             >
-                {/* Header Modal persis Screenshot #1 */}
-                <div className="relative px-6 py-4.5 border-b border-slate-100 flex items-center justify-center">
-                    {showingVaSubmenu ? (
-                        <button
-                            type="button"
-                            onClick={() => setShowingVaSubmenu(false)}
-                            className="absolute left-5 p-1 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer flex items-center gap-1 text-xs font-semibold"
-                            aria-label="Kembali"
+                {/* Backdrop Layer */}
+                <TransitionChild
+                    as={Fragment}
+                    enter="ease-out duration-200"
+                    enterFrom="opacity-0"
+                    enterTo="opacity-100"
+                    leave="ease-in duration-150"
+                    leaveFrom="opacity-100"
+                    leaveTo="opacity-0"
+                >
+                    <DialogBackdrop className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity" />
+                </TransitionChild>
+
+                {/* Kontainer Modal Tengah */}
+                <div className="fixed inset-0 z-10 overflow-y-auto">
+                    <div className="flex min-h-full items-center justify-center p-3 sm:p-4 text-center">
+                        <TransitionChild
+                            as={Fragment}
+                            enter="ease-out duration-200"
+                            enterFrom="opacity-0 scale-95 -translate-y-2"
+                            enterTo="opacity-100 scale-100 translate-y-0"
+                            leave="ease-in duration-150"
+                            leaveFrom="opacity-100 scale-100 translate-y-0"
+                            leaveTo="opacity-0 scale-95 -translate-y-2"
                         >
-                            <ArrowLeft className="w-4 h-4" />
-                            <span>Kembali</span>
-                        </button>
-                    ) : null}
-
-                    <h3
-                        id="payment-modal-title"
-                        className="text-base font-bold text-slate-800 tracking-tight"
-                    >
-                        {showingVaSubmenu ? "Pilih Bank Virtual Account" : "Payment Method"}
-                    </h3>
-
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="absolute right-5 p-1 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer rounded-full"
-                        aria-label="Tutup modal"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
-
-                {/* Body Content */}
-                <div className="p-6 overflow-y-auto space-y-5">
-                    {showingVaSubmenu ? (
-                        /* Submenu Bank Virtual Account */
-                        <div className="space-y-2">
-                            <p className="text-xs text-slate-500 mb-3">
-                                Pilih bank untuk mendapatkan Nomor Virtual Account otomatis:
-                            </p>
-                            <div className="divide-y divide-slate-100 border border-slate-200 rounded-2xl overflow-hidden">
-                                {VA_BANKS.map((bank) => {
-                                    const isSelected = temporaryId === bank.id;
-                                    return (
-                                        <div
-                                            key={bank.id}
-                                            onClick={() => {
-                                                setTemporaryId(bank.id);
-                                            }}
-                                            className={`p-3.5 flex items-center justify-between gap-3 cursor-pointer transition-colors ${
-                                                isSelected
-                                                    ? "bg-red-50/30"
-                                                    : "hover:bg-slate-50"
-                                            }`}
+                            <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-3xl bg-white text-left align-middle shadow-2xl transition-all border border-slate-200/90 flex flex-col max-h-[calc(100dvh-3rem)]">
+                                {/* Header Modal */}
+                                <div className="relative px-5 py-4 border-b border-slate-100 flex items-center justify-center shrink-0">
+                                    {showingVaSubmenu && (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setShowingVaSubmenu(false)
+                                            }
+                                            className="absolute left-4 p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer flex items-center gap-1 text-xs font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                            aria-label="Kembali ke pilihan utama pembayaran"
                                         >
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-12 h-8 bg-white border border-slate-200 rounded-lg p-1 flex items-center justify-center shrink-0">
-                                                    <img
-                                                        src={bank.ikon}
-                                                        alt={bank.nama}
-                                                        className="max-h-full max-w-full object-contain"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-slate-900">
-                                                        {bank.nama} Virtual Account
-                                                    </p>
-                                                    <p className="text-[11px] text-slate-500">
-                                                        {bank.subjudul}
-                                                    </p>
-                                                </div>
-                                            </div>
+                                            <ArrowLeft className="w-4 h-4 stroke-[2.2]" />
+                                            <span>Kembali</span>
+                                        </button>
+                                    )}
 
-                                            <div className="shrink-0">
-                                                {isSelected ? (
-                                                    <span className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center shadow-xs">
-                                                        <Check className="w-3.5 h-3.5 stroke-3" />
-                                                    </span>
-                                                ) : (
-                                                    <span className="w-5 h-5 rounded-full border border-slate-300 bg-white block" />
-                                                )}
+                                    <DialogTitle
+                                        as="h3"
+                                        className="text-base font-black text-slate-900 tracking-tight"
+                                    >
+                                        {showingVaSubmenu
+                                            ? "Pilih Bank Virtual Account"
+                                            : "Pilih Metode Pembayaran"}
+                                    </DialogTitle>
+
+                                    <button
+                                        type="button"
+                                        onClick={onClose}
+                                        className="absolute right-4 p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                        aria-label="Tutup jendela pembayaran"
+                                    >
+                                        <X className="w-4 h-4 stroke-[2.2]" />
+                                    </button>
+                                </div>
+
+                                {/* Body Content */}
+                                <div className="p-5 sm:p-6 overflow-y-auto space-y-4 no-scrollbar overscroll-contain flex-1">
+                                    {showingVaSubmenu ? (
+                                        /* Submenu Bank Virtual Account WAI-ARIA List */
+                                        <div className="space-y-3">
+                                            <p className="text-xs text-slate-500">
+                                                Pilih rekening bank tujuan untuk
+                                                mendapatkan nomor Virtual
+                                                Account otomatis dari Midtrans:
+                                            </p>
+
+                                            <div
+                                                role="radiogroup"
+                                                aria-label="Daftar Bank Virtual Account"
+                                                className="divide-y divide-slate-100 border border-slate-200/90 rounded-2xl overflow-hidden shadow-2xs"
+                                            >
+                                                {VA_BANKS.map((bank) => {
+                                                    const isSelected =
+                                                        temporaryId === bank.id;
+                                                    const isIconBroken =
+                                                        failedIcons[bank.id];
+
+                                                    return (
+                                                        <div
+                                                            key={bank.id}
+                                                            role="radio"
+                                                            aria-checked={
+                                                                isSelected
+                                                            }
+                                                            tabIndex={0}
+                                                            onClick={() =>
+                                                                setTemporaryId(
+                                                                    bank.id,
+                                                                )
+                                                            }
+                                                            onKeyDown={(e) => {
+                                                                if (
+                                                                    e.key ===
+                                                                        "Enter" ||
+                                                                    e.key ===
+                                                                        " "
+                                                                ) {
+                                                                    e.preventDefault();
+                                                                    setTemporaryId(
+                                                                        bank.id,
+                                                                    );
+                                                                }
+                                                            }}
+                                                            className={cn(
+                                                                "p-3.5 flex items-center justify-between gap-3 cursor-pointer transition-colors focus:outline-none focus-visible:bg-red-50/40",
+                                                                isSelected
+                                                                    ? "bg-red-50/30"
+                                                                    : "hover:bg-slate-50/80 bg-white",
+                                                            )}
+                                                        >
+                                                            <div className="flex items-center gap-3 min-w-0 pr-2">
+                                                                <div className="w-12 h-8 bg-white border border-slate-200/80 rounded-xl p-1 flex items-center justify-center shrink-0 shadow-2xs">
+                                                                    {!isIconBroken ? (
+                                                                        <img
+                                                                            src={
+                                                                                bank.ikon
+                                                                            }
+                                                                            alt={
+                                                                                bank.nama
+                                                                            }
+                                                                            className="max-h-full max-w-full object-contain"
+                                                                            onError={() =>
+                                                                                handleIconError(
+                                                                                    bank.id,
+                                                                                )
+                                                                            }
+                                                                        />
+                                                                    ) : (
+                                                                        <span className="text-[10px] font-black text-slate-800 font-mono">
+                                                                            {
+                                                                                bank.nama
+                                                                            }
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <p className="text-xs font-bold text-slate-900 truncate">
+                                                                        {
+                                                                            bank.nama
+                                                                        }{" "}
+                                                                        Virtual
+                                                                        Account
+                                                                    </p>
+                                                                    <p className="text-[11px] text-slate-500 font-medium truncate mt-0.5">
+                                                                        {
+                                                                            bank.subjudul
+                                                                        }
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="shrink-0">
+                                                                {isSelected ? (
+                                                                    <span className="w-5 h-5 rounded-full bg-[#E52027] text-white flex items-center justify-center shadow-2xs">
+                                                                        <Check className="w-3 h-3 stroke-[3]" />
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="w-5 h-5 rounded-full border border-slate-300 bg-white block" />
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    ) : (
-                        /* Main Payment Method Layout Sesuai Screenshot #1 */
-                        <>
-                            {/* Primary Method: QRIS Card */}
-                            <div>
-                                <button
-                                    type="button"
-                                    onClick={() => handleSelectMethod("qris")}
-                                    className={`w-full h-16 sm:h-18 px-6 rounded-2xl border-2 flex items-center justify-center transition-all cursor-pointer ${
-                                        temporaryId === "qris"
-                                            ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-xs"
-                                            : "border-slate-200 hover:border-slate-300 bg-white shadow-2xs"
-                                    }`}
-                                >
-                                    <img
-                                        src="/assets/ikon/payment-qris.svg"
-                                        alt="QRIS"
-                                        className="h-7 sm:h-8 object-contain"
-                                    />
-                                </button>
-                            </div>
-
-                            {/* Collapsible: Other Methods */}
-                            <div className="space-y-3 pt-1">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsOtherExpanded((prev) => !prev)}
-                                    className="w-full flex items-center justify-between text-sm font-semibold text-slate-700 hover:text-slate-900 cursor-pointer"
-                                >
-                                    <span>Other Methods</span>
-                                    {isOtherExpanded ? (
-                                        <ChevronUp className="w-4 h-4 text-slate-500" />
                                     ) : (
-                                        <ChevronDown className="w-4 h-4 text-slate-500" />
+                                        /* Main Payment Selection Layout */
+                                        <>
+                                            {/* Primary Card: QRIS */}
+                                            <div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        handleSelectMethod(
+                                                            "qris",
+                                                        )
+                                                    }
+                                                    className={cn(
+                                                        "w-full h-16 sm:h-18 px-5 rounded-2xl border-2 flex items-center justify-between transition-all cursor-pointer shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]",
+                                                        temporaryId === "qris"
+                                                            ? "border-[#E52027] bg-red-50/20 ring-2 ring-[#E52027]/20"
+                                                            : "border-slate-200 hover:border-slate-300 bg-white",
+                                                    )}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="h-9 px-2 bg-white rounded-xl border border-slate-100 flex items-center justify-center">
+                                                            <img
+                                                                src="/assets/ikon/payment-qris.svg"
+                                                                alt="QRIS"
+                                                                className="h-6 sm:h-7 object-contain"
+                                                                onError={(
+                                                                    e,
+                                                                ) => {
+                                                                    const target =
+                                                                        e.currentTarget;
+                                                                    target.style.display =
+                                                                        "none";
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <div className="text-left">
+                                                            <span className="block text-xs font-black text-slate-900">
+                                                                QRIS Instan
+                                                            </span>
+                                                            <span className="block text-[10px] text-slate-500 font-medium">
+                                                                GoPay, OVO,
+                                                                ShopeePay, BCA,
+                                                                Mandiri
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="shrink-0">
+                                                        {temporaryId ===
+                                                        "qris" ? (
+                                                            <span className="w-5 h-5 rounded-full bg-[#E52027] text-white flex items-center justify-center shadow-2xs">
+                                                                <Check className="w-3 h-3 stroke-[3]" />
+                                                            </span>
+                                                        ) : (
+                                                            <span className="w-5 h-5 rounded-full border border-slate-300 bg-white block" />
+                                                        )}
+                                                    </div>
+                                                </button>
+                                            </div>
+
+                                            {/* Collapsible: Saluran Lainnya */}
+                                            <div className="space-y-3 pt-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setIsOtherExpanded(
+                                                            (prev) => !prev,
+                                                        )
+                                                    }
+                                                    className="w-full flex items-center justify-between text-xs font-bold text-slate-700 hover:text-slate-900 cursor-pointer py-1"
+                                                >
+                                                    <span className="uppercase tracking-wider">
+                                                        Metode Pembayaran
+                                                        Lainnya
+                                                    </span>
+                                                    {isOtherExpanded ? (
+                                                        <ChevronUp className="w-4 h-4 text-slate-500" />
+                                                    ) : (
+                                                        <ChevronDown className="w-4 h-4 text-slate-500" />
+                                                    )}
+                                                </button>
+
+                                                {isOtherExpanded && (
+                                                    <div className="grid grid-cols-2 gap-2.5 pt-0.5">
+                                                        {/* OVO */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                handleSelectMethod(
+                                                                    "ovo",
+                                                                )
+                                                            }
+                                                            className={cn(
+                                                                "h-16 px-3.5 rounded-2xl border flex items-center justify-center transition-all cursor-pointer shadow-2xs",
+                                                                temporaryId ===
+                                                                    "ovo"
+                                                                    ? "border-[#E52027] bg-red-50/20 ring-1 ring-[#E52027]"
+                                                                    : "border-slate-200 hover:border-slate-300 bg-white",
+                                                            )}
+                                                        >
+                                                            <span className="text-base font-black text-[#4c3494] tracking-tight font-mono">
+                                                                OVO
+                                                            </span>
+                                                        </button>
+
+                                                        {/* Virtual Account Submenu Trigger */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                handleSelectMethod(
+                                                                    "virtual_account",
+                                                                )
+                                                            }
+                                                            className={cn(
+                                                                "h-16 px-3.5 rounded-2xl border flex flex-col items-center justify-center transition-all cursor-pointer shadow-2xs",
+                                                                isVaSelected
+                                                                    ? "border-[#E52027] bg-red-50/20 ring-1 ring-[#E52027]"
+                                                                    : "border-slate-200 hover:border-slate-300 bg-white",
+                                                            )}
+                                                        >
+                                                            <span className="text-xs font-bold text-slate-900 leading-tight">
+                                                                Virtual Account
+                                                            </span>
+                                                            <span className="text-[10px] text-[#E52027] font-bold truncate max-w-full mt-0.5">
+                                                                {isVaSelected
+                                                                    ? VA_BANKS.find(
+                                                                          (b) =>
+                                                                              b.id ===
+                                                                              temporaryId,
+                                                                      )?.nama ||
+                                                                      "Pilih Bank"
+                                                                    : "BCA, Mandiri, BRI..."}
+                                                            </span>
+                                                        </button>
+
+                                                        {/* Alfamart */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                handleSelectMethod(
+                                                                    "alfamart",
+                                                                )
+                                                            }
+                                                            className={cn(
+                                                                "h-16 px-3.5 rounded-2xl border flex items-center justify-center transition-all cursor-pointer shadow-2xs",
+                                                                temporaryId ===
+                                                                    "alfamart"
+                                                                    ? "border-[#E52027] bg-red-50/20 ring-1 ring-[#E52027]"
+                                                                    : "border-slate-200 hover:border-slate-300 bg-white",
+                                                            )}
+                                                        >
+                                                            <img
+                                                                src="/assets/ikon/payment-alfamart.svg"
+                                                                alt="Alfamart"
+                                                                className="h-6 object-contain"
+                                                                onError={(
+                                                                    e,
+                                                                ) => {
+                                                                    const target =
+                                                                        e.currentTarget;
+                                                                    target.style.display =
+                                                                        "none";
+                                                                }}
+                                                            />
+                                                        </button>
+
+                                                        {/* Akulaku */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                handleSelectMethod(
+                                                                    "akulaku",
+                                                                )
+                                                            }
+                                                            className={cn(
+                                                                "h-16 px-3.5 rounded-2xl border flex items-center justify-center transition-all cursor-pointer shadow-2xs",
+                                                                temporaryId ===
+                                                                    "akulaku"
+                                                                    ? "border-[#E52027] bg-red-50/20 ring-1 ring-[#E52027]"
+                                                                    : "border-slate-200 hover:border-slate-300 bg-white",
+                                                            )}
+                                                        >
+                                                            <span className="text-xs font-bold text-slate-900">
+                                                                Akulaku PayLater
+                                                            </span>
+                                                        </button>
+
+                                                        {/* Kartu Kredit / Debit */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                handleSelectMethod(
+                                                                    "credit_card",
+                                                                )
+                                                            }
+                                                            className={cn(
+                                                                "col-span-2 h-14 px-4 rounded-2xl border flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs",
+                                                                temporaryId ===
+                                                                    "credit_card"
+                                                                    ? "border-[#E52027] bg-red-50/20 ring-1 ring-[#E52027]"
+                                                                    : "border-slate-200 hover:border-slate-300 bg-white",
+                                                            )}
+                                                        >
+                                                            <CreditCard className="w-4 h-4 text-slate-500" />
+                                                            <span className="text-xs font-bold text-slate-900">
+                                                                Kartu Kredit /
+                                                                Debit Online
+                                                            </span>
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </>
                                     )}
-                                </button>
+                                </div>
 
-                                {isOtherExpanded && (
-                                    <div className="grid grid-cols-2 gap-3 pt-1">
-                                        {/* OVO */}
-                                        <button
-                                            type="button"
-                                            onClick={() => handleSelectMethod("ovo")}
-                                            className={`h-16 px-4 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
-                                                temporaryId === "ovo"
-                                                    ? "border-primary bg-primary/5 ring-1 ring-primary shadow-xs"
-                                                    : "border-slate-200 hover:border-slate-300 bg-white"
-                                            }`}
-                                        >
-                                            <span className="text-lg font-black text-[#4c3494] tracking-tight">
-                                                OVO
-                                            </span>
-                                        </button>
-
-                                        {/* Virtual Account (Triggers Submenu) */}
-                                        <button
-                                            type="button"
-                                            onClick={() => handleSelectMethod("virtual_account")}
-                                            className={`h-16 px-4 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer ${
-                                                isVaSelected
-                                                    ? "border-primary bg-primary/5 ring-1 ring-primary shadow-xs"
-                                                    : "border-slate-200 hover:border-slate-300 bg-white"
-                                            }`}
-                                        >
-                                            <span className="text-xs sm:text-sm font-bold text-slate-800 leading-tight">
-                                                Virtual Account
-                                            </span>
-                                            {isVaSelected && (
-                                                <span className="text-[10px] text-primary font-semibold truncate max-w-full">
-                                                    {VA_BANKS.find((b) => b.id === temporaryId)?.nama || "Pilih Bank"}
-                                                </span>
-                                            )}
-                                        </button>
-
-                                        {/* Alfamart */}
-                                        <button
-                                            type="button"
-                                            onClick={() => handleSelectMethod("alfamart")}
-                                            className={`h-16 px-4 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
-                                                temporaryId === "alfamart"
-                                                    ? "border-primary bg-primary/5 ring-1 ring-primary shadow-xs"
-                                                    : "border-slate-200 hover:border-slate-300 bg-white"
-                                            }`}
-                                        >
-                                            <img
-                                                src="/assets/ikon/payment-alfamart.svg"
-                                                alt="Alfamart"
-                                                className="h-6 object-contain"
-                                            />
-                                        </button>
-
-                                        {/* Akulaku */}
-                                        <button
-                                            type="button"
-                                            onClick={() => handleSelectMethod("akulaku")}
-                                            className={`h-16 px-4 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
-                                                temporaryId === "akulaku"
-                                                    ? "border-primary bg-primary/5 ring-1 ring-primary shadow-xs"
-                                                    : "border-slate-200 hover:border-slate-300 bg-white"
-                                            }`}
-                                        >
-                                            <span className="text-xs sm:text-sm font-bold text-slate-800">
-                                                Akulaku
-                                            </span>
-                                        </button>
-
-                                        {/* Credit/Debit Card */}
-                                        <button
-                                            type="button"
-                                            onClick={() => handleSelectMethod("credit_card")}
-                                            className={`h-16 px-4 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
-                                                temporaryId === "credit_card"
-                                                    ? "border-primary bg-primary/5 ring-1 ring-primary shadow-xs"
-                                                    : "border-slate-200 hover:border-slate-300 bg-white"
-                                            }`}
-                                        >
-                                            <span className="text-xs sm:text-sm font-bold text-slate-800 text-center">
-                                                Credit/Debit Card
-                                            </span>
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </>
-                    )}
+                                {/* Sticky Footer Konfirmasi */}
+                                <div className="p-4 sm:p-5 border-t border-slate-100 bg-white shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={handleConfirm}
+                                        disabled={!selectedItem}
+                                        className={cn(
+                                            "w-full min-h-[46px] py-3 px-6 rounded-2xl font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-md flex items-center justify-center gap-2",
+                                            selectedItem
+                                                ? "bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.99] text-white shadow-red-500/20"
+                                                : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none",
+                                        )}
+                                    >
+                                        <Check className="w-4 h-4 stroke-[2.5]" />
+                                        <span>
+                                            Konfirmasi Metode Pembayaran
+                                        </span>
+                                    </button>
+                                </div>
+                            </DialogPanel>
+                        </TransitionChild>
+                    </div>
                 </div>
-
-                {/* Sticky Footer: Confirm Button persis Screenshot #1 */}
-                <div className="p-5 border-t border-slate-100 bg-white">
-                    <button
-                        type="button"
-                        onClick={handleConfirm}
-                        disabled={!selectedItem}
-                        className={`w-full py-3.5 px-6 rounded-full font-bold text-sm sm:text-base transition-all cursor-pointer shadow-xs ${
-                            selectedItem
-                                ? "bg-primary hover:bg-primary-hover text-white active:scale-[0.99]"
-                                : "bg-red-200 text-white cursor-not-allowed"
-                        }`}
-                    >
-                        Confirm
-                    </button>
-                </div>
-            </div>
-        </div>
+            </Dialog>
+        </Transition>
     );
 }
-

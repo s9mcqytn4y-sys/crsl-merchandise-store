@@ -1,51 +1,87 @@
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import {
+    useEffect,
+    useState,
+    useRef,
+    useMemo,
+    useCallback,
+} from "react";
 import { Link } from "@inertiajs/react";
-import { ChevronLeft, ChevronRight, Package } from "lucide-react";
-import { formatRupiah } from "../..//Utils/formatters";
+import { ChevronLeft, ChevronRight, Package, Tag } from "lucide-react";
+import { formatRupiah } from "../../Utils/formatters";
+import { cn } from "../../lib/utils";
 
 export interface ViewedProductItem {
     id: number | string;
     nama: string;
     slug: string;
-    harga: number;
-    harga_diskon?: number | null;
+    harga: number | string;
+    harga_diskon?: number | string | null;
     gambar?: string | null;
 }
 
 interface RecentViewedProps {
     currentProduct?: ViewedProductItem;
     fallbackRecommendations?: ViewedProductItem[];
+    className?: string;
 }
 
 const STORAGE_KEY = "crsl_recently_viewed";
 const MAX_STORED = 10;
+const PLACEHOLDER_IMAGE = "/assets/gambar/produk-placeholder.webp";
+
+/**
+ * Normalisasi URL gambar aman (mendukung path storage lokal & remote CDN)
+ */
+function normalizeImageUrl(gambar?: string | null): string {
+    if (!gambar) return "";
+    const g = gambar.trim();
+    if (
+        g.startsWith("http://") ||
+        g.startsWith("https://") ||
+        g.startsWith("data:")
+    ) {
+        return g;
+    }
+    if (g.startsWith("/storage/")) return g;
+    if (g.startsWith("storage/")) return `/${g}`;
+    if (g.startsWith("/")) return g;
+    return `/storage/${g}`;
+}
 
 export default function RecentViewed({
     currentProduct,
     fallbackRecommendations = [],
+    className,
 }: RecentViewedProps) {
     const [viewedItems, setViewedItems] = useState<ViewedProductItem[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(false);
+    const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>(
+        {},
+    );
+
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+    // 1. Sinkronisasi Penyimpanan Riwayat di LocalStorage
     useEffect(() => {
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
             let parsed: ViewedProductItem[] = raw ? JSON.parse(raw) : [];
 
             if (currentProduct && currentProduct.id) {
-                // Hapus duplikasi produk yang sedang dibuka
+                // Hapus duplikasi produk yang sedang aktif
                 parsed = parsed.filter(
                     (item) => String(item.id) !== String(currentProduct.id),
                 );
-                // Sisipkan di posisi terdepan
+                // Sisipkan produk di urutan terdepan
                 parsed.unshift(currentProduct);
-                // Simpan maksimal 10 produk
+                // Batasi kuota riwayat penyimpanan
                 parsed = parsed.slice(0, MAX_STORED);
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
             }
 
-            // Produk yang sedang dilihat dikeluarkan dari daftar tampil
+            // Produk yang sedang dibuka dikeluarkan dari daftar tampil
             const displayed = parsed.filter(
                 (item) =>
                     !currentProduct ||
@@ -53,13 +89,13 @@ export default function RecentViewed({
             );
             setViewedItems(displayed);
         } catch {
-            // Abaikan jika storage disabled/private mode
+            // Abaikan jika localStorage dibatasi atau browser dalam mode private
         } finally {
             setIsLoaded(true);
         }
     }, [currentProduct?.id]);
 
-    // Jika riwayat dilihat masih sedikit (< 3 produk), padukan dengan rekomendasi fallback
+    // 2. Padukan dengan Rekomendasi Fallback jika Riwayat Masih Minim (< 3)
     const displayList = useMemo(() => {
         if (!isLoaded) return [];
 
@@ -67,7 +103,6 @@ export default function RecentViewed({
             return viewedItems;
         }
 
-        // Gabungkan viewed items + fallback yang unik
         const combined = [...viewedItems];
         const existingIds = new Set(combined.map((item) => String(item.id)));
         if (currentProduct) {
@@ -85,13 +120,33 @@ export default function RecentViewed({
         return combined;
     }, [viewedItems, fallbackRecommendations, currentProduct, isLoaded]);
 
+    // 3. Evaluasi Status Tombol Navigasi Scroll
+    const checkScrollBounds = useCallback(() => {
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        const { scrollLeft, scrollWidth, clientWidth } = container;
+        setCanScrollLeft(scrollLeft > 4);
+        setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 4);
+    }, []);
+
+    useEffect(() => {
+        checkScrollBounds();
+        window.addEventListener("resize", checkScrollBounds);
+        return () => window.removeEventListener("resize", checkScrollBounds);
+    }, [checkScrollBounds, displayList]);
+
     const handleScroll = (direction: "left" | "right") => {
         if (!scrollContainerRef.current) return;
-        const offset = direction === "left" ? -260 : 260;
+        const offset = direction === "left" ? -280 : 280;
         scrollContainerRef.current.scrollBy({
             left: offset,
             behavior: "smooth",
         });
+    };
+
+    const handleImageError = (id: string | number) => {
+        setBrokenImages((prev) => ({ ...prev, [String(id)]: true }));
     };
 
     if (!isLoaded || displayList.length === 0) return null;
@@ -100,18 +155,29 @@ export default function RecentViewed({
 
     return (
         <section
-            className="pt-10 pb-6 border-t border-slate-100 select-none"
+            className={cn(
+                "pt-10 pb-6 border-t border-slate-100 select-none",
+                className,
+            )}
             aria-labelledby="heading-recently-viewed"
         >
+            {/* Header Seksi & Kontrol Navigasi */}
             <div className="flex items-center justify-between mb-5">
-                <h3
-                    id="heading-recently-viewed"
-                    className="text-base sm:text-lg font-bold text-slate-800 tracking-normal"
-                >
-                    {isActualHistory
-                        ? "Recently Viewed"
-                        : "You Might Also Like"}
-                </h3>
+                <div className="space-y-0.5">
+                    <h3
+                        id="heading-recently-viewed"
+                        className="text-base sm:text-lg font-black text-slate-900 tracking-tight"
+                    >
+                        {isActualHistory
+                            ? "Terakhir Dilihat"
+                            : "Mungkin Kamu Suka"}
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                        {isActualHistory
+                            ? "Produk yang baru saja Anda jelajahi"
+                            : "Pilihan merchandise spesial untuk melengkapi gayamu"}
+                    </p>
+                </div>
 
                 {/* Tombol Navigasi Desktop */}
                 {displayList.length > 3 && (
@@ -119,18 +185,20 @@ export default function RecentViewed({
                         <button
                             type="button"
                             onClick={() => handleScroll("left")}
-                            className="w-8 h-8 rounded-full border border-slate-200 hover:border-slate-300 hover:bg-slate-50 flex items-center justify-center text-slate-600 transition-colors"
+                            disabled={!canScrollLeft}
+                            className="w-8 h-8 rounded-full border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-slate-700 transition-all cursor-pointer shadow-2xs active:scale-95"
                             aria-label="Geser ke kiri"
                         >
-                            <ChevronLeft className="w-4 h-4" />
+                            <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
                         </button>
                         <button
                             type="button"
                             onClick={() => handleScroll("right")}
-                            className="w-8 h-8 rounded-full border border-slate-200 hover:border-slate-300 hover:bg-slate-50 flex items-center justify-center text-slate-600 transition-colors"
+                            disabled={!canScrollRight}
+                            className="w-8 h-8 rounded-full border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-slate-700 transition-all cursor-pointer shadow-2xs active:scale-95"
                             aria-label="Geser ke kanan"
                         >
-                            <ChevronRight className="w-4 h-4" />
+                            <ChevronRight className="w-4 h-4 stroke-[2.5]" />
                         </button>
                     </div>
                 )}
@@ -139,59 +207,89 @@ export default function RecentViewed({
             {/* Carousel Container */}
             <div
                 ref={scrollContainerRef}
+                onScroll={checkScrollBounds}
                 className="flex gap-3.5 sm:gap-4 overflow-x-auto pb-3 scroll-smooth no-scrollbar snap-x snap-mandatory"
             >
                 {displayList.map((item) => {
-                    const price =
-                        item.harga_diskon && item.harga_diskon < item.harga
-                            ? item.harga_diskon
-                            : item.harga;
+                    // Normalisasi numerik ketat anti-lexicographical bug
+                    const hargaDasar = Number(item.harga) || 0;
+                    const rawDiskon =
+                        item.harga_diskon !== null &&
+                        item.harga_diskon !== undefined
+                            ? Number(item.harga_diskon)
+                            : null;
+
                     const hasDiscount =
-                        Boolean(item.harga_diskon) &&
-                        item.harga_diskon! < item.harga;
+                        rawDiskon !== null &&
+                        !isNaN(rawDiskon) &&
+                        rawDiskon > 0 &&
+                        rawDiskon < hargaDasar;
+
+                    const effectivePrice =
+                        hasDiscount && rawDiskon !== null
+                            ? rawDiskon
+                            : hargaDasar;
+
+                    const diskonPersen =
+                        hasDiscount && hargaDasar > 0
+                            ? Math.round(
+                                  ((hargaDasar - (rawDiskon as number)) /
+                                      hargaDasar) *
+                                      100,
+                              )
+                            : 0;
+
+                    const isImgBroken = brokenImages[String(item.id)];
+                    const imageUrl = normalizeImageUrl(item.gambar);
 
                     return (
                         <Link
                             key={item.id}
-                            href={`/produk/${item.slug}`}
-                            className="snap-start w-40 sm:w-46.25 md:w-50 shrink-0 group bg-white border border-slate-200/90 hover:border-slate-300 rounded-2xl overflow-hidden shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between"
+                            href={`/produk/${encodeURIComponent(item.slug)}`}
+                            className="snap-start w-40 sm:w-48 md:w-52 shrink-0 group bg-white border border-slate-200/90 hover:border-slate-300 rounded-2xl overflow-hidden shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between"
                         >
                             {/* Gambar Produk */}
                             <div className="aspect-square w-full bg-slate-50 overflow-hidden relative">
-                                {item.gambar ? (
+                                {imageUrl && !isImgBroken ? (
                                     <img
-                                        src={item.gambar}
+                                        src={imageUrl}
                                         alt={item.nama}
-                                        width={200}
-                                        height={200}
-                                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                                        width={220}
+                                        height={220}
                                         loading="lazy"
+                                        onError={() =>
+                                            handleImageError(item.id)
+                                        }
+                                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
                                     />
                                 ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                    <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-100">
                                         <Package className="w-8 h-8 stroke-[1.2]" />
                                     </div>
                                 )}
 
-                                {hasDiscount && (
-                                    <span className="absolute top-2 left-2 bg-primary text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full shadow-2xs">
-                                        SALE
+                                {/* Badge Diskon Dinamis */}
+                                {hasDiscount && diskonPersen > 0 && (
+                                    <span className="absolute top-2 left-2 bg-[#E52027] text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md shadow-2xs flex items-center gap-0.5 font-mono">
+                                        <Tag className="w-2.5 h-2.5 stroke-[2.5]" />
+                                        <span>-{diskonPersen}%</span>
                                     </span>
                                 )}
                             </div>
 
                             {/* Deskripsi & Harga */}
                             <div className="p-3 space-y-1">
-                                <h4 className="text-xs font-semibold text-slate-800 line-clamp-2 leading-snug group-hover:text-primary transition-colors">
+                                <h4 className="text-xs font-bold text-slate-800 line-clamp-2 leading-snug group-hover:text-[#E52027] transition-colors">
                                     {item.nama}
                                 </h4>
-                                <div className="flex items-baseline gap-1.5 pt-1 tabular-nums flex-wrap">
-                                    <span className="text-xs sm:text-[13px] font-bold text-slate-900">
-                                        {formatRupiah(price)}
+
+                                <div className="flex items-baseline gap-1.5 pt-1 tabular-nums flex-wrap font-mono">
+                                    <span className="text-xs sm:text-[13px] font-black text-slate-900">
+                                        {formatRupiah(effectivePrice)}
                                     </span>
                                     {hasDiscount && (
                                         <span className="text-[10px] text-slate-400 line-through">
-                                            {formatRupiah(item.harga)}
+                                            {formatRupiah(hargaDasar)}
                                         </span>
                                     )}
                                 </div>

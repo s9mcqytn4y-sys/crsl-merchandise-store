@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Plus, Minus, AlertCircle } from "lucide-react";
 import { formatRupiah } from "../../Utils/formatters";
+import { cn } from "../../lib/utils";
 
 export interface VariantItem {
     id: number | string;
@@ -9,7 +10,7 @@ export interface VariantItem {
     warna?: string;
     warna_hex?: string;
     ukuran?: string;
-    harga_tambahan?: number;
+    harga_tambahan?: number | string;
     stok?: number;
     sku?: string;
     gambar_varian?: string | null;
@@ -24,8 +25,28 @@ interface VariantSelectorProps {
     onSelectSize?: (size: string) => void;
     quantity: number;
     onQuantityChange: (qty: number) => void;
-    totalStock: number;
+    totalStock?: number;
     errorMessage?: string | null;
+    className?: string;
+}
+
+/**
+ * Normalisasi URL gambar thumbnail varian lokal Laravel Storage vs Remote CDN
+ */
+function normalizeMediaUrl(url?: string | null): string {
+    if (!url) return "";
+    const clean = url.trim();
+    if (
+        clean.startsWith("http://") ||
+        clean.startsWith("https://") ||
+        clean.startsWith("data:")
+    ) {
+        return clean;
+    }
+    if (clean.startsWith("/storage/")) return clean;
+    if (clean.startsWith("storage/")) return `/${clean}`;
+    if (clean.startsWith("/")) return clean;
+    return `/storage/${clean}`;
 }
 
 export default function VariantSelector({
@@ -36,10 +57,11 @@ export default function VariantSelector({
     onSelectSize,
     quantity,
     onQuantityChange,
-    totalStock,
+    totalStock = 0,
     errorMessage,
+    className,
 }: VariantSelectorProps) {
-    // 1. Ekstraksi daftar ukuran unik dari varian
+    // 1. Ekstraksi daftar ukuran unik dari array varian
     const availableSizes = useMemo(() => {
         return Array.from(
             new Set(variants.map((v) => v.ukuran).filter(Boolean) as string[]),
@@ -50,39 +72,58 @@ export default function VariantSelector({
         availableSizes.length > 1 &&
         !availableSizes.every((s) => s.toLowerCase() === "all size");
 
-    // Hitung stok aktif
+    // Hitung ketersediaan stok riil
     const currentVariantStock = selectedVariant
-        ? (selectedVariant.stok ?? totalStock)
-        : totalStock;
+        ? Math.max(0, Number(selectedVariant.stok ?? totalStock))
+        : Math.max(0, Number(totalStock));
+
     const isOutOfStock = currentVariantStock <= 0;
 
-    // State lokal untuk kuantitas agar pengetikan angka tidak terpental
-    const [localQtyStr, setLocalQtyStr] = useState<string>(String(quantity));
+    // State lokal input kuantitas untuk kenyamanan pengetikan
+    const [localQtyStr, setLocalQtyStr] = useState<string>(
+        String(isOutOfStock ? 0 : Math.max(1, quantity)),
+    );
 
     useEffect(() => {
-        setLocalQtyStr(String(isOutOfStock ? 0 : quantity));
+        setLocalQtyStr(String(isOutOfStock ? 0 : Math.max(1, quantity)));
     }, [quantity, isOutOfStock]);
 
-    // Auto-clamp jika kuantitas melebihi stok varian yang dipilih
+    // Auto-clamp jika kuantitas melebihi kapasitas stok varian yang baru dipilih
     useEffect(() => {
-        if (currentVariantStock > 0 && quantity > currentVariantStock) {
+        if (isOutOfStock) {
+            if (quantity !== 0) onQuantityChange(0);
+        } else if (quantity > currentVariantStock) {
             onQuantityChange(currentVariantStock);
+        } else if (quantity < 1 && currentVariantStock > 0) {
+            onQuantityChange(1);
         }
-    }, [selectedVariant, currentVariantStock, quantity, onQuantityChange]);
+    }, [
+        selectedVariant,
+        currentVariantStock,
+        quantity,
+        isOutOfStock,
+        onQuantityChange,
+    ]);
 
     const handleIncrement = () => {
-        if (quantity < currentVariantStock) {
+        if (!isOutOfStock && quantity < currentVariantStock) {
             onQuantityChange(quantity + 1);
         }
     };
 
     const handleDecrement = () => {
-        if (quantity > 1) {
+        if (!isOutOfStock && quantity > 1) {
             onQuantityChange(quantity - 1);
         }
     };
 
     const handleQuantityBlur = () => {
+        if (isOutOfStock) {
+            onQuantityChange(0);
+            setLocalQtyStr("0");
+            return;
+        }
+
         const parsed = parseInt(localQtyStr, 10);
         if (isNaN(parsed) || parsed < 1) {
             onQuantityChange(1);
@@ -92,12 +133,16 @@ export default function VariantSelector({
             setLocalQtyStr(String(currentVariantStock));
         } else {
             onQuantityChange(parsed);
+            setLocalQtyStr(String(parsed));
         }
     };
 
     const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (isOutOfStock) return;
+
         const val = e.target.value.replace(/\D/g, "");
         setLocalQtyStr(val);
+
         if (val) {
             const num = parseInt(val, 10);
             if (num > 0 && num <= currentVariantStock) {
@@ -106,12 +151,27 @@ export default function VariantSelector({
         }
     };
 
-    // Label varian aktif terpilih
+    // Sinkronisasi ganda saat varian diklik
+    const handleVariantClick = useCallback(
+        (v: VariantItem) => {
+            const variantStock = Math.max(0, Number(v.stok ?? 0));
+            if (variantStock <= 0) return;
+
+            onSelectVariant(v);
+
+            // Sinkronkan ke ukuran jika varian membawa atribut ukuran spesifik
+            if (v.ukuran && onSelectSize && v.ukuran !== selectedSize) {
+                onSelectSize(v.ukuran);
+            }
+        },
+        [onSelectVariant, onSelectSize, selectedSize],
+    );
+
     const activeColorName =
         selectedVariant?.warna || selectedVariant?.nama_varian;
 
     return (
-        <div className="space-y-5">
+        <div className={cn("space-y-5 select-none", className)}>
             {/* 1. Pemilih Warna / Varian Utama */}
             {variants.length > 0 && (
                 <div className="space-y-2.5">
@@ -121,7 +181,7 @@ export default function VariantSelector({
                             {activeColorName && (
                                 <span className="font-normal text-slate-500 ml-1.5">
                                     :{" "}
-                                    <strong className="font-semibold text-slate-800">
+                                    <strong className="font-bold text-slate-800">
                                         {activeColorName}
                                     </strong>
                                 </span>
@@ -130,10 +190,16 @@ export default function VariantSelector({
 
                         {currentVariantStock > 0 &&
                             currentVariantStock <= 5 && (
-                                <span className="text-[11px] font-bold text-amber-600 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-md">
+                                <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200/90 px-2 py-0.5 rounded-md">
                                     Sisa {currentVariantStock} item
                                 </span>
                             )}
+
+                        {isOutOfStock && (
+                            <span className="text-[11px] font-bold text-rose-700 bg-rose-50 border border-rose-200/90 px-2 py-0.5 rounded-md">
+                                Stok Habis
+                            </span>
+                        )}
                     </div>
 
                     <div
@@ -143,7 +209,8 @@ export default function VariantSelector({
                     >
                         {variants.map((v) => {
                             const isSelected = selectedVariant?.id === v.id;
-                            const isSoldOut = (v.stok ?? 0) <= 0;
+                            const stockCount = Math.max(0, Number(v.stok ?? 0));
+                            const isSoldOut = stockCount <= 0;
 
                             const colorPart = v.warna || v.nama_varian || "";
                             const sizePart =
@@ -151,6 +218,7 @@ export default function VariantSelector({
                                 v.ukuran.toLowerCase() !== "all size"
                                     ? v.ukuran
                                     : "";
+
                             const label =
                                 sizePart && colorPart && !hasMultipleSizes
                                     ? `${colorPart.toUpperCase()} • ${sizePart.toUpperCase()}`
@@ -162,6 +230,9 @@ export default function VariantSelector({
                                       ).toUpperCase();
 
                             const extraPrice = Number(v.harga_tambahan || 0);
+                            const variantImgUrl = normalizeMediaUrl(
+                                v.gambar_varian,
+                            );
 
                             return (
                                 <button
@@ -169,37 +240,38 @@ export default function VariantSelector({
                                     type="button"
                                     role="radio"
                                     aria-checked={isSelected}
+                                    aria-disabled={isSoldOut}
                                     disabled={isSoldOut}
-                                    onClick={() =>
-                                        !isSoldOut && onSelectVariant(v)
-                                    }
-                                    className={`group relative overflow-hidden flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border transition-all select-none ${
+                                    onClick={() => handleVariantClick(v)}
+                                    className={cn(
+                                        "group relative overflow-hidden flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] focus-visible:ring-offset-2",
                                         isSelected
-                                            ? "border-slate-900 bg-white text-slate-900 ring-2 ring-slate-900/10 shadow-xs font-bold"
+                                            ? "border-[#E52027] bg-red-50/40 text-[#E52027] ring-2 ring-[#E52027]/20 shadow-xs"
                                             : isSoldOut
-                                              ? "border-slate-200 bg-slate-50/80 text-slate-400 cursor-not-allowed"
-                                              : "border-slate-200 hover:border-slate-400 bg-white text-slate-700 hover:bg-slate-50/80 cursor-pointer"
-                                    }`}
+                                              ? "border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed opacity-60"
+                                              : "border-slate-200 hover:border-slate-300 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs",
+                                    )}
                                     aria-label={`${label} ${isSoldOut ? "(Stok Habis)" : ""}`}
                                 >
-                                    {/* Thumbnail Bulat / Hex Swatch */}
-                                    {v.gambar_varian ? (
+                                    {/* Thumbnail Swatch */}
+                                    {variantImgUrl ? (
                                         <img
-                                            src={v.gambar_varian}
+                                            src={variantImgUrl}
                                             alt=""
                                             aria-hidden="true"
-                                            className={`w-4 h-4 rounded-full object-cover shrink-0 border border-slate-200 ${
-                                                isSoldOut
-                                                    ? "opacity-40 grayscale"
-                                                    : ""
-                                            }`}
+                                            className={cn(
+                                                "w-4 h-4 rounded-full object-cover shrink-0 border border-slate-200",
+                                                isSoldOut &&
+                                                    "grayscale opacity-50",
+                                            )}
                                         />
                                     ) : v.warna_hex ? (
                                         <span
                                             aria-hidden="true"
-                                            className={`w-3.5 h-3.5 rounded-full shrink-0 border border-black/15 shadow-2xs ${
-                                                isSoldOut ? "opacity-40" : ""
-                                            }`}
+                                            className={cn(
+                                                "w-3.5 h-3.5 rounded-full shrink-0 border border-black/15 shadow-2xs",
+                                                isSoldOut && "opacity-40",
+                                            )}
                                             style={{
                                                 backgroundColor: v.warna_hex,
                                             }}
@@ -207,23 +279,22 @@ export default function VariantSelector({
                                     ) : null}
 
                                     <span
-                                        className={
-                                            isSoldOut
-                                                ? "line-through text-slate-400"
-                                                : ""
-                                        }
+                                        className={cn(
+                                            isSoldOut &&
+                                                "line-through text-slate-400",
+                                        )}
                                     >
                                         {label}
                                     </span>
 
-                                    {/* Label Tambahan Biaya Varian */}
+                                    {/* Tambahan Harga */}
                                     {extraPrice > 0 && !isSoldOut && (
-                                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md">
+                                        <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.5 rounded-md font-mono">
                                             +{formatRupiah(extraPrice)}
                                         </span>
                                     )}
 
-                                    {/* Garis Coret Diagonal untuk Stok Kosong */}
+                                    {/* Garis Coret Diagonal untuk Varian Habis */}
                                     {isSoldOut && (
                                         <svg
                                             className="absolute inset-0 w-full h-full pointer-events-none text-slate-300"
@@ -257,7 +328,7 @@ export default function VariantSelector({
                             {selectedSize && (
                                 <span className="font-normal text-slate-500 ml-1.5">
                                     :{" "}
-                                    <strong className="font-semibold text-slate-800">
+                                    <strong className="font-bold text-slate-800">
                                         {selectedSize}
                                     </strong>
                                 </span>
@@ -271,7 +342,9 @@ export default function VariantSelector({
                         className="flex flex-wrap gap-2"
                     >
                         {availableSizes.map((size) => {
-                            const isSizeSelected = selectedSize === size;
+                            const isSizeSelected =
+                                selectedSize?.toLowerCase() ===
+                                size.toLowerCase();
                             return (
                                 <button
                                     key={size}
@@ -279,11 +352,12 @@ export default function VariantSelector({
                                     role="radio"
                                     aria-checked={isSizeSelected}
                                     onClick={() => onSelectSize(size)}
-                                    className={`min-w-10 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                                    className={cn(
+                                        "min-w-[44px] px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]",
                                         isSizeSelected
-                                            ? "border-slate-900 bg-slate-900 text-white shadow-2xs"
-                                            : "border-slate-200 bg-white hover:border-slate-400 text-slate-700 hover:bg-slate-50"
-                                    }`}
+                                            ? "border-[#E52027] bg-[#E52027] text-white shadow-sm scale-[1.02]"
+                                            : "border-slate-200 bg-white hover:border-slate-300 text-slate-700 hover:bg-slate-50",
+                                    )}
                                 >
                                     {size.toUpperCase()}
                                 </button>
@@ -293,18 +367,18 @@ export default function VariantSelector({
                 </div>
             )}
 
-            {/* 3. Stepper Kuantitas & Error Feedback */}
+            {/* 3. Stepper Kuantitas & Indikator Error */}
             <div className="pt-1 space-y-2">
                 <span className="block text-xs font-bold text-slate-900">
                     Jumlah Pembelian
                 </span>
 
-                <div className="flex items-center border border-slate-300 rounded-xl bg-white overflow-hidden shadow-2xs focus-within:border-slate-500 focus-within:ring-2 focus-within:ring-slate-900/10 w-fit">
+                <div className="flex items-center border border-slate-300 rounded-xl bg-white overflow-hidden shadow-2xs focus-within:border-[#E52027] focus-within:ring-2 focus-within:ring-[#E52027]/10 w-fit">
                     <button
                         type="button"
                         onClick={handleDecrement}
                         disabled={quantity <= 1 || isOutOfStock}
-                        className="px-3.5 py-2.5 text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="px-3.5 py-2.5 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
                         aria-label="Kurangi jumlah barang"
                     >
                         <Minus className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -312,14 +386,18 @@ export default function VariantSelector({
 
                     <input
                         type="text"
+                        role="spinbutton"
                         inputMode="numeric"
                         pattern="[0-9]*"
+                        aria-valuenow={isOutOfStock ? 0 : quantity}
+                        aria-valuemin={isOutOfStock ? 0 : 1}
+                        aria-valuemax={currentVariantStock}
                         value={isOutOfStock ? "0" : localQtyStr}
                         disabled={isOutOfStock}
                         onChange={handleQuantityChange}
                         onBlur={handleQuantityBlur}
-                        className="w-12 text-center text-xs sm:text-sm font-black text-slate-900 focus:outline-none tabular-nums bg-transparent"
-                        aria-label="Kuantitas produk"
+                        className="w-12 text-center text-xs sm:text-sm font-black text-slate-900 focus:outline-none tabular-nums bg-transparent font-mono disabled:opacity-50"
+                        aria-label="Jumlah kuantitas produk"
                     />
 
                     <button
@@ -328,7 +406,7 @@ export default function VariantSelector({
                         disabled={
                             quantity >= currentVariantStock || isOutOfStock
                         }
-                        className="px-3.5 py-2.5 text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="px-3.5 py-2.5 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
                         aria-label="Tambah jumlah barang"
                     >
                         <Plus className="w-3.5 h-3.5 stroke-[2.5]" />

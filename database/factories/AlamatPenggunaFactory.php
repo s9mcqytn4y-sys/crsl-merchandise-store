@@ -22,7 +22,7 @@ class AlamatPenggunaFactory extends Factory
             'telepon' => '08' . fake()->numerify('##########'),
             'email' => fake()->safeEmail(),
             'negara' => 'Indonesia',
-            'area_id' => 'IDNP11KOT789311',
+            'area_id' => 'IDNP6IDNC147IDND830IDZ10560',
             'provinsi' => 'DKI Jakarta',
             'kota' => 'Jakarta Pusat',
             'kecamatan' => 'Johar Baru',

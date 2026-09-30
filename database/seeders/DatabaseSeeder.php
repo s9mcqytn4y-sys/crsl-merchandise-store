@@ -46,7 +46,7 @@ class DatabaseSeeder extends Seeder
                 'kecamatan' => 'Johar Baru',
                 'kelurahan' => 'Johar Baru',
                 'kode_pos' => '10560',
-                'biteship_area_id' => 'IDNP11KOT789311',
+                'biteship_area_id' => 'IDNP6IDNC147IDND830IDZ10560',
             ],
             [
                 'provinsi' => 'DKI Jakarta',
@@ -94,7 +94,7 @@ class DatabaseSeeder extends Seeder
 
         // 4. Akun Tunggal Terverifikasi: abdul@crsl-store.id
         $user = User::updateOrCreate(
-            ['email' => 'abdul@crsl-store.id'],
+            ['email' => 'abdulaziz543333@gmail.com'],
             [
                 'name' => 'abdul music',
                 'telepon' => '+628567060477',
@@ -135,7 +135,7 @@ class DatabaseSeeder extends Seeder
             'rt_rw' => '003/005',
             'no_rumah' => '42',
             'patokan' => 'Samping Apotek K-24',
-            'area_id' => 'IDNP11KOT789311',
+            'area_id' => 'IDNP6IDNC147IDND830IDZ10560',
             'adalah_utama' => true,
         ]);
 

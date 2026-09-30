@@ -1,5 +1,6 @@
 import React from "react";
-import { User, AlertCircle } from "lucide-react";
+import { User, AlertCircle, Loader2 } from "lucide-react";
+import { cn } from "../../lib/utils";
 
 interface ForgotPasswordStepProps {
     identifier: string;
@@ -7,6 +8,7 @@ interface ForgotPasswordStepProps {
     onSubmit: (e: React.FormEvent) => void;
     error?: string;
     loading: boolean;
+    className?: string;
 }
 
 export default function ForgotPasswordStep({
@@ -15,53 +17,92 @@ export default function ForgotPasswordStep({
     onSubmit,
     error,
     loading,
+    className,
 }: ForgotPasswordStepProps) {
+    const canSubmit = Boolean(identifier.trim()) && !loading;
+
     return (
-        <form onSubmit={onSubmit} className="space-y-4 pt-4">
-            <p className="text-xs text-slate-600 leading-relaxed">
-                Masukkan alamat email atau nomor WhatsApp yang terdaftar untuk menerima 6 digit kode OTP pemulihan kata sandi.
-            </p>
+        <form
+            onSubmit={onSubmit}
+            className={cn("space-y-4 pt-1 select-none", className)}
+            noValidate
+        >
+            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 text-xs text-slate-600 leading-relaxed shadow-2xs">
+                Masukkan alamat email atau nomor WhatsApp yang terdaftar pada
+                akun CRSL Anda untuk menerima 6 digit kode OTP pemulihan kata
+                sandi.
+            </div>
 
             <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                    Email / Nomor Handphone Terdaftar
+                <label
+                    htmlFor="forgot-identifier-input"
+                    className="block text-xs font-bold text-slate-700 mb-1.5"
+                >
+                    Email atau Nomor Handphone{" "}
+                    <span className="text-[#E52027]">*</span>
                 </label>
                 <div
-                    className={`border rounded-2xl px-4 py-3 flex items-center gap-3 bg-white transition-all ${
+                    className={cn(
+                        "border rounded-2xl px-3.5 py-2.5 sm:py-3 flex items-center gap-2.5 bg-white transition-all shadow-2xs",
                         error
-                            ? "border-red-500 bg-red-50/20 ring-1 ring-red-400/40"
-                            : "border-slate-300 focus-within:border-slate-800 focus-within:ring-1 focus-within:ring-slate-800"
-                    }`}
+                            ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
+                            : "border-slate-300 focus-within:border-[#E52027] focus-within:ring-2 focus-within:ring-[#E52027]/10",
+                    )}
                 >
                     <User className="w-4 h-4 text-slate-400 shrink-0" />
                     <input
+                        id="forgot-identifier-input"
                         type="text"
+                        disabled={loading}
                         value={identifier}
                         onChange={(e) => onChangeIdentifier(e.target.value)}
-                        placeholder="Contoh: abdul@crsl-store.id"
-                        className="w-full bg-transparent text-xs text-slate-800 focus:outline-none font-medium placeholder-slate-400"
+                        placeholder="Contoh: bestie@crsl-store.id atau 08123456789"
+                        aria-invalid={Boolean(error)}
+                        aria-describedby={
+                            error ? "forgot-identifier-error" : undefined
+                        }
+                        className="w-full bg-transparent text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none font-medium"
                         autoFocus
+                        autoComplete="username"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        required
                     />
                 </div>
                 {error && (
-                    <p className="text-xs font-medium text-red-600 pl-1 mt-1.5 flex items-center gap-1">
+                    <p
+                        id="forgot-identifier-error"
+                        role="alert"
+                        className="text-xs font-semibold text-rose-600 pl-1 mt-1.5 flex items-center gap-1 animate-in fade-in"
+                    >
                         <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                        {error}
+                        <span>{error}</span>
                     </p>
                 )}
             </div>
 
-            <button
-                type="submit"
-                disabled={!identifier.trim() || loading}
-                className={`w-full min-h-[46px] py-3 rounded-full text-xs sm:text-sm font-semibold transition-all ${
-                    identifier.trim() && !loading
-                        ? "bg-[#E52027] hover:bg-[#CC1C22] text-white shadow-xs cursor-pointer"
-                        : "bg-red-200 text-white/90 cursor-not-allowed"
-                }`}
-            >
-                {loading ? "Mengirim OTP..." : "Kirim Kode OTP"}
-            </button>
+            <div className="pt-1">
+                <button
+                    type="submit"
+                    disabled={!canSubmit}
+                    className={cn(
+                        "w-full min-h-[48px] py-3 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-xs",
+                        canSubmit
+                            ? "bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.99] text-white cursor-pointer"
+                            : "bg-slate-200 text-slate-400 cursor-not-allowed select-none",
+                    )}
+                >
+                    {loading ? (
+                        <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Mengirim Kode OTP...</span>
+                        </>
+                    ) : (
+                        <span>Kirim Kode OTP</span>
+                    )}
+                </button>
+            </div>
         </form>
     );
 }

@@ -1,7 +1,15 @@
 import React, { useState } from "react";
-import { X, Send, MessageCircle, CheckCircle2 } from "lucide-react";
+import {
+    MessageCircle,
+    Send,
+    CheckCircle2,
+    AlertCircle,
+    MessageSquareShare,
+} from "lucide-react";
+import { useForm, usePage } from "@inertiajs/react";
 import { toast } from "sonner";
-import { router } from "@inertiajs/react";
+import Modal from "../Common/Modal";
+import Button from "../Common/Button";
 
 interface InquiryModalProps {
     isOpen: boolean;
@@ -9,7 +17,10 @@ interface InquiryModalProps {
     produkId: number | string;
     namaProduk: string;
     selectedVariantName?: string;
+    productSlug?: string;
 }
+
+const CRSL_CS_WHATSAPP = "6281234567890"; // Nomor resmi CS CRSL
 
 export default function InquiryModal({
     isOpen,
@@ -17,163 +28,273 @@ export default function InquiryModal({
     produkId,
     namaProduk,
     selectedVariantName = "",
+    productSlug = "",
 }: InquiryModalProps) {
-    const [pesan, setPesan] = useState("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const page = usePage();
+    const authUser = (page.props as any)?.auth?.user;
     const [isSuccess, setIsSuccess] = useState(false);
 
-    if (!isOpen) return null;
+    // Form Inertia terpadu dengan validasi otomatis
+    const { data, setData, post, processing, errors, reset, clearErrors } =
+        useForm({
+            produk_id: produkId,
+            nama_produk: namaProduk,
+            varian: selectedVariantName || "Default",
+            nama_pengirim: authUser?.nama || "",
+            kontak: authUser?.email || authUser?.no_hp || "",
+            pesan: "",
+        });
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleClose = () => {
+        if (processing) return;
+        reset();
+        clearErrors();
+        setIsSuccess(false);
+        onClose();
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const trimmed = pesan.trim();
+        const trimmed = data.pesan.trim();
+
         if (!trimmed) {
-            toast.error("Silakan tulis pertanyaan Anda tentang produk ini.");
+            toast.error("Silakan tulis pertanyaan Anda mengenai produk ini.");
             return;
         }
 
-        setIsSubmitting(true);
-        try {
-            await router.post(
-                "/pesan-produk",
-                {
-                    produk_id: produkId,
-                    nama_produk: namaProduk,
-                    varian: selectedVariantName || "Default",
-                    pesan: trimmed,
-                },
-                {
-                    preserveScroll: true,
-                    onSuccess: () => {
-                        setIsSuccess(true);
-                        toast.success("Pesan pertanyaan produk Anda telah terkirim!");
-                        setTimeout(() => {
-                            setIsSuccess(false);
-                            setPesan("");
-                            onClose();
-                        }, 1800);
-                    },
-                    onError: () => {
-                        // Fallback jika belum login atau route internal
-                        setIsSuccess(true);
-                        toast.success("Pesan Anda telah diterima oleh tim CS CRSL!");
-                        setTimeout(() => {
-                            setIsSuccess(false);
-                            setPesan("");
-                            onClose();
-                        }, 1800);
-                    },
-                }
-            );
-        } catch {
-            setIsSuccess(true);
-            toast.success("Pesan Anda telah diterima oleh tim CS CRSL!");
-            setTimeout(() => {
-                setIsSuccess(false);
-                setPesan("");
-                onClose();
-            }, 1800);
-        } finally {
-            setIsSubmitting(false);
-        }
+        post("/api/pesan-produk", {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsSuccess(true);
+                toast.success("Pertanyaan Anda berhasil dikirim ke tim CS!");
+                setTimeout(() => {
+                    handleClose();
+                }, 2000);
+            },
+            onError: (err) => {
+                const firstError = Object.values(err)[0];
+                toast.error(
+                    typeof firstError === "string"
+                        ? firstError
+                        : "Gagal mengirim pesan. Silakan hubungi CS via WhatsApp.",
+                );
+            },
+        });
+    };
+
+    // Alihkan langsung ke WhatsApp resmi CRSL dengan pesan otomatis
+    const handleChatWhatsApp = () => {
+        const productUrl =
+            typeof window !== "undefined" && productSlug
+                ? `${window.location.origin}/produk/${productSlug}`
+                : "";
+
+        const textMessage = [
+            `Halo CS CRSL, saya ingin bertanya tentang produk:`,
+            `*${namaProduk}*`,
+            selectedVariantName ? `Varian: ${selectedVariantName}` : "",
+            productUrl ? `Link: ${productUrl}` : "",
+            data.pesan.trim() ? `\nPertanyaan: ${data.pesan.trim()}` : "",
+        ]
+            .filter(Boolean)
+            .join("\n");
+
+        const waUrl = `https://wa.me/${CRSL_CS_WHATSAPP}?text=${encodeURIComponent(textMessage)}`;
+        window.open(waUrl, "_blank", "noopener,noreferrer");
+        handleClose();
     };
 
     return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-fadeIn"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="inquiry-modal-title"
+        <Modal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title="Tanya Produk CRSL"
+            description="Tim CS CRSL siap membantu menjawab detail stok, ukuran, dan bahan produk."
+            maxWidth="md"
+            closeOnOverlayClick={!processing}
         >
-            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-100 animate-scaleUp">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-red-50 text-primary flex items-center justify-center">
-                            <MessageCircle className="w-4 h-4" />
-                        </div>
-                        <h3
-                            id="inquiry-modal-title"
-                            className="font-bold text-base text-slate-900"
-                        >
-                            Tanya Produk CRSL
-                        </h3>
+            {isSuccess ? (
+                <div className="py-6 text-center space-y-3">
+                    <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto shadow-2xs">
+                        <CheckCircle2 className="w-7 h-7" />
                     </div>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                        aria-label="Tutup dialog"
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
-                </div>
-
-                {isSuccess ? (
-                    <div className="py-8 text-center space-y-3">
-                        <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
-                            <CheckCircle2 className="w-6 h-6" />
-                        </div>
+                    <div className="space-y-1">
                         <h4 className="font-bold text-slate-900 text-sm">
                             Pesan Berhasil Terkirim!
                         </h4>
-                        <p className="text-xs text-slate-500 max-w-xs mx-auto">
-                            Customer service kami akan merespons pertanyaan Anda sesegera mungkin.
+                        <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
+                            Pertanyaan Anda telah kami terima dan akan dibalas
+                            melalui kontak yang terdaftar.
                         </p>
                     </div>
-                ) : (
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/60 space-y-1">
-                            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                                Produk
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    {/* Ringkasan Produk yang Ditanyakan */}
+                    <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-1">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">
+                            Produk Terpilih
+                        </span>
+                        <p className="text-xs font-bold text-slate-900 line-clamp-1">
+                            {namaProduk}
+                        </p>
+                        {selectedVariantName && (
+                            <p className="text-[11px] text-slate-600 font-medium">
+                                Varian:{" "}
+                                <span className="font-bold text-slate-800">
+                                    {selectedVariantName}
+                                </span>
                             </p>
-                            <p className="text-xs font-bold text-slate-900 line-clamp-1">
-                                {namaProduk}
-                            </p>
-                            {selectedVariantName && (
-                                <p className="text-[11px] text-slate-500 font-medium">
-                                    Varian: {selectedVariantName}
-                                </p>
-                            )}
-                        </div>
+                        )}
+                    </div>
 
+                    <form
+                        onSubmit={handleSubmit}
+                        className="space-y-3.5"
+                        noValidate
+                    >
+                        {/* Kolom Nama & Kontak untuk Pengguna Tamu */}
+                        {!authUser && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label
+                                        htmlFor="inquiry-nama"
+                                        className="block text-xs font-bold text-slate-700 mb-1"
+                                    >
+                                        Nama Anda{" "}
+                                        <span className="text-[#E52027]">
+                                            *
+                                        </span>
+                                    </label>
+                                    <input
+                                        id="inquiry-nama"
+                                        type="text"
+                                        disabled={processing}
+                                        value={data.nama_pengirim}
+                                        onChange={(e) =>
+                                            setData(
+                                                "nama_pengirim",
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder="Nama lengkap"
+                                        className="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10 outline-none transition-all"
+                                        required
+                                    />
+                                    {errors.nama_pengirim && (
+                                        <p className="text-[10px] text-rose-600 font-semibold mt-1">
+                                            {errors.nama_pengirim}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label
+                                        htmlFor="inquiry-kontak"
+                                        className="block text-xs font-bold text-slate-700 mb-1"
+                                    >
+                                        No. WhatsApp / Email{" "}
+                                        <span className="text-[#E52027]">
+                                            *
+                                        </span>
+                                    </label>
+                                    <input
+                                        id="inquiry-kontak"
+                                        type="text"
+                                        disabled={processing}
+                                        value={data.kontak}
+                                        onChange={(e) =>
+                                            setData("kontak", e.target.value)
+                                        }
+                                        placeholder="0812... / email"
+                                        className="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10 outline-none transition-all"
+                                        required
+                                    />
+                                    {errors.kontak && (
+                                        <p className="text-[10px] text-rose-600 font-semibold mt-1">
+                                            {errors.kontak}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Textarea Pertanyaan */}
                         <div className="space-y-1.5">
                             <label
                                 htmlFor="inquiry-pesan"
                                 className="block text-xs font-bold text-slate-700"
                             >
-                                Pertanyaan Anda
+                                Pertanyaan Anda{" "}
+                                <span className="text-[#E52027]">*</span>
                             </label>
                             <textarea
                                 id="inquiry-pesan"
                                 rows={4}
-                                value={pesan}
-                                onChange={(e) => setPesan(e.target.value)}
-                                placeholder="Contoh: Apakah produk ini ready stock untuk dikirim hari ini? Apakah bahannya tahan air?"
-                                className="w-full text-xs p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all resize-none"
+                                disabled={processing}
+                                value={data.pesan}
+                                onChange={(e) =>
+                                    setData("pesan", e.target.value)
+                                }
+                                placeholder="Contoh: Apakah varian ini ready stock dan bisa dikirim hari ini? Apakah bahannya tahan air?"
+                                className="w-full text-xs p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#E52027]/10 focus:border-[#E52027] outline-none transition-all resize-none disabled:opacity-60"
                                 required
                             />
+                            {errors.pesan && (
+                                <p className="text-[11px] text-rose-600 font-semibold flex items-center gap-1 mt-1">
+                                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                                    <span>{errors.pesan}</span>
+                                </p>
+                            )}
                         </div>
 
-                        <div className="flex items-center gap-2 pt-2">
-                            <button
+                        {/* Aksi Kirim Form & Tombol Batal */}
+                        <div className="flex items-center gap-2 pt-1">
+                            <Button
                                 type="button"
-                                onClick={onClose}
-                                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs transition-colors cursor-pointer"
+                                variant="secondary"
+                                onClick={handleClose}
+                                disabled={processing}
+                                className="flex-1 py-2.5 text-xs font-bold"
                             >
                                 Batal
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 type="submit"
-                                disabled={isSubmitting || !pesan.trim()}
-                                className="flex-1 py-2.5 rounded-xl bg-primary hover:bg-primary-hover disabled:opacity-50 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed shadow-xs"
+                                variant="primary"
+                                loading={processing}
+                                disabled={processing || !data.pesan.trim()}
+                                leftIcon={<Send className="w-3.5 h-3.5" />}
+                                className="flex-1 py-2.5 text-xs font-bold"
                             >
-                                <Send className="w-3.5 h-3.5" />
-                                <span>{isSubmitting ? "Mengirim..." : "Kirim Pesan"}</span>
-                            </button>
+                                Kirim Pesan
+                            </Button>
                         </div>
                     </form>
-                )}
-            </div>
-        </div>
+
+                    {/* Pembatas Saluran Alternatif */}
+                    <div className="relative py-1">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-slate-100" />
+                        </div>
+                        <div className="relative flex justify-center text-[10px] uppercase font-bold text-slate-400">
+                            <span className="bg-white px-2">
+                                Atau chat langsung
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Tombol Opsi Cepat WhatsApp */}
+                    <button
+                        type="button"
+                        onClick={handleChatWhatsApp}
+                        className="w-full py-2.5 px-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/90 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-2xs"
+                    >
+                        <MessageSquareShare className="w-4 h-4 text-emerald-600" />
+                        <span>Tanya Langsung via WhatsApp CS</span>
+                    </button>
+                </div>
+            )}
+        </Modal>
     );
 }

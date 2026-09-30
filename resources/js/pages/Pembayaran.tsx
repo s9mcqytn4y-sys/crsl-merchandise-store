@@ -1,4 +1,4 @@
-import React, {
+import {
     useState,
     useMemo,
     useEffect,
@@ -6,13 +6,26 @@ import React, {
     useRef,
 } from "react";
 import { Head, router, Link } from "@inertiajs/react";
-import { ArrowLeft, Check, ChevronRight, Loader2 } from "lucide-react";
+import {
+    ArrowLeft,
+    Check,
+    ChevronRight,
+    Loader2,
+    ShoppingBag,
+} from "lucide-react";
 import { Toaster, toast } from "sonner";
+
+function getXsrfToken(): string {
+    if (typeof document === "undefined") return "";
+    const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : "";
+}
 
 import { useCheckoutStore } from "../Stores/useCheckoutStore";
 import { useKeranjangStore } from "../Stores/useKeranjangStore";
 import { checkoutFormSchema } from "../Validation/checkoutSchema";
 import { formatRupiah } from "../Utils/formatters";
+import { cn } from "../lib/utils";
 
 import AddressSection from "../Components/Checkout/AddressSection";
 import AddressSelectModal, {
@@ -47,9 +60,11 @@ interface UserProfile {
 export interface ExtendedCartItem extends CartItem {
     berat_gram?: number;
     weight?: number;
+    slug?: string;
+    sku?: string;
 }
 
-interface PembayaranProps {
+export interface PembayaranPageProps {
     keranjang?: Record<string, ExtendedCartItem> | ExtendedCartItem[];
     subtotal?: number;
     user?: UserProfile | null;
@@ -92,50 +107,60 @@ const DEFAULT_COURIERS: CourierOption[] = [
     {
         id: "jne_reg",
         kurir_kode: "jne",
+        layanan_kode: "reg",
         nama: "JNE",
-        layanan: "Reguler (2 - 3 days)",
+        layanan: "Reguler (2 - 3 hari)",
         biaya: 48000,
-        etd: "2 - 3 days",
+        etd: "2 - 3 hari",
         ikon: "/assets/ikon/kurir-jne.svg",
     },
     {
         id: "jne_yes",
         kurir_kode: "jne",
+        layanan_kode: "yes",
         nama: "JNE",
-        layanan: "YES (Yakin Esok Sampai) (1 days)",
+        layanan: "YES (Yakin Esok Sampai)",
         biaya: 117000,
-        etd: "1 days",
+        etd: "1 hari",
         ikon: "/assets/ikon/kurir-jne.svg",
     },
     {
         id: "jnt_ez",
         kurir_kode: "jnt",
+        layanan_kode: "ez",
         nama: "J&T Express",
         layanan: "EZ (Regular Service)",
         biaya: 52000,
-        etd: "2 - 3 days",
+        etd: "2 - 3 hari",
         ikon: "/assets/ikon/kurir-jnt.svg",
     },
     {
         id: "sicepat_reg",
         kurir_kode: "sicepat",
+        layanan_kode: "siuntung",
         nama: "SiCepat",
-        layanan: "REG (Reguler)",
+        layanan: "SiUntung (Reguler)",
         biaya: 50000,
-        etd: "2 - 3 days",
+        etd: "2 - 3 hari",
         ikon: "/assets/ikon/kurir-sicepat.svg",
     },
 ];
 
 const DEFAULT_PAYMENT: PaymentOption = {
-    id: "midtrans_snap",
-    nama: "Pembayaran Instan (Midtrans)",
-    subjudul: "QRIS, GoPay, Virtual Account & Kartu Kredit",
+    id: "qris",
+    nama: "QRIS (Semua E-Wallet & Mobile Banking)",
+    subjudul: "GoPay, OVO, Dana, ShopeePay, BCA QR, Livin'",
     tipe: "qris",
     ikon: "/assets/ikon/payment-qris.svg",
 };
 
 const INSURANCE_FEE = 2500;
+
+function isPercentageDiscount(tipe?: string): boolean {
+    if (!tipe) return false;
+    const clean = tipe.toLowerCase().trim();
+    return ["persen", "persentase", "percentage", "percent"].includes(clean);
+}
 
 export default function Pembayaran({
     keranjang = [],
@@ -147,7 +172,7 @@ export default function Pembayaran({
     vouchers = [],
     kurirList = [],
     metodeBayarList = [],
-}: PembayaranProps) {
+}: PembayaranPageProps) {
     // 1. External Store Selectors
     const storeKeranjangItems = useKeranjangStore((state) => state.items);
     const kosongkanKeranjang = useKeranjangStore((state) => state.kosongkan);
@@ -200,12 +225,31 @@ export default function Pembayaran({
             }
         }
 
-        if (isBuyNowQuery) setIsBuyNowMode(true);
+        if (isBuyNowQuery) {
+            setIsBuyNowMode(true);
+        } else {
+            setIsBuyNowMode(false);
+            setBuyNowItem(null);
+        }
     }, []);
 
     // 3. Normalized Cart Items
     const cartItems: ExtendedCartItem[] = useMemo(() => {
         if (isBuyNowMode && buyNowItem) return [buyNowItem];
+
+        const serverItems: ExtendedCartItem[] = (() => {
+            if (Array.isArray(keranjang) && keranjang.length > 0)
+                return keranjang;
+            if (
+                keranjang &&
+                typeof keranjang === "object" &&
+                Object.keys(keranjang).length > 0
+            )
+                return Object.values(keranjang);
+            return [];
+        })();
+
+        if (serverItems.length > 0) return serverItems;
 
         if (storeKeranjangItems && storeKeranjangItems.length > 0) {
             return storeKeranjangItems.map((item) => ({
@@ -223,10 +267,6 @@ export default function Pembayaran({
                 sku: item.sku,
             }));
         }
-
-        if (Array.isArray(keranjang)) return keranjang;
-        if (keranjang && typeof keranjang === "object")
-            return Object.values(keranjang);
 
         return [];
     }, [isBuyNowMode, buyNowItem, storeKeranjangItems, keranjang]);
@@ -256,7 +296,7 @@ export default function Pembayaran({
         }
     }, [addresses, alamatUtama, selectedAddress]);
 
-    // 5. Courier Dynamic Calculation with AbortController
+    // 5. Courier Dynamic Calculation
     const [isLoadingCouriers, setIsLoadingCouriers] = useState<boolean>(false);
     const [dynamicCouriers, setDynamicCouriers] = useState<CourierOption[]>([]);
 
@@ -286,7 +326,6 @@ export default function Pembayaran({
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
-    // Keep active courier aligned when available options change
     useEffect(() => {
         if (availableCouriers.length > 0) {
             setSelectedCourier((prev) => {
@@ -298,7 +337,7 @@ export default function Pembayaran({
         }
     }, [availableCouriers]);
 
-    // Shipping Rate Calculation Effect
+    // Shipping Rate API Call
     const abortControllerRef = useRef<AbortController | null>(null);
 
     useEffect(() => {
@@ -321,6 +360,7 @@ export default function Pembayaran({
                         "Content-Type": "application/json",
                         Accept: "application/json",
                         "X-Requested-With": "XMLHttpRequest",
+                        "X-XSRF-TOKEN": getXsrfToken(),
                     },
                     body: JSON.stringify({
                         area_id: destinationAreaId,
@@ -345,6 +385,7 @@ export default function Pembayaran({
                         (item) => ({
                             id: `${item.kurir_kode}_${item.layanan_kode || item.layanan || "reg"}`,
                             kurir_kode: item.kurir_kode,
+                            layanan_kode: item.layanan_kode || "reg",
                             nama: item.kurir_nama || item.nama || "Kurir",
                             layanan:
                                 item.layanan_nama ||
@@ -406,20 +447,31 @@ export default function Pembayaran({
             Math.round((totalGrams / 1000) * 100) / 100,
         );
 
-        const voucherDiscount = appliedVoucher
-            ? appliedVoucher.tipe === "persen" || appliedVoucher.tipe === "persentase"
-                ? appliedVoucher.maksimal_diskon && Number(appliedVoucher.maksimal_diskon) > 0
-                    ? Math.min(
-                          (computedSubtotal * Number(appliedVoucher.nilai)) / 100,
-                          Number(appliedVoucher.maksimal_diskon),
-                      )
-                    : (computedSubtotal * Number(appliedVoucher.nilai)) / 100
-                : Number(appliedVoucher.nilai) || 0
-            : 0;
+        // Voucher Calculation (persen & nominal terstandarisasi)
+        let voucherDiscount = 0;
+        if (appliedVoucher) {
+            if (isPercentageDiscount(appliedVoucher.tipe)) {
+                const pot =
+                    (computedSubtotal * Number(appliedVoucher.nilai)) / 100;
+                voucherDiscount =
+                    appliedVoucher.maksimal_diskon &&
+                    Number(appliedVoucher.maksimal_diskon) > 0
+                        ? Math.min(pot, Number(appliedVoucher.maksimal_diskon))
+                        : pot;
+            } else {
+                voucherDiscount = Number(appliedVoucher.nilai) || 0;
+            }
+            voucherDiscount = Math.min(voucherDiscount, computedSubtotal);
+        }
 
+        // Loyalty Point bounded to subtotal remainder after voucher
+        const sisaSubtotalSetelahVoucher = Math.max(
+            0,
+            computedSubtotal - voucherDiscount,
+        );
         const loyaltyDiscount =
             useLoyaltyPoints && loyaltyPoint
-                ? Math.min(Number(loyaltyPoint), computedSubtotal)
+                ? Math.min(Number(loyaltyPoint), sisaSubtotalSetelahVoucher)
                 : 0;
 
         const shippingCost = Number(selectedCourier?.biaya) || 0;
@@ -454,7 +506,7 @@ export default function Pembayaran({
         hasInsurance,
     ]);
 
-    // Otomatis lepaskan voucher jika subtotal belanja turun di bawah syarat minimum
+    // Lepas voucher jika subtotal belanja turun
     useEffect(() => {
         if (appliedVoucher) {
             const minBelanja = Number(
@@ -588,7 +640,7 @@ export default function Pembayaran({
                 ? selectedAddress.kode_pos || ""
                 : guestFormData.kode_pos,
             kurir: selectedCourier.kurir_kode,
-            layanan_kurir: selectedCourier.layanan || "reguler",
+            layanan_kurir: selectedCourier.layanan_kode || "reg",
             ongkir: calculation.shippingCost,
             metode_pembayaran: selectedPayment.id,
             subtotal: calculation.subtotal,
@@ -674,33 +726,55 @@ export default function Pembayaran({
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex flex-col">
+        <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex flex-col select-none">
             <Head title="Checkout Pesanan - CRSL Official Store" />
-            <Toaster position="top-center" richColors />
+            <Toaster position="top-center" richColors theme="light" />
 
-            {/* Banner Promo */}
-            <div className="bg-primary text-white text-[11px] sm:text-xs font-bold py-2 text-center tracking-wider px-4">
-                GRATIS ONGKIR SELURUH INDONESIA
+            {/* Banner Promo Atas */}
+            <div className="bg-[#E52027] text-white text-[11px] sm:text-xs font-bold py-2 text-center tracking-wider px-4">
+                GRATIS ONGKIR SELURUH INDONESIA UNTUK MEMBER CRSL
             </div>
 
+            {/* Banner Mode Beli Langsung */}
+            {isBuyNowMode && buyNowItem && (
+                <div className="bg-amber-500/10 border-b border-amber-200 text-amber-900 text-xs px-4 py-2 flex items-center justify-between">
+                    <span className="font-semibold flex items-center gap-1.5">
+                        <ShoppingBag className="w-3.5 h-3.5 text-amber-700" />
+                        Mode Beli Langsung: Menyelesaikan pesanan khusus 1
+                        produk ini.
+                    </span>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            sessionStorage.removeItem("crsl_buy_now_item");
+                            setIsBuyNowMode(false);
+                            setBuyNowItem(null);
+                        }}
+                        className="text-[11px] font-bold underline hover:text-amber-950 cursor-pointer"
+                    >
+                        Beralih ke Keranjang Belanja
+                    </button>
+                </div>
+            )}
+
             {/* Header Sticky Navigation */}
-            <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200">
+            <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <button
                             type="button"
                             onClick={handleBack}
-                            className="inline-flex items-center gap-2 px-3 py-2 text-slate-700 hover:text-slate-950 hover:bg-slate-100 rounded-xl transition-all font-bold text-xs cursor-pointer active:scale-95"
-                            aria-label="Kembali"
+                            className="inline-flex items-center gap-2 px-3 py-2 text-slate-700 hover:text-slate-950 hover:bg-slate-100 rounded-2xl transition-all font-bold text-xs cursor-pointer active:scale-95"
+                            aria-label="Kembali ke halaman sebelumnya"
                         >
-                            <ArrowLeft className="w-4 h-4" />
+                            <ArrowLeft className="w-4 h-4 stroke-[2.2]" />
                             <span className="hidden sm:inline">Kembali</span>
                         </button>
 
                         <Link
                             href="/"
                             className="flex items-center gap-2 pl-2 border-l border-slate-200"
-                            aria-label="Beranda CRSL"
+                            aria-label="Beranda CRSL Official Store"
                         >
                             <span className="font-black text-xl sm:text-2xl text-slate-950 tracking-tighter">
                                 &lt;CRSL&#x2022;
@@ -708,14 +782,14 @@ export default function Pembayaran({
                         </Link>
                     </div>
 
-                    {/* Step Breadcrumbs */}
+                    {/* Step Breadcrumbs WAI-ARIA */}
                     <nav
                         aria-label="Tahapan Checkout"
                         className="flex items-center gap-1.5 sm:gap-3 text-xs"
                     >
-                        <div className="flex items-center gap-1.5 text-emerald-700 font-semibold">
-                            <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[11px] font-bold">
-                                <Check className="w-3 h-3 stroke-[2.5]" />
+                        <div className="flex items-center gap-1.5 text-emerald-700 font-bold">
+                            <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[11px] font-black">
+                                <Check className="w-3 h-3 stroke-[3]" />
                             </span>
                             <span className="hidden md:inline">
                                 1. Keranjang
@@ -724,8 +798,8 @@ export default function Pembayaran({
 
                         <ChevronRight className="w-3.5 h-3.5 text-slate-300 shrink-0" />
 
-                        <div className="flex items-center gap-1.5 bg-primary/10 text-primary font-bold px-2.5 py-1 rounded-full">
-                            <span className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center text-[11px] font-black">
+                        <div className="flex items-center gap-1.5 bg-red-50 text-[#E52027] font-black px-3 py-1 rounded-full border border-red-200/60">
+                            <span className="w-5 h-5 rounded-full bg-[#E52027] text-white flex items-center justify-center text-[11px] font-black">
                                 2
                             </span>
                             <span>Checkout &amp; Bayar</span>
@@ -746,7 +820,7 @@ export default function Pembayaran({
             {/* Layout Grid Utama */}
             <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                    {/* Kolom Kiri: Form & Opsi Logistik */}
+                    {/* Kolom Kiri: Form Alamat & Pilihan Saluran */}
                     <div className="lg:col-span-7 space-y-6 sm:space-y-8">
                         <AddressSection
                             user={user}
@@ -773,6 +847,7 @@ export default function Pembayaran({
                         <ShipmentMethodSection
                             selectedCourier={selectedCourier}
                             onOpenModal={() => setIsShipmentModalOpen(true)}
+                            isModalOpen={isShipmentModalOpen}
                             error={errors.kurir}
                             isLoading={isLoadingCouriers}
                         />
@@ -780,12 +855,13 @@ export default function Pembayaran({
                         <PaymentMethodSection
                             selectedPayment={selectedPayment}
                             onOpenModal={() => setIsPaymentModalOpen(true)}
+                            isModalOpen={isPaymentModalOpen}
                             error={errors.metode_pembayaran}
                         />
                     </div>
 
-                    {/* Kolom Kanan: Ringkasan Order & Checkout CTA */}
-                    <div className="lg:col-span-5 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
+                    {/* Kolom Kanan: Ringkasan Pembayaran Sticky */}
+                    <div className="lg:col-span-5 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto no-scrollbar">
                         <OrderSummarySection
                             items={cartItems}
                             subtotal={calculation.subtotal}
@@ -811,7 +887,7 @@ export default function Pembayaran({
                 </div>
             </main>
 
-            {/* Modals & Dialogs */}
+            {/* Modals & Dialogs Terintegrasi */}
             <ShipmentSelectModal
                 isOpen={isShipmentModalOpen}
                 onClose={() => setIsShipmentModalOpen(false)}
@@ -820,6 +896,7 @@ export default function Pembayaran({
                     selectedCourier.id || selectedCourier.kurir_kode
                 }
                 hasInsurance={hasInsurance}
+                insuranceFee={INSURANCE_FEE}
                 onToggleInsurance={setHasInsurance}
                 onConfirmCourier={setSelectedCourier}
             />
@@ -872,29 +949,30 @@ export default function Pembayaran({
                 onClose={() => setIsAuthModalOpen(false)}
             />
 
-            {/* Overlay State Loader */}
+            {/* Overlay State Loader Midtrans/Biteship */}
             {isSubmitting && (
                 <div
-                    className="fixed inset-0 z-50 flex flex-col items-center justify-center p-6 bg-slate-950/70 backdrop-blur-sm text-white text-center"
+                    className="fixed inset-0 z-50 flex flex-col items-center justify-center p-6 bg-slate-950/70 backdrop-blur-xs text-white text-center"
                     role="alert"
                     aria-live="assertive"
                     aria-busy="true"
                 >
-                    <div className="bg-white text-slate-900 rounded-3xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center space-y-4 border border-slate-100">
-                        <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center text-primary">
-                            <Loader2 className="w-8 h-8 animate-spin" />
+                    <div className="bg-white text-slate-900 rounded-3xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center space-y-4 border border-slate-100 animate-in zoom-in-95">
+                        <div className="w-16 h-16 rounded-3xl bg-red-50 flex items-center justify-center text-[#E52027] border border-red-100 shadow-2xs">
+                            <Loader2 className="w-8 h-8 animate-spin stroke-[2.2]" />
                         </div>
                         <div className="space-y-1.5">
-                            <h3 className="text-base font-black text-slate-900">
+                            <h3 className="text-base font-black text-slate-900 tracking-tight">
                                 Menyiapkan Pesanan...
                             </h3>
                             <p className="text-xs text-slate-500 leading-relaxed">
-                                Menghubungkan transaksi Anda ke Midtrans &amp;
-                                Biteship. Mohon tidak menutup halaman ini.
+                                Menghubungkan transaksi Anda ke payment gateway
+                                Midtrans &amp; kurir Biteship. Mohon tidak
+                                menutup jendela ini.
                             </p>
                         </div>
                         <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                            <div className="bg-primary h-full w-2/3 animate-pulse rounded-full" />
+                            <div className="bg-[#E52027] h-full w-2/3 animate-pulse rounded-full" />
                         </div>
                     </div>
                 </div>

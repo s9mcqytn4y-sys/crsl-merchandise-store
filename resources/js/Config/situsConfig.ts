@@ -1,223 +1,169 @@
-export interface NavigasiItem {
-    label: string;
-    href: string;
-    isHighlight?: boolean;
-    badge?: string;
-    emoji?: string;
-}
+/**
+ * Konfigurasi Global Toko Online CRSL Official Store
+ * Digunakan secara luas oleh komponen Storefront, SEO Head, Faktur, PDP, dan Beranda.
+ */
 
 export interface HeroSlideCMS {
-    gambar: string;
-    tag: string;
+    id: string | number;
     judul: string;
-    subjudul: string;
-    tombol: string;
+    subjudul?: string;
+    gambar_desktop: string;
+    gambar_mobile: string;
     tautan: string;
-    alt: string;
+    tombol_label?: string;
+    alt_teks: string;
 }
 
-export interface NegaraOption {
-    kode: "ID" | "MY" | "SG" | string;
+export interface MascotCharacter {
     nama: string;
+    karakter: string;
+    deskripsi: string;
+    warnaHex: string;
+    gambar: string;
 }
 
-export interface MataUangOption {
-    kode: "IDR" | "USD" | "SGD" | "MYR" | string;
-    label: string;
+export interface SitusConfig {
+    namaToko: string;
+    tagline: string;
+    deskripsiSingkat: string;
+    domain: string;
+    urlSitus: string;
+    whatsappCS: string;
+    whatsappCSFormatted: string;
+    emailSupport: string;
+    jamOperasional: string;
+    alamatToko: string;
+    mediaSosial: {
+        instagram: string;
+        tiktok: string;
+        youtube: string;
+        shopee: string;
+        tokopedia: string;
+    };
+    warnaBrand: {
+        primer: string;
+        primerHover: string;
+        aksen: string;
+        gelap: string;
+    };
+    heroSlidesCMS: HeroSlideCMS[];
+    maskot: MascotCharacter[];
+    /** Kata kunci populer untuk modal pencarian cepat */
+    pencarianPopuler?: string[];
 }
 
-export const SITUS_CONFIG = {
-    nama: "CRSL Official Store",
-    tagline: "Animals as your Bestfriends!",
-    domain: "crsl-store.id",
-    lokasi: "Sleman, D.I. Yogyakarta, Indonesia",
-    whatsappCS: "6281234567890",
-    pesanPromoBilahAtas: [
-        "GRATIS ONGKIR SELURUH INDONESIA",
-        "DISKON 10% ALL ITEM UNTUK NEW ADOPTER",
-        "BELANJA DI WEBSITE LEBIH MURAH & CEPAT",
-        "FREE EXCLUSIVE STICKER PACK DI SETIAP PEMBELIAN",
-    ],
-    navigasiUtama: [
-        { label: "BERANDA", href: "/", isHighlight: false },
-        { label: "KATALOG PRODUK", href: "/katalog", isHighlight: false },
-        {
-            label: "🎒 BTS COLLECTION",
-            href: "/katalog?kategori=back-to-school-essentials",
-            isHighlight: true,
-        },
-        { label: "LACAK PESANAN", href: "/lacak", isHighlight: false },
-    ],
-    pencarianPopuler: [
-        "slingbag",
-        "topi",
-        "monie",
-        "mosko",
-        "ruby",
-        "wallet",
-        "yori",
-        "helm",
-    ],
-    opsiNegara: [
-        { kode: "ID", nama: "Indonesia" },
-        { kode: "MY", nama: "Malaysia" },
-        { kode: "SG", nama: "Singapore" },
-    ],
-    opsiMataUang: [
-        { kode: "IDR", label: "IDR - Indonesian Rupiah" },
-        { kode: "USD", label: "USD - United States Dollar" },
-        { kode: "SGD", label: "SGD - Singapore Dollar" },
-        { kode: "MYR", label: "MYR - Malaysian Ringgit" },
-    ],
+/** Helper sanitasi nomor WhatsApp agar menghasilkan format numerik internasional bersih */
+function sanitizePhoneNumber(phone: string): string {
+    const cleaned = phone.replace(/\D/g, "");
+    if (cleaned.startsWith("0")) {
+        return `62${cleaned.slice(1)}`;
+    }
+    return cleaned;
+}
+
+const rawWhatsapp =
+    (typeof import.meta !== "undefined" && import.meta.env?.VITE_WHATSAPP_CS) ||
+    "6281234567890";
+
+const cleanWhatsapp = sanitizePhoneNumber(rawWhatsapp);
+
+export const SITUS_CONFIG: SitusConfig = {
+    namaToko: "CRSL Official Store",
+    tagline: "Animals as Your Bestfriends!",
+    deskripsiSingkat:
+        "Toko resmi apparel, tas, aksesoris, dan merchandise karakter original CRSL: Odin, Chilo, Popo, Piggy, dan Choco.",
+    domain: "crsl.store",
+    urlSitus:
+        (typeof import.meta !== "undefined" && import.meta.env?.VITE_APP_URL) ||
+        "https://crsl.store",
+
+    // Nomor WhatsApp resmi CS (versi raw numerik untuk wa.me dan versi tampilan UI)
+    whatsappCS: cleanWhatsapp,
+    whatsappCSFormatted: `+${cleanWhatsapp.slice(0, 2)} ${cleanWhatsapp.slice(2, 5)}-${cleanWhatsapp.slice(5, 9)}-${cleanWhatsapp.slice(9)}`,
+    emailSupport: "support@crsl.store",
+    jamOperasional: "Senin - Sabtu: 09:00 - 17:00 WIB",
+    alamatToko: "Sleman, Daerah Istimewa Yogyakarta, Indonesia",
+
+    mediaSosial: {
+        instagram: "https://instagram.com/crsl.official",
+        tiktok: "https://tiktok.com/@crsl.official",
+        youtube: "https://youtube.com/@crslofficial",
+        shopee: "https://shopee.co.id/crsl.store",
+        tokopedia: "https://tokopedia.com/crsl",
+    },
+
+    warnaBrand: {
+        primer: "#E52027",
+        primerHover: "#CC1C22",
+        aksen: "#F59E0B",
+        gelap: "#0F172A",
+    },
+
     heroSlidesCMS: [
         {
-            gambar: "/assets/gambar/banner-1.webp",
-            tag: "NEW SEASON",
-            judul: "Animals as your Bestfriends!",
+            id: "bts-2026",
+            judul: "Back to School Collection 2026",
             subjudul:
-                "Merchandise karakter hewan lucu & fungsional untuk menemani hari-harimu.",
-            tombol: "Adopt Now",
-            tautan: "/katalog",
-            alt: "CRSL Koleksi Terbaru",
+                "Tingkatkan semangat harimu bersama ransel dan perlengkapan terbaru dari CRSL.",
+            gambar_desktop: "/assets/gambar/hero-bts-desktop.webp",
+            gambar_mobile: "/assets/gambar/hero-bts-mobile.webp",
+            tautan: "/katalog?kategori=tas",
+            tombol_label: "Jelajahi Koleksi",
+            alt_teks: "Koleksi Back to School CRSL Official Store",
         },
         {
-            gambar: "/assets/gambar/banner-hero-main.webp",
-            tag: "BTS ESSENTIALS",
-            judul: "Back to School with Odin & Friends",
+            id: "new-arrival-apparel",
+            judul: "New Daily Tees & Outerwear",
             subjudul:
-                "Ransel water-repellent, kapasitas laptop 14 inci, dan kompartemen lengkap.",
-            tombol: "Lihat Ransel",
-            tautan: "/katalog?kategori=backpack-collection",
-            alt: "CRSL Back to School Essentials",
-        },
-        {
-            gambar: "/assets/gambar/banner-tumbler.webp",
-            tag: "EVERYDAY HYDRATION",
-            judul: "Tumbler Termos 12 Jam Dingin",
-            subjudul:
-                "Stainless steel food-grade anti tumpah dengan karakter imut Popo si Panda.",
-            tombol: "Pilih Tumbler",
-            tautan: "/katalog?kategori=tumbler-collection",
-            alt: "CRSL Tumbler Collection",
-        },
-        {
-            gambar: "/assets/gambar/banner-cassie.webp",
-            tag: "BEST SELLER",
-            judul: "Compact & Stylish Cassie Wallet",
-            subjudul:
-                "Dompet kanvas lipat wanita dengan motif plaid ikonik dan slot kartu lengkap.",
-            tombol: "Beli Cassie Wallet",
-            tautan: "/katalog?kategori=wallet-accessories",
-            alt: "CRSL Cassie Wallet",
-        },
-        {
-            gambar: "/assets/gambar/banner-2.webp",
-            tag: "SPECIAL EDITION",
-            judul: "Meet The 5 Bestfriends Squad",
-            subjudul:
-                "Temukan kepribadianmu bersama Odin, Chilo, Pigko, Popo, dan Choco.",
-            tombol: "Kenali Karakter",
-            tautan: "/katalog",
-            alt: "CRSL Animal Characters",
+                "Bahan katun premium lembut dengan bordir karakter maskot eksklusif.",
+            gambar_desktop: "/assets/gambar/hero-apparel-desktop.webp",
+            gambar_mobile: "/assets/gambar/hero-apparel-mobile.webp",
+            tautan: "/katalog?urutan=terbaru",
+            tombol_label: "Lihat New Arrival",
+            alt_teks: "Koleksi Apparel Terbaru CRSL Official",
         },
     ],
-    navigasiKategori: [
-        {
-            label: "BTS Collection",
-            href: "/katalog?kategori=back-to-school-essentials",
-            isHighlight: true,
-            badge: "Hot",
-        },
-        { label: "All Products", href: "/katalog", isHighlight: false },
-        {
-            label: "All Day Promo",
-            href: "/katalog?promo=true",
-            isHighlight: true,
-            badge: "Sale",
-        },
-        {
-            label: "Backpacks",
-            href: "/katalog?kategori=backpack-collection",
-            isHighlight: false,
-        },
-        {
-            label: "Slingbags",
-            href: "/katalog?kategori=slingbag-collection",
-            isHighlight: false,
-        },
-        {
-            label: "Tumbler Collection",
-            href: "/katalog?kategori=tumbler-collection",
-            isHighlight: false,
-        },
-        {
-            label: "Tops",
-            href: "/katalog?kategori=tops-collection",
-            isHighlight: false,
-        },
-        {
-            label: "Bottoms",
-            href: "/katalog?kategori=bottoms-collection",
-            isHighlight: false,
-        },
-        {
-            label: "Outerwears",
-            href: "/katalog?kategori=outerwears-collection",
-            isHighlight: false,
-        },
-        {
-            label: "Footwears",
-            href: "/katalog?kategori=footwear-collection",
-            isHighlight: false,
-        },
-        {
-            label: "Headwears",
-            href: "/katalog?kategori=headwear-collection",
-            isHighlight: false,
-        },
-        {
-            label: "Wallet & Accessories",
-            href: "/katalog?kategori=wallet-accessories",
-            isHighlight: false,
-        },
-        {
-            label: "What's Poppin'",
-            href: "/katalog?kategori=whats-poppin",
-            isHighlight: false,
-        },
-    ],
-} as const;
 
-export const THEME_TOKENS = {
-    colors: {
-        primary: "#E52027",
-        primaryHover: "#CC1C22",
-        primaryActive: "#B3181E",
-        primarySubtle: "#FEF2F2", // red-50
-        secondary: "#64748B",
-        darkBg: "#020617", // slate-950
-        darkCard: "#0F172A", // slate-900
-        emerald: "#059669", // emerald-600
-        amber: "#D97706", // amber-600
-        rose: "#E11D48", // rose-600
-    },
-    motion: {
-        rotatorDuration: 4,
-        rotatorEaseOut: "power2.out",
-        rotatorEaseIn: "power2.in",
-        transitionDuration: 0.3,
-    },
-    typography: {
-        fontBody: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
-        fontHeading: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
-        fontMono: "'JetBrains Mono', Consolas, monospace",
-        headingWeight: 700,
-        subheadingWeight: 600,
-        bodyWeight: 400,
-    },
-    layout: {
-        bilahAtasHeight: "36px",
-        navigasiHeight: "64px",
-        maxWidth: "1280px",
-    },
-} as const;
+    maskot: [
+        {
+            nama: "Odin",
+            karakter: "Dino",
+            deskripsi:
+                "Pemberani, setia kawan, dan selalu siap menemani petualanganmu.",
+            warnaHex: "#10B981",
+            gambar: "/assets/gambar/maskot-odin.webp",
+        },
+        {
+            nama: "Chilo",
+            karakter: "Cat",
+            deskripsi:
+                "Manis, penyayang, dan suka kenyamanan santai di mana saja.",
+            warnaHex: "#F59E0B",
+            gambar: "/assets/gambar/maskot-chilo.webp",
+        },
+        {
+            nama: "Popo",
+            karakter: "Panda",
+            deskripsi:
+                "Tenang, bijaksana, dan pembawa kehangatan bagi teman-temannya.",
+            warnaHex: "#64748B",
+            gambar: "/assets/gambar/maskot-popo.webp",
+        },
+        {
+            nama: "Piggy",
+            karakter: "Pig",
+            deskripsi: "Ceria, penuh energi positif, dan selalu membawa tawa.",
+            warnaHex: "#F43F5E",
+            gambar: "/assets/gambar/maskot-piggy.webp",
+        },
+        {
+            nama: "Choco",
+            karakter: "Bear",
+            deskripsi: "Kuat, hangat, dan siap melindungi sahabat-sahabatnya.",
+            warnaHex: "#8B5CF6",
+            gambar: "/assets/gambar/maskot-choco.webp",
+        },
+    ],
+};
+
+export default SITUS_CONFIG;

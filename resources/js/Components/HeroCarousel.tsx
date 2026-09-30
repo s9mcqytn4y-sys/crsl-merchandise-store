@@ -73,7 +73,8 @@ export default function HeroCarousel({
 }: {
     slides?: HeroSlide[] | readonly HeroSlide[];
 }) {
-    const activeSlides = slides.length > 0 ? (slides as HeroSlide[]) : DEFAULT_SLIDES;
+    const activeSlides =
+        slides.length > 0 ? (slides as HeroSlide[]) : DEFAULT_SLIDES;
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
 
@@ -82,7 +83,7 @@ export default function HeroCarousel({
 
     const goToPrev = useCallback(() => {
         setCurrentIndex(
-            (prev) => (prev - 1 + activeSlides.length) % activeSlides.length
+            (prev) => (prev - 1 + activeSlides.length) % activeSlides.length,
         );
     }, [activeSlides.length]);
 
@@ -109,7 +110,7 @@ export default function HeroCarousel({
 
         const ctx = gsap.context(() => {
             const currentSlideEl = containerRef.current?.querySelector(
-                `[data-slide-index="${currentIndex}"]`
+                `[data-slide-index="${currentIndex}"]`,
             );
             if (!currentSlideEl) return;
 
@@ -129,12 +130,14 @@ export default function HeroCarousel({
                         opacity: 1,
                         duration: 1.2,
                         ease: "power2.out",
-                    }
+                    },
                 );
             }
 
             // Staggered Entrance Teks
-            const textGroup = [tagEl, titleEl, subtitleEl, btnEl].filter(Boolean);
+            const textGroup = [tagEl, titleEl, subtitleEl, btnEl].filter(
+                Boolean,
+            );
             if (textGroup.length > 0) {
                 gsap.fromTo(
                     textGroup,
@@ -146,7 +149,7 @@ export default function HeroCarousel({
                         stagger: 0.1,
                         ease: "power2.out",
                         overwrite: "auto",
-                    }
+                    },
                 );
             }
         }, containerRef);
@@ -155,26 +158,29 @@ export default function HeroCarousel({
     }, [currentIndex]);
 
     // Mouse Move Micro-Parallax untuk Desktop
-    const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-        if (!containerRef.current || window.innerWidth < 1024) return;
-        const rect = containerRef.current.getBoundingClientRect();
-        const mouseX = (e.clientX - rect.left) / rect.width - 0.5;
-        const mouseY = (e.clientY - rect.top) / rect.height - 0.5;
+    const handleMouseMove = useCallback(
+        (e: React.MouseEvent<HTMLDivElement>) => {
+            if (!containerRef.current || window.innerWidth < 1024) return;
+            const rect = containerRef.current.getBoundingClientRect();
+            const mouseX = (e.clientX - rect.left) / rect.width - 0.5;
+            const mouseY = (e.clientY - rect.top) / rect.height - 0.5;
 
-        const currentSlideEl = containerRef.current.querySelector(
-            `[data-slide-index="${currentIndex}"]`
-        );
-        const bgImage = currentSlideEl?.querySelector(".hero-bg-image");
-        if (bgImage) {
-            gsap.to(bgImage, {
-                x: mouseX * -20,
-                y: mouseY * -15,
-                duration: 0.6,
-                ease: "power1.out",
-                overwrite: "auto",
-            });
-        }
-    }, [currentIndex]);
+            const currentSlideEl = containerRef.current.querySelector(
+                `[data-slide-index="${currentIndex}"]`,
+            );
+            const bgImage = currentSlideEl?.querySelector(".hero-bg-image");
+            if (bgImage) {
+                gsap.to(bgImage, {
+                    x: mouseX * -20,
+                    y: mouseY * -15,
+                    duration: 0.6,
+                    ease: "power1.out",
+                    overwrite: "auto",
+                });
+            }
+        },
+        [currentIndex],
+    );
 
     // Touch Swiping Handlers untuk Mobile
     const handleTouchStart = (e: React.TouchEvent) => {

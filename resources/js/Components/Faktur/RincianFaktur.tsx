@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, useMemo } from "react";
 import {
     Truck,
     MapPin,
@@ -11,6 +11,10 @@ import {
     Mail,
     FileText,
     Package,
+    Coins,
+    TicketPercent,
+    AlertCircle,
+    ShoppingBag,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -30,13 +34,19 @@ interface ShippingDetail {
     nomor_resi?: string;
     penerima?: string;
     alamat_lengkap?: string;
-    json_payload?: {
-        nama_penerima?: string;
-        telepon?: string;
-        email?: string;
-        alamat_lengkap?: string;
-        catatan?: string;
-    };
+    json_payload?:
+        | string
+        | {
+              nama_penerima?: string;
+              telepon?: string;
+              email?: string;
+              alamat_lengkap?: string;
+              catatan?: string;
+              kota?: string;
+              kecamatan?: string;
+              provinsi?: string;
+              kode_pos?: string;
+          };
 }
 
 interface RincianFakturProps {
@@ -48,6 +58,8 @@ interface RincianFakturProps {
     ongkir: number;
     diskon?: number;
     total: number;
+    kodeVoucher?: string | null;
+    poinDigunakan?: number;
     pengiriman?: ShippingDetail;
     isDropship?: boolean;
     dropshipPengirim?: string;
@@ -58,8 +70,30 @@ interface RincianFakturProps {
     onOpenEditRecipient?: () => void;
 }
 
+/**
+ * Normalisasi format nama kurir & layanan agar ramah dibaca pembeli
+ */
+function formatKurirLayanan(kurir?: string, layanan?: string): string {
+    if (!kurir) return "Ekspedisi Pengiriman";
+    const k = kurir.toLowerCase().trim();
+    let namaKurir = kurir.toUpperCase();
+
+    if (k === "pos") namaKurir = "POS Indonesia";
+    else if (k === "jne") namaKurir = "JNE Express";
+    else if (k === "jnt") namaKurir = "J&T Express";
+    else if (k === "sicepat") namaKurir = "SiCepat Ekspres";
+    else if (k === "tiki") namaKurir = "TIKI";
+
+    if (!layanan) return namaKurir;
+    const cleanLayanan = layanan.replace(/_/g, " ").trim();
+    const namaLayanan = cleanLayanan.toLowerCase().includes("reg")
+        ? cleanLayanan.replace(/reg/i, "Reguler")
+        : cleanLayanan.toUpperCase();
+
+    return `${namaKurir} (${namaLayanan})`;
+}
+
 export default function RincianFaktur({
-    nomorPesanan,
     status = "belum_bayar",
     catatan,
     items = [],
@@ -67,6 +101,8 @@ export default function RincianFaktur({
     ongkir,
     diskon = 0,
     total,
+    kodeVoucher = null,
+    poinDigunakan = 0,
     pengiriman = {},
     isDropship = false,
     dropshipPengirim,
@@ -76,108 +112,97 @@ export default function RincianFaktur({
     formatRupiah,
     onOpenEditRecipient,
 }: RincianFakturProps) {
-    const [copiedField, setCopiedField] = useState<
-        "orderId" | "total" | "resi" | null
-    >(null);
+    const [copiedResi, setCopiedResi] = useState(false);
 
-    const handleCopy = async (
-        text: string,
-        field: "orderId" | "total" | "resi",
-        label: string,
-    ) => {
+    const handleCopyResi = async (resiText: string) => {
         try {
-            await navigator.clipboard.writeText(text);
-            setCopiedField(field);
-            toast.success(`${label} berhasil disalin`);
-            setTimeout(() => setCopiedField(null), 2000);
+            await navigator.clipboard.writeText(resiText);
+            setCopiedResi(true);
+            toast.success("Nomor resi berhasil disalin!");
+            setTimeout(() => setCopiedResi(false), 2000);
         } catch {
-            toast.error("Gagal menyalin ke clipboard");
+            toast.error("Gagal menyalin nomor resi.");
         }
     };
 
-    const payload = pengiriman.json_payload;
+    // Safe parser untuk json_payload jika bertipe string
+    const parsedPayload = useMemo(() => {
+        const raw = pengiriman.json_payload;
+        if (!raw) return {};
+        if (typeof raw === "object") return raw;
+        try {
+            return JSON.parse(raw);
+        } catch {
+            return {};
+        }
+    }, [pengiriman.json_payload]);
+
     const recipientName =
-        payload?.nama_penerima || pengiriman.penerima || "Pelanggan";
-    const recipientPhone = payload?.telepon;
-    const recipientEmail = payload?.email;
+        parsedPayload.nama_penerima || pengiriman.penerima || "Pelanggan";
+    const recipientPhone = parsedPayload.telepon;
+    const recipientEmail = parsedPayload.email;
     const recipientAddress =
-        payload?.alamat_lengkap ||
+        parsedPayload.alamat_lengkap ||
         pengiriman.alamat_lengkap ||
         "Alamat pengiriman belum ditentukan.";
-    const orderNotes = catatan || payload?.catatan;
+    const orderNotes = catatan || parsedPayload.catatan;
 
-    const canEditAddress =
-        status === "belum_bayar" || status === "akan_dikirim";
+    // Alamat hanya boleh diubah jika belum lunas dan resi kurir belum terbit
+    const hasWaybill = Boolean(pengiriman.nomor_resi);
+    const canEditAddress = status === "belum_bayar" && !hasWaybill;
+
+    // Pemisahan transparan diskon voucher vs poin loyalitas
+    const nominalPoin = Math.max(0, Number(poinDigunakan) || 0);
+    const nominalVoucher = Math.max(0, (Number(diskon) || 0) - nominalPoin);
+
+    const isHoldVerification =
+        status === "menunggu_verifikasi_manual" || status === "challenge";
+
+    const labelKurirLayanan = formatKurirLayanan(
+        pengiriman.kurir,
+        pengiriman.layanan,
+    );
 
     return (
         <aside className="space-y-4" aria-label="Rincian Transaksi Faktur">
-            {/* 1. Quick Info Box: Nomor Faktur */}
-            {nomorPesanan && (
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex items-center justify-between gap-3 text-xs">
-                    <div className="min-w-0">
-                        <span className="text-[10px] uppercase font-medium text-slate-500 block tracking-wider">
-                            Nomor Pesanan
-                        </span>
-                        <span className="font-mono font-semibold text-slate-900 truncate block text-sm select-all">
-                            #{nomorPesanan}
-                        </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                        <button
-                            type="button"
-                            onClick={() =>
-                                handleCopy(
-                                    nomorPesanan,
-                                    "orderId",
-                                    "Nomor Pesanan",
-                                )
-                            }
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 ${
-                                copiedField === "orderId"
-                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                    : "bg-white hover:bg-slate-100 text-slate-700 border-slate-200 shadow-xs"
-                            }`}
-                        >
-                            {copiedField === "orderId" ? (
-                                <Check className="w-3.5 h-3.5 text-emerald-600" />
-                            ) : (
-                                <Copy className="w-3.5 h-3.5 text-slate-400" />
-                            )}
-                            <span>
-                                {copiedField === "orderId"
-                                    ? "Tersalin"
-                                    : "Salin ID"}
-                            </span>
-                        </button>
+            {/* Banner Transparansi: Penahanan Verifikasi Manual */}
+            {isHoldVerification && (
+                <div className="bg-amber-50 border border-amber-300 rounded-2xl p-4 flex items-start gap-3 text-xs text-amber-950 shadow-2xs">
+                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                        <p className="font-bold">
+                            Pembayaran Dalam Tinjauan Tim CS
+                        </p>
+                        <p className="text-[11px] leading-relaxed text-amber-800">
+                            Sistem mendeteksi transaksi memerlukan verifikasi
+                            manual (seperti selisih nominal transfer). Tim CS
+                            kami sedang memeriksa data pembayaran Anda.
+                        </p>
                     </div>
                 </div>
             )}
 
-            {/* 2. Informasi Pengiriman & Penerima */}
-            <section className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-xs space-y-4">
+            {/* 1. Informasi Pengiriman & Penerima */}
+            <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <h2 className="font-semibold text-sm text-slate-900 flex items-center gap-2">
-                        <Truck className="w-4 h-4 text-slate-600" />
+                    <h2 className="font-bold text-sm text-slate-900 flex items-center gap-2">
+                        <Truck className="w-4 h-4 text-[#E52027]" />
                         <span>Informasi Pengiriman</span>
                     </h2>
 
                     <div className="flex items-center gap-2">
                         {pengiriman.kurir && (
-                            <span className="text-[10px] font-medium uppercase tracking-wide text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
-                                {pengiriman.kurir}{" "}
-                                {pengiriman.layanan
-                                    ? `(${pengiriman.layanan})`
-                                    : ""}
+                            <span className="text-[11px] font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+                                {labelKurirLayanan}
                             </span>
                         )}
                         {canEditAddress && onOpenEditRecipient && (
                             <button
                                 type="button"
                                 onClick={onOpenEditRecipient}
-                                className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+                                className="inline-flex items-center gap-1 text-xs font-bold text-[#E52027] hover:underline transition-colors cursor-pointer"
                             >
-                                <Edit3 className="w-3 h-3" />
+                                <Edit3 className="w-3.5 h-3.5" />
                                 <span>Ubah</span>
                             </button>
                         )}
@@ -185,40 +210,48 @@ export default function RincianFaktur({
                 </div>
 
                 <div className="space-y-3 text-xs">
+                    {/* Kartu Nomor Resi Kurir (Jika sudah terbit) */}
                     {pengiriman.nomor_resi && (
-                        <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
-                            <span className="text-slate-600">No. Resi:</span>
-                            <div className="flex items-center gap-1.5">
-                                <span className="font-mono font-semibold text-slate-900 select-all">
+                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/90 flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                                    No. Resi Kurir
+                                </span>
+                                <span className="font-mono font-bold text-slate-900 select-all truncate block text-sm pt-0.5">
                                     {pengiriman.nomor_resi}
                                 </span>
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        handleCopy(
-                                            pengiriman.nomor_resi!,
-                                            "resi",
-                                            "Nomor Resi",
-                                        )
-                                    }
-                                    className="p-1 text-slate-400 hover:text-slate-700 rounded transition-colors"
-                                    title="Salin Resi"
-                                >
-                                    {copiedField === "resi" ? (
-                                        <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                    ) : (
-                                        <Copy className="w-3.5 h-3.5" />
-                                    )}
-                                </button>
                             </div>
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    handleCopyResi(pengiriman.nomor_resi!)
+                                }
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:border-slate-300 shadow-2xs transition-colors cursor-pointer shrink-0"
+                                title="Salin nomor resi"
+                            >
+                                {copiedResi ? (
+                                    <>
+                                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                        <span className="text-emerald-700">
+                                            Tersalin
+                                        </span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Copy className="w-3.5 h-3.5 text-slate-400" />
+                                        <span>Salin</span>
+                                    </>
+                                )}
+                            </button>
                         </div>
                     )}
 
+                    {/* Data Alamat Tujuan */}
                     <div className="space-y-2">
                         <div className="flex items-start gap-2.5">
                             <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                             <div className="space-y-0.5 min-w-0">
-                                <p className="font-medium text-slate-900">
+                                <p className="font-bold text-slate-900">
                                     {recipientName}
                                 </p>
                                 <p className="text-slate-600 leading-relaxed">
@@ -228,7 +261,7 @@ export default function RincianFaktur({
                         </div>
 
                         {(recipientPhone || recipientEmail) && (
-                            <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-600 pl-6 pt-0.5">
+                            <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-600 pl-6.5">
                                 {recipientPhone && (
                                     <a
                                         href={`tel:${recipientPhone}`}
@@ -251,21 +284,22 @@ export default function RincianFaktur({
                         )}
 
                         {orderNotes && (
-                            <div className="flex items-start gap-2 text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-200 mt-2">
-                                <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
-                                <span>
-                                    <strong className="text-slate-700">
+                            <div className="flex items-start gap-2 text-[11px] text-amber-900 bg-amber-50/80 p-2.5 rounded-xl border border-amber-200/80 mt-2">
+                                <FileText className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                                <div>
+                                    <strong className="font-bold">
                                         Catatan:
                                     </strong>{" "}
-                                    {orderNotes}
-                                </span>
+                                    <span>{orderNotes}</span>
+                                </div>
                             </div>
                         )}
                     </div>
 
+                    {/* Informasi Dropship */}
                     {isDropship && (
-                        <div className="p-2.5 rounded-lg bg-amber-50/70 border border-amber-200/70 text-xs text-amber-950 space-y-0.5">
-                            <div className="flex items-center gap-1.5 font-medium text-amber-900">
+                        <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200 text-xs text-amber-950 space-y-0.5">
+                            <div className="flex items-center gap-1.5 font-bold text-amber-900">
                                 <UserCheck className="w-3.5 h-3.5 text-amber-700" />
                                 <span>Pengiriman Dropship</span>
                             </div>
@@ -278,77 +312,106 @@ export default function RincianFaktur({
                 </div>
             </section>
 
-            {/* 3. Ringkasan Item Pesanan */}
-            <section className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-xs space-y-4">
-                <h2 className="font-semibold text-sm text-slate-900 border-b border-slate-100 pb-3 flex justify-between items-center">
-                    <span>Item Pesanan</span>
-                    <span className="text-xs font-normal text-slate-500">
+            {/* 2. Rincian Item Pesanan */}
+            <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h2 className="font-bold text-sm text-slate-900 flex items-center gap-2">
+                        <Package className="w-4 h-4 text-slate-700" />
+                        <span>Item Pesanan</span>
+                    </h2>
+                    <span className="text-xs font-semibold text-slate-500">
                         ({items.length} produk)
                     </span>
-                </h2>
-
-                <div className="space-y-3 max-h-72 overflow-y-auto pr-1 divide-y divide-slate-100">
-                    {items.map((it, idx) => (
-                        <div
-                            key={it.id || idx}
-                            className="flex items-center justify-between gap-3 text-xs pt-3 first:pt-0"
-                        >
-                            <div className="flex items-center gap-3 min-w-0">
-                                {it.gambar ? (
-                                    <img
-                                        src={it.gambar}
-                                        alt={it.nama_produk}
-                                        className="w-12 h-12 rounded-lg object-cover border border-slate-200 shrink-0 bg-slate-50"
-                                        loading="lazy"
-                                    />
-                                ) : (
-                                    <div className="w-12 h-12 rounded-lg border border-slate-200 bg-slate-100 text-slate-400 flex items-center justify-center shrink-0">
-                                        <Package className="w-5 h-5" />
-                                    </div>
-                                )}
-
-                                <div className="min-w-0 space-y-0.5">
-                                    <p className="font-medium text-slate-900 truncate leading-snug">
-                                        {it.nama_produk}
-                                    </p>
-                                    <div className="flex flex-wrap items-center gap-1 text-[11px] text-slate-500">
-                                        {it.ukuran && (
-                                            <span className="bg-slate-100 px-1.5 py-0.2 rounded text-[10px]">
-                                                {it.ukuran}
-                                            </span>
-                                        )}
-                                        {it.warna && (
-                                            <span className="bg-slate-100 px-1.5 py-0.2 rounded text-[10px]">
-                                                {it.warna}
-                                            </span>
-                                        )}
-                                        <span className="text-slate-400">
-                                            •
-                                        </span>
-                                        <span>{it.jumlah}x</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <span className="font-medium text-slate-900 shrink-0 tabular-nums font-mono text-xs">
-                                {formatRupiah(it.harga * it.jumlah)}
-                            </span>
-                        </div>
-                    ))}
                 </div>
 
-                {/* 4. Rincian Biaya */}
+                {items.length === 0 ? (
+                    <div className="py-6 text-center text-slate-400 space-y-1">
+                        <ShoppingBag className="w-6 h-6 mx-auto opacity-50" />
+                        <p className="text-xs">Tidak ada data item pesanan.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-3 max-h-72 overflow-y-auto pr-1 divide-y divide-slate-100">
+                        {items.map((it, idx) => {
+                            const subtotalItem = it.harga * it.jumlah;
+                            const gambarSrc = it.gambar
+                                ? it.gambar.startsWith("http") ||
+                                  it.gambar.startsWith("/")
+                                    ? it.gambar
+                                    : `/storage/${it.gambar}`
+                                : "/assets/gambar/placeholder.webp";
+
+                            return (
+                                <div
+                                    key={it.id || idx}
+                                    className="flex items-center justify-between gap-3 text-xs pt-3 first:pt-0"
+                                >
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="w-12 h-12 rounded-xl border border-slate-200 shrink-0 overflow-hidden bg-slate-50 flex items-center justify-center p-0.5">
+                                            <img
+                                                src={gambarSrc}
+                                                alt={it.nama_produk}
+                                                className="w-full h-full object-cover rounded-lg"
+                                                loading="lazy"
+                                                onError={(e) => {
+                                                    const target =
+                                                        e.currentTarget;
+                                                    target.onerror = null;
+                                                    target.src =
+                                                        "/assets/gambar/placeholder.webp";
+                                                }}
+                                            />
+                                        </div>
+
+                                        <div className="min-w-0 space-y-0.5">
+                                            <p className="font-bold text-slate-900 truncate leading-snug">
+                                                {it.nama_produk}
+                                            </p>
+                                            <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
+                                                <span className="font-semibold text-slate-700">
+                                                    {it.jumlah}x
+                                                </span>
+                                                {it.jumlah > 1 && (
+                                                    <span>
+                                                        (@{" "}
+                                                        {formatRupiah(it.harga)}
+                                                        )
+                                                    </span>
+                                                )}
+                                                {it.ukuran && (
+                                                    <span className="bg-slate-100 px-1.5 py-0.5 rounded text-[10px] font-medium text-slate-600">
+                                                        {it.ukuran}
+                                                    </span>
+                                                )}
+                                                {it.warna && (
+                                                    <span className="bg-slate-100 px-1.5 py-0.5 rounded text-[10px] font-medium text-slate-600">
+                                                        {it.warna}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <span className="font-bold text-slate-900 shrink-0 tabular-nums font-mono text-xs">
+                                        {formatRupiah(subtotalItem)}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {/* 3. Rincian Biaya Riil & Transparan */}
                 <div className="space-y-2 pt-3 border-t border-slate-100 text-xs text-slate-600">
                     <div className="flex justify-between">
                         <span>Subtotal Produk</span>
-                        <span className="font-mono text-slate-900 tabular-nums">
+                        <span className="font-mono font-semibold text-slate-900 tabular-nums">
                             {formatRupiah(subtotal)}
                         </span>
                     </div>
 
                     <div className="flex justify-between">
                         <span>Biaya Pengiriman</span>
-                        <span className="font-mono text-slate-900 tabular-nums">
+                        <span className="font-mono font-semibold text-slate-900 tabular-nums">
                             {formatRupiah(ongkir)}
                         </span>
                     </div>
@@ -359,26 +422,46 @@ export default function RincianFaktur({
                                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                                 <span>Asuransi Pengiriman</span>
                             </span>
-                            <span className="font-mono tabular-nums">
+                            <span className="font-mono font-semibold tabular-nums text-slate-900">
                                 +{formatRupiah(biayaAsuransi)}
                             </span>
                         </div>
                     )}
 
-                    {diskon > 0 && (
-                        <div className="flex justify-between text-emerald-700 font-medium">
-                            <span>Diskon Voucher</span>
+                    {/* Diskon Voucher Belanja */}
+                    {nominalVoucher > 0 && (
+                        <div className="flex justify-between text-emerald-700 font-semibold">
+                            <span className="flex items-center gap-1">
+                                <TicketPercent className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>
+                                    Diskon Voucher{" "}
+                                    {kodeVoucher ? `(${kodeVoucher})` : ""}
+                                </span>
+                            </span>
                             <span className="font-mono tabular-nums">
-                                -{formatRupiah(diskon)}
+                                -{formatRupiah(nominalVoucher)}
+                            </span>
+                        </div>
+                    )}
+
+                    {/* Pemotongan Koin Loyalitas */}
+                    {nominalPoin > 0 && (
+                        <div className="flex justify-between text-amber-700 font-semibold">
+                            <span className="flex items-center gap-1">
+                                <Coins className="w-3.5 h-3.5 text-amber-600" />
+                                <span>Potongan Koin Loyalitas</span>
+                            </span>
+                            <span className="font-mono tabular-nums">
+                                -{formatRupiah(nominalPoin)}
                             </span>
                         </div>
                     )}
 
                     <div className="flex justify-between items-baseline pt-3 border-t border-slate-200 text-sm">
-                        <span className="font-semibold text-slate-900">
+                        <span className="font-bold text-slate-900">
                             Total Tagihan
                         </span>
-                        <span className="text-lg font-semibold text-slate-900 font-mono tabular-nums tracking-tight">
+                        <span className="text-lg font-black text-slate-900 font-mono tabular-nums tracking-tight">
                             {formatRupiah(total)}
                         </span>
                     </div>

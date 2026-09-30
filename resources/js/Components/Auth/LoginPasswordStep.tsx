@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { User, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { User, Lock, Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react";
+import { cn } from "../../lib/utils";
 
 interface LoginPasswordStepProps {
     identifier: string;
@@ -10,6 +11,7 @@ interface LoginPasswordStepProps {
     onForgotPasswordClick: () => void;
     error?: string;
     loading: boolean;
+    className?: string;
 }
 
 export default function LoginPasswordStep({
@@ -21,20 +23,29 @@ export default function LoginPasswordStep({
     onForgotPasswordClick,
     error,
     loading,
+    className,
 }: LoginPasswordStepProps) {
     const [showPassword, setShowPassword] = useState(false);
 
+    const canSubmit = Boolean(password.trim()) && !loading;
+
     return (
-        <form onSubmit={onSubmit} className="space-y-4 pt-4">
-            {/* Field Identifier Readonly */}
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 flex items-center justify-between">
-                <div className="flex items-center gap-2.5 min-w-0">
-                    <User className="w-4 h-4 text-slate-400 shrink-0" />
+        <form
+            onSubmit={onSubmit}
+            className={cn("space-y-4 pt-1 select-none", className)}
+            noValidate
+        >
+            {/* Field Identifier Readonly Card */}
+            <div className="bg-slate-50 border border-slate-200/90 rounded-2xl px-4 py-2.5 flex items-center justify-between shadow-2xs">
+                <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                    <div className="w-7 h-7 rounded-xl bg-white border border-slate-200 flex items-center justify-center shrink-0 text-slate-400">
+                        <User className="w-4 h-4" />
+                    </div>
                     <div className="min-w-0">
-                        <span className="block text-[10px] uppercase tracking-wider font-semibold text-slate-400">
+                        <span className="block text-[10px] uppercase tracking-wider font-bold text-slate-400 leading-none">
                             Akun
                         </span>
-                        <span className="block text-xs font-semibold text-slate-800 truncate">
+                        <span className="block text-xs font-bold text-slate-800 truncate mt-0.5 font-mono">
                             {identifier}
                         </span>
                     </div>
@@ -42,48 +53,66 @@ export default function LoginPasswordStep({
                 <button
                     type="button"
                     onClick={onChangeIdentifierClick}
-                    className="text-xs text-[#E52027] font-semibold hover:underline shrink-0 cursor-pointer"
+                    disabled={loading}
+                    className="text-xs text-[#E52027] hover:text-[#CC1C22] font-bold hover:underline shrink-0 cursor-pointer disabled:opacity-50"
                 >
                     Ubah
                 </button>
             </div>
 
-            {/* Field Password */}
+            {/* Field Input Password */}
             <div>
                 <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-semibold text-slate-700">
-                        Kata Sandi
+                    <label
+                        htmlFor="login-password-input"
+                        className="block text-xs font-bold text-slate-700"
+                    >
+                        Kata Sandi <span className="text-[#E52027]">*</span>
                     </label>
                     <button
                         type="button"
                         onClick={onForgotPasswordClick}
-                        className="text-xs font-semibold text-[#E52027] hover:underline cursor-pointer"
+                        disabled={loading}
+                        className="text-xs font-bold text-[#E52027] hover:text-[#CC1C22] hover:underline cursor-pointer disabled:opacity-50"
                     >
                         Lupa sandi?
                     </button>
                 </div>
 
                 <div
-                    className={`border rounded-2xl px-4 py-3 flex items-center gap-3 bg-white relative transition-all ${
+                    className={cn(
+                        "border rounded-2xl px-3.5 py-2.5 sm:py-3 flex items-center gap-2.5 bg-white transition-all shadow-2xs",
                         error
-                            ? "border-red-500 bg-red-50/20 ring-1 ring-red-400/40"
-                            : "border-slate-300 focus-within:border-slate-800 focus-within:ring-1 focus-within:ring-slate-800"
-                    }`}
+                            ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
+                            : "border-slate-300 focus-within:border-[#E52027] focus-within:ring-2 focus-within:ring-[#E52027]/10",
+                    )}
                 >
                     <Lock className="w-4 h-4 text-slate-400 shrink-0" />
                     <input
+                        id="login-password-input"
                         type={showPassword ? "text" : "password"}
+                        disabled={loading}
                         value={password}
                         onChange={(e) => onChangePassword(e.target.value)}
                         placeholder="Masukkan kata sandi akun"
-                        className="w-full bg-transparent text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none border-0 p-0 m-0 outline-none ring-0 shadow-none font-medium"
+                        aria-invalid={Boolean(error)}
+                        aria-describedby={
+                            error ? "login-password-error" : undefined
+                        }
+                        className="w-full bg-transparent text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none font-medium"
                         autoFocus
+                        autoComplete="current-password"
+                        required
                     />
                     <button
                         type="button"
-                        onClick={() => setShowPassword(!showPassword)}
+                        onClick={() => setShowPassword((prev) => !prev)}
                         className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer focus:outline-none"
-                        aria-label={showPassword ? "Sembunyikan sandi" : "Lihat sandi"}
+                        aria-label={
+                            showPassword
+                                ? "Sembunyikan kata sandi"
+                                : "Lihat kata sandi"
+                        }
                     >
                         {showPassword ? (
                             <EyeOff className="w-4 h-4" />
@@ -93,24 +122,39 @@ export default function LoginPasswordStep({
                     </button>
                 </div>
                 {error && (
-                    <p className="text-xs font-medium text-red-600 pl-1 mt-1.5 flex items-center gap-1">
+                    <p
+                        id="login-password-error"
+                        role="alert"
+                        className="text-xs font-semibold text-rose-600 pl-1 mt-1.5 flex items-center gap-1 animate-in fade-in"
+                    >
                         <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                        {error}
+                        <span>{error}</span>
                     </p>
                 )}
             </div>
 
-            <button
-                type="submit"
-                disabled={!password || loading}
-                className={`w-full min-h-[46px] py-3 rounded-full text-xs sm:text-sm font-semibold transition-all ${
-                    password && !loading
-                        ? "bg-[#E52027] hover:bg-[#CC1C22] text-white shadow-xs cursor-pointer active:scale-98"
-                        : "bg-red-200 text-white/95 cursor-not-allowed"
-                }`}
-            >
-                {loading ? "Memproses..." : "Masuk"}
-            </button>
+            {/* Tombol Submit */}
+            <div className="pt-2">
+                <button
+                    type="submit"
+                    disabled={!canSubmit}
+                    className={cn(
+                        "w-full min-h-[48px] py-3 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-xs",
+                        canSubmit
+                            ? "bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.99] text-white cursor-pointer"
+                            : "bg-slate-200 text-slate-400 cursor-not-allowed select-none",
+                    )}
+                >
+                    {loading ? (
+                        <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Memproses Autentikasi...</span>
+                        </>
+                    ) : (
+                        <span>Masuk ke Akun</span>
+                    )}
+                </button>
+            </div>
         </form>
     );
 }

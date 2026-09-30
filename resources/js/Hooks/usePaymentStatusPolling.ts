@@ -1,17 +1,32 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { router } from "@inertiajs/react";
 
 export interface UsePaymentStatusPollingOptions {
     intervalMs?: number;
     maxDurationMs?: number;
     onSettled?: (status: string) => void;
+    onHold?: (status: string, pesan?: string) => void;
     onError?: (err: Error) => void;
+    autoReloadInertia?: boolean;
 }
 
-const TERMINAL_SUCCESS_STATUSES = ["akan_dikirim", "dikirim", "selesai"];
-const TERMINAL_FAILURE_STATUSES = ["dibatalkan", "expire", "expired", "failed"];
-const ALL_TERMINAL_STATUSES = [
+export const TERMINAL_SUCCESS_STATUSES = ["akan_dikirim", "dikirim", "selesai"];
+export const TERMINAL_FAILURE_STATUSES = [
+    "dibatalkan",
+    "expire",
+    "expired",
+    "failed",
+];
+export const HOLD_STATUSES = [
+    "menunggu_verifikasi_manual",
+    "challenge",
+    "suspect_underpaid",
+];
+
+export const ALL_TERMINAL_STATUSES = [
     ...TERMINAL_SUCCESS_STATUSES,
     ...TERMINAL_FAILURE_STATUSES,
+    ...HOLD_STATUSES,
 ];
 
 export function usePaymentStatusPolling(
@@ -21,21 +36,27 @@ export function usePaymentStatusPolling(
 ) {
     const {
         intervalMs = 4000,
-        maxDurationMs = 120000, // 2 Menit
+        maxDurationMs = 900000, // 15 menit (cukup untuk polling aktif QRIS / VA)
         onSettled,
+        onHold,
         onError,
+        autoReloadInertia = true,
     } = options;
 
-    const [status, setStatus] = useState<string>(initialStatus);
+    const [status, setStatus] = useState<string>(initialStatus.toLowerCase());
+    const [statusMessage, setStatusMessage] = useState<string | null>(null);
     const [isChecking, setIsChecking] = useState<boolean>(false);
 
-    // Simpan callback ke ref agar perubahan fungsi di parent tidak memicu re-render/reset effect
+    // Simpan callback ke ref agar re-render parent tidak me-reset interval
     const onSettledRef = useRef(onSettled);
+    const onHoldRef = useRef(onHold);
     const onErrorRef = useRef(onError);
+
     useEffect(() => {
         onSettledRef.current = onSettled;
+        onHoldRef.current = onHold;
         onErrorRef.current = onError;
-    }, [onSettled, onError]);
+    }, [onSettled, onHold, onError]);
 
     // Sinkronisasi jika initialStatus dari Inertia berubah
     useEffect(() => {
@@ -44,8 +65,9 @@ export function usePaymentStatusPolling(
         }
     }, [initialStatus]);
 
-    const isSettled = ALL_TERMINAL_STATUSES.includes(status.toLowerCase());
-    const isSuccess = TERMINAL_SUCCESS_STATUSES.includes(status.toLowerCase());
+    const isSettled = ALL_TERMINAL_STATUSES.includes(status);
+    const isSuccess = TERMINAL_SUCCESS_STATUSES.includes(status);
+    const isHold = HOLD_STATUSES.includes(status);
 
     const isSettledRef = useRef<boolean>(isSettled);
     useEffect(() => {
@@ -77,20 +99,34 @@ export function usePaymentStatusPolling(
                 },
             );
 
-            if (!res.ok) {
-                throw new Error(`HTTP error ${res.status}`);
-            }
-
             const data = await res.json();
 
-            if (data?.sukses && data?.status) {
+            // Tangani baik saat sukses: true maupun saat transaksi di-hold (sukses: false)
+            if (data?.status) {
                 const statusBaru = String(data.status).toLowerCase();
-                setStatus(statusBaru);
+                const pesan = data?.pesan || null;
 
+                setStatus(statusBaru);
+                if (pesan) setStatusMessage(pesan);
+
+                // 1. Kasus Status Tertahan / Verifikasi Manual CS
+                if (HOLD_STATUSES.includes(statusBaru)) {
+                    isSettledRef.current = true;
+                    onHoldRef.current?.(statusBaru, pesan);
+                    if (autoReloadInertia) {
+                        router.reload({ only: ["pesanan"] });
+                    }
+                    return;
+                }
+
+                // 2. Kasus Status Terminal Sukses / Gagal
                 const settledBaru = ALL_TERMINAL_STATUSES.includes(statusBaru);
                 if (settledBaru && !isSettledRef.current) {
                     isSettledRef.current = true;
                     onSettledRef.current?.(statusBaru);
+                    if (autoReloadInertia) {
+                        router.reload({ only: ["pesanan"] });
+                    }
                 }
             }
         } catch (err: unknown) {
@@ -102,16 +138,13 @@ export function usePaymentStatusPolling(
             isFetchingRef.current = false;
             setIsChecking(false);
         }
-    }, [nomorPesanan]);
+    }, [nomorPesanan, autoReloadInertia]);
 
-    // Lifecycle interval polling terisolasi
+    // Lifecycle Polling
     useEffect(() => {
-        if (isSettled || !nomorPesanan) {
-            return;
-        }
+        if (isSettled || !nomorPesanan) return;
 
         const startTime = Date.now();
-
         const timer = setInterval(() => {
             if (isSettledRef.current) {
                 clearInterval(timer);
@@ -137,8 +170,10 @@ export function usePaymentStatusPolling(
 
     return {
         status,
+        statusMessage,
         isSettled,
         isSuccess,
+        isHold,
         isChecking,
         cekStatusManual,
     };

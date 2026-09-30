@@ -1,4 +1,3 @@
-import React from 'react';
 import { Award, Package, Heart, Trash2 } from 'lucide-react';
 import { formatRupiah } from '../../../Utils/formatters';
 

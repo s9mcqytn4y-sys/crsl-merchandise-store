@@ -28,7 +28,7 @@ class KonfirmasiPesananMail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         $totalFmt = 'Rp ' . number_format($this->pesanan->total, 0, ',', '.');
-        $kurirFmt = strtoupper($this->pesanan->kurir ?? 'JNE');
+        $kurirFmt = strtoupper($this->pesanan->pengiriman?->kurir ?? 'JNE');
         $isLocal = app()->isLocal() || config('services.midtrans.is_production') === false;
 
         $sandboxBanner = $isLocal ? "

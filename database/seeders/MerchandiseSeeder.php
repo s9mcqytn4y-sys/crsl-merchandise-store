@@ -120,7 +120,7 @@ class MerchandiseSeeder extends Seeder
                 'tipe' => 'Kabupaten',
                 'kecamatan' => 'Depok',
                 'kelurahan' => 'Caturtunggal',
-                'biteship_area_id' => 'IDNP11KOT789311',
+                'biteship_area_id' => 'IDNP5IDNC412IDND5043IDZ55281',
             ]
         );
 

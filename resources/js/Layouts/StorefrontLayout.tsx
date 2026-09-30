@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { router, usePage } from "@inertiajs/react";
+import React, { useEffect, useRef, useMemo } from "react";
+import { Head, router, usePage } from "@inertiajs/react";
 import { Toaster, toast } from "sonner";
 import BilahAtas from "../Components/BilahAtas";
 import PengingatPesananBelumBayar from "../Components/PengingatPesananBelumBayar";
@@ -16,7 +16,7 @@ import Footer from "../Components/Footer";
 import { useAppStore } from "../Stores/useAppStore";
 import { useKeranjangStore } from "../Stores/useKeranjangStore";
 import { useAuthStore } from "../Stores/useAuthStore";
-import type { AuthUser, SharedPageProps } from "../types";
+import type { SharedPageProps } from "../types";
 
 interface StorefrontLayoutProps {
     children: React.ReactNode;
@@ -26,14 +26,13 @@ export default function StorefrontLayout({ children }: StorefrontLayoutProps) {
     const page = usePage<SharedPageProps>();
     const { flash, auth } = page.props;
     const currentUrl = page.url || "";
+    const pageComponent = page.component || "";
 
-
-    // 1. Single Source of Truth: Keranjang dikontrol 100% oleh Zustand
+    // 1. Selector Keranjang (Zustand)
     const isCartOpen = useKeranjangStore((state) => state.isOpen);
     const bukaKeranjang = useKeranjangStore((state) => state.bukaKeranjang);
     const tutupKeranjang = useKeranjangStore((state) => state.tutupKeranjang);
 
-    // Hitung jumlah item secara reaktif langsung dari store aktif
     const totalItemKeranjang = useKeranjangStore((state) => {
         if (typeof state.hitungJumlahTotal === "function") {
             return state.hitungJumlahTotal();
@@ -44,9 +43,9 @@ export default function StorefrontLayout({ children }: StorefrontLayoutProps) {
         );
     });
 
-    // 2. Granular Selectors untuk useAppStore (Mencegah Unnecessary Re-render)
+    // 2. Selector UI Store (Granular)
     const isSearchOpen = useAppStore((state) => state.isSearchOpen);
-    const isMenuOpen = useAppStore((state) => state.isMenuOpen);
+    const isMenuOpen = useAppStore((state) => state.isMobileMenuOpen);
     const isPrefOpen = useAppStore((state) => state.isPrefOpen);
     const country = useAppStore((state) => state.country);
     const language = useAppStore((state) => state.language);
@@ -60,28 +59,86 @@ export default function StorefrontLayout({ children }: StorefrontLayoutProps) {
     const closePref = useAppStore((state) => state.closePref);
     const setPreferences = useAppStore((state) => state.setPreferences);
 
-    // 3. Auth Modal Store
+    // 3. Selector Auth Store
     const isAuthOpen = useAuthStore((state) => state.isOpen);
     const authTab = useAuthStore((state) => state.activeTab);
     const closeAuthModal = useAuthStore((state) => state.closeAuthModal);
     const openAuthModal = useAuthStore((state) => state.openAuthModal);
 
-    // 4. Handle Flash Messages via Sonner Toast (Anti-CLS)
+    // 4. Deteksi Halaman Bersih dari StickyCartBar (Pencegahan Tumpang Tindih UI)
+    const shouldShowStickyCart = useMemo(() => {
+        const blacklistRoutes = [
+            "/account",
+            "/profile",
+            "/pembayaran",
+            "/checkout",
+            "/faktur",
+            "/invoice",
+            "/lacak",
+            "/track",
+        ];
+
+        const isBlacklistedUrl = blacklistRoutes.some((route) =>
+            currentUrl.toLowerCase().startsWith(route),
+        );
+
+        const blacklistComponents = [
+            "Checkout",
+            "Pembayaran",
+            "Faktur",
+            "LacakPesanan",
+            "TrackOrder",
+            "Akun",
+            "Account",
+            "ProfileAccount",
+            "ProfileDelivery",
+            "ProfileMyInfo",
+        ];
+
+        const isBlacklistedComponent =
+            blacklistComponents.includes(pageComponent);
+
+        return !isBlacklistedUrl && !isBlacklistedComponent;
+    }, [currentUrl, pageComponent]);
+
+    // 5. Penanganan Flash Toast Anti-Duplikasi
+    const lastToastRef = useRef<string | null>(null);
+
     useEffect(() => {
+        const flashMessage = flash?.sukses || flash?.error || flash?.info;
+        if (!flashMessage || lastToastRef.current === flashMessage) return;
+
+        lastToastRef.current = flashMessage;
+
         if (flash?.sukses) {
             toast.success(flash.sukses);
-        }
-        if (flash?.error) {
+        } else if (flash?.error) {
             toast.error(flash.error);
-        }
-        if (flash?.info) {
+        } else if (flash?.info) {
             toast.info(flash.info);
         }
+
+        const timer = setTimeout(() => {
+            lastToastRef.current = null;
+        }, 1500);
+
+        return () => clearTimeout(timer);
     }, [flash]);
 
+    // 6. Handler Logout Aman (Menutup Drawer Sebelum Request)
+    const handleLogout = () => {
+        closeMenu();
+        router.post("/logout");
+    };
+
     return (
-        <div className="min-h-dvh flex flex-col bg-slate-50 text-slate-800 font-sans relative antialiased selection:bg-red-500 selection:text-white">
-            {/* Toast Notification Container */}
+        <div className="min-h-dvh flex flex-col bg-slate-50 text-slate-800 font-sans relative antialiased selection:bg-[#E52027] selection:text-white">
+            {/* Konfigurasi Global Head Meta */}
+            <Head>
+                <meta name="theme-color" content="#E52027" />
+            </Head>
+
+            {/* Sonner Toast Notification */}
             <Toaster
                 position="top-center"
                 richColors
@@ -93,21 +150,21 @@ export default function StorefrontLayout({ children }: StorefrontLayoutProps) {
                 }}
             />
 
-            {/* Aksesibilitas: Skip Link untuk Keyboard Navigation */}
+            {/* Aksesibilitas: Skip Link ke Konten Utama */}
             <a
                 href="#main-content"
-                className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-slate-900 focus:text-white focus:rounded-xl focus:shadow-lg focus:outline-none"
+                className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2.5 focus:bg-[#E52027] focus:text-white focus:font-bold focus:text-xs focus:rounded-xl focus:shadow-lg focus:outline-none"
             >
                 Lewati ke Konten Utama
             </a>
 
-            {/* Pengingat Pesanan Belum Bayar (Screenshot #2) */}
+            {/* Pengingat Pesanan Menunggu Pembayaran */}
             <PengingatPesananBelumBayar />
 
-            {/* Announcement Bar */}
+            {/* Announcement Banner */}
             <BilahAtas />
 
-            {/* Main Navigation Bar */}
+            {/* Navigasi Utama */}
             <NavigasiUtama
                 isMenuOpen={isMenuOpen}
                 onMenuOpen={openMenu}
@@ -117,24 +174,24 @@ export default function StorefrontLayout({ children }: StorefrontLayoutProps) {
                 authUser={auth?.user}
             />
 
-            {/* Main Content Area */}
+            {/* Area Konten Dinamis */}
             <main
                 id="main-content"
-                className="flex-1 pb-24 md:pb-28 focus:outline-none"
+                tabIndex={-1}
+                className={`flex-1 focus:outline-none ${
+                    shouldShowStickyCart ? "pb-24 md:pb-28" : "pb-12 md:pb-16"
+                }`}
             >
                 {children}
             </main>
 
-            {/* Sticky Cart Notification Bar (Mobile / Responsive) - Sembunyikan pada checkout/account */}
-            {!currentUrl.startsWith("/account") &&
-                !currentUrl.startsWith("/profile") &&
-                !currentUrl.startsWith("/pembayaran") &&
-                !currentUrl.startsWith("/checkout") && <StickyCartBar />}
+            {/* Sticky Cart Notification Bar (Mobile) */}
+            {shouldShowStickyCart && <StickyCartBar />}
 
-            {/* Main Footer */}
+            {/* Footer Global Storefront */}
             <Footer />
 
-            {/* Drawer Keranjang: Terhubung Murni ke Zustand */}
+            {/* Drawer Keranjang Belanja */}
             <DrawerKeranjang isOpen={isCartOpen} onClose={tutupKeranjang} />
 
             {/* Modal Preferensi (Mata Uang, Bahasa, Wilayah) */}
@@ -147,16 +204,16 @@ export default function StorefrontLayout({ children }: StorefrontLayoutProps) {
                 onSavePreferences={setPreferences}
             />
 
-            {/* Modal Pencarian Global */}
+            {/* Modal Pencarian Produk Global */}
             <PencarianModal isOpen={isSearchOpen} onClose={closeSearch} />
 
-            {/* Drawer Menu Samping (Mobile) */}
+            {/* Drawer Navigasi Mobile */}
             <SideMenuDrawer
                 isOpen={isMenuOpen}
                 onClose={closeMenu}
                 authUser={auth?.user}
                 onOpenAuth={() => openAuthModal("login")}
-                onLogout={() => router.post("/logout")}
+                onLogout={handleLogout}
             />
 
             {/* Floating Action Hub (CS WhatsApp, Voucher, Shortcut Keranjang) */}
@@ -165,10 +222,10 @@ export default function StorefrontLayout({ children }: StorefrontLayoutProps) {
                 onOpenCart={bukaKeranjang}
             />
 
-            {/* Global Quick Add-to-Cart Modal */}
+            {/* Modal Konfigurasi Varian Cepat (Quick Add) */}
             <AddToCartModal />
 
-            {/* Global Authentication Modal */}
+            {/* Modal Autentikasi Global */}
             <AuthModal
                 isOpen={isAuthOpen}
                 initialTab={authTab === "register" ? "register" : "login"}

@@ -1,56 +1,40 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 export interface AddressItem {
     id: number | string;
+    label?: string;
     nama_penerima: string;
     telepon: string;
     email?: string;
-    alamat_lengkap: string;
-    provinsi: string;
-    kota: string;
-    kecamatan: string;
-    kelurahan?: string;
-    kode_pos: string;
     area_id?: string;
-    is_utama?: boolean;
+    biteship_area_id?: string;
+    provinsi?: string;
+    kota?: string;
+    kecamatan?: string;
+    kelurahan?: string;
+    kode_pos?: string;
+    alamat_lengkap: string;
+    format_lengkap?: string;
+    adalah_utama?: boolean;
 }
 
-export type CheckoutModalType =
-    | "address_select"
-    | "address_form"
-    | "voucher_select"
-    | "delivery_message"
-    | null;
-
 interface CheckoutState {
-    // Modal Management (Discriminated State)
-    activeModal: CheckoutModalType;
-    editingAddress: AddressItem | null;
-
-    // Backward Compatibility Flags (Derived State Helpers)
+    // 1. Modal States (UI Only - Tidak Dipersist)
     isAddressModalOpen: boolean;
     isNewAddressModalOpen: boolean;
     isVoucherModalOpen: boolean;
     isMessageModalOpen: boolean;
+    editingAddress: AddressItem | null;
 
-    // Dropship
+    // 2. Checkout Form Draft States
     isDropship: boolean;
     dropshipSender: string;
     dropshipPhone: string;
-
-    // Delivery message & notes
     deliveryMessage: string;
-
-    // Loyalty points
     useLoyaltyPoints: boolean;
-}
 
-interface CheckoutActions {
-    // Modal Actions
-    openModal: (modal: CheckoutModalType, data?: AddressItem | null) => void;
-    closeModal: () => void;
-
-    // Shorthand Modal Actions (Menjaga Kompatibilitas dengan Komponen Existing)
+    // 3. Modal Actions
     openAddressModal: () => void;
     closeAddressModal: () => void;
     openNewAddressModal: (addrToEdit?: AddressItem | null) => void;
@@ -59,31 +43,20 @@ interface CheckoutActions {
     closeVoucherModal: () => void;
     openMessageModal: () => void;
     closeMessageModal: () => void;
+    setEditingAddress: (address: AddressItem | null) => void;
 
-    // Dropship Actions
+    // 4. Form Actions
     setIsDropship: (val: boolean) => void;
     setDropshipSender: (val: string) => void;
     setDropshipPhone: (val: string) => void;
+    setDeliveryMessage: (val: string) => void;
+    setUseLoyaltyPoints: (val: boolean | ((prev: boolean) => boolean)) => void;
 
-    // Delivery Message Actions
-    setDeliveryMessage: (msg: string) => void;
-
-    // Loyalty Points Actions
-    setUseLoyaltyPoints: (val: boolean) => void;
-
-    // Reset Action (Wajib dipanggil saat transaksi checkout selesai / navigasi keluar)
+    // 5. Reset Action
     resetCheckoutState: () => void;
 }
 
-export type CheckoutStore = CheckoutState & CheckoutActions;
-
-const initialCheckoutState: CheckoutState = {
-    activeModal: null,
-    editingAddress: null,
-    isAddressModalOpen: false,
-    isNewAddressModalOpen: false,
-    isVoucherModalOpen: false,
-    isMessageModalOpen: false,
+const initialFormState = {
     isDropship: false,
     dropshipSender: "",
     dropshipPhone: "",
@@ -91,89 +64,79 @@ const initialCheckoutState: CheckoutState = {
     useLoyaltyPoints: false,
 };
 
-export const useCheckoutStore = create<CheckoutStore>((set) => ({
-    ...initialCheckoutState,
-
-    // Core Unified Modal Handler
-    openModal: (modal, data = null) =>
-        set({
-            activeModal: modal,
-            editingAddress: data,
-            isAddressModalOpen: modal === "address_select",
-            isNewAddressModalOpen: modal === "address_form",
-            isVoucherModalOpen: modal === "voucher_select",
-            isMessageModalOpen: modal === "delivery_message",
-        }),
-
-    closeModal: () =>
-        set({
-            activeModal: null,
+export const useCheckoutStore = create<CheckoutState>()(
+    persist(
+        (set) => ({
+            // Inisialisasi Modal
+            isAddressModalOpen: false,
+            isNewAddressModalOpen: false,
+            isVoucherModalOpen: false,
+            isMessageModalOpen: false,
             editingAddress: null,
-            isAddressModalOpen: false,
-            isNewAddressModalOpen: false,
-            isVoucherModalOpen: false,
-            isMessageModalOpen: false,
+
+            // Inisialisasi Form
+            ...initialFormState,
+
+            // Action Modals
+            openAddressModal: () => set({ isAddressModalOpen: true }),
+            closeAddressModal: () => set({ isAddressModalOpen: false }),
+
+            openNewAddressModal: (addrToEdit = null) =>
+                set({
+                    isNewAddressModalOpen: true,
+                    editingAddress: addrToEdit ?? null,
+                }),
+
+            closeNewAddressModal: () =>
+                set({
+                    isNewAddressModalOpen: false,
+                    editingAddress: null,
+                }),
+
+            openVoucherModal: () => set({ isVoucherModalOpen: true }),
+            closeVoucherModal: () => set({ isVoucherModalOpen: false }),
+
+            openMessageModal: () => set({ isMessageModalOpen: true }),
+            closeMessageModal: () => set({ isMessageModalOpen: false }),
+
+            setEditingAddress: (address) => set({ editingAddress: address }),
+
+            // Action Form Handlers
+            setIsDropship: (val) => set({ isDropship: val }),
+            setDropshipSender: (val) => set({ dropshipSender: val }),
+            setDropshipPhone: (val) => set({ dropshipPhone: val }),
+            setDeliveryMessage: (val) => set({ deliveryMessage: val }),
+
+            setUseLoyaltyPoints: (val) =>
+                set((state) => ({
+                    useLoyaltyPoints:
+                        typeof val === "function"
+                            ? val(state.useLoyaltyPoints)
+                            : val,
+                })),
+
+            // Reset Seluruh State Checkout (Dijalankan saat sukses checkout / faktur baru)
+            resetCheckoutState: () =>
+                set({
+                    isAddressModalOpen: false,
+                    isNewAddressModalOpen: false,
+                    isVoucherModalOpen: false,
+                    isMessageModalOpen: false,
+                    editingAddress: null,
+                    ...initialFormState,
+                }),
         }),
-
-    // Shorthand API Wrappers (Zero Breaking Changes untuk Pembayaran.tsx)
-    openAddressModal: () =>
-        set({
-            activeModal: "address_select",
-            isAddressModalOpen: true,
-            isNewAddressModalOpen: false,
-            isVoucherModalOpen: false,
-            isMessageModalOpen: false,
-        }),
-    closeAddressModal: () =>
-        set({ activeModal: null, isAddressModalOpen: false }),
-
-    openNewAddressModal: (addrToEdit = null) =>
-        set({
-            activeModal: "address_form",
-            editingAddress: addrToEdit,
-            isNewAddressModalOpen: true,
-            isAddressModalOpen: false,
-            isVoucherModalOpen: false,
-            isMessageModalOpen: false,
-        }),
-    closeNewAddressModal: () =>
-        set({
-            activeModal: null,
-            isNewAddressModalOpen: false,
-            editingAddress: null,
-        }),
-
-    openVoucherModal: () =>
-        set({
-            activeModal: "voucher_select",
-            isVoucherModalOpen: true,
-            isAddressModalOpen: false,
-            isNewAddressModalOpen: false,
-            isMessageModalOpen: false,
-        }),
-    closeVoucherModal: () =>
-        set({ activeModal: null, isVoucherModalOpen: false }),
-
-    openMessageModal: () =>
-        set({
-            activeModal: "delivery_message",
-            isMessageModalOpen: true,
-            isAddressModalOpen: false,
-            isNewAddressModalOpen: false,
-            isVoucherModalOpen: false,
-        }),
-    closeMessageModal: () =>
-        set({ activeModal: null, isMessageModalOpen: false }),
-
-    // Mutator Forms & Checkout Options
-    setIsDropship: (val) => set({ isDropship: val }),
-    setDropshipSender: (val) => set({ dropshipSender: val }),
-    setDropshipPhone: (val) => set({ dropshipPhone: val }),
-
-    setDeliveryMessage: (msg) => set({ deliveryMessage: msg }),
-
-    setUseLoyaltyPoints: (val) => set({ useLoyaltyPoints: val }),
-
-    // Reset Store
-    resetCheckoutState: () => set(initialCheckoutState),
-}));
+        {
+            name: "crsl_checkout_draft_v2",
+            storage: createJSONStorage(() => sessionStorage),
+            // Hanya persistenkan nilai form di sessionStorage, jangan simpan flag modal UI
+            partialize: (state) => ({
+                isDropship: state.isDropship,
+                dropshipSender: state.dropshipSender,
+                dropshipPhone: state.dropshipPhone,
+                deliveryMessage: state.deliveryMessage,
+                useLoyaltyPoints: state.useLoyaltyPoints,
+            }),
+        },
+    ),
+);

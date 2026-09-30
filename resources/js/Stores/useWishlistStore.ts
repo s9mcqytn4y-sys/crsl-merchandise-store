@@ -1,7 +1,5 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { router } from "@inertiajs/react";
-import { toast } from "sonner";
 
 export interface WishlistProduct {
     id: number;
@@ -13,98 +11,116 @@ export interface WishlistProduct {
 
 interface WishlistState {
     items: WishlistProduct[];
-    itemIds: number[];
-    tambahWishlist: (product: WishlistProduct, isLoggedIn?: boolean) => void;
-    hapusWishlist: (productId: number, isLoggedIn?: boolean) => void;
-    toggleWishlist: (product: WishlistProduct, isLoggedIn?: boolean) => void;
-    isWishlisted: (productId: number) => boolean;
+    isLoading: boolean;
+
+    // Actions
     setInitialItems: (items: WishlistProduct[]) => void;
-    clearWishlist: () => void;
+    tambahWishlist: (produk: WishlistProduct, isLoggedIn?: boolean) => Promise<void>;
+    hapusWishlist: (produkId: number, isLoggedIn?: boolean) => Promise<void>;
+    toggleWishlist: (produk: WishlistProduct, isLoggedIn?: boolean) => Promise<void>;
+    isWishlisted: (produkId: number) => boolean;
+    kosongkan: () => void;
+}
+
+function getXsrfToken(): string {
+    if (typeof document === "undefined") return "";
+    const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : "";
+}
+
+/**
+ * Endpoint wishlist yang benar sesuai routes/web.php:
+ * POST /wishlist/toggle -> wishlist.toggle
+ */
+async function apiToggleWishlist(produkId: number): Promise<void> {
+    await fetch("/wishlist/toggle", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+            "X-XSRF-TOKEN": getXsrfToken(),
+        },
+        body: JSON.stringify({ produk_id: produkId }),
+    });
 }
 
 export const useWishlistStore = create<WishlistState>()(
     persist(
         (set, get) => ({
             items: [],
-            itemIds: [],
+            isLoading: false,
 
-            isWishlisted: (productId: number) => {
-                return get().itemIds.includes(productId);
+            setInitialItems: (items) => {
+                set({ items: Array.isArray(items) ? items : [] });
             },
 
-            tambahWishlist: (product: WishlistProduct, isLoggedIn = false) => {
-                const { items, itemIds } = get();
-                if (itemIds.includes(product.id)) return;
+            isWishlisted: (produkId) => {
+                return get().items.some(
+                    (it) => Number(it.id) === Number(produkId),
+                );
+            },
 
-                const nextItems = [product, ...items];
-                const nextIds = [product.id, ...itemIds];
-                set({ items: nextItems, itemIds: nextIds });
+            tambahWishlist: async (produk, isLoggedIn = false) => {
+                const current = get().items;
+                const idNum = Number(produk.id);
 
-                toast.success(`${product.nama} disimpan ke wishlist!`);
+                // Optimistic update
+                if (!current.some((it) => Number(it.id) === idNum)) {
+                    const newItem: WishlistProduct = {
+                        id: idNum,
+                        nama: produk.nama,
+                        slug: produk.slug,
+                        harga: Number(produk.harga) || 0,
+                        gambar: produk.gambar || null,
+                    };
+                    set({ items: [...current, newItem] });
+                }
 
+                // Sinkronkan ke database jika user terautentikasi
                 if (isLoggedIn) {
-                    router.post(
-                        "/wishlist/toggle",
-                        { produk_id: product.id },
-                        {
-                            preserveScroll: true,
-                            preserveState: true,
-                            onError: () => {
-                                // rollback on server error
-                                set({ items, itemIds });
-                                toast.error("Gagal memperbarui wishlist di server.");
-                            },
-                        }
-                    );
+                    try {
+                        await apiToggleWishlist(idNum);
+                    } catch (err) {
+                        console.warn("Gagal sinkronisasi tambah wishlist ke database:", err);
+                    }
                 }
             },
 
-            hapusWishlist: (productId: number, isLoggedIn = false) => {
-                const { items, itemIds } = get();
-                const nextItems = items.filter((item) => item.id !== productId);
-                const nextIds = itemIds.filter((id) => id !== productId);
-                set({ items: nextItems, itemIds: nextIds });
+            hapusWishlist: async (produkId, isLoggedIn = false) => {
+                const idNum = Number(produkId);
+                // Optimistic UI update: hapus seketika dari state lokal
+                set((state) => ({
+                    items: state.items.filter((it) => Number(it.id) !== idNum),
+                }));
 
-                toast.info("Produk dihapus dari wishlist.");
-
+                // Sinkronkan ke database jika login
                 if (isLoggedIn) {
-                    router.post(
-                        "/wishlist/toggle",
-                        { produk_id: productId },
-                        {
-                            preserveScroll: true,
-                            preserveState: true,
-                            onError: () => {
-                                // rollback on server error
-                                set({ items, itemIds });
-                                toast.error("Gagal memperbarui wishlist di server.");
-                            },
-                        }
-                    );
+                    try {
+                        await apiToggleWishlist(idNum);
+                    } catch (err) {
+                        console.warn("Gagal sinkronisasi hapus wishlist ke database:", err);
+                    }
                 }
             },
 
-            toggleWishlist: (product: WishlistProduct, isLoggedIn = false) => {
-                const exists = get().isWishlisted(product.id);
+            toggleWishlist: async (produk, isLoggedIn = false) => {
+                const exists = get().isWishlisted(Number(produk.id));
                 if (exists) {
-                    get().hapusWishlist(product.id, isLoggedIn);
+                    await get().hapusWishlist(Number(produk.id), isLoggedIn);
                 } else {
-                    get().tambahWishlist(product, isLoggedIn);
+                    await get().tambahWishlist(produk, isLoggedIn);
                 }
             },
 
-            setInitialItems: (serverItems: WishlistProduct[]) => {
-                const serverIds = serverItems.map((item) => item.id);
-                set({ items: serverItems, itemIds: serverIds });
-            },
-
-            clearWishlist: () => {
-                set({ items: [], itemIds: [] });
+            kosongkan: () => {
+                set({ items: [] });
             },
         }),
         {
-            name: "crsl_wishlist_storage",
+            name: "crsl_wishlist_store_v2",
             storage: createJSONStorage(() => localStorage),
-        }
-    )
+            partialize: (state) => ({ items: state.items }),
+        },
+    ),
 );

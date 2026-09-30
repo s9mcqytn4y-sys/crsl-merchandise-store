@@ -1,7 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Head, router } from "@inertiajs/react";
 import StorefrontLayout from "../Layouts/StorefrontLayout";
-import { SlidersHorizontal, RotateCcw, X, Search } from "lucide-react";
+import {
+    SlidersHorizontal,
+    RotateCcw,
+    X,
+    Search,
+    Sparkles,
+} from "lucide-react";
 import ProductCard, { ProductData } from "../Components/Common/ProductCard";
 import CircularCategoriesBar, {
     CircularCategoryItem,
@@ -10,15 +16,26 @@ import FilterSortDrawer, {
     FilterValues,
 } from "../Components/Catalog/FilterSortDrawer";
 import StickyCartBar from "../Components/StickyCartBar";
+import { formatRupiah } from "../Utils/formatters";
+import { cn } from "../lib/utils";
 
 interface CatalogProps {
     produk?: ProductData[];
     products?: ProductData[];
     kategori?: CircularCategoryItem[];
     categories?: CircularCategoryItem[];
-    filter?: Partial<FilterValues> & { kategori?: string; cari?: string };
-    filters?: Partial<FilterValues> & { kategori?: string; cari?: string };
+    filter?: Partial<FilterValues> & {
+        kategori?: string;
+        cari?: string;
+        page?: number;
+    };
+    filters?: Partial<FilterValues> & {
+        kategori?: string;
+        cari?: string;
+        page?: number;
+    };
     priceRangeBounds?: { min: number; max: number };
+    className?: string;
 }
 
 export default function Catalog({
@@ -29,6 +46,7 @@ export default function Catalog({
     filter = {},
     filters = {},
     priceRangeBounds = { min: 2500, max: 519000 },
+    className,
 }: CatalogProps) {
     const listProduk = produk.length > 0 ? produk : products;
     const listKategori = kategori.length > 0 ? kategori : categories;
@@ -37,11 +55,17 @@ export default function Catalog({
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState(activeFilter.cari || "");
 
+    useEffect(() => {
+        setSearchQuery(activeFilter.cari || "");
+    }, [activeFilter.cari]);
+
     const activeCategorySlug = activeFilter.kategori || "all-products";
 
-    // Handle Kategori Select
+    // Handle Kategori Select (otomatis reset pagination)
     const handleCategoryChange = (slug: string) => {
         const nextFilter: Record<string, any> = { ...activeFilter };
+        delete nextFilter.page;
+
         if (slug === "all-products") {
             delete nextFilter.kategori;
         } else {
@@ -54,6 +78,8 @@ export default function Catalog({
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const nextFilter: Record<string, any> = { ...activeFilter };
+        delete nextFilter.page;
+
         if (searchQuery.trim()) {
             nextFilter.cari = searchQuery.trim();
         } else {
@@ -62,7 +88,16 @@ export default function Catalog({
         router.get("/katalog", nextFilter, { preserveScroll: true });
     };
 
-    // Handle Apply Filters from Drawer Sesuai Screenshot 2
+    // Handle Clear Search
+    const handleClearSearch = () => {
+        setSearchQuery("");
+        const nextFilter: Record<string, any> = { ...activeFilter };
+        delete nextFilter.cari;
+        delete nextFilter.page;
+        router.get("/katalog", nextFilter, { preserveScroll: true });
+    };
+
+    // Handle Apply Filters from Drawer
     const handleApplyDrawerFilters = (newValues: FilterValues) => {
         const nextFilter: Record<string, any> = {
             ...activeFilter,
@@ -70,6 +105,7 @@ export default function Catalog({
             tipe: newValues.tipe,
             ketersediaan: newValues.ketersediaan,
         };
+        delete nextFilter.page;
 
         if (newValues.min_harga) {
             nextFilter.min_harga = newValues.min_harga;
@@ -110,7 +146,7 @@ export default function Catalog({
     );
     const categoryTitle =
         activeCategorySlug === "all-products" || !activeCategoryObj
-            ? "All Products"
+            ? "Semua Produk"
             : activeCategoryObj.nama;
 
     // Hitung active filter count untuk badge
@@ -125,108 +161,132 @@ export default function Catalog({
 
     return (
         <StorefrontLayout>
-            <Head title="Products - CRSL Official Store - Animals as your bestfriends!" />
+            <Head title="Katalog Produk - CRSL Official Merchandise Store" />
 
-            {/* 2. Circular Horizontal Category Carousel Sesuai Screenshot 1 */}
+            {/* 1. Bar Kategori Melingkar Horizontal */}
             <CircularCategoriesBar
                 categories={listKategori}
                 activeCategorySlug={activeCategorySlug}
                 onSelectCategory={handleCategoryChange}
             />
 
-            {/* 3. Main Catalog Container */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-                {/* Search Bar Opsional */}
+            {/* 2. Kontainer Utama Katalog */}
+            <div
+                className={cn(
+                    "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 select-none",
+                    className,
+                )}
+            >
+                {/* Search Bar Input */}
                 <form
                     onSubmit={handleSearchSubmit}
                     className="mb-6 max-w-md flex items-center gap-2"
                 >
                     <div className="relative flex-1">
-                        <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 stroke-[2.2]" />
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Cari produk merchandise favoritmu..."
-                            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-full text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-primary focus:bg-white transition-colors"
+                            placeholder="Cari produk merchandise CRSL..."
+                            className="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200/90 rounded-2xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10 focus:bg-white transition-all shadow-2xs font-medium"
                         />
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                onClick={handleClearSearch}
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                                aria-label="Hapus kata kunci pencarian"
+                            >
+                                <X className="w-3.5 h-3.5 stroke-[2.5]" />
+                            </button>
+                        )}
                     </div>
-                    {searchQuery && (
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setSearchQuery("");
-                                handleCategoryChange(activeCategorySlug);
-                            }}
-                            className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100"
-                        >
-                            <X className="w-4 h-4" />
-                        </button>
-                    )}
+                    <button
+                        type="submit"
+                        className="px-4 py-2.5 bg-[#E52027] hover:bg-[#CC1C22] text-white font-bold text-xs rounded-2xl shadow-xs transition-all active:scale-95 cursor-pointer shrink-0"
+                    >
+                        Cari
+                    </button>
                 </form>
 
-                {/* 4. Section Bar: Title "All Products" di Kiri & Tombol "Filter & Sort" di Kanan Sesuai Screenshot 1 */}
+                {/* 3. Section Bar: Judul Kategori & Tombol Drawer Filter & Sort */}
                 <div className="flex items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
                     <div>
                         <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                             {categoryTitle}
                         </h1>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                            Menampilkan {listProduk.length} produk
+                        <p className="text-xs text-slate-500 mt-0.5 font-medium">
+                            Menampilkan{" "}
+                            <span className="font-bold text-slate-800 font-mono">
+                                {listProduk.length}
+                            </span>{" "}
+                            produk
                         </p>
                     </div>
 
-                    {/* Tombol Outline Pill Merah: Filter & Sort Sesuai Screenshot 1 */}
+                    {/* Tombol Buka Drawer Filter WAI-ARIA */}
                     <button
                         type="button"
+                        role="button"
+                        aria-haspopup="dialog"
+                        aria-expanded={isFilterOpen}
+                        aria-controls="drawer-filter-sort"
                         onClick={() => setIsFilterOpen(true)}
-                        className="inline-flex items-center gap-2 px-4 py-2 border border-primary text-primary hover:bg-primary hover:text-white rounded-full text-xs sm:text-[13px] font-bold tracking-tight transition-all duration-150 shadow-2xs cursor-pointer active:scale-98"
-                        aria-label="Buka Filter dan Pengurutan"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 border border-[#E52027] text-[#E52027] hover:bg-[#E52027] hover:text-white rounded-2xl text-xs sm:text-[13px] font-bold tracking-tight transition-all duration-200 shadow-2xs cursor-pointer active:scale-95 group"
                     >
-                        <SlidersHorizontal className="w-3.5 h-3.5" />
-                        <span>Filter &amp; Sort</span>
+                        <SlidersHorizontal className="w-3.5 h-3.5 stroke-[2.5]" />
+                        <span>Filter &amp; Urutkan</span>
                         {activeFilterCount > 0 && (
-                            <span className="w-4 h-4 rounded-full bg-primary text-white text-[10px] flex items-center justify-center font-bold">
+                            <span className="w-4 h-4 rounded-full bg-[#E52027] group-hover:bg-white text-white group-hover:text-[#E52027] text-[10px] flex items-center justify-center font-black font-mono transition-colors">
                                 {activeFilterCount}
                             </span>
                         )}
                     </button>
                 </div>
 
-                {/* Active Filter Badges */}
+                {/* 4. Active Filter Badges */}
                 {activeFilterCount > 0 && (
-                    <div className="flex flex-wrap items-center gap-2 mb-6">
-                        <span className="text-xs text-slate-400">
+                    <div className="flex flex-wrap items-center gap-2 mb-6 animate-in fade-in duration-200">
+                        <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">
                             Filter Aktif:
                         </span>
                         {activeFilter.warna && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-primary rounded-full text-xs font-semibold">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-[#E52027] border border-red-200/80 rounded-xl text-xs font-bold shadow-2xs">
                                 Warna: {activeFilter.warna}
                             </span>
                         )}
                         {activeFilter.ukuran && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-primary rounded-full text-xs font-semibold">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-[#E52027] border border-red-200/80 rounded-xl text-xs font-bold shadow-2xs">
                                 Ukuran: {activeFilter.ukuran}
                             </span>
                         )}
                         {(activeFilter.min_harga || activeFilter.max_harga) && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-primary rounded-full text-xs font-semibold">
-                                Harga: Rp {activeFilter.min_harga || 0} - Rp{" "}
-                                {activeFilter.max_harga || "Max"}
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-[#E52027] border border-red-200/80 rounded-xl text-xs font-bold font-mono shadow-2xs">
+                                Harga:{" "}
+                                {formatRupiah(
+                                    Number(activeFilter.min_harga) || 0,
+                                )}{" "}
+                                -{" "}
+                                {activeFilter.max_harga
+                                    ? formatRupiah(
+                                          Number(activeFilter.max_harga),
+                                      )
+                                    : "Maksimal"}
                             </span>
                         )}
                         <button
                             type="button"
                             onClick={handleResetAllFilters}
-                            className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-primary underline ml-2 cursor-pointer"
+                            className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-[#E52027] font-bold underline ml-1 cursor-pointer transition-colors"
                         >
-                            <RotateCcw className="w-3 h-3" />
-                            <span>Reset Filter</span>
+                            <RotateCcw className="w-3 h-3 stroke-[2.2]" />
+                            <span>Reset Semua</span>
                         </button>
                     </div>
                 )}
 
-                {/* 5. Product Grid 2-Column Mobile Sesuai Screenshot 1 */}
+                {/* 5. Product Grid (2 Kolom Mobile, 3-4 Kolom Desktop) */}
                 {listProduk.length > 0 ? (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-5 pb-16">
                         {listProduk.map((item, idx) => (
@@ -240,29 +300,31 @@ export default function Catalog({
                 ) : (
                     /* Empty State */
                     <div className="py-16 text-center space-y-4 max-w-md mx-auto">
-                        <div className="w-16 h-16 rounded-2xl bg-red-50 text-primary flex items-center justify-center mx-auto">
-                            <SlidersHorizontal className="w-8 h-8" />
+                        <div className="w-16 h-16 rounded-3xl bg-red-50 text-[#E52027] border border-red-100 flex items-center justify-center mx-auto shadow-2xs">
+                            <SlidersHorizontal className="w-7 h-7 stroke-[2]" />
                         </div>
-                        <h3 className="text-base sm:text-lg font-bold text-slate-900">
-                            Tidak Ada Produk yang Cocok
-                        </h3>
-                        <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-                            Coba sesuaikan filter warna, ukuran, atau rentang
-                            harga untuk menemukan produk yang kamu inginkan.
-                        </p>
+                        <div className="space-y-1">
+                            <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                                Tidak Ada Produk yang Cocok
+                            </h3>
+                            <p className="text-xs sm:text-sm text-slate-500 leading-relaxed max-w-xs mx-auto">
+                                Coba sesuaikan kata kunci pencarian, pilihan
+                                warna, ukuran, atau rentang harga yang dipilih.
+                            </p>
+                        </div>
                         <button
                             type="button"
                             onClick={handleResetAllFilters}
-                            className="inline-flex items-center gap-2 bg-primary text-white text-xs font-bold px-5 py-2.5 rounded-full hover:bg-primary-hover transition-colors shadow-xs"
+                            className="inline-flex items-center gap-2 bg-[#E52027] hover:bg-[#CC1C22] text-white text-xs font-bold px-6 py-3 rounded-2xl shadow-xs transition-all active:scale-95 cursor-pointer"
                         >
-                            <RotateCcw className="w-3.5 h-3.5" />
+                            <RotateCcw className="w-3.5 h-3.5 stroke-[2.2]" />
                             <span>Reset Semua Filter</span>
                         </button>
                     </div>
                 )}
             </div>
 
-            {/* 6. Filter & Sort Drawer Sesuai Screenshot 2 */}
+            {/* 6. Filter & Sort Drawer WAI-ARIA */}
             <FilterSortDrawer
                 isOpen={isFilterOpen}
                 onClose={() => setIsFilterOpen(false)}
@@ -280,7 +342,7 @@ export default function Catalog({
                 priceBounds={priceRangeBounds}
             />
 
-            {/* 7. Sticky Bottom Cart Bar Sesuai Screenshot 1 */}
+            {/* 7. Sticky Bottom Cart Bar */}
             <StickyCartBar />
         </StorefrontLayout>
     );

@@ -20,11 +20,13 @@ import {
     ShieldCheck,
     TicketPercent,
     ChevronRight,
+    Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useKeranjangStore } from "../Stores/useKeranjangStore";
 import { SITUS_CONFIG } from "../Config/situsConfig";
 import { formatRupiah } from "../Utils/formatters";
+import { cn } from "../lib/utils";
 
 // ==========================================
 // 1. STRICT TYPE DEFINITIONS
@@ -66,21 +68,39 @@ export interface CartPayloadItem {
     sku: string;
 }
 
-interface ProductDetailProps {
+export interface DetailProdukProps {
     produk?: Record<string, any>;
     product?: Record<string, any>;
     rekomendasi?: Array<Record<string, any>>;
     recommended?: Array<Record<string, any>>;
+    className?: string;
+}
+
+const FALLBACK_IMAGE = "/assets/gambar/banner-1.webp";
+
+/** Helper normalisasi URL media terintegrasi storage Laravel */
+function normalizeMediaUrl(url?: string | null): string {
+    if (!url) return FALLBACK_IMAGE;
+    const clean = url.trim();
+    if (
+        clean.startsWith("http://") ||
+        clean.startsWith("https://") ||
+        clean.startsWith("data:")
+    ) {
+        return clean;
+    }
+    if (clean.startsWith("/storage/")) return clean;
+    if (clean.startsWith("storage/")) return `/${clean}`;
+    if (clean.startsWith("/")) return clean;
+    return `/storage/${clean}`;
 }
 
 // ==========================================
-// 2. DATA NORMALIZER (Clean Boundary Layer)
+// 2. DATA NORMALIZER
 // ==========================================
 function normalizeProduct(raw: Record<string, any> = {}): NormalizedProduct {
-    const nama = String(raw.nama || raw.name || "Produk CRSL");
-    const mainImg = String(
-        raw.gambar_utama || raw.main_image || "/assets/gambar/placeholder.webp",
-    );
+    const nama = String(raw.nama || raw.name || "Produk Merchandise CRSL");
+    const mainImg = normalizeMediaUrl(raw.gambar_utama || raw.main_image);
 
     const rawListImages =
         Array.isArray(raw.gambar) && raw.gambar.length > 0
@@ -92,7 +112,7 @@ function normalizeProduct(raw: Record<string, any> = {}): NormalizedProduct {
     const gambar: GalleryImage[] = rawListImages.map(
         (img: any, idx: number) => ({
             id: img.id ?? idx,
-            url: String(img.url || mainImg),
+            url: normalizeMediaUrl(img.url || mainImg),
             alt_teks: String(img.alt_teks || img.alt_text || nama),
         }),
     );
@@ -109,6 +129,19 @@ function normalizeProduct(raw: Record<string, any> = {}): NormalizedProduct {
         nilai: String(s.nilai || s.spec_value || "-"),
     }));
 
+    const rawVariants = Array.isArray(raw.varian)
+        ? raw.varian
+        : Array.isArray(raw.variants)
+          ? raw.variants
+          : [];
+
+    const varian: VariantItem[] = rawVariants.map((v: any) => ({
+        ...v,
+        gambar_varian: v.gambar_varian
+            ? normalizeMediaUrl(v.gambar_varian)
+            : undefined,
+    }));
+
     const hargaDasar = Number(raw.harga_dasar ?? raw.price ?? 0);
     const rawDiscount = raw.harga_diskon ?? raw.discount_price;
     const hargaDiskon =
@@ -121,18 +154,20 @@ function normalizeProduct(raw: Record<string, any> = {}): NormalizedProduct {
         nama,
         slug: String(raw.slug || (raw.id ? String(raw.id) : "produk-crsl")),
         kategoriNama: String(
-            raw.kategori?.nama || raw.category?.name || "CRSL Official Merch",
+            raw.kategori?.nama || raw.category?.name || "Official Merchandise",
         ),
         hargaDasar,
         hargaDiskon,
         stokTotal: Number(raw.stok_total ?? raw.stock ?? 0),
-        beratGram: Number(raw.berat_gram ?? raw.weight ?? 0),
+        beratGram: Number(raw.berat_gram ?? raw.weight ?? 350),
         deskripsi: String(
-            raw.deskripsi || raw.description || "Official merchandise CRSL.",
+            raw.deskripsi ||
+                raw.description ||
+                "Official merchandise resmi dari CRSL Official Store.",
         ),
         gambarUtama: mainImg,
         gambar,
-        varian: (raw.varian || raw.variants || []) as VariantItem[],
+        varian,
         spesifikasi,
     };
 }
@@ -142,8 +177,8 @@ export default function DetailProduk({
     product,
     rekomendasi = [],
     recommended = [],
-}: ProductDetailProps) {
-    // Normalisasi data produk aktif dan rekomendasi
+    className,
+}: DetailProdukProps) {
     const activeProduct = useMemo(
         () => normalizeProduct(produk || product),
         [produk, product],
@@ -154,11 +189,9 @@ export default function DetailProduk({
         return rawRecs.map((r) => normalizeProduct(r));
     }, [rekomendasi, recommended]);
 
-    // Store Keranjang
     const tambahItemStore = useKeranjangStore((state) => state.tambahItem);
     const cartItems = useKeranjangStore((state) => state.items);
 
-    // Hitung total nilai belanja aktif
     const globalCartTotal = useMemo(() => {
         if (!cartItems || !Array.isArray(cartItems)) return 0;
         return cartItems.reduce(
@@ -168,13 +201,11 @@ export default function DetailProduk({
         );
     }, [cartItems]);
 
-    // Helper session storage per produk
     const getSessionKey = useCallback(
         (id: string | number) => `crsl_pdp_selected_${id}`,
         [],
     );
 
-    // State Internal
     const [selectedVariant, setSelectedVariant] = useState<VariantItem | null>(
         null,
     );
@@ -186,10 +217,11 @@ export default function DetailProduk({
     const [variantError, setVariantError] = useState<string | null>(null);
     const [isDiscountsModalOpen, setIsDiscountsModalOpen] =
         useState<boolean>(false);
-    const [isInquiryModalOpen, setIsInquiryModalOpen] = useState<boolean>(false);
+    const [isInquiryModalOpen, setIsInquiryModalOpen] =
+        useState<boolean>(false);
     const [isWishlistLoading, setIsWishlistLoading] = useState<boolean>(false);
 
-    // Sinkronisasi state saat navigasi client-side berganti produk
+    // Sinkronisasi state varian dengan fallback varian default
     useEffect(() => {
         if (!activeProduct.id) return;
 
@@ -198,6 +230,7 @@ export default function DetailProduk({
             size?: string;
             quantity?: number;
         } | null = null;
+
         if (typeof window !== "undefined") {
             try {
                 const rawData = sessionStorage.getItem(
@@ -209,11 +242,20 @@ export default function DetailProduk({
             }
         }
 
-        const matchedVariant = saved?.variantId
-            ? activeProduct.varian.find(
-                  (v) => String(v.id) === String(saved?.variantId),
-              ) || null
-            : null;
+        let matchedVariant: VariantItem | null = null;
+        if (saved?.variantId) {
+            matchedVariant =
+                activeProduct.varian.find(
+                    (v) => String(v.id) === String(saved?.variantId),
+                ) || null;
+        }
+
+        // Jika belum ada pilihan tersimpan, pilih varian pertama yang memiliki stok
+        if (!matchedVariant && activeProduct.varian.length > 0) {
+            matchedVariant =
+                activeProduct.varian.find((v) => (v.stok ?? 0) > 0) ||
+                activeProduct.varian[0];
+        }
 
         setSelectedVariant(matchedVariant);
         setSelectedImage(
@@ -232,7 +274,6 @@ export default function DetailProduk({
         getSessionKey,
     ]);
 
-    // Simpan preferensi pilihan ke Session Storage
     const persistSelection = useCallback(
         (variantId?: string | number, size?: string, qty?: number) => {
             if (typeof window === "undefined" || !activeProduct.id) return;
@@ -246,7 +287,7 @@ export default function DetailProduk({
                     }),
                 );
             } catch {
-                // Ignore storage limits / incognito security errors
+                // Ignore storage quota
             }
         },
         [
@@ -258,7 +299,6 @@ export default function DetailProduk({
         ],
     );
 
-    // Perhitungan Harga & Stok
     const isDiscounted =
         activeProduct.hargaDiskon !== undefined &&
         activeProduct.hargaDiskon < activeProduct.hargaDasar;
@@ -273,7 +313,6 @@ export default function DetailProduk({
         : activeProduct.stokTotal;
     const isOutOfStock = currentStock <= 0;
 
-    // Handlers
     const handleSelectVariant = (v: VariantItem) => {
         setSelectedVariant(v);
         setVariantError(null);
@@ -307,7 +346,7 @@ export default function DetailProduk({
         }
         if (quantity > currentStock) {
             toast.error(
-                `Kuantitas melebihi stok yang tersedia (Maks. ${currentStock} pcs).`,
+                `Kuantitas melebihi stok yang tersedia (Maksimal ${currentStock} pcs).`,
             );
             return false;
         }
@@ -342,7 +381,7 @@ export default function DetailProduk({
         if (!validatePurchase()) return;
 
         tambahItemStore(createCartPayload());
-        toast.success("Produk berhasil ditambahkan ke keranjang!");
+        toast.success("Produk berhasil ditambahkan ke keranjang belanja!");
     };
 
     const handleBuyNow = (e: React.MouseEvent) => {
@@ -350,8 +389,6 @@ export default function DetailProduk({
         if (!validatePurchase()) return;
 
         const payload = createCartPayload();
-
-        // Hanya isi session checkout instan tanpa menduplikasi ke keranjang reguler
         if (typeof window !== "undefined") {
             try {
                 sessionStorage.setItem(
@@ -359,7 +396,7 @@ export default function DetailProduk({
                     JSON.stringify(payload),
                 );
             } catch {
-                // Ignore storage limits
+                // Ignore storage quota
             }
         }
         router.visit("/pembayaran?buy_now=1");
@@ -368,12 +405,12 @@ export default function DetailProduk({
     const handleDirectWhatsAppCS = () => {
         const currentUrl =
             typeof window !== "undefined" ? window.location.href : "";
-        const phone = SITUS_CONFIG.whatsappCS;
+        const cleanPhone = (SITUS_CONFIG.whatsappCS || "").replace(/\D/g, "");
         const text = encodeURIComponent(
-            `Halo tim CS CRSL, saya ingin bertanya seputar produk: ${activeProduct.nama}\nLink: ${currentUrl}`,
+            `Halo tim CS CRSL, saya ingin bertanya seputar produk: ${activeProduct.nama}\nTautan: ${currentUrl}`,
         );
         window.open(
-            `https://wa.me/${phone}?text=${text}`,
+            `https://wa.me/${cleanPhone}?text=${text}`,
             "_blank",
             "noopener,noreferrer",
         );
@@ -389,8 +426,12 @@ export default function DetailProduk({
             { produk_id: activeProduct.id },
             {
                 preserveScroll: true,
-                onSuccess: () => toast.success("Status wishlist diperbarui!"),
-                onError: () => toast.error("Gagal memperbarui wishlist."),
+                onSuccess: () =>
+                    toast.success(
+                        "Status wishlist produk berhasil diperbarui!",
+                    ),
+                onError: () =>
+                    toast.error("Gagal memperbarui status wishlist."),
                 onFinish: () => setIsWishlistLoading(false),
             },
         );
@@ -398,12 +439,12 @@ export default function DetailProduk({
 
     return (
         <StorefrontLayout>
-            <Head title={`${activeProduct.nama} - CRSL Store`} />
+            <Head title={`${activeProduct.nama} - CRSL Official Store`} />
 
-            {/* Breadcrumb Navigation */}
+            {/* Breadcrumb Navigation WAI-ARIA */}
             <nav
-                aria-label="Breadcrumb"
-                className="bg-slate-50 border-b border-slate-200/80 py-3 text-xs text-slate-500"
+                aria-label="Navigasi Jejak Halaman"
+                className="bg-slate-50/80 border-b border-slate-200/80 py-3 text-xs text-slate-500 select-none"
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2">
                     <Link
@@ -426,7 +467,12 @@ export default function DetailProduk({
                 </div>
             </nav>
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+            <main
+                className={cn(
+                    "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 select-none",
+                    className,
+                )}
+            >
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
                     {/* Media Magnifier Gallery */}
                     <div className="lg:col-span-6">
@@ -439,23 +485,24 @@ export default function DetailProduk({
                     </div>
 
                     {/* Panel Transaksi & Informasi Produk */}
-                    <div className="lg:col-span-6 space-y-5 bg-white p-6 sm:p-7 rounded-xl border border-slate-200/90 shadow-xs">
+                    <div className="lg:col-span-6 space-y-5 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-2xs">
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <span
-                                        className={`text-xs font-semibold px-2.5 py-1 rounded ${
+                                        className={cn(
+                                            "text-xs font-bold px-2.5 py-1 rounded-full border shadow-2xs font-mono",
                                             isOutOfStock
-                                                ? "bg-rose-50 text-rose-700 border border-rose-200"
-                                                : "bg-slate-100 text-slate-700"
-                                        }`}
+                                                ? "bg-rose-50 text-rose-800 border-rose-200"
+                                                : "bg-emerald-50 text-emerald-800 border-emerald-200",
+                                        )}
                                     >
                                         {isOutOfStock
                                             ? "Stok Habis"
-                                            : "Tersedia"}
+                                            : "Stok Tersedia"}
                                     </span>
                                     {activeProduct.kategoriNama && (
-                                        <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2.5 py-1 rounded">
+                                        <span className="text-xs font-bold text-slate-700 bg-slate-100 border border-slate-200/80 px-2.5 py-1 rounded-full font-mono">
                                             {activeProduct.kategoriNama}
                                         </span>
                                     )}
@@ -464,51 +511,59 @@ export default function DetailProduk({
                                     type="button"
                                     onClick={handleToggleWishlist}
                                     disabled={isWishlistLoading}
-                                    className="p-2 text-slate-400 hover:text-primary rounded-lg hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-50"
-                                    aria-label="Simpan ke Wishlist"
+                                    className="p-2 text-slate-400 hover:text-[#E52027] rounded-xl hover:bg-red-50/50 transition-colors cursor-pointer disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                    aria-label="Simpan ke Wishlist Saya"
                                 >
-                                    <Heart className="w-5 h-5" />
+                                    {isWishlistLoading ? (
+                                        <Loader2 className="w-5 h-5 animate-spin text-[#E52027]" />
+                                    ) : (
+                                        <Heart className="w-5 h-5 stroke-[2]" />
+                                    )}
                                 </button>
                             </div>
 
-                            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 leading-snug tracking-normal">
+                            <h1 className="text-xl sm:text-2xl font-black text-slate-900 leading-snug tracking-tight">
                                 {activeProduct.nama}
                             </h1>
 
-                            {/* Harga */}
+                            {/* Harga Produk */}
                             <div className="flex items-baseline gap-2.5 pt-1">
-                                <span className="text-2xl sm:text-3xl font-bold text-slate-900 tabular-nums">
+                                <span className="text-2xl sm:text-3xl font-black text-slate-900 font-mono tabular-nums">
                                     {formatRupiah(currentPrice)}
                                 </span>
                                 {isDiscounted && (
-                                    <span className="text-sm font-semibold text-slate-400 line-through tabular-nums">
+                                    <span className="text-sm font-semibold text-slate-400 line-through font-mono tabular-nums">
                                         {formatRupiah(activeProduct.hargaDasar)}
                                     </span>
                                 )}
                             </div>
                         </div>
 
-                        {/* Banner Voucher Promo */}
+                        {/* Banner Pemicu Modal Kupon Diskon WAI-ARIA */}
                         <button
                             type="button"
+                            role="button"
+                            aria-haspopup="dialog"
+                            aria-expanded={isDiscountsModalOpen}
+                            aria-controls="modal-diskon-produk"
                             onClick={() => setIsDiscountsModalOpen(true)}
-                            className="w-full flex items-center justify-between px-3.5 py-3 bg-[#F8F9FA] border border-slate-200/90 rounded-lg text-left hover:border-slate-300 transition-colors cursor-pointer group"
+                            className="w-full flex items-center justify-between px-4 py-3 bg-slate-50/70 border border-slate-200/90 rounded-2xl text-left hover:border-slate-300 hover:bg-slate-100/60 transition-all cursor-pointer group shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
                         >
                             <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-md bg-white border border-slate-200 flex items-center justify-center text-slate-600 shrink-0">
-                                    <TicketPercent className="w-4 h-4 text-slate-700" />
+                                <div className="w-8 h-8 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center text-[#E52027] shrink-0 shadow-2xs">
+                                    <TicketPercent className="w-4 h-4 stroke-[2.2]" />
                                 </div>
                                 <div>
-                                    <p className="text-xs font-bold text-slate-800">
+                                    <p className="text-xs font-bold text-slate-900">
                                         Kupon Diskon Tersedia
                                     </p>
-                                    <p className="text-[11px] text-slate-500">
-                                        Gunakan voucher untuk penawaran harga
-                                        terbaik!
+                                    <p className="text-[11px] text-slate-500 font-medium">
+                                        Klaim voucher belanja untuk potongan
+                                        harga terbaik
                                     </p>
                                 </div>
                             </div>
-                            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 group-hover:text-slate-700 transition-all" />
                         </button>
 
                         {/* Pemilih Varian & Ukuran */}
@@ -530,28 +585,29 @@ export default function DetailProduk({
                                 type="button"
                                 onClick={handleAddToCart}
                                 disabled={isOutOfStock}
-                                className="w-full h-12 bg-white hover:bg-red-50 disabled:opacity-50 text-primary border-2 border-primary font-bold text-sm rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed shadow-xs"
+                                className="w-full min-h-[48px] bg-white hover:bg-red-50/40 disabled:opacity-50 text-[#E52027] border-2 border-[#E52027] font-extrabold text-sm rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed shadow-2xs active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
                             >
-                                <ShoppingBag className="w-4 h-4" />
+                                <ShoppingBag className="w-4 h-4 stroke-[2.2]" />
                                 <span>
                                     {isOutOfStock
                                         ? "Stok Habis"
                                         : "Tambah ke Keranjang"}
                                 </span>
                             </button>
+
                             <button
                                 type="button"
                                 onClick={handleBuyNow}
                                 disabled={isOutOfStock}
-                                className="w-full h-12 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white font-bold text-sm rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed shadow-xs"
+                                className="w-full min-h-[48px] bg-[#E52027] hover:bg-[#CC1C22] disabled:opacity-50 text-white font-extrabold text-sm rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed shadow-lg shadow-red-500/20 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
                             >
-                                <Zap className="w-4 h-4" />
+                                <Zap className="w-4 h-4 stroke-[2.2]" />
                                 <span>Beli Sekarang</span>
                             </button>
                         </div>
 
                         {/* Lookbook Campaign Banner */}
-                        <div className="rounded-lg overflow-hidden border border-slate-200">
+                        <div className="rounded-2xl overflow-hidden border border-slate-200/80 shadow-2xs">
                             <img
                                 src="/assets/gambar/banner-lookbook.webp"
                                 alt="CRSL Campaign Lookbook"
@@ -574,41 +630,46 @@ export default function DetailProduk({
                         />
 
                         {/* Layanan Tanya Produk & WhatsApp CS */}
-                        <div className="grid grid-cols-2 gap-2.5">
+                        <div className="grid grid-cols-2 gap-3">
                             <button
                                 type="button"
+                                role="button"
+                                aria-haspopup="dialog"
+                                aria-expanded={isInquiryModalOpen}
+                                aria-controls="modal-inquiry-produk"
                                 onClick={() => setIsInquiryModalOpen(true)}
-                                className="w-full py-2.5 min-h-11 bg-white hover:bg-red-50 text-primary border border-primary font-bold text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                                className="w-full py-2.5 min-h-[44px] bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-xs rounded-2xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
                             >
-                                <MessageCircle className="w-4 h-4 text-primary" />
+                                <MessageCircle className="w-4 h-4 text-[#E52027] stroke-[2.2]" />
                                 <span>Tanya Produk</span>
                             </button>
+
                             <button
                                 type="button"
                                 onClick={handleDirectWhatsAppCS}
-                                className="w-full py-2.5 min-h-11 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 font-bold text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                                className="w-full py-2.5 min-h-[44px] bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-xs rounded-2xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                             >
-                                <MessageCircle className="w-4 h-4 text-emerald-600" />
+                                <MessageCircle className="w-4 h-4 text-emerald-600 stroke-[2.2]" />
                                 <span>WhatsApp CS</span>
                             </button>
                         </div>
 
                         {/* Spesifikasi Teknis & Material */}
                         {activeProduct.spesifikasi.length > 0 && (
-                            <div className="pt-4 border-t border-slate-100 space-y-2">
-                                <h4 className="font-extrabold text-sm text-slate-900">
-                                    Spesifikasi Material & Detail
+                            <div className="pt-4 border-t border-slate-100 space-y-2.5">
+                                <h4 className="font-black text-sm text-slate-900 tracking-tight">
+                                    Spesifikasi Material &amp; Detail
                                 </h4>
-                                <div className="bg-slate-50 rounded-lg p-3.5 border border-slate-200/80 space-y-2">
+                                <div className="bg-slate-50/70 rounded-2xl p-4 border border-slate-200/80 space-y-2 shadow-2xs">
                                     {activeProduct.spesifikasi.map((spec) => (
                                         <div
                                             key={spec.id}
-                                            className="grid grid-cols-3 text-xs border-b border-slate-200/60 pb-1.5 last:border-0 last:pb-0"
+                                            className="grid grid-cols-3 text-xs border-b border-slate-200/60 pb-2 last:border-0 last:pb-0"
                                         >
                                             <span className="font-bold text-slate-500">
                                                 {spec.kunci}
                                             </span>
-                                            <span className="col-span-2 font-semibold text-slate-800">
+                                            <span className="col-span-2 font-semibold text-slate-900">
                                                 {spec.nilai}
                                             </span>
                                         </div>
@@ -617,8 +678,8 @@ export default function DetailProduk({
                             </div>
                         )}
 
-                        <div className="pt-1 flex items-center gap-2 text-slate-500 text-xs">
-                            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <div className="pt-1 flex items-center gap-2 text-slate-500 text-xs font-medium">
+                            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 stroke-[2.2]" />
                             <span>
                                 100% Produk Original Merchandise CRSL Terjamin
                             </span>
@@ -672,6 +733,7 @@ export default function DetailProduk({
                 selectedVariantName={selectedVariant?.nama_varian}
             />
 
+            {/* Sticky Bottom Cart Bar */}
             <StickyCartBar />
         </StorefrontLayout>
     );

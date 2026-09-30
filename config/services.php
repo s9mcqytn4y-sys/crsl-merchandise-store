@@ -58,4 +58,19 @@ return [
         'webhook_url' => env('MIDTRANS_WEBHOOK_URL'),
     ],
 
+    'commerce' => [
+        'driver' => env('COMMERCE_DRIVER', 'production'),
+    ],
+
+    // ============================================================
+    // RAJAONGKIR LOGISTICS GATEWAY
+    // ============================================================
+    'rajaongkir' => [
+        'api_key'        => env('RAJAONGKIR_API_KEY', ''),
+        'package'        => env('RAJAONGKIR_PACKAGE', 'starter'),
+        'base_url'       => rtrim(env('RAJAONGKIR_BASE_URL', 'https://api.rajaongkir.com/starter'), '/'),
+        'origin_city_id' => env('RAJAONGKIR_ORIGIN_CITY_ID', '152'), // 152 = Jakarta Pusat
+        'couriers'       => env('RAJAONGKIR_COURIERS', 'jne,pos,tiki'),
+    ],
+
 ];

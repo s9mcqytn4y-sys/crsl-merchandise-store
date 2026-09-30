@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useMemo, useRef } from "react";
-import { Link } from "@inertiajs/react";
-import { Menu, Search, User, ShoppingBag } from "lucide-react";
-import { useKeranjangStore } from "../Stores/useKeranjangStore";
+import { useEffect, useState, useRef } from "react";
+import { Link, usePage } from "@inertiajs/react";
+import { Menu, Search, User } from "lucide-react";
+import { AuthUser } from "../types";
+import { cn } from "../lib/utils";
 
 interface FlagIconProps {
     currency: string;
@@ -27,6 +28,40 @@ function IkonBendera({ currency }: FlagIconProps) {
                     />
                 </svg>
             );
+        case "SGD":
+            return (
+                <svg
+                    width="18"
+                    height="12"
+                    viewBox="0 0 18 12"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                    className="rounded-[2px] overflow-hidden shrink-0 border border-slate-200"
+                >
+                    <rect width="18" height="6" fill="#ED2939" />
+                    <rect y="6" width="18" height="6" fill="#FFFFFF" />
+                </svg>
+            );
+        case "MYR":
+            return (
+                <svg
+                    width="18"
+                    height="12"
+                    viewBox="0 0 18 12"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                    className="rounded-[2px] overflow-hidden shrink-0 border border-slate-200"
+                >
+                    <rect width="18" height="12" fill="#CC0000" />
+                    <path
+                        d="M0 2h18v2H0zm0 4h18v2H0zm0 4h18v2H0z"
+                        fill="#FFFFFF"
+                    />
+                    <rect width="9" height="7" fill="#000066" />
+                </svg>
+            );
         case "IDR":
         default:
             return (
@@ -39,22 +74,22 @@ function IkonBendera({ currency }: FlagIconProps) {
                     aria-hidden="true"
                     className="rounded-[2px] overflow-hidden shrink-0 border border-slate-200"
                 >
-                    <rect width="18" height="6" fill="#CE1126" />
+                    <rect width="18" height="6" fill="#E52027" />
                     <rect y="6" width="18" height="6" fill="#FFFFFF" />
                 </svg>
             );
     }
 }
 
-import { AuthUser } from "../types";
-
 interface NavigasiUtamaProps {
     isMenuOpen: boolean;
     onMenuOpen: () => void;
     onSearchOpen: () => void;
     onPrefOpen: () => void;
+    onOpenAuth?: () => void;
     currency?: string;
     authUser?: AuthUser | null;
+    className?: string;
 }
 
 export default function NavigasiUtama({
@@ -62,18 +97,13 @@ export default function NavigasiUtama({
     onMenuOpen,
     onSearchOpen,
     onPrefOpen,
+    onOpenAuth,
     currency = "IDR",
     authUser = null,
+    className,
 }: NavigasiUtamaProps) {
-    // Zustand Atomic Selectors
-    const items = useKeranjangStore((state) => state.items);
-    const bukaKeranjang = useKeranjangStore((state) => state.bukaKeranjang);
+    const { url } = usePage();
 
-    // Total item keranjang reaktif
-    const jumlahKeranjang = useMemo(() => {
-        if (!Array.isArray(items)) return 0;
-        return items.reduce((total, item) => total + (item.jumlah || 1), 0);
-    }, [items]);
 
     const [isScrolled, setIsScrolled] = useState(false);
     const rafId = useRef<number | null>(null);
@@ -98,13 +128,18 @@ export default function NavigasiUtama({
         };
     }, []);
 
+    const isAccountActive =
+        url.startsWith("/account") || url.startsWith("/profile");
+
     return (
         <header
-            className={`w-full bg-white transition-all duration-200 ${
+            className={cn(
+                "w-full bg-white transition-all duration-200 sticky top-0 z-40 select-none",
                 isScrolled
-                    ? "border-b border-slate-200 shadow-xs"
-                    : "border-b border-slate-100 shadow-none"
-            }`}
+                    ? "border-b border-slate-200/90 shadow-2xs backdrop-blur-md bg-white/95"
+                    : "border-b border-slate-100 shadow-none",
+                className,
+            )}
         >
             <div className="max-w-7xl mx-auto h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between relative">
                 {/* SISI KIRI: Tombol Menu Drawer */}
@@ -113,20 +148,20 @@ export default function NavigasiUtama({
                         id="btn-hamburger-menu"
                         type="button"
                         onClick={onMenuOpen}
-                        className="p-2 -ml-2 text-slate-700 hover:text-primary hover:bg-slate-50 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
-                        aria-label="Buka menu navigasi"
+                        className="p-2 -ml-2 text-slate-700 hover:text-[#E52027] hover:bg-red-50/50 active:bg-red-50 rounded-2xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer"
+                        aria-label="Buka menu navigasi utama"
                         aria-expanded={isMenuOpen}
                         aria-controls="side-menu-drawer"
                     >
-                        <Menu className="w-5 h-5" strokeWidth={2.2} />
+                        <Menu className="w-5 h-5 stroke-[2.2]" />
                     </button>
                 </div>
 
-                {/* TENGAH: Logo Utama (<ROSL Mascot Logo) */}
+                {/* TENGAH: Logo Resmi CRSL */}
                 <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
                     <Link
                         href="/"
-                        className="flex items-center gap-2 group focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none rounded-lg p-1"
+                        className="flex items-center gap-2 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] rounded-xl p-1 transition-transform active:scale-95"
                         aria-label="CRSL Official Store - Beranda"
                     >
                         <img
@@ -136,7 +171,8 @@ export default function NavigasiUtama({
                             height={32}
                             className="h-6 sm:h-7 md:h-8 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
                             onError={(e) => {
-                                const target = e.currentTarget as HTMLImageElement;
+                                const target =
+                                    e.currentTarget as HTMLImageElement;
                                 target.onerror = null;
                                 target.src = "/assets/gambar/logo-crsl.png";
                             }}
@@ -146,16 +182,18 @@ export default function NavigasiUtama({
 
                 {/* SISI KANAN: Tombol Aksi */}
                 <div className="flex items-center gap-1 sm:gap-2">
-                    {/* Preferensi Mata Uang */}
+                    {/* Preferensi Mata Uang & Wilayah */}
                     <button
                         id="btn-preferensi-wilayah"
                         type="button"
                         onClick={onPrefOpen}
-                        className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-semibold text-slate-700 hover:text-slate-900 px-1.5 sm:px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                        className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-slate-700 hover:text-slate-900 px-2 sm:px-2.5 py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer shadow-2xs"
                         aria-label={`Mata uang aktif: ${currency}`}
                     >
                         <IkonBendera currency={currency} />
-                        <span className="hidden xs:inline sm:inline">{currency}</span>
+                        <span className="hidden xs:inline sm:inline font-mono">
+                            {currency}
+                        </span>
                     </button>
 
                     {/* Tombol Pencarian */}
@@ -163,25 +201,44 @@ export default function NavigasiUtama({
                         id="btn-pencarian"
                         type="button"
                         onClick={onSearchOpen}
-                        className="p-2 text-slate-700 hover:text-primary hover:bg-red-50/70 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
-                        aria-label="Cari produk"
+                        className="p-2 text-slate-700 hover:text-[#E52027] hover:bg-red-50/60 rounded-2xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer"
+                        aria-label="Cari produk toko"
                     >
-                        <Search className="w-5 h-5" strokeWidth={2} />
+                        <Search className="w-5 h-5 stroke-[2.2]" />
                     </button>
 
-                    {/* Tombol Akun: Langsung ke URL Akun */}
-                    <Link
-                        href="/account"
-                        id="btn-akun"
-                        className="p-2 text-slate-700 hover:text-primary hover:bg-red-50/70 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none relative"
-                        aria-label={
-                            authUser
-                                ? `Profil ${authUser.name}`
-                                : "Halaman Akun Pengguna"
-                        }
-                    >
-                        <User className="w-5 h-5" strokeWidth={2} />
-                    </Link>
+                    {/* Tombol Akun / Profil */}
+                    {authUser ? (
+                        <Link
+                            href="/account"
+                            id="btn-akun"
+                            className={cn(
+                                "p-2 rounded-2xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer relative",
+                                isAccountActive
+                                    ? "bg-red-50 text-[#E52027]"
+                                    : "text-slate-700 hover:text-[#E52027] hover:bg-red-50/60",
+                            )}
+                            aria-label={`Profil ${authUser.name || (authUser as any).nama || "Akun"}`}
+                        >
+                            <User className="w-5 h-5 stroke-[2.2]" />
+                        </Link>
+                    ) : (
+                        <button
+                            type="button"
+                            id="btn-akun-guest"
+                            onClick={() => {
+                                if (onOpenAuth) {
+                                    onOpenAuth();
+                                } else {
+                                    onMenuOpen();
+                                }
+                            }}
+                            className="p-2 text-slate-700 hover:text-[#E52027] hover:bg-red-50/60 rounded-2xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer"
+                            aria-label="Masuk atau daftar akun"
+                        >
+                            <User className="w-5 h-5 stroke-[2.2]" />
+                        </button>
+                    )}
                 </div>
             </div>
         </header>

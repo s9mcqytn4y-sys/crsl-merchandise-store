@@ -1,18 +1,33 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import { Fragment } from "react";
-import { X, Search, Loader2, AlertCircle } from "lucide-react";
+import React, {
+    useState,
+    useEffect,
+    useRef,
+    Fragment,
+    useCallback,
+} from "react";
+import {
+    Dialog,
+    DialogPanel,
+    DialogTitle,
+    DialogBackdrop,
+    Transition,
+    TransitionChild,
+} from "@headlessui/react";
+import { X, Search, Loader2, AlertCircle, MapPin } from "lucide-react";
 import { router } from "@inertiajs/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toastNotifikasi } from "../../Utils/toastNotifikasi";
 import { cn } from "../../lib/utils";
-import { addressSchema, type AddressFormData } from "../../Validation/addressSchema";
+import {
+    addressSchema,
+    type AddressFormData,
+} from "../../Validation/addressSchema";
 import { AddressItem } from "./AddressSelectModal";
 
 interface BiteshipAreaResult {
     id: string;
-    nama: string;
+    nama?: string;
     provinsi: string;
     kota: string;
     kecamatan: string;
@@ -21,27 +36,32 @@ interface BiteshipAreaResult {
 }
 
 interface AddressFormModalProps {
-    isOpen: boolean;
+    isOpen?: boolean;
     onClose: () => void;
-    editingAddress: AddressItem | null;
+    editingAddress?: AddressItem | null;
     onAddressSaved: (savedAddress: AddressItem) => void;
+    className?: string;
 }
 
 export default function AddressFormModal({
-    isOpen,
+    isOpen = false,
     onClose,
-    editingAddress,
+    editingAddress = null,
     onAddressSaved,
+    className,
 }: AddressFormModalProps) {
+    const isVisible = Boolean(isOpen);
     const [loading, setLoading] = useState(false);
 
-    // Biteship autocomplete search
-    const [areaSearchQuery, setAreaSearchQuery] = useState("");
+    // Biteship autocomplete search state
+    const [areaInputText, setAreaInputText] = useState("");
     const [areaResults, setAreaResults] = useState<BiteshipAreaResult[]>([]);
     const [isSearchingArea, setIsSearchingArea] = useState(false);
     const [showAreaDropdown, setShowAreaDropdown] = useState(false);
-    const [selectedAreaText, setSelectedAreaText] = useState("");
+    const [highlightedIndex, setHighlightedIndex] = useState(-1);
+
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const listboxRef = useRef<HTMLDivElement>(null);
 
     const {
         register,
@@ -70,8 +90,9 @@ export default function AddressFormModal({
 
     const currentLabel = watch("label");
 
+    // Sinkronisasi data saat modal dibuka atau editingAddress berubah
     useEffect(() => {
-        if (isOpen) {
+        if (isVisible) {
             if (editingAddress) {
                 reset({
                     label: editingAddress.label || "Rumah",
@@ -85,19 +106,24 @@ export default function AddressFormModal({
                     kelurahan: editingAddress.kelurahan || "",
                     kode_pos: editingAddress.kode_pos || "",
                     alamat_lengkap: editingAddress.alamat_lengkap || "",
-                    adalah_utama: editingAddress.adalah_utama || false,
+                    adalah_utama: Boolean(editingAddress.adalah_utama),
                 });
 
                 const currentText = [
-                    editingAddress.kelurahan ? `Kel. ${editingAddress.kelurahan}` : "",
-                    editingAddress.kecamatan ? `Kec. ${editingAddress.kecamatan}` : "",
+                    editingAddress.kelurahan
+                        ? `Kel. ${editingAddress.kelurahan}`
+                        : "",
+                    editingAddress.kecamatan
+                        ? `Kec. ${editingAddress.kecamatan}`
+                        : "",
                     editingAddress.kota,
                     editingAddress.provinsi,
                     editingAddress.kode_pos,
                 ]
                     .filter(Boolean)
                     .join(", ");
-                setSelectedAreaText(currentText);
+
+                setAreaInputText(currentText);
             } else {
                 reset({
                     label: "Rumah",
@@ -113,60 +139,134 @@ export default function AddressFormModal({
                     alamat_lengkap: "",
                     adalah_utama: false,
                 });
-                setSelectedAreaText("");
+                setAreaInputText("");
             }
-            setAreaSearchQuery("");
+            setAreaResults([]);
             setShowAreaDropdown(false);
+            setHighlightedIndex(-1);
         }
-    }, [isOpen, editingAddress, reset]);
+    }, [isVisible, editingAddress, reset]);
 
-    // Debounce search area
+    // Tutup dropdown jika klik di luar area
     useEffect(() => {
-        if (areaSearchQuery.trim().length < 3) {
+        if (!showAreaDropdown) return;
+
+        function handleOutsideClick(e: MouseEvent | TouchEvent) {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(e.target as Node)
+            ) {
+                setShowAreaDropdown(false);
+            }
+        }
+
+        document.addEventListener("mousedown", handleOutsideClick);
+        document.addEventListener("touchstart", handleOutsideClick);
+        return () => {
+            document.removeEventListener("mousedown", handleOutsideClick);
+            document.removeEventListener("touchstart", handleOutsideClick);
+        };
+    }, [showAreaDropdown]);
+
+    // Pencarian area dengan Debounce + AbortController anti-race-condition
+    useEffect(() => {
+        const query = areaInputText.trim();
+        if (query.length < 3) {
             setAreaResults([]);
             setIsSearchingArea(false);
             return;
         }
 
+        const controller = new AbortController();
         setIsSearchingArea(true);
+
         const timer = setTimeout(() => {
-            fetch(`/api/wilayah/cari?q=${encodeURIComponent(areaSearchQuery.trim())}`)
+            fetch(`/api/wilayah/cari?q=${encodeURIComponent(query)}`, {
+                signal: controller.signal,
+            })
                 .then((res) => res.json())
                 .then((data) => {
                     if (data?.sukses && Array.isArray(data?.data)) {
                         setAreaResults(data.data);
+                        setShowAreaDropdown(true);
+                        setHighlightedIndex(-1);
                     } else {
                         setAreaResults([]);
                     }
                 })
-                .catch(() => setAreaResults([]))
+                .catch((err) => {
+                    if (err.name !== "AbortError") {
+                        setAreaResults([]);
+                    }
+                })
                 .finally(() => setIsSearchingArea(false));
         }, 300);
 
-        return () => clearTimeout(timer);
-    }, [areaSearchQuery]);
+        return () => {
+            clearTimeout(timer);
+            controller.abort();
+        };
+    }, [areaInputText]);
 
-    const pilihArea = (area: BiteshipAreaResult) => {
-        setValue("area_id", area.id, { shouldValidate: true });
-        setValue("provinsi", area.provinsi || "");
-        setValue("kota", area.kota || "", { shouldValidate: true });
-        setValue("kecamatan", area.kecamatan || "");
-        setValue("kelurahan", area.kelurahan || "");
-        setValue("kode_pos", area.kode_pos || "", { shouldValidate: true });
+    const pilihArea = useCallback(
+        (area: BiteshipAreaResult) => {
+            setValue("area_id", area.id, { shouldValidate: true });
+            setValue("provinsi", area.provinsi || "");
+            setValue("kota", area.kota || "", { shouldValidate: true });
+            setValue("kecamatan", area.kecamatan || "");
+            setValue("kelurahan", area.kelurahan || "");
+            setValue("kode_pos", area.kode_pos || "", { shouldValidate: true });
 
-        const labelWilayah = [
-            area.kelurahan ? `Kel. ${area.kelurahan}` : "",
-            area.kecamatan ? `Kec. ${area.kecamatan}` : "",
-            area.kota,
-            area.provinsi,
-            area.kode_pos,
-        ]
-            .filter(Boolean)
-            .join(", ");
+            const labelWilayah = [
+                area.kelurahan ? `Kel. ${area.kelurahan}` : "",
+                area.kecamatan ? `Kec. ${area.kecamatan}` : "",
+                area.kota,
+                area.provinsi,
+                area.kode_pos,
+            ]
+                .filter(Boolean)
+                .join(", ");
 
-        setSelectedAreaText(labelWilayah);
-        setShowAreaDropdown(false);
-        setAreaSearchQuery("");
+            setAreaInputText(labelWilayah);
+            setShowAreaDropdown(false);
+            setAreaResults([]);
+            setHighlightedIndex(-1);
+        },
+        [setValue],
+    );
+
+    // Otomatis scroll kontainer dropdown saat keyboard bernavigasi
+    useEffect(() => {
+        if (highlightedIndex >= 0 && listboxRef.current) {
+            const activeEl = listboxRef.current.children[
+                highlightedIndex
+            ] as HTMLElement;
+            if (activeEl) {
+                activeEl.scrollIntoView({ block: "nearest" });
+            }
+        }
+    }, [highlightedIndex]);
+
+    // Navigasi keyboard dropdown wilayah (ArrowDown, ArrowUp, Enter, Escape)
+    const handleAreaKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (!showAreaDropdown || areaResults.length === 0) return;
+
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setHighlightedIndex((prev) =>
+                prev < areaResults.length - 1 ? prev + 1 : 0,
+            );
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setHighlightedIndex((prev) =>
+                prev > 0 ? prev - 1 : areaResults.length - 1,
+            );
+        } else if (e.key === "Enter" && highlightedIndex >= 0) {
+            e.preventDefault();
+            pilihArea(areaResults[highlightedIndex]);
+        } else if (e.key === "Escape") {
+            setShowAreaDropdown(false);
+        }
     };
 
     const onSubmit = (formData: AddressFormData) => {
@@ -174,16 +274,16 @@ export default function AddressFormModal({
         const payload = {
             label: formData.label,
             nama_penerima: formData.nama_penerima.trim(),
-            telepon: formData.telepon.trim(),
+            telepon: formData.telepon.trim().replace(/\D/g, ""),
             email: formData.email?.trim() || null,
             area_id: formData.area_id || null,
-            provinsi: formData.provinsi,
-            kota: formData.kota,
-            kecamatan: formData.kecamatan,
-            kelurahan: formData.kelurahan || null,
-            kode_pos: formData.kode_pos,
+            provinsi: formData.provinsi?.trim() || "",
+            kota: formData.kota?.trim() || "",
+            kecamatan: formData.kecamatan?.trim() || "",
+            kelurahan: formData.kelurahan?.trim() || null,
+            kode_pos: formData.kode_pos?.trim() || "",
             alamat_lengkap: formData.alamat_lengkap.trim(),
-            adalah_utama: formData.adalah_utama,
+            adalah_utama: Boolean(formData.adalah_utama),
         };
 
         const targetUrl = editingAddress
@@ -198,6 +298,7 @@ export default function AddressFormModal({
                 toastNotifikasi.sukses("Alamat pengiriman berhasil disimpan.");
                 setLoading(false);
                 onClose();
+
                 const formatLengkap = [
                     formData.alamat_lengkap,
                     formData.kecamatan,
@@ -215,8 +316,11 @@ export default function AddressFormModal({
                 } as AddressItem);
             },
             onError: (errs) => {
+                const firstErr =
+                    typeof errs === "object" ? Object.values(errs)[0] : null;
                 toastNotifikasi.error(
-                    (Object.values(errs)[0] as string) || "Gagal menyimpan alamat."
+                    (firstErr as string) ||
+                        "Gagal menyimpan alamat pengiriman.",
                 );
                 setLoading(false);
             },
@@ -225,9 +329,15 @@ export default function AddressFormModal({
     };
 
     return (
-        <Transition show={isOpen} as={Fragment}>
-            <Dialog as="div" className="relative z-50" onClose={onClose}>
-                <Transition.Child
+        <Transition show={isVisible} as={Fragment}>
+            <Dialog
+                as="div"
+                id="modal-form-alamat-pengiriman"
+                className={cn("relative z-50 select-none", className)}
+                onClose={onClose}
+            >
+                {/* Backdrop Layer */}
+                <TransitionChild
                     as={Fragment}
                     enter="ease-out duration-200"
                     enterFrom="opacity-0"
@@ -236,207 +346,403 @@ export default function AddressFormModal({
                     leaveFrom="opacity-100"
                     leaveTo="opacity-0"
                 >
-                    <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs" />
-                </Transition.Child>
+                    <DialogBackdrop className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity" />
+                </TransitionChild>
 
-                <div className="fixed inset-0 overflow-y-auto">
-                    <div className="flex min-h-full items-center justify-center p-4 text-center">
-                        <Transition.Child
+                {/* Kontainer Modal Tengah */}
+                <div className="fixed inset-0 z-10 overflow-y-auto">
+                    <div className="flex min-h-full items-center justify-center p-3 sm:p-4 text-center">
+                        <TransitionChild
                             as={Fragment}
                             enter="ease-out duration-200"
-                            enterFrom="opacity-0 scale-95"
-                            enterTo="opacity-100 scale-100"
+                            enterFrom="opacity-0 scale-95 -translate-y-2"
+                            enterTo="opacity-100 scale-100 translate-y-0"
                             leave="ease-in duration-150"
-                            leaveFrom="opacity-100 scale-100"
-                            leaveTo="opacity-0 scale-95"
+                            leaveFrom="opacity-100 scale-100 translate-y-0"
+                            leaveTo="opacity-0 scale-95 -translate-y-2"
                         >
-                            <Dialog.Panel className="w-full max-w-[540px] transform overflow-hidden rounded-[28px] bg-white p-6 sm:p-7 text-left align-middle shadow-2xl transition-all border border-slate-200">
-                                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                                    <Dialog.Title className="text-base sm:text-lg font-bold text-slate-900">
-                                        {editingAddress ? "Ubah Alamat Pengiriman" : "Tambah Alamat Pengiriman"}
-                                    </Dialog.Title>
+                            <DialogPanel className="w-full max-w-[540px] transform overflow-hidden rounded-3xl bg-white p-5 sm:p-7 text-left align-middle shadow-2xl transition-all border border-slate-200/90">
+                                {/* Header Modal */}
+                                <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-9 h-9 rounded-2xl bg-red-50 text-[#E52027] border border-red-100 flex items-center justify-center shrink-0">
+                                            <MapPin className="w-4 h-4 stroke-[2.2]" />
+                                        </div>
+                                        <DialogTitle className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                                            {editingAddress
+                                                ? "Ubah Alamat Pengiriman"
+                                                : "Tambah Alamat Pengiriman"}
+                                        </DialogTitle>
+                                    </div>
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
+                                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                        aria-label="Tutup form alamat"
                                     >
-                                        <X className="w-4 h-4" />
+                                        <X className="w-4 h-4 stroke-[2.2]" />
                                     </button>
                                 </div>
 
-                                <form onSubmit={handleSubmit(onSubmit)} className="py-4 space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-                                    {/* Label */}
-                                    <div className="flex gap-2">
-                                        {["Rumah", "Kantor", "Kos"].map((l) => (
-                                            <button
-                                                key={l}
-                                                type="button"
-                                                onClick={() => setValue("label", l)}
-                                                className={cn(
-                                                    "px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer",
-                                                    currentLabel === l
-                                                        ? "bg-slate-900 text-white"
-                                                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                                                )}
-                                            >
-                                                {l}
-                                            </button>
-                                        ))}
+                                {/* Form Input */}
+                                <form
+                                    onSubmit={handleSubmit(onSubmit)}
+                                    className="py-4 space-y-4 max-h-[72vh] overflow-y-auto pr-1 no-scrollbar"
+                                    noValidate
+                                >
+                                    {/* Pilihan Label Alamat */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                            Label Alamat
+                                        </label>
+                                        <div className="flex gap-2">
+                                            {["Rumah", "Kantor", "Kos"].map(
+                                                (l) => (
+                                                    <button
+                                                        key={l}
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setValue("label", l)
+                                                        }
+                                                        className={cn(
+                                                            "px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                                                            currentLabel === l
+                                                                ? "bg-slate-900 text-white shadow-2xs"
+                                                                : "bg-slate-100 text-slate-600 hover:bg-slate-200",
+                                                        )}
+                                                    >
+                                                        {l}
+                                                    </button>
+                                                ),
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* Nama Penerima */}
                                     <div>
-                                        <label htmlFor="modal-nama-penerima" className="block text-xs font-semibold text-slate-700 mb-1">
-                                            Nama Penerima*
+                                        <label
+                                            htmlFor="modal-nama-penerima"
+                                            className="block text-xs font-bold text-slate-700 mb-1"
+                                        >
+                                            Nama Lengkap Penerima{" "}
+                                            <span className="text-[#E52027]">
+                                                *
+                                            </span>
                                         </label>
                                         <input
                                             id="modal-nama-penerima"
                                             type="text"
                                             autoComplete="name"
                                             {...register("nama_penerima")}
-                                            placeholder="Nama lengkap penerima"
-                                            aria-invalid={!!errors.nama_penerima}
-                                            aria-describedby={errors.nama_penerima ? "err-nama-penerima" : undefined}
-                                            className={cn(
-                                                "w-full px-4 py-2.5 rounded-xl border text-xs sm:text-sm text-slate-800 focus:outline-none transition-all",
+                                            placeholder="Nama penerima paket"
+                                            aria-invalid={Boolean(
+                                                errors.nama_penerima,
+                                            )}
+                                            aria-describedby={
                                                 errors.nama_penerima
-                                                    ? "border-red-500 bg-red-50/20"
-                                                    : "border-slate-300 focus:border-slate-800"
+                                                    ? "err-nama-penerima"
+                                                    : undefined
+                                            }
+                                            className={cn(
+                                                "w-full px-3.5 py-2.5 rounded-2xl border text-xs sm:text-sm text-slate-900 focus:outline-none transition-all shadow-2xs",
+                                                errors.nama_penerima
+                                                    ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
+                                                    : "border-slate-300 focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10",
                                             )}
                                         />
                                         {errors.nama_penerima && (
-                                            <p id="err-nama-penerima" className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
+                                            <p
+                                                id="err-nama-penerima"
+                                                role="alert"
+                                                className="text-xs text-rose-600 font-semibold mt-1 flex items-center gap-1 animate-in fade-in"
+                                            >
                                                 <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                                                {errors.nama_penerima.message}
+                                                <span>
+                                                    {
+                                                        errors.nama_penerima
+                                                            .message
+                                                    }
+                                                </span>
                                             </p>
                                         )}
                                     </div>
 
-                                    {/* No Telepon */}
+                                    {/* Nomor Telepon */}
                                     <div>
-                                        <label htmlFor="modal-telepon" className="block text-xs font-semibold text-slate-700 mb-1">
-                                            Nomor Handphone*
+                                        <label
+                                            htmlFor="modal-telepon"
+                                            className="block text-xs font-bold text-slate-700 mb-1"
+                                        >
+                                            Nomor Handphone / WhatsApp{" "}
+                                            <span className="text-[#E52027]">
+                                                *
+                                            </span>
                                         </label>
                                         <input
                                             id="modal-telepon"
                                             type="tel"
+                                            inputMode="numeric"
                                             autoComplete="tel"
                                             {...register("telepon")}
                                             placeholder="Contoh: 08123456789"
-                                            aria-invalid={!!errors.telepon}
-                                            aria-describedby={errors.telepon ? "err-telepon" : undefined}
-                                            className={cn(
-                                                "w-full px-4 py-2.5 rounded-xl border text-xs sm:text-sm text-slate-800 focus:outline-none transition-all",
+                                            aria-invalid={Boolean(
+                                                errors.telepon,
+                                            )}
+                                            aria-describedby={
                                                 errors.telepon
-                                                    ? "border-red-500 bg-red-50/20"
-                                                    : "border-slate-300 focus:border-slate-800"
+                                                    ? "err-telepon"
+                                                    : undefined
+                                            }
+                                            className={cn(
+                                                "w-full px-3.5 py-2.5 rounded-2xl border text-xs sm:text-sm font-mono text-slate-900 focus:outline-none transition-all shadow-2xs",
+                                                errors.telepon
+                                                    ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
+                                                    : "border-slate-300 focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10",
                                             )}
                                         />
                                         {errors.telepon && (
-                                            <p id="err-telepon" className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
+                                            <p
+                                                id="err-telepon"
+                                                role="alert"
+                                                className="text-xs text-rose-600 font-semibold mt-1 flex items-center gap-1 animate-in fade-in"
+                                            >
                                                 <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                                                {errors.telepon.message}
+                                                <span>
+                                                    {errors.telepon.message}
+                                                </span>
                                             </p>
                                         )}
                                     </div>
 
-                                    {/* Autocomplete Wilayah Pengiriman */}
+                                    {/* Autocomplete Wilayah Ekspedisi (Biteship Area ID) */}
                                     <div className="relative" ref={dropdownRef}>
-                                        <label htmlFor="modal-area-search" className="block text-xs font-semibold text-slate-700 mb-1">
-                                            Kecamatan / Kota / Kode Pos*
+                                        <label
+                                            htmlFor="modal-area-search"
+                                            className="block text-xs font-bold text-slate-700 mb-1"
+                                        >
+                                            Kecamatan, Kota, atau Kode Pos{" "}
+                                            <span className="text-[#E52027]">
+                                                *
+                                            </span>
                                         </label>
                                         <div className="relative">
                                             <input
                                                 id="modal-area-search"
                                                 type="text"
                                                 autoComplete="off"
-                                                value={areaSearchQuery || selectedAreaText}
+                                                role="combobox"
+                                                aria-autocomplete="list"
+                                                aria-expanded={showAreaDropdown}
+                                                aria-controls="area-results-listbox"
+                                                aria-activedescendant={
+                                                    highlightedIndex >= 0
+                                                        ? `area-option-${highlightedIndex}`
+                                                        : undefined
+                                                }
+                                                value={areaInputText}
+                                                onKeyDown={handleAreaKeyDown}
                                                 onChange={(e) => {
-                                                    setAreaSearchQuery(e.target.value);
+                                                    setAreaInputText(
+                                                        e.target.value,
+                                                    );
                                                     setShowAreaDropdown(true);
+                                                    setValue("area_id", "");
                                                 }}
-                                                onFocus={() => setShowAreaDropdown(true)}
-                                                placeholder="Ketik min. 3 karakter: Sleman, Johar Baru, 10560..."
+                                                onFocus={() => {
+                                                    if (areaResults.length > 0)
+                                                        setShowAreaDropdown(
+                                                            true,
+                                                        );
+                                                }}
+                                                placeholder="Ketik min. 3 karakter: Sleman, Johar Baru, 55281..."
+                                                aria-invalid={Boolean(
+                                                    errors.kota ||
+                                                    errors.kode_pos ||
+                                                    errors.area_id,
+                                                )}
                                                 className={cn(
-                                                    "w-full pl-9 pr-4 py-2.5 rounded-xl border text-xs sm:text-sm text-slate-800 focus:outline-none transition-all",
-                                                    errors.kota || errors.kode_pos
-                                                        ? "border-red-500 bg-red-50/20"
-                                                        : "border-slate-300 focus:border-slate-800"
+                                                    "w-full pl-9 pr-8 py-2.5 rounded-2xl border text-xs sm:text-sm text-slate-900 focus:outline-none transition-all shadow-2xs",
+                                                    errors.kota ||
+                                                        errors.kode_pos ||
+                                                        errors.area_id
+                                                        ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
+                                                        : "border-slate-300 focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10",
                                                 )}
                                             />
                                             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                                             {isSearchingArea && (
-                                                <Loader2 className="w-4 h-4 text-slate-400 animate-spin absolute right-3 top-1/2 -translate-y-1/2" />
+                                                <Loader2 className="w-4 h-4 text-[#E52027] animate-spin absolute right-3 top-1/2 -translate-y-1/2" />
                                             )}
                                         </div>
 
-                                        {/* Dropdown hasil */}
-                                        {showAreaDropdown && areaResults.length > 0 && (
-                                            <div className="absolute z-20 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-48 overflow-y-auto divide-y divide-slate-100">
-                                                {areaResults.map((area) => (
-                                                    <div
-                                                        key={area.id}
-                                                        onClick={() => pilihArea(area)}
-                                                        className="p-3 text-left hover:bg-slate-50 cursor-pointer transition-colors"
-                                                    >
-                                                        <div className="text-xs font-bold text-slate-800">
-                                                            {area.kecamatan}, {area.kota}
-                                                        </div>
-                                                        <div className="text-[11px] text-slate-500">
-                                                            {area.provinsi} {area.kode_pos ? `• ${area.kode_pos}` : ""}
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                        {(errors.kota || errors.kode_pos) && (
-                                            <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
+                                        {/* Dropdown Listbox Hasil Pencarian Wilayah */}
+                                        {showAreaDropdown &&
+                                            areaResults.length > 0 && (
+                                                <div
+                                                    id="area-results-listbox"
+                                                    ref={listboxRef}
+                                                    role="listbox"
+                                                    aria-label="Pilihan wilayah pengiriman"
+                                                    className="absolute z-20 left-0 right-0 mt-1.5 bg-white border border-slate-200/90 rounded-2xl shadow-xl max-h-52 overflow-y-auto divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-150"
+                                                >
+                                                    {areaResults.map(
+                                                        (area, index) => {
+                                                            const isHighlighted =
+                                                                highlightedIndex ===
+                                                                index;
+                                                            return (
+                                                                <div
+                                                                    key={
+                                                                        area.id
+                                                                    }
+                                                                    id={`area-option-${index}`}
+                                                                    role="option"
+                                                                    aria-selected={
+                                                                        isHighlighted
+                                                                    }
+                                                                    onClick={() =>
+                                                                        pilihArea(
+                                                                            area,
+                                                                        )
+                                                                    }
+                                                                    className={cn(
+                                                                        "p-3 text-left cursor-pointer transition-colors",
+                                                                        isHighlighted
+                                                                            ? "bg-red-50/50"
+                                                                            : "hover:bg-slate-50",
+                                                                    )}
+                                                                >
+                                                                    <div className="text-xs font-bold text-slate-900">
+                                                                        {
+                                                                            area.kecamatan
+                                                                        }
+                                                                        ,{" "}
+                                                                        {
+                                                                            area.kota
+                                                                        }
+                                                                    </div>
+                                                                    <div className="text-[11px] text-slate-500 font-medium">
+                                                                        {
+                                                                            area.provinsi
+                                                                        }{" "}
+                                                                        {area.kode_pos
+                                                                            ? `• Kode Pos: ${area.kode_pos}`
+                                                                            : ""}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        },
+                                                    )}
+                                                </div>
+                                            )}
+
+                                        {(errors.kota ||
+                                            errors.kode_pos ||
+                                            errors.area_id) && (
+                                            <p
+                                                role="alert"
+                                                className="text-xs text-rose-600 font-semibold mt-1 flex items-center gap-1 animate-in fade-in"
+                                            >
                                                 <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                                                {errors.kota?.message || errors.kode_pos?.message}
+                                                <span>
+                                                    {errors.area_id?.message ||
+                                                        errors.kota?.message ||
+                                                        errors.kode_pos
+                                                            ?.message ||
+                                                        "Wajib memilih wilayah resmi dari daftar"}
+                                                </span>
                                             </p>
                                         )}
                                     </div>
 
-                                    {/* Alamat Lengkap */}
+                                    {/* Alamat Lengkap / Patokan */}
                                     <div>
-                                        <label htmlFor="modal-alamat-lengkap" className="block text-xs font-semibold text-slate-700 mb-1">
-                                            Alamat Lengkap (Jalan, RT/RW, No. Rumah)*
+                                        <label
+                                            htmlFor="modal-alamat-lengkap"
+                                            className="block text-xs font-bold text-slate-700 mb-1"
+                                        >
+                                            Alamat Lengkap & Patokan{" "}
+                                            <span className="text-[#E52027]">
+                                                *
+                                            </span>
                                         </label>
                                         <textarea
                                             id="modal-alamat-lengkap"
                                             rows={2}
                                             autoComplete="street-address"
                                             {...register("alamat_lengkap")}
-                                            placeholder="Contoh: Jl. Kaliurang Km 5 No. 12, RT 01 / RW 02"
-                                            aria-invalid={!!errors.alamat_lengkap}
-                                            aria-describedby={errors.alamat_lengkap ? "err-alamat-lengkap" : undefined}
-                                            className={cn(
-                                                "w-full px-4 py-2.5 rounded-xl border text-xs sm:text-sm text-slate-800 focus:outline-none transition-all",
+                                            placeholder="Contoh: Jl. Palagan Tentara Pelajar Km 9 No. 42 (Pagar Hitam Depan Indomaret)"
+                                            aria-invalid={Boolean(
+                                                errors.alamat_lengkap,
+                                            )}
+                                            aria-describedby={
                                                 errors.alamat_lengkap
-                                                    ? "border-red-500 bg-red-50/20"
-                                                    : "border-slate-300 focus:border-slate-800"
+                                                    ? "err-alamat-lengkap"
+                                                    : undefined
+                                            }
+                                            className={cn(
+                                                "w-full px-3.5 py-2.5 rounded-2xl border text-xs sm:text-sm text-slate-900 focus:outline-none transition-all shadow-2xs resize-none",
+                                                errors.alamat_lengkap
+                                                    ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
+                                                    : "border-slate-300 focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10",
                                             )}
                                         />
                                         {errors.alamat_lengkap && (
-                                            <p id="err-alamat-lengkap" className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
+                                            <p
+                                                id="err-alamat-lengkap"
+                                                role="alert"
+                                                className="text-xs text-rose-600 font-semibold mt-1 flex items-center gap-1 animate-in fade-in"
+                                            >
                                                 <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                                                {errors.alamat_lengkap.message}
+                                                <span>
+                                                    {
+                                                        errors.alamat_lengkap
+                                                            .message
+                                                    }
+                                                </span>
                                             </p>
                                         )}
                                     </div>
 
+                                    {/* Checkbox Jadikan Alamat Utama */}
+                                    <div className="pt-1">
+                                        <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                                            <input
+                                                type="checkbox"
+                                                {...register("adalah_utama")}
+                                                className="w-4 h-4 rounded-md border-slate-300 text-[#E52027] focus:ring-[#E52027] cursor-pointer"
+                                            />
+                                            <span className="text-xs font-bold text-slate-700">
+                                                Jadikan sebagai alamat
+                                                pengiriman utama
+                                            </span>
+                                        </label>
+                                    </div>
+
+                                    {/* Tombol Simpan Alamat */}
                                     <div className="pt-2">
                                         <button
                                             type="submit"
                                             disabled={loading}
-                                            className="w-full py-3 bg-[#E52027] hover:bg-[#CC1C22] active:scale-98 text-white rounded-full text-xs sm:text-sm font-bold transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                                            className="w-full min-h-[46px] py-3 bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.99] text-white rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-md shadow-red-500/20 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
                                         >
-                                            {loading ? "Menyimpan..." : "Simpan Alamat"}
+                                            {loading ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    <span>
+                                                        Menyimpan Alamat...
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <span>
+                                                    Simpan Alamat Pengiriman
+                                                </span>
+                                            )}
                                         </button>
                                     </div>
                                 </form>
-                            </Dialog.Panel>
-                        </Transition.Child>
+                            </DialogPanel>
+                        </TransitionChild>
                     </div>
                 </div>
             </Dialog>

@@ -1,38 +1,97 @@
-import React, { useState, Fragment } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import { X, Tag, Check, AlertCircle, Loader2 } from "lucide-react";
+import React, { useState, useMemo, Fragment } from "react";
+import {
+    Dialog,
+    DialogPanel,
+    DialogTitle,
+    DialogBackdrop,
+    Transition,
+    TransitionChild,
+} from "@headlessui/react";
+import {
+    X,
+    Tag,
+    Check,
+    AlertCircle,
+    Loader2,
+    Sparkles,
+    Ban,
+    TicketPercent,
+} from "lucide-react";
 import { formatRupiah } from "../../Utils/formatters";
+import { cn } from "../../lib/utils";
 
 export interface VoucherItem {
     id: number;
     kode: string;
     judul: string;
-    tipe: string;
+    tipe: "persen" | "persentase" | "percentage" | "nominal" | "fixed" | string;
     nilai: number;
     min_belanja: number;
     minimal_belanja?: number;
     maksimal_diskon?: number;
     discount?: string;
     sudah_dipakai?: boolean;
+    deskripsi?: string;
 }
 
 interface VoucherSelectModalProps {
-    isOpen: boolean;
+    isOpen?: boolean;
     onClose: () => void;
-    vouchers: VoucherItem[];
-    subtotal: number;
-    appliedVoucher: VoucherItem | null;
+    vouchers?: VoucherItem[];
+    subtotal?: number;
+    appliedVoucher?: VoucherItem | null;
     onApplyVoucher: (voucher: VoucherItem | null) => void;
+    className?: string;
+}
+
+function getXsrfToken(): string {
+    if (typeof document === "undefined") return "";
+    const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+    if (match) return decodeURIComponent(match[1]);
+    return (
+        (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)
+            ?.content || ""
+    );
+}
+
+/** Helper normalisasi tipe diskon persentase */
+function isPercentageDiscount(tipe?: string): boolean {
+    if (!tipe) return false;
+    const clean = tipe.toLowerCase().trim();
+    return ["persen", "persentase", "percentage", "percent"].includes(clean);
+}
+
+/** Hitung estimasi diskon riil berdasarkan subtotal keranjang */
+export function hitungEstimasiDiskon(
+    voucher: VoucherItem,
+    subtotal: number,
+): number {
+    const isPercent = isPercentageDiscount(voucher.tipe);
+    let diskon = isPercent
+        ? Math.round((subtotal * Number(voucher.nilai)) / 100)
+        : Number(voucher.nilai) || 0;
+
+    if (
+        isPercent &&
+        voucher.maksimal_diskon &&
+        Number(voucher.maksimal_diskon) > 0
+    ) {
+        diskon = Math.min(diskon, Number(voucher.maksimal_diskon));
+    }
+
+    return Math.min(diskon, subtotal);
 }
 
 export default function VoucherSelectModal({
-    isOpen,
+    isOpen = false,
     onClose,
-    vouchers,
-    subtotal,
-    appliedVoucher,
+    vouchers = [],
+    subtotal = 0,
+    appliedVoucher = null,
     onApplyVoucher,
+    className,
 }: VoucherSelectModalProps) {
+    const isVisible = Boolean(isOpen);
     const [manualCode, setManualCode] = useState("");
     const [manualError, setManualError] = useState("");
     const [isLoadingManual, setIsLoadingManual] = useState(false);
@@ -49,16 +108,13 @@ export default function VoucherSelectModal({
 
         setIsLoadingManual(true);
         try {
-            const csrfToken =
-                (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || "";
-
             const res = await fetch("/api/voucher/validasi", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     Accept: "application/json",
                     "X-Requested-With": "XMLHttpRequest",
-                    "X-CSRF-TOKEN": csrfToken,
+                    "X-XSRF-TOKEN": getXsrfToken(),
                 },
                 body: JSON.stringify({
                     kode: codeClean,
@@ -68,45 +124,62 @@ export default function VoucherSelectModal({
 
             const data = await res.json();
             if (!res.ok || !data.sukses) {
-                setManualError(data.pesan || "Kode voucher tidak dapat digunakan.");
+                setManualError(
+                    data.pesan || "Kode voucher tidak dapat digunakan.",
+                );
                 return;
             }
+
+            const rawTipe = String(data.tipe || "nominal").toLowerCase();
+            const isPercent = isPercentageDiscount(rawTipe);
 
             const verifiedVoucher: VoucherItem = {
                 id: data.id || Date.now(),
                 kode: data.kode,
-                judul: data.judul,
-                tipe: data.tipe,
+                judul: data.judul || `Diskon Voucher ${data.kode}`,
+                tipe: rawTipe,
                 nilai: Number(data.nilai) || 0,
-                min_belanja: Number(data.min_belanja) || 0,
-                minimal_belanja: Number(data.min_belanja) || 0,
+                min_belanja: Number(
+                    data.min_belanja ?? data.minimal_belanja ?? 0,
+                ),
+                minimal_belanja: Number(
+                    data.min_belanja ?? data.minimal_belanja ?? 0,
+                ),
                 maksimal_diskon: Number(data.maksimal_diskon) || 0,
-                discount:
-                    data.tipe === "persen"
-                        ? `${data.nilai}%`
-                        : formatRupiah(data.nilai),
+                discount: isPercent
+                    ? `${data.nilai}%`
+                    : formatRupiah(data.nilai),
             };
 
             onApplyVoucher(verifiedVoucher);
             setManualCode("");
             onClose();
         } catch {
-            const found = vouchers.find((v) => v.kode.toUpperCase() === codeClean);
+            // Fallback lookup dari daftar voucher publik jika request offline
+            const found = vouchers.find(
+                (v) => v.kode.toUpperCase() === codeClean,
+            );
             if (!found) {
-                setManualError("Kode voucher tidak valid atau sudah kedaluwarsa.");
+                setManualError(
+                    "Kode voucher tidak valid atau sudah kedaluwarsa.",
+                );
                 return;
             }
 
-            const minBelanja = Number(found.min_belanja ?? found.minimal_belanja ?? 0);
+            const minBelanja = Number(
+                found.min_belanja ?? found.minimal_belanja ?? 0,
+            );
             if (subtotal < minBelanja) {
                 setManualError(
-                    `Minimal belanja untuk voucher ini adalah ${formatRupiah(minBelanja)}.`
+                    `Minimal belanja untuk voucher ini adalah ${formatRupiah(minBelanja)}.`,
                 );
                 return;
             }
 
             if (found.sudah_dipakai) {
-                setManualError("Voucher ini telah digunakan oleh akun Anda.");
+                setManualError(
+                    "Voucher ini sudah pernah digunakan oleh akun Anda.",
+                );
                 return;
             }
 
@@ -120,17 +193,22 @@ export default function VoucherSelectModal({
 
     const handleSelectVoucher = (voucher: VoucherItem) => {
         if (voucher.sudah_dipakai) {
-            setManualError("Voucher ini sudah pernah digunakan sebelumnya.");
-            return;
-        }
-
-        const minBelanja = Number(voucher.min_belanja ?? voucher.minimal_belanja ?? 0);
-        if (subtotal < minBelanja) {
             setManualError(
-                `Minimal belanja untuk voucher ini adalah ${formatRupiah(minBelanja)}.`
+                "Voucher ini sudah pernah digunakan oleh akun Anda.",
             );
             return;
         }
+
+        const minBelanja = Number(
+            voucher.min_belanja ?? voucher.minimal_belanja ?? 0,
+        );
+        if (subtotal < minBelanja) {
+            setManualError(
+                `Subtotal belum memenuhi syarat minimal belanja ${formatRupiah(minBelanja)}.`,
+            );
+            return;
+        }
+
         onApplyVoucher(voucher);
         onClose();
     };
@@ -141,9 +219,15 @@ export default function VoucherSelectModal({
     };
 
     return (
-        <Transition show={isOpen} as={Fragment}>
-            <Dialog as="div" className="relative z-50" onClose={onClose}>
-                <Transition.Child
+        <Transition show={isVisible} as={Fragment}>
+            <Dialog
+                as="div"
+                id="modal-pilih-voucher"
+                className={cn("relative z-50 select-none", className)}
+                onClose={onClose}
+            >
+                {/* Backdrop Layer */}
+                <TransitionChild
                     as={Fragment}
                     enter="ease-out duration-200"
                     enterFrom="opacity-0"
@@ -152,57 +236,78 @@ export default function VoucherSelectModal({
                     leaveFrom="opacity-100"
                     leaveTo="opacity-0"
                 >
-                    <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs" />
-                </Transition.Child>
+                    <DialogBackdrop className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity" />
+                </TransitionChild>
 
-                <div className="fixed inset-0 overflow-y-auto">
-                    <div className="flex min-h-full items-center justify-center p-4 text-center">
-                        <Transition.Child
+                {/* Kontainer Modal Tengah */}
+                <div className="fixed inset-0 z-10 overflow-y-auto">
+                    <div className="flex min-h-full items-center justify-center p-3 sm:p-4 text-center">
+                        <TransitionChild
                             as={Fragment}
                             enter="ease-out duration-200"
-                            enterFrom="opacity-0 scale-95"
-                            enterTo="opacity-100 scale-100"
+                            enterFrom="opacity-0 scale-95 -translate-y-2"
+                            enterTo="opacity-100 scale-100 translate-y-0"
                             leave="ease-in duration-150"
-                            leaveFrom="opacity-100 scale-100"
-                            leaveTo="opacity-0 scale-95"
+                            leaveFrom="opacity-100 scale-100 translate-y-0"
+                            leaveTo="opacity-0 scale-95 -translate-y-2"
                         >
-                            <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-[28px] bg-white p-6 sm:p-7 text-left align-middle shadow-2xl transition-all border border-slate-200">
-                                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                                    <div className="flex items-center gap-2">
-                                        <Tag className="w-4 h-4 text-slate-700" />
-                                        <Dialog.Title className="text-base font-bold text-slate-900">
-                                            Pilih Voucher Belanja
-                                        </Dialog.Title>
+                            <DialogPanel className="w-full max-w-lg transform overflow-hidden rounded-3xl bg-white p-5 sm:p-7 text-left align-middle shadow-2xl transition-all border border-slate-200/90 flex flex-col max-h-[calc(100dvh-3rem)]">
+                                {/* Header Modal */}
+                                <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 shrink-0">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-9 h-9 rounded-2xl bg-red-50 text-[#E52027] border border-red-100 flex items-center justify-center shrink-0">
+                                            <TicketPercent className="w-4 h-4 stroke-[2.2]" />
+                                        </div>
+                                        <div>
+                                            <DialogTitle className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                                                Pilih Voucher Belanja
+                                            </DialogTitle>
+                                            <p className="text-[11px] text-slate-500">
+                                                Gunakan kode promo untuk
+                                                potongan ekstra
+                                            </p>
+                                        </div>
                                     </div>
+
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
+                                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                        aria-label="Tutup jendela voucher"
                                     >
-                                        <X className="w-4 h-4" />
+                                        <X className="w-4 h-4 stroke-[2.2]" />
                                     </button>
                                 </div>
 
-                                {/* Manual Input Code */}
-                                <form onSubmit={handleApplyManual} className="py-4 border-b border-slate-100">
-                                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                                        Punya Kode Voucher Promo?
+                                {/* Form Input Manual Kode Promo */}
+                                <form
+                                    onSubmit={handleApplyManual}
+                                    className="py-3.5 border-b border-slate-100 shrink-0"
+                                >
+                                    <label
+                                        htmlFor="input-manual-voucher-code"
+                                        className="block text-xs font-bold text-slate-700 mb-1.5"
+                                    >
+                                        Punya Kode Promo Khusus?
                                     </label>
                                     <div className="flex gap-2">
                                         <input
+                                            id="input-manual-voucher-code"
                                             type="text"
                                             value={manualCode}
                                             onChange={(e) => {
-                                                setManualCode(e.target.value.toUpperCase());
+                                                setManualCode(
+                                                    e.target.value.toUpperCase(),
+                                                );
                                                 setManualError("");
                                             }}
                                             placeholder="CONTOH: CRSLDISC10"
-                                            className="flex-1 px-3.5 py-2.5 text-xs sm:text-sm border border-slate-200 rounded-xl focus:border-slate-800 focus:outline-none uppercase font-mono transition-all"
+                                            className="flex-1 px-3.5 py-2.5 text-xs sm:text-sm border border-slate-300 rounded-2xl focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10 focus:outline-none uppercase font-mono font-bold text-slate-900 transition-all shadow-2xs placeholder:font-normal placeholder:text-slate-400"
                                         />
                                         <button
                                             type="submit"
                                             disabled={isLoadingManual}
-                                            className="px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors cursor-pointer shrink-0 disabled:opacity-50 flex items-center gap-1.5"
+                                            className="px-5 py-2.5 rounded-2xl bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.99] text-white text-xs font-bold transition-all cursor-pointer shrink-0 disabled:opacity-50 flex items-center gap-1.5 shadow-md shadow-red-500/20"
                                         >
                                             {isLoadingManual ? (
                                                 <>
@@ -215,111 +320,197 @@ export default function VoucherSelectModal({
                                         </button>
                                     </div>
                                     {manualError && (
-                                        <p className="mt-1.5 text-[11px] text-red-600 flex items-center gap-1 font-medium">
+                                        <p
+                                            role="alert"
+                                            className="mt-2 text-xs text-rose-600 flex items-center gap-1.5 font-semibold bg-rose-50 p-2.5 rounded-xl border border-rose-200 animate-in fade-in"
+                                        >
                                             <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                                            {manualError}
+                                            <span>{manualError}</span>
                                         </p>
                                     )}
                                 </form>
 
-                                {/* Applied Voucher Banner */}
+                                {/* Banner Voucher Terpasang */}
                                 {appliedVoucher && (
-                                    <div className="my-3 p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between gap-3">
-                                        <div className="space-y-0.5">
-                                            <p className="text-xs font-bold text-emerald-900">
-                                                Voucher Digunakan: {appliedVoucher.kode}
+                                    <div className="my-3 p-3.5 bg-emerald-50/80 border border-emerald-300/80 rounded-2xl flex items-center justify-between gap-3 shrink-0 shadow-2xs">
+                                        <div className="space-y-0.5 min-w-0 pr-2">
+                                            <p className="text-xs font-black text-emerald-950 flex items-center gap-1.5">
+                                                <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                                <span>Voucher Digunakan:</span>
+                                                <span className="font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md text-xs font-bold">
+                                                    {appliedVoucher.kode}
+                                                </span>
                                             </p>
-                                            <p className="text-[11px] text-emerald-700">
+                                            <p className="text-[11px] text-emerald-800 font-medium truncate">
                                                 {appliedVoucher.judul}
                                             </p>
                                         </div>
                                         <button
                                             type="button"
                                             onClick={handleRemoveVoucher}
-                                            className="text-xs font-semibold text-red-600 hover:text-red-700 underline cursor-pointer"
+                                            className="text-xs font-bold text-rose-600 hover:text-rose-700 underline shrink-0 cursor-pointer focus:outline-none"
                                         >
-                                            Hapus
+                                            Copot Kupon
                                         </button>
                                     </div>
                                 )}
 
-                                {/* Available Vouchers List */}
-                                <div className="py-3 space-y-2.5 max-h-[45vh] overflow-y-auto pr-1">
-                                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                        Voucher Tersedia
+                                {/* Daftar Voucher Publik Tersedia */}
+                                <div className="py-2 space-y-2.5 overflow-y-auto no-scrollbar overscroll-contain flex-1 pr-0.5">
+                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        Voucher Tersedia ({vouchers.length})
                                     </p>
 
                                     {vouchers.length === 0 ? (
-                                        <p className="text-center py-6 text-xs text-slate-400">
-                                            Tidak ada voucher aktif saat ini.
-                                        </p>
+                                        <div className="text-center py-10 px-4 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50 space-y-2">
+                                            <TicketPercent className="w-8 h-8 text-slate-300 mx-auto stroke-[1.5]" />
+                                            <p className="text-xs font-bold text-slate-700">
+                                                Belum Ada Voucher Terbuka
+                                            </p>
+                                            <p className="text-[11px] text-slate-400 max-w-xs mx-auto leading-relaxed">
+                                                Gunakan kode promo khusus pada
+                                                kolom di atas jika Anda
+                                                memilikinya.
+                                            </p>
+                                        </div>
                                     ) : (
                                         vouchers.map((v) => {
-                                            const isSelected = appliedVoucher?.id === v.id;
-                                            const minBelanja = Number(v.min_belanja ?? v.minimal_belanja ?? 0);
-                                            const isEligible = subtotal >= minBelanja && !v.sudah_dipakai;
+                                            const isSelected =
+                                                appliedVoucher?.id === v.id;
+                                            const minBelanja = Number(
+                                                v.min_belanja ??
+                                                    v.minimal_belanja ??
+                                                    0,
+                                            );
+                                            const isEligible =
+                                                subtotal >= minBelanja &&
+                                                !v.sudah_dipakai;
+                                            const estimasiHemat =
+                                                hitungEstimasiDiskon(
+                                                    v,
+                                                    subtotal,
+                                                );
 
                                             return (
                                                 <div
                                                     key={v.id}
-                                                    onClick={() => isEligible && handleSelectVoucher(v)}
-                                                    className={`p-3.5 rounded-2xl border transition-all ${
+                                                    role="button"
+                                                    tabIndex={
+                                                        isEligible ? 0 : -1
+                                                    }
+                                                    aria-pressed={isSelected}
+                                                    aria-disabled={!isEligible}
+                                                    onClick={() =>
+                                                        isEligible &&
+                                                        handleSelectVoucher(v)
+                                                    }
+                                                    onKeyDown={(e) => {
+                                                        if (
+                                                            isEligible &&
+                                                            (e.key ===
+                                                                "Enter" ||
+                                                                e.key === " ")
+                                                        ) {
+                                                            e.preventDefault();
+                                                            handleSelectVoucher(
+                                                                v,
+                                                            );
+                                                        }
+                                                    }}
+                                                    className={cn(
+                                                        "p-3.5 sm:p-4 rounded-2xl border transition-all text-left relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]",
                                                         isSelected
-                                                            ? "border-emerald-600 bg-emerald-50/50 ring-1 ring-emerald-600"
+                                                            ? "border-emerald-500 bg-emerald-50/40 ring-2 ring-emerald-500/20 shadow-2xs"
                                                             : isEligible
-                                                            ? "border-slate-200 bg-white hover:border-slate-300 cursor-pointer"
-                                                            : "border-slate-100 bg-slate-50/70 opacity-60 cursor-not-allowed"
-                                                    }`}
+                                                              ? "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60 cursor-pointer shadow-2xs"
+                                                              : "border-slate-100 bg-slate-50/70 opacity-60 cursor-not-allowed",
+                                                    )}
                                                 >
                                                     <div className="flex items-start justify-between gap-3">
-                                                        <div className="space-y-1">
-                                                            <div className="flex items-center gap-2">
+                                                        <div className="space-y-1 min-w-0 pr-2">
+                                                            <div className="flex items-center gap-2 flex-wrap">
                                                                 <span className="font-mono font-bold text-xs bg-slate-900 text-white px-2 py-0.5 rounded-md">
                                                                     {v.kode}
                                                                 </span>
-                                                                <span className="text-xs font-bold text-slate-800">
+                                                                <span className="text-xs font-bold text-slate-900 truncate">
                                                                     {v.judul}
                                                                 </span>
                                                             </div>
-                                                            <p className="text-[11px] text-slate-500">
-                                                                Min. belanja {formatRupiah(minBelanja)}
-                                                                {v.maksimal_diskon ? ` • Maks. ${formatRupiah(v.maksimal_diskon)}` : ""}
-                                                            </p>
+
+                                                            <div className="text-[11px] text-slate-500 space-y-0.5 font-medium">
+                                                                <p>
+                                                                    Min. belanja{" "}
+                                                                    {formatRupiah(
+                                                                        minBelanja,
+                                                                    )}
+                                                                    {v.maksimal_diskon
+                                                                        ? ` • Maks. ${formatRupiah(v.maksimal_diskon)}`
+                                                                        : ""}
+                                                                </p>
+                                                                {isEligible &&
+                                                                    estimasiHemat >
+                                                                        0 && (
+                                                                        <p className="text-emerald-700 font-bold font-mono">
+                                                                            Estimasi
+                                                                            hemat:
+                                                                            -
+                                                                            {formatRupiah(
+                                                                                estimasiHemat,
+                                                                            )}
+                                                                        </p>
+                                                                    )}
+                                                            </div>
+
                                                             {v.sudah_dipakai && (
-                                                                <span className="inline-block text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded font-semibold">
-                                                                    Sudah pernah dipakai oleh akun Anda
+                                                                <span className="inline-flex items-center gap-1 text-[10px] text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md font-bold mt-1">
+                                                                    <Ban className="w-3 h-3 stroke-[2.5]" />
+                                                                    <span>
+                                                                        Sudah
+                                                                        pernah
+                                                                        digunakan
+                                                                        akun
+                                                                        Anda
+                                                                    </span>
                                                                 </span>
                                                             )}
                                                         </div>
 
-                                                        {isSelected ? (
-                                                            <div className="flex items-center gap-1 text-emerald-700 font-bold text-xs">
-                                                                <Check className="w-4 h-4" />
-                                                                <span>Dipakai</span>
-                                                            </div>
-                                                        ) : (
-                                                            <button
-                                                                type="button"
-                                                                disabled={!isEligible}
-                                                                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
-                                                                    v.sudah_dipakai
-                                                                        ? "bg-amber-100 text-amber-800 cursor-not-allowed"
+                                                        {/* Status Terpasang / Aksi */}
+                                                        <div className="shrink-0 pt-0.5">
+                                                            {isSelected ? (
+                                                                <div className="flex items-center gap-1 text-emerald-800 font-bold text-xs bg-emerald-100/90 px-3 py-1.5 rounded-xl border border-emerald-200 font-mono">
+                                                                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                                                    <span>
+                                                                        Terpasang
+                                                                    </span>
+                                                                </div>
+                                                            ) : (
+                                                                <span
+                                                                    className={cn(
+                                                                        "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all inline-block text-center font-mono",
+                                                                        v.sudah_dipakai
+                                                                            ? "bg-amber-100 text-amber-800"
+                                                                            : isEligible
+                                                                              ? "bg-slate-900 text-white shadow-2xs group-hover:bg-slate-800"
+                                                                              : "bg-slate-200 text-slate-400",
+                                                                    )}
+                                                                >
+                                                                    {v.sudah_dipakai
+                                                                        ? "Terpakai"
                                                                         : isEligible
-                                                                        ? "bg-slate-900 text-white hover:bg-slate-800"
-                                                                        : "bg-slate-200 text-slate-400 cursor-not-allowed"
-                                                                }`}
-                                                            >
-                                                                {v.sudah_dipakai ? "Terpakai" : isEligible ? "Pakai" : "Belum Cukup"}
-                                                            </button>
-                                                        )}
+                                                                          ? "Gunakan"
+                                                                          : "Belum Cukup"}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             );
                                         })
                                     )}
                                 </div>
-                            </Dialog.Panel>
-                        </Transition.Child>
+                            </DialogPanel>
+                        </TransitionChild>
                     </div>
                 </div>
             </Dialog>

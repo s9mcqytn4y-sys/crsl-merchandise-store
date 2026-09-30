@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Head, Link } from "@inertiajs/react";
+import React, { useState, useEffect, useId } from "react";
+import { Head, Link, usePage } from "@inertiajs/react";
 import StorefrontLayout from "../Layouts/StorefrontLayout";
 import KartuLoyalitas from "../Components/Akun/KartuLoyalitas";
 import KartuVoucher from "../Components/Akun/KartuVoucher";
@@ -9,29 +9,39 @@ import ModalLoyaltyTiers, {
     TierItem,
 } from "../Components/Akun/ModalLoyaltyTiers";
 import { useAuthStore } from "../Stores/useAuthStore";
+import { toast } from "sonner";
+import { User, Settings, ShoppingBag, Heart, ShieldCheck } from "lucide-react";
+import { cn } from "../lib/utils";
 
-interface AccountProps {
-    user?: {
-        name?: string;
-        email?: string;
-        phone?: string;
-        birth_day?: string;
-        birth_month?: string;
-        birth_year?: string;
-    } | null;
+export interface UserAccountData {
+    id?: number | string;
+    name?: string;
+    email?: string;
+    phone?: string;
+    birth_day?: string;
+    birth_month?: string;
+    birth_year?: string;
+}
+
+export interface LoyaltyData {
+    tier?: string;
+    progress_text?: string;
+    points?: number;
+    total_spend?: number;
+    tiers?: TierItem[];
+}
+
+export interface AkunPageProps {
+    user?: UserAccountData | null;
     orders?: OrderItem[];
     wishlists?: WishlistItem[];
-    loyalty?: {
-        tier?: string;
-        progress_text?: string;
-        points?: number;
-        total_spend?: number;
-        tiers?: TierItem[];
-    };
+    loyalty?: LoyaltyData;
     vouchers?: any[];
     reseller_status?: string | null;
     harusBukaLogin?: boolean;
     flash_message?: string | null;
+    tabAwal?: "orders" | "wishlist";
+    className?: string;
 }
 
 export default function Akun({
@@ -43,66 +53,91 @@ export default function Akun({
     reseller_status,
     harusBukaLogin = false,
     flash_message,
-}: AccountProps) {
-    const [tabAktif, setTabAktif] = useState<"orders" | "wishlist">("orders");
+    tabAwal = "orders",
+    className,
+}: AkunPageProps) {
+    const { url } = usePage();
+
+    // Membaca tab dari URL query jika ada (?tab=wishlist)
+    const initialTab = useMemoTabFromUrl(url, tabAwal);
+    const [tabAktif, setTabAktif] = useState<"orders" | "wishlist">(initialTab);
     const [isLoyaltyModalOpen, setIsLoyaltyModalOpen] = useState(false);
     const openAuthModal = useAuthStore((state) => state.openAuthModal);
 
     const isGuest = !user;
 
+    // Trigger popup login saat diarahkan dari checkout / guest guard
     useEffect(() => {
         if (harusBukaLogin && isGuest) {
             openAuthModal("login");
         }
     }, [harusBukaLogin, isGuest, openAuthModal]);
 
+    // Menampilkan flash toast dari controller via Sonner
+    useEffect(() => {
+        if (flash_message) {
+            toast.success(flash_message);
+        }
+    }, [flash_message]);
+
+    // Keyboard navigation WAI-ARIA tablist (ArrowLeft & ArrowRight)
+    const handleTabKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+        if (e.key === "ArrowRight") {
+            e.preventDefault();
+            setTabAktif("wishlist");
+            document.getElementById("tab-wishlist")?.focus();
+        } else if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            setTabAktif("orders");
+            document.getElementById("tab-orders")?.focus();
+        }
+    };
+
     return (
         <StorefrontLayout>
             <Head
                 title={
                     isGuest
-                        ? "My Account - CRSL Official Store"
-                        : `My Account - ${user?.name || "Member"}`
+                        ? "Akun Saya - CRSL Official Store"
+                        : `Akun Saya - ${user?.name || "Member"}`
                 }
             />
 
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-6">
-                {/* Flash Toast Notification */}
-                {flash_message && (
-                    <div
-                        role="status"
-                        aria-live="polite"
-                        className="fixed top-5 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-2 duration-300"
-                    >
-                        <div className="bg-slate-800/90 text-white px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold shadow-xl backdrop-blur-xs flex items-center gap-2">
-                            <span className="text-emerald-400">✓</span>
-                            <span>{flash_message}</span>
-                        </div>
-                    </div>
+            <div
+                className={cn(
+                    "max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-6 select-none",
+                    className,
                 )}
-
-                {/* Guest Interface */}
+            >
+                {/* 1. Guest Interface Banner */}
                 {isGuest ? (
                     <section
                         aria-labelledby="heading-guest"
-                        className="space-y-6"
+                        className="space-y-4"
                     >
-                        <h1
-                            id="heading-guest"
-                            className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight"
-                        >
-                            My Account
-                        </h1>
+                        <div>
+                            <span className="text-xs font-black text-[#E52027] uppercase tracking-wider">
+                                CRSL Membership
+                            </span>
+                            <h1
+                                id="heading-guest"
+                                className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-0.5"
+                            >
+                                Akun Saya
+                            </h1>
+                        </div>
 
-                        <div className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-100 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-5">
-                            <div className="space-y-1 max-w-xl">
-                                <h2 className="text-sm sm:text-base font-bold text-slate-800">
-                                    Join as a member to get more benefits
-                                </h2>
+                        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+                            <div className="space-y-1.5 max-w-xl">
+                                <div className="flex items-center gap-2 text-slate-900 font-black text-base">
+                                    <ShieldCheck className="w-5 h-5 text-[#E52027]" />
+                                    <h2>Bergabung Menjadi Member CRSL</h2>
+                                </div>
                                 <p className="text-xs text-slate-500 leading-relaxed">
-                                    As a CRSL member, enjoy exclusive benefits,
-                                    discounts, and earn points effortlessly with
-                                    our free loyalty program.
+                                    Dapatkan voucher diskon khusus member,
+                                    kumpulkan Koin Loyalitas pada setiap
+                                    pembelian, dan nikmati kemudahan pelacakan
+                                    pesanan tanpa batas.
                                 </p>
                             </div>
 
@@ -110,50 +145,57 @@ export default function Akun({
                                 <button
                                     type="button"
                                     onClick={() => openAuthModal("login")}
-                                    className="px-6 py-2 rounded-full border border-red-500 text-red-500 hover:bg-red-50 font-bold text-xs transition-colors cursor-pointer"
+                                    className="px-6 py-2.5 rounded-2xl border border-slate-300 hover:border-[#E52027] text-slate-700 hover:text-[#E52027] hover:bg-red-50/30 font-bold text-xs transition-all cursor-pointer shadow-2xs"
                                 >
-                                    Login
+                                    Masuk
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => openAuthModal("register")}
-                                    className="px-6 py-2 rounded-full bg-primary hover:bg-primary-hover active:scale-95 text-white font-bold text-xs shadow-xs transition-all cursor-pointer"
+                                    className="px-6 py-2.5 rounded-2xl bg-[#E52027] hover:bg-[#CC1C22] active:scale-95 text-white font-bold text-xs shadow-md shadow-red-500/20 transition-all cursor-pointer"
                                 >
-                                    Signup
+                                    Daftar Akun
                                 </button>
                             </div>
                         </div>
                     </section>
                 ) : (
-                    /* Logged-in User Interface */
+                    /* 2. Logged-in User Header & Loyalty Cards */
                     <section
                         aria-labelledby="heading-user"
                         className="space-y-6"
                     >
-                        <div className="flex flex-wrap items-center justify-between gap-4">
-                            <h1
-                                id="heading-user"
-                                className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight"
-                            >
-                                Hi {user?.name || "Customer"}
-                            </h1>
+                        <div className="flex flex-wrap items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
+                            <div>
+                                <span className="text-xs font-black text-[#E52027] uppercase tracking-wider">
+                                    Member Area
+                                </span>
+                                <h1
+                                    id="heading-user"
+                                    className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-0.5"
+                                >
+                                    Halo, {user?.name || "Customer"}!
+                                </h1>
+                            </div>
 
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2.5">
                                 {reseller_status && (
-                                    <span className="px-3.5 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-xs font-medium text-slate-600">
+                                    <span className="px-3.5 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 font-mono">
                                         {reseller_status}
                                     </span>
                                 )}
 
                                 <Link
                                     href="/profile/myinfo"
-                                    className="px-5 py-1.5 rounded-full border border-red-500 text-red-500 hover:bg-red-50 font-bold text-xs transition-colors cursor-pointer"
+                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-300 hover:border-[#E52027] text-slate-700 hover:text-[#E52027] hover:bg-red-50/30 font-bold text-xs transition-all cursor-pointer shadow-2xs"
                                 >
-                                    Settings
+                                    <Settings className="w-3.5 h-3.5 stroke-[2.2]" />
+                                    <span>Pengaturan Akun</span>
                                 </Link>
                             </div>
                         </div>
 
+                        {/* Kartu Ringkasan Member & Voucher */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                             <KartuLoyalitas
                                 tier={loyalty?.tier || "Non-Member"}
@@ -167,28 +209,37 @@ export default function Akun({
                     </section>
                 )}
 
-                {/* Tabs Container */}
-                <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-100 shadow-xs space-y-6">
-                    <div className="border-b border-slate-200">
+                {/* 3. Panel Tab Interaktif (Orders & Wishlist) */}
+                <div className="bg-white rounded-3xl p-5 sm:p-8 border border-slate-200/90 shadow-2xs space-y-6">
+                    <div className="border-b border-slate-100">
                         <div
                             role="tablist"
-                            aria-label="Navigasi Akun"
-                            className="flex space-x-12 -mb-px"
+                            aria-label="Navigasi Menu Akun"
+                            className="flex space-x-8 -mb-px"
                         >
                             <button
                                 role="tab"
                                 id="tab-orders"
                                 aria-selected={tabAktif === "orders"}
                                 aria-controls="panel-orders"
+                                tabIndex={tabAktif === "orders" ? 0 : -1}
+                                onKeyDown={handleTabKeyDown}
                                 type="button"
                                 onClick={() => setTabAktif("orders")}
-                                className={`pb-3 text-sm font-bold tracking-tight transition-all cursor-pointer relative ${
+                                className={cn(
+                                    "pb-3.5 text-xs sm:text-sm font-black tracking-tight transition-all cursor-pointer relative flex items-center gap-2 focus:outline-none focus-visible:text-[#E52027]",
                                     tabAktif === "orders"
-                                        ? "text-slate-900 border-b-2 border-slate-900"
-                                        : "text-slate-500 hover:text-slate-800"
-                                }`}
+                                        ? "text-[#E52027] border-b-2 border-[#E52027]"
+                                        : "text-slate-400 hover:text-slate-700",
+                                )}
                             >
-                                Orders
+                                <ShoppingBag className="w-4 h-4 stroke-[2.2]" />
+                                <span>Riwayat Pesanan</span>
+                                {orders.length > 0 && (
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-mono">
+                                        {orders.length}
+                                    </span>
+                                )}
                             </button>
 
                             <button
@@ -196,15 +247,24 @@ export default function Akun({
                                 id="tab-wishlist"
                                 aria-selected={tabAktif === "wishlist"}
                                 aria-controls="panel-wishlist"
+                                tabIndex={tabAktif === "wishlist" ? 0 : -1}
+                                onKeyDown={handleTabKeyDown}
                                 type="button"
                                 onClick={() => setTabAktif("wishlist")}
-                                className={`pb-3 text-sm font-bold tracking-tight transition-all cursor-pointer relative ${
+                                className={cn(
+                                    "pb-3.5 text-xs sm:text-sm font-black tracking-tight transition-all cursor-pointer relative flex items-center gap-2 focus:outline-none focus-visible:text-[#E52027]",
                                     tabAktif === "wishlist"
-                                        ? "text-slate-900 border-b-2 border-slate-900"
-                                        : "text-slate-500 hover:text-slate-800"
-                                }`}
+                                        ? "text-[#E52027] border-b-2 border-[#E52027]"
+                                        : "text-slate-400 hover:text-slate-700",
+                                )}
                             >
-                                Wishlist
+                                <Heart className="w-4 h-4 stroke-[2.2]" />
+                                <span>Wishlist Saya</span>
+                                {wishlists.length > 0 && (
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-mono">
+                                        {wishlists.length}
+                                    </span>
+                                )}
                             </button>
                         </div>
                     </div>
@@ -229,6 +289,7 @@ export default function Akun({
                 </div>
             </div>
 
+            {/* Modal Detail Level Loyalitas */}
             <ModalLoyaltyTiers
                 isOpen={isLoyaltyModalOpen}
                 onClose={() => setIsLoyaltyModalOpen(false)}
@@ -240,4 +301,22 @@ export default function Akun({
             />
         </StorefrontLayout>
     );
+}
+
+/** Helper URL sync tab */
+function useMemoTabFromUrl(
+    url: string,
+    defaultTab: "orders" | "wishlist",
+): "orders" | "wishlist" {
+    if (typeof window === "undefined") return defaultTab;
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const queryTab = params.get("tab");
+        if (queryTab === "wishlist" || queryTab === "orders") {
+            return queryTab;
+        }
+    } catch {
+        // Fallback default tab
+    }
+    return defaultTab;
 }

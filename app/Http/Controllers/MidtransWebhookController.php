@@ -1,16 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
+use App\Domains\Inventori\Services\InventoriService;
 use App\Domains\Pembayaran\Services\MidtransService;
 use App\Domains\Pengiriman\Jobs\AlokasiPengirimanBiteshipJob;
 use App\Mail\KonfirmasiPesananMail;
-use App\Models\ItemPesanan;
 use App\Models\PenggunaLoyalitas;
 use App\Models\Pesanan;
 use App\Models\PesananPembayaran;
-use App\Models\PesananPengiriman;
-use App\Models\ProdukVarian;
 use App\Models\Voucher;
 use App\Models\VoucherTerpakai;
 use Illuminate\Http\JsonResponse;
@@ -24,7 +24,8 @@ use Illuminate\Support\Facades\Mail;
 class MidtransWebhookController extends Controller
 {
     public function __construct(
-        protected MidtransService $midtransService
+        protected MidtransService $midtransService,
+        protected InventoriService $inventoriService
     ) {}
 
     /**
@@ -33,28 +34,32 @@ class MidtransWebhookController extends Controller
     public function handle(Request $request): JsonResponse
     {
         $payload = $request->all();
-        Log::info("Midtrans Webhook Received", ['order_id' => $payload['order_id'] ?? null]);
+        $orderId = (string) ($payload['order_id'] ?? '');
+        $statusCode = (string) ($payload['status_code'] ?? '');
+        $grossAmount = (string) ($payload['gross_amount'] ?? '');
+        $signatureKey = (string) ($payload['signature_key'] ?? '');
+        $transactionStatus = (string) ($payload['transaction_status'] ?? '');
+        $fraudStatus = (string) ($payload['fraud_status'] ?? 'accept');
 
-        $orderId = (string)($payload['order_id'] ?? '');
-        $statusCode = (string)($payload['status_code'] ?? '');
-        $grossAmount = (string)($payload['gross_amount'] ?? '');
-        $signatureKey = (string)($payload['signature_key'] ?? '');
-        $transactionStatus = (string)($payload['transaction_status'] ?? '');
-        $fraudStatus = (string)($payload['fraud_status'] ?? 'accept');
+        Log::info("Midtrans Webhook Received: {$orderId}", [
+            'status' => $transactionStatus,
+            'amount' => $grossAmount,
+        ]);
 
         if (empty($orderId) || empty($signatureKey)) {
             return response()->json(['sukses' => false, 'pesan' => 'Payload tidak lengkap'], 400);
         }
 
-        // 1. Verifikasi Signature SHA-512
+        // 1. Verifikasi Keaslian Signature SHA-512
         if (!$this->midtransService->verifikasiSignature($orderId, $statusCode, $grossAmount, $signatureKey)) {
             Log::warning("Midtrans Webhook Invalid Signature: {$orderId}");
             return response()->json(['sukses' => false, 'pesan' => 'Signature Key tidak valid'], 403);
         }
 
-        $nomorPesananAsli = str_replace('-', '/', $orderId);
+        // Bersihkan suffix attempt (misal: INV-CRSL-20260927-0001-A2 -> INV/CRSL/20260927/0001)
+        $cleanOrderId = preg_replace('/-A\d+$/i', '', $orderId);
+        $nomorPesananAsli = str_replace('-', '/', $cleanOrderId);
 
-        // 2. Transaksi Database dengan Row Locking
         $needsDispatchShipping = false;
         $orderToDispatch = null;
 
@@ -62,34 +67,49 @@ class MidtransWebhookController extends Controller
             DB::beginTransaction();
 
             /** @var Pesanan|null $pesanan */
-            $pesanan = Pesanan::with(['pengguna', 'pengiriman'])
+            $pesanan = Pesanan::with(['pengguna', 'pengiriman', 'pembayaran', 'items'])
                 ->where('nomor_pesanan', $nomorPesananAsli)
+                ->orWhere('nomor_pesanan', $cleanOrderId)
                 ->orWhere('nomor_pesanan', $orderId)
                 ->lockForUpdate()
                 ->first();
 
             if (!$pesanan) {
                 DB::rollBack();
-                Log::info("Midtrans Webhook Order Not Found: {$orderId}");
-                return response()->json(['sukses' => true, 'pesan' => 'Pesanan tidak ditemukan'], 200);
+                Log::warning("Midtrans Webhook Order Not Found: {$orderId} (Raw: {$nomorPesananAsli})");
+                // Beri HTTP 200 agar Midtrans tidak terus melakukan retry untuk order yang tidak terdaftar
+                return response()->json(['sukses' => true, 'pesan' => 'Pesanan tidak ditemukan di database'], 200);
             }
 
-            // Validasi Kesesuaian Nominal (Anti-Tampering)
-            if ((int)round($pesanan->total) !== (int)round((float)$grossAmount)) {
-                DB::rollBack();
-                Log::error("Midtrans Webhook Amount Mismatch for {$orderId}: DB={$pesanan->total}, Webhook={$grossAmount}");
-                return response()->json(['sukses' => false, 'pesan' => 'Nominal tagihan tidak sesuai'], 422);
+            $pembayaran = $pesanan->pembayaran;
+
+            // 2. Proteksi Integritas Nominal (Anti-Tampering)
+            if ((int) round((float) $pesanan->total) !== (int) round((float) $grossAmount)) {
+                Log::critical("Midtrans Webhook Amount Mismatch for {$orderId}: DB={$pesanan->total}, Webhook={$grossAmount}");
+
+                // Jangan rollback, ubah status ke antrean audit admin
+                $pesanan->status = 'menunggu_verifikasi_manual';
+                $pesanan->save();
+
+                if ($pembayaran) {
+                    $pembayaran->midtrans_status = 'challenge_amount';
+                    $pembayaran->payment_payload = $payload;
+                    $pembayaran->save();
+                }
+
+                DB::commit();
+
+                // Kembalikan 200 agar Midtrans berhenti retry, namun sistem internal tahu statusnya tertahan
+                return response()->json(['sukses' => true, 'pesan' => 'Mismatch nominal dicatat untuk verifikasi manual'], 200);
             }
 
-            // Cek Idempotensi
+            // 3. Cek Idempotensi
             if (in_array($pesanan->status, ['akan_dikirim', 'dikirim', 'selesai', 'dibatalkan'])) {
                 DB::rollBack();
-                return response()->json(['sukses' => true, 'pesan' => 'Pesanan sudah diproses sebelumnya']);
+                return response()->json(['sukses' => true, 'pesan' => 'Pesanan sudah berada di status terminal']);
             }
 
-            $pembayaran = PesananPembayaran::where('pesanan_id', $pesanan->id)->first();
-
-            // A. STATUS SUKSES (Settlement / Capture)
+            // A. STATUS SUKSES (Settlement / Capture Accept)
             if (in_array($transactionStatus, ['settlement', 'capture']) && $fraudStatus === 'accept') {
                 $pesanan->status = 'akan_dikirim';
                 $pesanan->save();
@@ -118,7 +138,18 @@ class MidtransWebhookController extends Controller
                 $needsDispatchShipping = true;
                 $orderToDispatch = $pesanan;
 
-            // B. STATUS PENDING
+            // B. STATUS FRAUD CHALLENGE (Perlu Review Manual)
+            } elseif ($fraudStatus === 'challenge') {
+                $pesanan->status = 'menunggu_verifikasi_manual';
+                $pesanan->save();
+
+                if ($pembayaran) {
+                    $pembayaran->midtrans_status = 'challenge';
+                    $pembayaran->payment_payload = $payload;
+                    $pembayaran->save();
+                }
+
+            // C. STATUS PENDING
             } elseif ($transactionStatus === 'pending') {
                 if ($pembayaran) {
                     $pembayaran->midtrans_status = 'pending';
@@ -134,9 +165,9 @@ class MidtransWebhookController extends Controller
                     $pembayaran->save();
                 }
 
-            // C. STATUS BATAL / EXPIRED
+            // D. STATUS BATAL / EXPIRED / DENIED
             } elseif (in_array($transactionStatus, ['deny', 'cancel', 'expire'])) {
-                $pesanan->status = 'dibatalkan';
+                $pesanan->status = ($transactionStatus === 'expire') ? 'expired' : 'dibatalkan';
                 $pesanan->save();
 
                 if ($pembayaran) {
@@ -145,15 +176,15 @@ class MidtransWebhookController extends Controller
                     $pembayaran->save();
                 }
 
-                // Rollback Stok Varian
-                $items = ItemPesanan::where('pesanan_id', $pesanan->id)->get();
-                foreach ($items as $item) {
-                    if ($item->produk_varian_id) {
-                        ProdukVarian::where('id', $item->produk_varian_id)->increment('stok', $item->jumlah);
-                    }
-                }
+                // 1. Rollback Stok menggunakan InventoriService
+                $itemsArray = $pesanan->items->map(fn($item) => [
+                    'varian_id' => $item->produk_varian_id,
+                    'jumlah'    => $item->jumlah,
+                ])->toArray();
 
-                // Rollback Poin Loyalitas
+                $this->inventoriService->kembalikanStok($itemsArray);
+
+                // 2. Rollback Poin Loyalitas
                 if ($pesanan->pengguna_id && $pesanan->poin_digunakan > 0) {
                     $loyalitas = PenggunaLoyalitas::firstOrCreate(
                         ['pengguna_id' => $pesanan->pengguna_id],
@@ -164,7 +195,7 @@ class MidtransWebhookController extends Controller
                     Cache::forget("pengguna:profil:{$pesanan->pengguna_id}");
                 }
 
-                // Rollback Kuota Voucher
+                // 3. Rollback Kuota Voucher
                 if ($pesanan->kode_voucher) {
                     Voucher::where('kode', $pesanan->kode_voucher)->increment('kuota', 1);
                     VoucherTerpakai::where('pesanan_id', $pesanan->id)->delete();
@@ -175,11 +206,13 @@ class MidtransWebhookController extends Controller
 
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error("Midtrans Webhook DB Exception: " . $e->getMessage());
-            return response()->json(['sukses' => false, 'pesan' => 'Terjadi kesalahan sistem'], 500);
+            Log::error("Midtrans Webhook DB Exception: " . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json(['sukses' => false, 'pesan' => 'Terjadi kesalahan sistem internal'], 500);
         }
 
-        // 3. Dispatch Asynchronous Queue Job (Biteship & Email) di Luar DB Transaction
+        // 4. Dispatch Asynchronous Queue Job (Biteship & Email) di Luar Transaksi DB
         if ($needsDispatchShipping && $orderToDispatch) {
             $this->dispatchPengirimanDanNotifikasi($orderToDispatch);
         }
@@ -196,7 +229,6 @@ class MidtransWebhookController extends Controller
         $targetEmail = $pesanan->pengguna?->email ?? ($savedAddress['email'] ?? null);
 
         if ($targetEmail) {
-            // Pola Chained Queue: Biteship dieksekusi dulu -> Setelah waybill_id terbit, kirim Email beresinya
             Bus::chain([
                 new AlokasiPengirimanBiteshipJob($pesanan->id),
                 function () use ($pesanan, $targetEmail) {
@@ -207,7 +239,6 @@ class MidtransWebhookController extends Controller
                 },
             ])->dispatch();
         } else {
-            // Jika tidak ada email tujuan, cukup alokasikan kurir
             AlokasiPengirimanBiteshipJob::dispatch($pesanan->id);
         }
 

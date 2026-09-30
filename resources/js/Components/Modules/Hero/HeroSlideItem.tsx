@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from '@inertiajs/react';
 import { ArrowRight } from 'lucide-react';
 import { HeroSlide } from '../../HeroCarousel';

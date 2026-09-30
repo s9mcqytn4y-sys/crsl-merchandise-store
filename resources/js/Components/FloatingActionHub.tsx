@@ -1,16 +1,18 @@
-import React, { useState, useEffect, useRef } from "react";
-import { X, Percent, Gift, Mail, ArrowUpRight } from "lucide-react";
-import DiscountsModal from "../Components/PDP/DiscountsModal";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { usePage } from "@inertiajs/react";
+import { X, Percent, Gift, Mail, ArrowUpRight, HelpCircle } from "lucide-react";
+import DiscountsModal from "./PDP/DiscountsModal";
 import { SITUS_CONFIG } from "../Config/situsConfig";
+import { useKeranjangStore } from "../Stores/useKeranjangStore";
+import { cn } from "../lib/utils";
 
 interface FloatingActionHubProps {
-    onOpenCart?: () => void;
-    cartCount?: number;
+    className?: string;
 }
 
-// Ikon WhatsApp Vektor Resmi & Presisi
+// Ikon WhatsApp Vektor Resmi Brand
 function OfficialWhatsAppIcon({
-    className = "w-5 h-5",
+    className = "w-4 h-4",
 }: {
     className?: string;
 }) {
@@ -26,7 +28,7 @@ function OfficialWhatsAppIcon({
     );
 }
 
-// Ikon Balon Percakapan
+// Ikon Chat Balon Percakapan
 function ChatBubbleIcon({ className = "w-6 h-6" }: { className?: string }) {
     return (
         <svg
@@ -34,7 +36,7 @@ function ChatBubbleIcon({ className = "w-6 h-6" }: { className?: string }) {
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="2.2"
             strokeLinecap="round"
             strokeLinejoin="round"
             aria-hidden="true"
@@ -45,8 +47,12 @@ function ChatBubbleIcon({ className = "w-6 h-6" }: { className?: string }) {
 }
 
 export default function FloatingActionHub({
-    cartCount = 0,
+    className,
 }: FloatingActionHubProps) {
+    const { url } = usePage();
+    const items = useKeranjangStore((state) => state.items);
+    const isCartOpen = useKeranjangStore((state) => state.isOpen);
+
     const [isWaOpen, setIsWaOpen] = useState(false);
     const [isVoucherOpen, setIsVoucherOpen] = useState(false);
     const [mascotError, setMascotError] = useState(false);
@@ -54,19 +60,38 @@ export default function FloatingActionHub({
     const waCardRef = useRef<HTMLDivElement>(null);
     const waTriggerRef = useRef<HTMLButtonElement>(null);
 
-    const waNumber = SITUS_CONFIG?.whatsappCS || "6281234567890";
+    // Hitung kuantitas keranjang aktif secara atomic
+    const cartCount = useMemo(() => {
+        return Array.isArray(items)
+            ? items.reduce((acc, item) => acc + (Number(item.jumlah) || 1), 0)
+            : 0;
+    }, [items]);
+
+    // Blacklist rute pembayaran/transaksi
+    const isExcludedRoute = useMemo(() => {
+        const clean = url.toLowerCase();
+        return (
+            clean.startsWith("/pembayaran") ||
+            clean.startsWith("/checkout") ||
+            clean.startsWith("/faktur") ||
+            clean.includes("/pesanan/sukses")
+        );
+    }, [url]);
+
+    // Kontak Customer Support CRSL
+    const waNumber = SITUS_CONFIG?.whatsappCS || "6281222222775";
     const waLink = `https://api.whatsapp.com/send?phone=${waNumber}&text=${encodeURIComponent(
-        "Halo CRSL, saya ingin bertanya seputar produk dan pesanan",
+        "Halo CRSL Official, saya ingin bertanya seputar produk, stok, atau pesanan.",
     )}`;
     const emailLink = `mailto:support@crsl-store.id?subject=${encodeURIComponent(
-        "Tanya CRSL Store",
-    )}&body=${encodeURIComponent("Halo Tim CRSL,\n\nSaya ingin menanyakan:")}`;
+        "Tanya CS CRSL Official Store",
+    )}&body=${encodeURIComponent("Halo Tim Customer Care CRSL,\n\nSaya ingin menanyakan:")}`;
 
-    // Menutup popup saat klik di luar atau tekan tombol Esc
+    // Menutup popup saat klik/touch di luar atau Escape key
     useEffect(() => {
         if (!isWaOpen) return;
 
-        function handleClickOutside(e: MouseEvent) {
+        function handleOutsideAction(e: MouseEvent | TouchEvent) {
             if (
                 waCardRef.current &&
                 !waCardRef.current.contains(e.target as Node) &&
@@ -84,33 +109,42 @@ export default function FloatingActionHub({
             }
         }
 
-        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("mousedown", handleOutsideAction);
+        document.addEventListener("touchstart", handleOutsideAction);
         window.addEventListener("keydown", handleKeyDown);
 
         return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("mousedown", handleOutsideAction);
+            document.removeEventListener("touchstart", handleOutsideAction);
             window.removeEventListener("keydown", handleKeyDown);
         };
     }, [isWaOpen]);
 
-    // Offset posisi bawah dengan dukungan safe area iOS
-    const bottomPositionClass =
-        cartCount > 0
-            ? "bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] sm:bottom-6"
-            : "bottom-[calc(1.25rem+env(safe-area-inset-bottom,0px))] sm:bottom-6";
+    // Sembunyikan elemen jika berada di rute checkout atau saat drawer keranjang terbuka
+    if (isExcludedRoute || isCartOpen) {
+        return null;
+    }
+
+    // Offset posisi bottom dengan mempertimbangkan StickyCartBar dan Safe Area iOS
+    const bottomOffsetStyle = {
+        bottom:
+            cartCount > 0
+                ? "calc(5.75rem + env(safe-area-inset-bottom, 0px))"
+                : "calc(1.25rem + env(safe-area-inset-bottom, 0px))",
+    };
 
     return (
-        <>
-            {/* 1. SISI KANAN TENGAH: Launcher Tab Diskon / Kupon */}
+        <div className={cn("select-none", className)}>
+            {/* 1. SISI KANAN TENGAH: Launcher Tab Diskon / Kupon Eksklusif */}
             <aside
-                aria-label="Promo Cepat"
-                className="fixed right-0 top-1/2 -translate-y-1/2 z-30"
+                aria-label="Voucher Diskon Toko"
+                className="fixed right-0 top-1/2 -translate-y-1/2 z-30 pointer-events-none"
             >
                 <button
                     type="button"
                     onClick={() => setIsVoucherOpen(true)}
-                    className="flex items-center gap-1.5 py-3 px-2 bg-[#E52027] hover:bg-[#CC1C22] active:bg-[#B3171D] text-white rounded-l-2xl shadow-xl transition-all duration-200 hover:-translate-x-1 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-red-600 focus-visible:outline-none cursor-pointer group"
-                    aria-label="Lihat kupon diskon dan promo yang tersedia"
+                    className="pointer-events-auto flex items-center gap-1.5 py-3 px-2 bg-[#E52027] hover:bg-[#CC1C22] active:scale-95 text-white rounded-l-2xl shadow-xl transition-all duration-200 hover:-translate-x-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E52027] cursor-pointer group border-y border-l border-white/20"
+                    aria-label="Lihat kupon diskon dan promo voucher belanja CRSL"
                 >
                     <Percent className="w-4 h-4 stroke-[2.5] group-hover:rotate-12 transition-transform duration-200" />
                     <span className="[writing-mode:vertical-rl] text-[10px] font-black tracking-widest uppercase hidden sm:inline-block">
@@ -121,13 +155,14 @@ export default function FloatingActionHub({
 
             {/* 2. SISI KIRI BAWAH: Maskot Loyalty / Member Rewards */}
             <div
-                className={`fixed left-4 ${bottomPositionClass} z-30 transition-all duration-300`}
+                style={bottomOffsetStyle}
+                className="fixed left-4 z-30 transition-all duration-300"
             >
                 <div className="relative group">
                     <button
                         type="button"
                         onClick={() => setIsVoucherOpen(true)}
-                        className="w-12 h-12 rounded-2xl bg-white hover:bg-slate-50 active:scale-95 text-slate-800 shadow-lg border border-slate-200/90 flex items-center justify-center transition-all duration-200 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none cursor-pointer"
+                        className="w-12 h-12 rounded-2xl bg-white hover:bg-slate-50 active:scale-95 text-slate-800 shadow-xl border border-slate-200/90 flex items-center justify-center transition-all duration-200 hover:shadow-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer"
                         aria-label="Buka reward dan promo eksklusif CRSL"
                     >
                         {!mascotError ? (
@@ -143,7 +178,7 @@ export default function FloatingActionHub({
                             <Gift className="w-5 h-5 text-[#E52027]" />
                         )}
 
-                        {/* Indikator Badge Interaksi */}
+                        {/* Indikator Badge Promo Aktif */}
                         <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
                             <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-[#E52027] border-2 border-white" />
@@ -160,9 +195,10 @@ export default function FloatingActionHub({
 
             {/* 3. SISI KANAN BAWAH: Help Center & WhatsApp CS */}
             <div
-                className={`fixed right-4 ${bottomPositionClass} z-30 flex flex-col items-end gap-3 transition-all duration-300`}
+                style={bottomOffsetStyle}
+                className="fixed right-4 z-30 flex flex-col items-end gap-3 transition-all duration-300"
             >
-                {/* Pop-up Dialog Bantuan */}
+                {/* Pop-up Dialog Bantuan Terisolasi */}
                 {isWaOpen && (
                     <div
                         ref={waCardRef}
@@ -174,10 +210,10 @@ export default function FloatingActionHub({
                         {/* Header Dialog */}
                         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow-xs overflow-hidden shrink-0">
+                                <div className="w-10 h-10 rounded-2xl bg-slate-950 text-white flex items-center justify-center font-bold text-xs shadow-xs overflow-hidden shrink-0 border border-slate-800">
                                     <img
                                         src="/favicon.webp"
-                                        alt="CRSL Logo"
+                                        alt="Logo CRSL"
                                         className="w-6 h-6 object-contain"
                                         onError={(e) => {
                                             (
@@ -189,7 +225,7 @@ export default function FloatingActionHub({
                                 <div>
                                     <h4
                                         id="cs-support-title"
-                                        className="text-sm font-black text-slate-900 tracking-tight"
+                                        className="text-sm font-bold text-slate-900 tracking-tight"
                                     >
                                         Customer Care CRSL
                                     </h4>
@@ -202,7 +238,7 @@ export default function FloatingActionHub({
                             <button
                                 type="button"
                                 onClick={() => setIsWaOpen(false)}
-                                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+                                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
                                 aria-label="Tutup jendela chat bantuan"
                             >
                                 <X className="w-4 h-4" />
@@ -211,19 +247,19 @@ export default function FloatingActionHub({
 
                         {/* Teks Pengantar */}
                         <p className="text-xs text-slate-600 leading-relaxed">
-                            Halo Freen! Ada kendala saat memilih ukuran,
-                            informasi stok, atau konfirmasi pesanan? Hubungi tim
-                            support kami:
+                            Halo Bestie! Ada kendala saat memilih ukuran
+                            pakaian, ketersediaan stok, atau nomor resi pesanan?
+                            Hubungi tim kami:
                         </p>
 
-                        {/* Opsi Kontak */}
+                        {/* Opsi Kontak Langsung */}
                         <div className="flex flex-col gap-2">
                             <a
                                 href={waLink}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="w-full py-3 px-4 bg-[#25D366] hover:bg-[#20ba5a] active:scale-[0.98] text-white font-bold text-xs rounded-2xl flex items-center justify-between shadow-xs transition-all cursor-pointer"
-                                aria-label="Hubungi WhatsApp Customer Support"
+                                aria-label="Hubungi WhatsApp Customer Support CRSL"
                             >
                                 <span className="flex items-center gap-2.5">
                                     <OfficialWhatsAppIcon className="w-4 h-4" />
@@ -252,11 +288,12 @@ export default function FloatingActionHub({
                     ref={waTriggerRef}
                     type="button"
                     onClick={() => setIsWaOpen(!isWaOpen)}
-                    className={`w-13 h-13 rounded-2xl ${
+                    className={cn(
+                        "w-12 h-12 sm:w-[52px] sm:h-[52px] rounded-2xl shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#25D366] cursor-pointer border-2 border-white",
                         isWaOpen
                             ? "bg-slate-900 text-white hover:bg-slate-800"
-                            : "bg-[#25D366] hover:bg-[#20ba5a] text-white"
-                    } shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#25D366] focus-visible:outline-none cursor-pointer border-2 border-white`}
+                            : "bg-[#25D366] hover:bg-[#20ba5a] text-white",
+                    )}
                     aria-label={
                         isWaOpen
                             ? "Tutup kotak pesan bantuan"
@@ -267,16 +304,16 @@ export default function FloatingActionHub({
                     {isWaOpen ? (
                         <X className="w-5 h-5 stroke-[2.5]" />
                     ) : (
-                        <ChatBubbleIcon className="w-6 h-6 stroke-[2]" />
+                        <ChatBubbleIcon className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.2]" />
                     )}
                 </button>
             </div>
 
-            {/* Modal Kupon Diskon */}
+            {/* Modal Kupon Diskon Resmi */}
             <DiscountsModal
                 isOpen={isVoucherOpen}
                 onClose={() => setIsVoucherOpen(false)}
             />
-        </>
+        </div>
     );
 }

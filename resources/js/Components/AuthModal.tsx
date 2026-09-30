@@ -1,5 +1,12 @@
-import React, { useState, useEffect, Fragment } from "react";
-import { Dialog, Transition } from "@headlessui/react";
+import React, { useState, useEffect, useCallback } from "react";
+import {
+    Dialog,
+    DialogPanel,
+    DialogTitle,
+    DialogBackdrop,
+    Transition,
+    TransitionChild,
+} from "@headlessui/react";
 import { router } from "@inertiajs/react";
 import { X, ArrowLeft } from "lucide-react";
 import { toastNotifikasi } from "../Utils/toastNotifikasi";
@@ -9,12 +16,14 @@ import RegisterStep from "./Auth/RegisterStep";
 import OtpVerifyStep from "./Auth/OtpVerifyStep";
 import ForgotPasswordStep from "./Auth/ForgotPasswordStep";
 import ResetPasswordStep from "./Auth/ResetPasswordStep";
+import { cn } from "../lib/utils";
 
 interface AuthModalProps {
-    isOpen: boolean;
+    isOpen?: boolean;
     onClose: () => void;
     onSuccessAuth?: () => void;
     initialTab?: "login" | "register";
+    className?: string;
 }
 
 type AuthStep =
@@ -25,14 +34,37 @@ type AuthStep =
     | "register"
     | "verify_otp";
 
+/**
+ * Mengambil token CSRF Laravel secara aman dari Cookie XSRF-TOKEN atau meta tag
+ */
+function getCsrfToken(): string {
+    const metaTag = document.querySelector('meta[name="csrf-token"]');
+    if (metaTag) {
+        const content = metaTag.getAttribute("content");
+        if (content) return content;
+    }
+
+    const match = document.cookie.match(
+        new RegExp("(^|;\\s*)XSRF-TOKEN=([^;]+)"),
+    );
+    if (match && match[2]) {
+        return decodeURIComponent(match[2]);
+    }
+
+    return "";
+}
+
 export default function AuthModal({
-    isOpen,
+    isOpen = false,
     onClose,
     onSuccessAuth,
     initialTab = "login",
+    className,
 }: AuthModalProps) {
+    const isVisible = Boolean(isOpen ?? false);
+
     const [step, setStep] = useState<AuthStep>(
-        initialTab === "register" ? "register" : "login_identifier"
+        initialTab === "register" ? "register" : "login_identifier",
     );
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -57,24 +89,30 @@ export default function AuthModal({
     const [resetSuccessMessage, setResetSuccessMessage] = useState("");
 
     useEffect(() => {
-        if (isOpen) {
-            setStep(initialTab === "register" ? "register" : "login_identifier");
+        if (isVisible) {
+            setStep(
+                initialTab === "register" ? "register" : "login_identifier",
+            );
             setCountdown(180);
             setErrors({});
             setResetSuccessMessage("");
         }
-    }, [isOpen, initialTab]);
+    }, [isVisible, initialTab]);
 
     // Timer countdown untuk kirim ulang kode OTP
     useEffect(() => {
         let timer: ReturnType<typeof setInterval>;
-        if (isOpen && (step === "verify_otp" || step === "reset_password") && countdown > 0) {
+        if (
+            isVisible &&
+            (step === "verify_otp" || step === "reset_password") &&
+            countdown > 0
+        ) {
             timer = setInterval(() => {
                 setCountdown((prev) => prev - 1);
             }, 1000);
         }
         return () => clearInterval(timer);
-    }, [isOpen, step, countdown]);
+    }, [isVisible, step, countdown]);
 
     const handleClose = () => {
         onClose();
@@ -105,12 +143,31 @@ export default function AuthModal({
         }
     };
 
+    // Helper fetch dengan proteksi header CSRF & JSON
+    const authFetch = useCallback(async (url: string, body: object) => {
+        const csrfToken = getCsrfToken();
+        return fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+                ...(csrfToken
+                    ? { "X-XSRF-TOKEN": csrfToken, "X-CSRF-TOKEN": csrfToken }
+                    : {}),
+            },
+            body: JSON.stringify(body),
+        });
+    }, []);
+
     // ─── 1. Login Identifier Step ───
     const handleNextIdentifier = (e: React.FormEvent) => {
         e.preventDefault();
         const trimmed = identifier.trim();
         if (!trimmed) {
-            setErrors({ identifier: "Mohon masukkan email atau nomor handphone Anda." });
+            setErrors({
+                identifier: "Mohon masukkan email atau nomor handphone Anda.",
+            });
             return;
         }
 
@@ -139,28 +196,29 @@ export default function AuthModal({
         setLoading(true);
         setErrors({});
         try {
-            const res = await fetch("/login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                    "X-Requested-With": "XMLHttpRequest",
-                },
-                body: JSON.stringify({ email: identifier.trim(), password }),
+            const res = await authFetch("/login", {
+                email: identifier.trim(),
+                password,
             });
             const data = await res.json();
             if (res.ok && (data.sukses || data.success)) {
-                toastNotifikasi.sukses(data.pesan || "Login berhasil! Selamat datang kembali.");
+                toastNotifikasi.sukses(
+                    data.pesan || "Login berhasil! Selamat datang kembali.",
+                );
                 onSuccessAuth?.();
                 handleClose();
                 router.reload();
             } else {
                 const errMsg =
-                    data.pesan || data.message || "Email/Nomor HP atau kata sandi tidak cocok.";
+                    data.pesan ||
+                    data.message ||
+                    "Email/Nomor HP atau kata sandi tidak cocok.";
                 setErrors({ password: errMsg });
             }
         } catch {
-            setErrors({ password: "Gagal terhubung ke server. Silakan coba kembali." });
+            setErrors({
+                password: "Gagal terhubung ke server. Silakan coba kembali.",
+            });
         } finally {
             setLoading(false);
         }
@@ -175,13 +233,16 @@ export default function AuthModal({
         const cleanEmail = regEmail.trim().toLowerCase();
 
         if (!cleanName) newErrors.fullName = "Nama lengkap wajib diisi.";
-        else if (cleanName.length < 3) newErrors.fullName = "Nama lengkap minimal 3 karakter.";
+        else if (cleanName.length < 3)
+            newErrors.fullName = "Nama lengkap minimal 3 karakter.";
 
         if (!cleanEmail) newErrors.regEmail = "Email wajib diisi.";
         else if (!cleanEmail.includes("@") || !cleanEmail.includes("."))
             newErrors.regEmail = "Alamat email tidak valid.";
 
-        if (!regPassword) newErrors.regPassword = "Kata sandi wajib diisi minimal 8 karakter.";
+        if (!regPassword)
+            newErrors.regPassword =
+                "Kata sandi wajib diisi minimal 8 karakter.";
         else if (regPassword.length < 8)
             newErrors.regPassword = "Kata sandi minimal 8 karakter.";
 
@@ -193,31 +254,28 @@ export default function AuthModal({
         setLoading(true);
         setErrors({});
         try {
-            const res = await fetch("/register", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                    "X-Requested-With": "XMLHttpRequest",
-                },
-                body: JSON.stringify({
-                    nama: cleanName,
-                    name: cleanName,
-                    email: cleanEmail,
-                    password: regPassword,
-                    password_confirmation: regPassword,
-                    birth_day: birthDay,
-                    birth_month: birthMonth,
-                    birth_year: birthYear,
-                }),
+            const res = await authFetch("/register", {
+                nama: cleanName,
+                name: cleanName,
+                email: cleanEmail,
+                password: regPassword,
+                password_confirmation: regPassword,
+                birth_day: birthDay,
+                birth_month: birthMonth,
+                birth_year: birthYear,
             });
             const data = await res.json();
             if (res.ok && (data.sukses || data.success)) {
                 setStep("verify_otp");
                 setCountdown(180);
+                toastNotifikasi.sukses(
+                    "Kode verifikasi OTP telah dikirimkan ke email Anda.",
+                );
             } else {
                 const errMsg =
-                    data.pesan || data.message || "Pendaftaran gagal. Silakan periksa data Anda.";
+                    data.pesan ||
+                    data.message ||
+                    "Pendaftaran gagal. Silakan periksa data Anda.";
                 if (errMsg.toLowerCase().includes("email")) {
                     setErrors({ regEmail: errMsg });
                 } else {
@@ -225,7 +283,9 @@ export default function AuthModal({
                 }
             }
         } catch {
-            setErrors({ regEmail: "Gagal terhubung ke server. Silakan coba lagi." });
+            setErrors({
+                regEmail: "Gagal terhubung ke server. Silakan coba lagi.",
+            });
         } finally {
             setLoading(false);
         }
@@ -235,7 +295,9 @@ export default function AuthModal({
     const handleOtpSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!otpCode || otpCode.length !== 6) {
-            setErrors({ otpCode: "Masukkan 6 digit kode verifikasi OTP secara lengkap." });
+            setErrors({
+                otpCode: "Masukkan 6 digit kode verifikasi OTP secara lengkap.",
+            });
             return;
         }
 
@@ -243,18 +305,15 @@ export default function AuthModal({
         setErrors({});
         try {
             const targetEmail = (regEmail || identifier).trim().toLowerCase();
-            const res = await fetch("/otp/verifikasi", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                    "X-Requested-With": "XMLHttpRequest",
-                },
-                body: JSON.stringify({ email: targetEmail, kode_otp: otpCode }),
+            const res = await authFetch("/otp/verifikasi", {
+                email: targetEmail,
+                kode_otp: otpCode,
             });
             const data = await res.json();
             if (res.ok && (data.sukses || data.success)) {
-                toastNotifikasi.sukses("Akun berhasil diverifikasi! Selamat datang.");
+                toastNotifikasi.sukses(
+                    "Akun berhasil diverifikasi! Selamat datang.",
+                );
                 onSuccessAuth?.();
                 handleClose();
                 router.reload();
@@ -262,11 +321,42 @@ export default function AuthModal({
                 setErrors({
                     otpCode:
                         data.pesan ||
-                        "Kode OTP 6 digit tidak valid atau sudah kedaluwarsa. Gunakan 123456 untuk testing.",
+                        "Kode OTP 6 digit tidak valid atau sudah kedaluwarsa.",
                 });
             }
         } catch {
-            setErrors({ otpCode: "Terjadi kesalahan saat memverifikasi OTP. Silakan coba kembali." });
+            setErrors({
+                otpCode:
+                    "Terjadi kesalahan saat memverifikasi OTP. Silakan coba kembali.",
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Handler Kirim Ulang OTP Riil ke Server
+    const handleResendOtp = async () => {
+        const targetEmail = (regEmail || identifier).trim().toLowerCase();
+        if (!targetEmail) return;
+
+        setLoading(true);
+        try {
+            const res = await authFetch("/lupa-password/minta-otp", {
+                identitas: targetEmail,
+            });
+            const data = await res.json();
+            if (res.ok && data.sukses) {
+                setCountdown(180);
+                toastNotifikasi.sukses(
+                    data.pesan || "Kode OTP baru telah berhasil dikirim.",
+                );
+            } else {
+                toastNotifikasi.error(
+                    data.pesan || "Gagal mengirim ulang OTP.",
+                );
+            }
+        } catch {
+            toastNotifikasi.error("Gagal terhubung ke server.");
         } finally {
             setLoading(false);
         }
@@ -277,21 +367,17 @@ export default function AuthModal({
         e.preventDefault();
         const target = (resetIdentifier || identifier).trim();
         if (!target) {
-            setErrors({ resetIdentifier: "Masukkan email atau nomor HP yang terdaftar." });
+            setErrors({
+                resetIdentifier: "Masukkan email atau nomor HP yang terdaftar.",
+            });
             return;
         }
 
         setLoading(true);
         setErrors({});
         try {
-            const res = await fetch("/lupa-password/minta-otp", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                    "X-Requested-With": "XMLHttpRequest",
-                },
-                body: JSON.stringify({ identitas: target }),
+            const res = await authFetch("/lupa-password/minta-otp", {
+                identitas: target,
             });
             const data = await res.json();
             if (res.ok && data.sukses) {
@@ -308,7 +394,8 @@ export default function AuthModal({
             }
         } catch {
             setErrors({
-                resetIdentifier: "Gagal mengirim permintaan reset password. Coba sesaat lagi.",
+                resetIdentifier:
+                    "Gagal mengirim permintaan reset password. Coba sesaat lagi.",
             });
         } finally {
             setLoading(false);
@@ -338,23 +425,17 @@ export default function AuthModal({
         setLoading(true);
         setErrors({});
         try {
-            const res = await fetch("/lupa-password/reset", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                    "X-Requested-With": "XMLHttpRequest",
-                },
-                body: JSON.stringify({
-                    identitas: resetIdentifier,
-                    kode_otp: resetOtp,
-                    password: newPassword,
-                    password_confirmation: confirmNewPassword,
-                }),
+            const res = await authFetch("/lupa-password/reset", {
+                identitas: resetIdentifier,
+                kode_otp: resetOtp,
+                password: newPassword,
+                password_confirmation: confirmNewPassword,
             });
             const data = await res.json();
             if (res.ok && data.sukses) {
-                toastNotifikasi.sukses("Kata sandi berhasil diperbarui! Anda telah login otomatis.");
+                toastNotifikasi.sukses(
+                    "Kata sandi berhasil diperbarui! Anda telah login otomatis.",
+                );
                 onSuccessAuth?.();
                 handleClose();
                 router.reload();
@@ -362,21 +443,27 @@ export default function AuthModal({
                 setErrors({
                     resetOtp:
                         data.pesan ||
-                        "Kode OTP salah atau reset gagal. Gunakan 123456 untuk testing.",
+                        "Kode OTP salah atau reset kata sandi gagal.",
                 });
             }
         } catch {
-            setErrors({ resetOtp: "Gagal memperbarui kata sandi. Silakan coba kembali." });
+            setErrors({
+                resetOtp: "Gagal memperbarui kata sandi. Silakan coba kembali.",
+            });
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <Transition show={isOpen} as={Fragment}>
-            <Dialog as="div" className="relative z-50" onClose={handleClose}>
-                <Transition.Child
-                    as={Fragment}
+        <Transition show={isVisible} as={React.Fragment}>
+            <Dialog
+                as="div"
+                className={cn("relative z-50 select-none", className)}
+                onClose={handleClose}
+            >
+                <TransitionChild
+                    as={React.Fragment}
                     enter="ease-out duration-200"
                     enterFrom="opacity-0"
                     enterTo="opacity-100"
@@ -384,25 +471,26 @@ export default function AuthModal({
                     leaveFrom="opacity-100"
                     leaveTo="opacity-0"
                 >
-                    <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs" />
-                </Transition.Child>
+                    <DialogBackdrop className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity" />
+                </TransitionChild>
 
-                <div className="fixed inset-0 overflow-y-auto">
-                    <div className="flex min-h-full items-center justify-center p-4 text-center">
-                        <Transition.Child
-                            as={Fragment}
+                <div className="fixed inset-0 z-10 overflow-y-auto">
+                    <div className="flex min-h-full items-center justify-center p-3 sm:p-4 text-center">
+                        <TransitionChild
+                            as={React.Fragment}
                             enter="ease-out duration-200"
-                            enterFrom="opacity-0 scale-95"
-                            enterTo="opacity-100 scale-100"
+                            enterFrom="opacity-0 scale-95 -translate-y-2"
+                            enterTo="opacity-100 scale-100 translate-y-0"
                             leave="ease-in duration-150"
-                            leaveFrom="opacity-100 scale-100"
-                            leaveTo="opacity-0 scale-95"
+                            leaveFrom="opacity-100 scale-100 translate-y-0"
+                            leaveTo="opacity-0 scale-95 -translate-y-2"
                         >
-                            <Dialog.Panel className="w-full max-w-[420px] transform overflow-hidden rounded-[28px] bg-white p-6 sm:p-7 text-left align-middle shadow-2xl transition-all border border-slate-200">
+                            <DialogPanel className="w-full max-w-[420px] transform overflow-hidden rounded-3xl bg-white p-6 sm:p-7 text-left align-middle shadow-2xl transition-all border border-slate-200/90">
                                 {/* Header Modal */}
-                                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                                <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
                                     <div className="flex items-center gap-2">
-                                        {(step === "login_password" || step === "forgot_password") && (
+                                        {(step === "login_password" ||
+                                            step === "forgot_password") && (
                                             <button
                                                 type="button"
                                                 onClick={() => {
@@ -412,7 +500,7 @@ export default function AuthModal({
                                                 className="p-1 -ml-1 text-slate-500 hover:text-slate-900 rounded-lg transition-colors cursor-pointer"
                                                 aria-label="Kembali ke langkah sebelumnya"
                                             >
-                                                <ArrowLeft className="w-4 h-4" />
+                                                <ArrowLeft className="w-4 h-4 stroke-[2.2]" />
                                             </button>
                                         )}
                                         {step === "reset_password" && (
@@ -425,165 +513,182 @@ export default function AuthModal({
                                                 className="p-1 -ml-1 text-slate-500 hover:text-slate-900 rounded-lg transition-colors cursor-pointer"
                                                 aria-label="Kembali ke lupa password"
                                             >
-                                                <ArrowLeft className="w-4 h-4" />
+                                                <ArrowLeft className="w-4 h-4 stroke-[2.2]" />
                                             </button>
                                         )}
 
-                                        <Dialog.Title
+                                        <DialogTitle
                                             as="h3"
-                                            className="text-lg font-bold text-slate-900 tracking-tight"
+                                            className="text-base sm:text-lg font-black text-slate-900 tracking-tight"
                                         >
-                                            {step === "login_identifier" && "Masuk ke Akun"}
-                                            {step === "login_password" && "Masukkan Kata Sandi"}
-                                            {step === "forgot_password" && "Lupa Kata Sandi"}
-                                            {step === "reset_password" && "Atur Ulang Kata Sandi"}
-                                            {step === "register" && "Daftar Akun CRSL"}
-                                            {step === "verify_otp" && "Verifikasi Kode OTP"}
-                                        </Dialog.Title>
+                                            {step === "login_identifier" &&
+                                                "Masuk ke Akun"}
+                                            {step === "login_password" &&
+                                                "Masukkan Kata Sandi"}
+                                            {step === "forgot_password" &&
+                                                "Lupa Kata Sandi"}
+                                            {step === "reset_password" &&
+                                                "Atur Ulang Kata Sandi"}
+                                            {step === "register" &&
+                                                "Daftar Akun CRSL"}
+                                            {step === "verify_otp" &&
+                                                "Verifikasi Kode OTP"}
+                                        </DialogTitle>
                                     </div>
 
                                     <button
                                         type="button"
                                         onClick={handleClose}
-                                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors focus:outline-none cursor-pointer"
-                                        aria-label="Tutup dialog"
+                                        className="p-1.5 -mr-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors focus:outline-none cursor-pointer"
+                                        aria-label="Tutup dialog autentikasi"
                                     >
                                         <X className="w-4 h-4" />
                                     </button>
                                 </div>
 
                                 {/* Step Components */}
-                                {step === "login_identifier" && (
-                                    <LoginIdentifierStep
-                                        identifier={identifier}
-                                        onChangeIdentifier={(val) => {
-                                            setIdentifier(val);
-                                            clearFieldError("identifier");
-                                        }}
-                                        onSubmit={handleNextIdentifier}
-                                        onSwitchToRegister={() => {
-                                            setErrors({});
-                                            setStep("register");
-                                        }}
-                                        error={errors.identifier}
-                                        loading={loading}
-                                    />
-                                )}
+                                <div className="pt-4">
+                                    {step === "login_identifier" && (
+                                        <LoginIdentifierStep
+                                            identifier={identifier}
+                                            onChangeIdentifier={(val) => {
+                                                setIdentifier(val);
+                                                clearFieldError("identifier");
+                                            }}
+                                            onSubmit={handleNextIdentifier}
+                                            onSwitchToRegister={() => {
+                                                setErrors({});
+                                                setStep("register");
+                                            }}
+                                            error={errors.identifier}
+                                            loading={loading}
+                                        />
+                                    )}
 
-                                {step === "login_password" && (
-                                    <LoginPasswordStep
-                                        identifier={identifier}
-                                        password={password}
-                                        onChangePassword={(val) => {
-                                            setPassword(val);
-                                            clearFieldError("password");
-                                        }}
-                                        onSubmit={handleLoginSubmit}
-                                        onChangeIdentifierClick={() => {
-                                            setErrors({});
-                                            setStep("login_identifier");
-                                        }}
-                                        onForgotPasswordClick={() => {
-                                            setErrors({});
-                                            setResetIdentifier(identifier);
-                                            setStep("forgot_password");
-                                        }}
-                                        error={errors.password}
-                                        loading={loading}
-                                    />
-                                )}
+                                    {step === "login_password" && (
+                                        <LoginPasswordStep
+                                            identifier={identifier}
+                                            password={password}
+                                            onChangePassword={(val) => {
+                                                setPassword(val);
+                                                clearFieldError("password");
+                                            }}
+                                            onSubmit={handleLoginSubmit}
+                                            onChangeIdentifierClick={() => {
+                                                setErrors({});
+                                                setStep("login_identifier");
+                                            }}
+                                            onForgotPasswordClick={() => {
+                                                setErrors({});
+                                                setResetIdentifier(identifier);
+                                                setStep("forgot_password");
+                                            }}
+                                            error={errors.password}
+                                            loading={loading}
+                                        />
+                                    )}
 
-                                {step === "forgot_password" && (
-                                    <ForgotPasswordStep
-                                        identifier={resetIdentifier || identifier}
-                                        onChangeIdentifier={(val) => {
-                                            setResetIdentifier(val);
-                                            setIdentifier(val);
-                                            clearFieldError("resetIdentifier");
-                                        }}
-                                        onSubmit={handleForgotRequestOtp}
-                                        error={errors.resetIdentifier}
-                                        loading={loading}
-                                    />
-                                )}
+                                    {step === "forgot_password" && (
+                                        <ForgotPasswordStep
+                                            identifier={
+                                                resetIdentifier || identifier
+                                            }
+                                            onChangeIdentifier={(val) => {
+                                                setResetIdentifier(val);
+                                                setIdentifier(val);
+                                                clearFieldError(
+                                                    "resetIdentifier",
+                                                );
+                                            }}
+                                            onSubmit={handleForgotRequestOtp}
+                                            error={errors.resetIdentifier}
+                                            loading={loading}
+                                        />
+                                    )}
 
-                                {step === "reset_password" && (
-                                    <ResetPasswordStep
-                                        resetSuccessMessage={resetSuccessMessage}
-                                        resetOtp={resetOtp}
-                                        newPassword={newPassword}
-                                        confirmNewPassword={confirmNewPassword}
-                                        onChangeResetOtp={(val) => {
-                                            setResetOtp(val);
-                                            clearFieldError("resetOtp");
-                                        }}
-                                        onChangeNewPassword={(val) => {
-                                            setNewPassword(val);
-                                            clearFieldError("newPassword");
-                                        }}
-                                        onChangeConfirmNewPassword={(val) => {
-                                            setConfirmNewPassword(val);
-                                            clearFieldError("confirmNewPassword");
-                                        }}
-                                        onSubmit={handleResetPasswordSubmit}
-                                        errors={errors}
-                                        loading={loading}
-                                    />
-                                )}
+                                    {step === "reset_password" && (
+                                        <ResetPasswordStep
+                                            resetSuccessMessage={
+                                                resetSuccessMessage
+                                            }
+                                            resetOtp={resetOtp}
+                                            newPassword={newPassword}
+                                            confirmNewPassword={
+                                                confirmNewPassword
+                                            }
+                                            onChangeResetOtp={(val) => {
+                                                setResetOtp(val);
+                                                clearFieldError("resetOtp");
+                                            }}
+                                            onChangeNewPassword={(val) => {
+                                                setNewPassword(val);
+                                                clearFieldError("newPassword");
+                                            }}
+                                            onChangeConfirmNewPassword={(
+                                                val,
+                                            ) => {
+                                                setConfirmNewPassword(val);
+                                                clearFieldError(
+                                                    "confirmNewPassword",
+                                                );
+                                            }}
+                                            onSubmit={handleResetPasswordSubmit}
+                                            errors={errors}
+                                            loading={loading}
+                                        />
+                                    )}
 
-                                {step === "register" && (
-                                    <RegisterStep
-                                        fullName={fullName}
-                                        regEmail={regEmail}
-                                        regPassword={regPassword}
-                                        birthDay={birthDay}
-                                        birthMonth={birthMonth}
-                                        birthYear={birthYear}
-                                        onChangeFullName={(val) => {
-                                            setFullName(val);
-                                            clearFieldError("fullName");
-                                        }}
-                                        onChangeRegEmail={(val) => {
-                                            setRegEmail(val);
-                                            clearFieldError("regEmail");
-                                        }}
-                                        onChangeRegPassword={(val) => {
-                                            setRegPassword(val);
-                                            clearFieldError("regPassword");
-                                        }}
-                                        onChangeBirthDay={setBirthDay}
-                                        onChangeBirthMonth={setBirthMonth}
-                                        onChangeBirthYear={setBirthYear}
-                                        onSubmit={handleRegisterSubmit}
-                                        onSwitchToLogin={() => {
-                                            setErrors({});
-                                            setStep("login_identifier");
-                                        }}
-                                        errors={errors}
-                                        loading={loading}
-                                    />
-                                )}
+                                    {step === "register" && (
+                                        <RegisterStep
+                                            fullName={fullName}
+                                            regEmail={regEmail}
+                                            regPassword={regPassword}
+                                            birthDay={birthDay}
+                                            birthMonth={birthMonth}
+                                            birthYear={birthYear}
+                                            onChangeFullName={(val) => {
+                                                setFullName(val);
+                                                clearFieldError("fullName");
+                                            }}
+                                            onChangeRegEmail={(val) => {
+                                                setRegEmail(val);
+                                                clearFieldError("regEmail");
+                                            }}
+                                            onChangeRegPassword={(val) => {
+                                                setRegPassword(val);
+                                                clearFieldError("regPassword");
+                                            }}
+                                            onChangeBirthDay={setBirthDay}
+                                            onChangeBirthMonth={setBirthMonth}
+                                            onChangeBirthYear={setBirthYear}
+                                            onSubmit={handleRegisterSubmit}
+                                            onSwitchToLogin={() => {
+                                                setErrors({});
+                                                setStep("login_identifier");
+                                            }}
+                                            errors={errors}
+                                            loading={loading}
+                                        />
+                                    )}
 
-                                {step === "verify_otp" && (
-                                    <OtpVerifyStep
-                                        targetEmail={regEmail || identifier}
-                                        otpCode={otpCode}
-                                        onChangeOtpCode={(val) => {
-                                            setOtpCode(val);
-                                            clearFieldError("otpCode");
-                                        }}
-                                        countdown={countdown}
-                                        onResendOtp={() => {
-                                            setCountdown(180);
-                                            toastNotifikasi.sukses("Kode OTP baru telah dikirim.");
-                                        }}
-                                        onSubmit={handleOtpSubmit}
-                                        error={errors.otpCode}
-                                        loading={loading}
-                                    />
-                                )}
-                            </Dialog.Panel>
-                        </Transition.Child>
+                                    {step === "verify_otp" && (
+                                        <OtpVerifyStep
+                                            targetEmail={regEmail || identifier}
+                                            otpCode={otpCode}
+                                            onChangeOtpCode={(val) => {
+                                                setOtpCode(val);
+                                                clearFieldError("otpCode");
+                                            }}
+                                            countdown={countdown}
+                                            onResendOtp={handleResendOtp}
+                                            onSubmit={handleOtpSubmit}
+                                            error={errors.otpCode}
+                                            loading={loading}
+                                        />
+                                    )}
+                                </div>
+                            </DialogPanel>
+                        </TransitionChild>
                     </div>
                 </div>
             </Dialog>

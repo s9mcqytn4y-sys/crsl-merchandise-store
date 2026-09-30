@@ -1,4 +1,3 @@
-import React from "react";
 import ProductCard, { ProductData } from "../Common/ProductCard";
 
 interface CardProductPreOrderProps {
