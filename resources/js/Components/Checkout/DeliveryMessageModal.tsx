@@ -200,7 +200,7 @@ export default function DeliveryMessageModal({
                                     <button
                                         type="button"
                                         onClick={handleSave}
-                                        className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover active:scale-[0.99] text-white text-xs font-bold transition-all shadow-md shadow-red-500/20 cursor-pointer"
+                                        className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover active:scale-[0.99] text-white text-xs font-bold transition-all shadow-sm hover:shadow-md cursor-pointer"
                                     >
                                         <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                                         <span>Simpan Catatan</span>

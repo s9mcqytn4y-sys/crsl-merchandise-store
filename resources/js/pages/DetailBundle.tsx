@@ -333,7 +333,7 @@ export default function DetailBundle({
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
                         {/* Kolom Kiri: Galeri Media Sticky */}
                         <div className="lg:col-span-7 space-y-4 lg:sticky lg:top-24">
-                            <div className="relative aspect-square sm:aspect-4/3 lg:aspect-square bg-white rounded-3xl border border-slate-200/90 overflow-hidden group shadow-2xs">
+                            <div className="relative aspect-square sm:aspect-4/3 lg:aspect-square bg-white rounded-2xl border border-slate-200/90 overflow-hidden group shadow-2xs">
                                 <span className="absolute top-3.5 left-3.5 z-10 bg-primary text-white text-[11px] font-black uppercase px-3 py-1 rounded-full shadow-xs tracking-wider font-mono">
                                     Bundle Spesial
                                 </span>
@@ -434,7 +434,7 @@ export default function DetailBundle({
                         </div>
 
                         {/* Kolom Kanan: Detail & Konfigurasi Paket */}
-                        <div className="lg:col-span-5 bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-2xs space-y-6">
+                        <div className="lg:col-span-5 bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-8 shadow-2xs space-y-6">
                             <div>
                                 <div className="flex items-center gap-2 mb-2.5">
                                     <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-900 text-white font-mono">
@@ -748,7 +748,7 @@ export default function DetailBundle({
                                     <button
                                         type="button"
                                         onClick={handleBuyNow}
-                                        className="w-full min-h-[48px] bg-primary hover:bg-primary-hover text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.99] shadow-lg shadow-red-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                        className="w-full min-h-[48px] bg-primary hover:bg-primary-hover text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.99] shadow-sm hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                     >
                                         <Zap className="w-4 h-4 fill-white stroke-[2]" />
                                         <span>Beli Sekarang</span>

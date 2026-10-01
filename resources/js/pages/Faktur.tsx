@@ -606,7 +606,7 @@ export default function Faktur({ pesanan, is_baru, className }: InvoiceProps) {
                         <div className="lg:col-span-7 space-y-5">
                             {/* State 1: Verifikasi Manual CS */}
                             {isHoldManual && (
-                                <section className="bg-amber-50/90 border border-amber-300 rounded-3xl p-5 sm:p-6 space-y-4 shadow-2xs">
+                                <section className="bg-amber-50/90 border border-amber-300 rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xs">
                                     <div className="flex items-start gap-3.5">
                                         <div className="w-10 h-10 rounded-2xl bg-amber-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
                                             <AlertCircle className="w-5 h-5 stroke-[2.2]" />
@@ -667,7 +667,7 @@ export default function Faktur({ pesanan, is_baru, className }: InvoiceProps) {
 
                             {/* State 2: Lunas & Terverifikasi */}
                             {isSuccessSettled && (
-                                <div className="bg-emerald-50/80 border border-emerald-200/90 rounded-3xl p-5 sm:p-6 space-y-4 shadow-2xs">
+                                <div className="bg-emerald-50/80 border border-emerald-200/90 rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xs">
                                     <div className="flex items-start gap-3.5">
                                         <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
                                             {hasWaybill ? (
@@ -725,7 +725,7 @@ export default function Faktur({ pesanan, is_baru, className }: InvoiceProps) {
 
                             {/* State 3: Menunggu Pembayaran Aktif */}
                             {isPendingPayment && (
-                                <section className="bg-white border border-slate-200/90 rounded-3xl shadow-2xs overflow-hidden">
+                                <section className="bg-white border border-slate-200/90 rounded-2xl shadow-2xs overflow-hidden">
                                     <div className="p-5 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-slate-50/70">
                                         <div className="space-y-1">
                                             <div className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600">
@@ -927,7 +927,7 @@ export default function Faktur({ pesanan, is_baru, className }: InvoiceProps) {
 
                             {/* State 4: Pesanan Selesai / Batal / Expired */}
                             {isTerminated && (
-                                <section className="bg-white border border-slate-200/90 rounded-3xl p-6 space-y-4 shadow-2xs">
+                                <section className="bg-white border border-slate-200/90 rounded-2xl p-6 space-y-4 shadow-2xs">
                                     <div className="flex items-start gap-3.5">
                                         <div className="w-10 h-10 rounded-2xl bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center shrink-0 shadow-2xs">
                                             <XCircle className="w-5 h-5 stroke-[2.2]" />
@@ -966,7 +966,7 @@ export default function Faktur({ pesanan, is_baru, className }: InvoiceProps) {
                             {/* Banner Customer Service Adaptif */}
                             <aside
                                 aria-label="Bantuan Layanan Pelanggan"
-                                className="bg-slate-50 border border-slate-200/90 rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-slate-600 shadow-2xs"
+                                className="bg-slate-50 border border-slate-200/90 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-slate-600 shadow-2xs"
                             >
                                 <div className="flex items-start sm:items-center gap-3">
                                     <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200/90 flex items-center justify-center shrink-0 shadow-2xs">
@@ -1112,7 +1112,7 @@ export default function Faktur({ pesanan, is_baru, className }: InvoiceProps) {
                                     leaveFrom="opacity-100 scale-100 translate-y-0"
                                     leaveTo="opacity-0 scale-95 -translate-y-2"
                                 >
-                                    <DialogPanel className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-200/90 text-left transition-all space-y-4">
+                                    <DialogPanel className="bg-white rounded-2xl max-w-md w-full p-6 sm:p-7 shadow-xl border border-slate-200/90 text-left transition-all space-y-4">
                                         <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
                                             <div className="flex items-center gap-2.5">
                                                 <div className="w-8 h-8 rounded-xl bg-red-50 text-primary border border-red-100 flex items-center justify-center shrink-0">
@@ -1186,7 +1186,7 @@ export default function Faktur({ pesanan, is_baru, className }: InvoiceProps) {
                                                 onClick={() =>
                                                     setIsTermsModalOpen(false)
                                                 }
-                                                className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-2.5 rounded-2xl transition-all text-xs shadow-md shadow-red-500/20 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
+                                                className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-2.5 rounded-xl transition-all text-xs shadow-sm hover:shadow-md active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
                                             >
                                                 Saya Mengerti
                                             </button>

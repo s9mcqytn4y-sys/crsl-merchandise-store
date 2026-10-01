@@ -183,7 +183,7 @@ export default function ModalUbahAlamat({
             }}
         >
             <div
-                className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col max-h-[92vh]"
+                className="bg-white w-full max-w-lg rounded-2xl shadow-xl overflow-hidden border border-slate-200 flex flex-col max-h-[92vh]"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header Modal */}

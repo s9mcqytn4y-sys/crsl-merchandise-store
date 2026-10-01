@@ -34,9 +34,7 @@ class MidtransService
         $authHeader = 'Basic ' . base64_encode($this->serverKey . ':');
 
         $options = [
-            'curl' => [
-                CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
-            ],
+            'force_ip_resolve' => 'v4',
         ];
 
         // Nonaktifkan verifikasi SSL di local/sandbox jika CA bundle lokal tidak terkonfigurasi

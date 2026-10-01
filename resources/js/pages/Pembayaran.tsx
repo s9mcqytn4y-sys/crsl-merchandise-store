@@ -956,9 +956,9 @@ export default function Pembayaran({
                     aria-live="assertive"
                     aria-busy="true"
                 >
-                    <div className="bg-white text-slate-900 rounded-3xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center space-y-4 border border-slate-100 animate-in zoom-in-95">
-                        <div className="w-16 h-16 rounded-3xl bg-red-50 flex items-center justify-center text-primary border border-red-100 shadow-2xs">
-                            <Loader2 className="w-8 h-8 animate-spin stroke-[2.2]" />
+                    <div className="bg-white text-slate-900 rounded-2xl p-7 max-w-sm w-full shadow-xl flex flex-col items-center space-y-4 border border-slate-100 animate-in zoom-in-95">
+                        <div className="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center text-primary border border-red-100 shadow-2xs">
+                            <Loader2 className="w-7 h-7 animate-spin stroke-[2.2]" />
                         </div>
                         <div className="space-y-1.5">
                             <h3 className="text-base font-black text-slate-900 tracking-tight">
@@ -971,7 +971,7 @@ export default function Pembayaran({
                             </p>
                         </div>
                         <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                            <div className="bg-primary h-full w-2/3 animate-pulse rounded-full" />
+                            <div className="bg-primary h-full w-2/3 rounded-full" />
                         </div>
                     </div>
                 </div>

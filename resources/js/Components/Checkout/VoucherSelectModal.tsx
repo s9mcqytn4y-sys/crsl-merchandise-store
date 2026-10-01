@@ -306,7 +306,7 @@ export default function VoucherSelectModal({
                                         <button
                                             type="submit"
                                             disabled={isLoadingManual}
-                                            className="px-5 py-2.5 rounded-2xl bg-primary hover:bg-primary-hover active:scale-[0.99] text-white text-xs font-bold transition-all cursor-pointer shrink-0 disabled:opacity-50 flex items-center gap-1.5 shadow-md shadow-red-500/20"
+                                            className="px-5 py-2.5 rounded-2xl bg-primary hover:bg-primary-hover active:scale-[0.99] text-white text-xs font-bold transition-all cursor-pointer shrink-0 disabled:opacity-50 flex items-center gap-1.5 shadow-sm hover:shadow-md"
                                         >
                                             {isLoadingManual ? (
                                                 <>

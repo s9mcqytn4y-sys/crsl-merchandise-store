@@ -105,7 +105,7 @@ export default function ModalBatalPesanan({
             }}
         >
             <div
-                className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col max-h-[92vh]"
+                className="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden border border-slate-200 flex flex-col max-h-[92vh]"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="p-5 sm:p-6 space-y-4 overflow-y-auto">

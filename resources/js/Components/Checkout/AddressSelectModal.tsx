@@ -338,7 +338,7 @@ export default function AddressSelectModal({
                                             onClose();
                                             onOpenAddModal();
                                         }}
-                                        className="w-full min-h-[46px] py-3 bg-primary hover:bg-primary-hover active:scale-[0.99] text-white rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-md shadow-red-500/20 flex items-center justify-center gap-2 cursor-pointer"
+                                        className="w-full min-h-[46px] py-3 bg-primary hover:bg-primary-hover active:scale-[0.99] text-white rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
                                     >
                                         <Plus className="w-4 h-4 stroke-[2.5]" />
                                         <span>Tambah Alamat Baru</span>

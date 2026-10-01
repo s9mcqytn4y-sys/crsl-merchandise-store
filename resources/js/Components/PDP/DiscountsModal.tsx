@@ -139,7 +139,7 @@ export default function DiscountsModal({
                             leaveFrom="opacity-100 scale-100 translate-y-0"
                             leaveTo="opacity-0 scale-95 -translate-y-2"
                         >
-                            <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-3xl bg-white shadow-2xl transition-all border border-slate-200/80 flex flex-col max-h-[calc(100dvh-2.5rem)]">
+                            <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white shadow-xl transition-all border border-slate-200/80 flex flex-col max-h-[calc(100dvh-2.5rem)]">
                                 {/* Header Modal */}
                                 <div className="border-b border-slate-100 px-5 sm:px-6 py-4 flex items-center justify-between bg-white shrink-0">
                                     <div className="flex items-center gap-3 min-w-0 pr-2">

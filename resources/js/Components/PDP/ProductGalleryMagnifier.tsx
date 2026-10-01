@@ -258,7 +258,7 @@ export default function ProductGalleryMagnifier({
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
-                className="relative flex-1 aspect-square w-full rounded-3xl bg-slate-100 border border-slate-200/90 overflow-hidden group touch-pan-y md:cursor-crosshair shadow-2xs"
+                className="relative flex-1 aspect-square w-full rounded-2xl bg-slate-100 border border-slate-200/90 overflow-hidden group touch-pan-y md:cursor-crosshair shadow-2xs"
             >
                 {mainImgError ? (
                     <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 gap-2 p-6 text-center bg-slate-50">

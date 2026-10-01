@@ -354,7 +354,7 @@ export default function OrderSummarySection({
                         onClick={onSubmitOrder}
                         disabled={isSubmitting}
                         aria-busy={isSubmitting}
-                        className="w-full min-h-[50px] px-6 rounded-2xl bg-primary hover:bg-primary-hover active:scale-[0.99] text-white font-extrabold text-sm sm:text-base shadow-lg shadow-red-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full min-h-[50px] px-6 rounded-2xl bg-primary hover:bg-primary-hover active:scale-[0.99] text-white font-extrabold text-sm sm:text-base shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isSubmitting ? (
                             <>

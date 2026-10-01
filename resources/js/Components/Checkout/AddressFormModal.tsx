@@ -724,7 +724,7 @@ export default function AddressFormModal({
                                         <button
                                             type="submit"
                                             disabled={loading}
-                                            className="w-full min-h-[46px] py-3 bg-primary hover:bg-primary-hover active:scale-[0.99] text-white rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-md shadow-red-500/20 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                                            className="w-full min-h-[46px] py-3 bg-primary hover:bg-primary-hover active:scale-[0.99] text-white rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-sm hover:shadow-md cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
                                         >
                                             {loading ? (
                                                 <>
