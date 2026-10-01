@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'telepon', 'birth_day', 'birth_month', 'birth_year'])]
+#[Fillable(['name', 'email', 'password', 'telepon', 'birth_day', 'birth_month', 'birth_year', 'peran'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -28,6 +28,36 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function isOwner(): bool
+    {
+        return $this->peran === 'owner';
+    }
+
+    public function isAdmin(): bool
+    {
+        return in_array($this->peran, ['owner', 'admin'], true);
+    }
+
+    public function isStaff(): bool
+    {
+        return in_array($this->peran, ['owner', 'admin', 'staff'], true);
+    }
+
+    public function isReseller(): bool
+    {
+        return $this->peran === 'reseller';
+    }
+
+    public function isCustomer(): bool
+    {
+        return $this->peran === 'customer';
+    }
+
+    public function canAccessCms(): bool
+    {
+        return in_array($this->peran, ['owner', 'admin', 'staff'], true);
     }
 
     public function loyalitas(): \Illuminate\Database\Eloquent\Relations\HasOne

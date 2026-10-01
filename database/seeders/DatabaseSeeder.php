@@ -92,16 +92,59 @@ class DatabaseSeeder extends Seeder
 
         User::where('email', '!=', 'abdul@crsl-store.id')->delete();
 
-        // 4. Akun Tunggal Terverifikasi: abdul@crsl-store.id
+        // 4. Akun Terverifikasi Berbasis Multi-Role (Owner, Admin, Reseller, Customer)
         $user = User::updateOrCreate(
             ['email' => 'abdulaziz543333@gmail.com'],
             [
-                'name' => 'abdul music',
+                'name' => 'Abdul Aziz (Owner)',
                 'telepon' => '+628567060477',
                 'password' => Hash::make('password123'),
+                'peran' => 'owner',
                 'birth_day' => '14',
                 'birth_month' => '09',
                 'birth_year' => '2003',
+                'email_verified_at' => now(),
+            ]
+        );
+
+        User::updateOrCreate(
+            ['email' => 'admin@crsl-store.id'],
+            [
+                'name' => 'CRSL Store Admin',
+                'telepon' => '+6281234567801',
+                'password' => Hash::make('password123'),
+                'peran' => 'admin',
+                'birth_day' => '01',
+                'birth_month' => '01',
+                'birth_year' => '2000',
+                'email_verified_at' => now(),
+            ]
+        );
+
+        User::updateOrCreate(
+            ['email' => 'reseller@crsl-store.id'],
+            [
+                'name' => 'CRSL Official Reseller',
+                'telepon' => '+6281234567802',
+                'password' => Hash::make('password123'),
+                'peran' => 'reseller',
+                'birth_day' => '01',
+                'birth_month' => '01',
+                'birth_year' => '2000',
+                'email_verified_at' => now(),
+            ]
+        );
+
+        User::updateOrCreate(
+            ['email' => 'customer@crsl-store.id'],
+            [
+                'name' => 'CRSL Valued Customer',
+                'telepon' => '+6281234567803',
+                'password' => Hash::make('password123'),
+                'peran' => 'customer',
+                'birth_day' => '01',
+                'birth_month' => '01',
+                'birth_year' => '2000',
                 'email_verified_at' => now(),
             ]
         );

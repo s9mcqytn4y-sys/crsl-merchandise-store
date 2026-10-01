@@ -26,6 +26,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'crsl_locale',
             'crsl_currency',
         ]);
+        $middleware->alias([
+            'peran' => \App\Http\Middleware\PastikanPeranPengguna::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
