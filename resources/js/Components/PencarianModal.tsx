@@ -58,10 +58,12 @@ function normalizeMediaUrl(url?: string | null): string {
     return `/storage/${clean}`;
 }
 
+const EMPTY_FALLBACK: SearchProductResult[] = [];
+
 export default function PencarianModal({
     isOpen,
     onClose,
-    rekomendasiFallback = [],
+    rekomendasiFallback = EMPTY_FALLBACK,
     className,
 }: PencarianModalProps) {
     const [query, setQuery] = useState("");
@@ -87,12 +89,12 @@ export default function PencarianModal({
 
     // Sinkronisasi data lokal saat modal dibuka
     useEffect(() => {
-        if (!isOpen) {
-            setQuery("");
-            setLiveResults([]);
-            setIsSearching(false);
-            return;
-        }
+        if (!isOpen) return;
+
+        // Reset state pencarian saat modal dibuka
+        setQuery("");
+        setLiveResults([]);
+        setIsSearching(false);
 
         // 1. Baca riwayat kata kunci pencarian
         try {
@@ -134,7 +136,7 @@ export default function PencarianModal({
             document.body.style.overflow = originalOverflow;
             clearTimeout(timer);
         };
-    }, [isOpen, rekomendasiFallback]);
+    }, [isOpen]);
 
     // Handle Escape Key
     useEffect(() => {
@@ -152,7 +154,7 @@ export default function PencarianModal({
         const trimmed = query.trim();
 
         if (trimmed.length < 2) {
-            setLiveResults([]);
+            setLiveResults((prev) => (prev.length > 0 ? [] : prev));
             setIsSearching(false);
             return;
         }
