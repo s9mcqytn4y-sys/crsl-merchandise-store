@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Award, Coins, ChevronRight, Sparkles, TrendingUp } from "lucide-react";
+import { Coins, ChevronRight, TrendingUp } from "lucide-react";
 import { useAuthStore } from "../../Stores/useAuthStore";
 
 export interface TierConfig {

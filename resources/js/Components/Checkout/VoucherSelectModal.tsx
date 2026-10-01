@@ -1,4 +1,4 @@
-import React, { useState, useMemo, Fragment } from "react";
+import React, { useState, Fragment } from "react";
 import {
     Dialog,
     DialogPanel,
@@ -9,7 +9,6 @@ import {
 } from "@headlessui/react";
 import {
     X,
-    Tag,
     Check,
     AlertCircle,
     Loader2,

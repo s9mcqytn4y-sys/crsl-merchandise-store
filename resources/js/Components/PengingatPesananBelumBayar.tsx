@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Link, usePage, router } from "@inertiajs/react";
+import { Link, usePage } from "@inertiajs/react";
 import { Clock, ArrowRight, X, AlertTriangle } from "lucide-react";
 import { formatRupiah } from "../Utils/formatters";
 import { cn } from "../lib/utils";

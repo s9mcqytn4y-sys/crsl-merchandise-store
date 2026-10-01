@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { X, ChevronDown, ChevronUp, RotateCcw, Check } from "lucide-react";
-import { formatRupiah } from "../../Utils/formatters";
 import { cn } from "../../lib/utils";
 
 export interface FilterValues {

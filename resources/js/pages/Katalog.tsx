@@ -6,7 +6,6 @@ import {
     RotateCcw,
     X,
     Search,
-    Sparkles,
 } from "lucide-react";
 import ProductCard, { ProductData } from "../Components/Common/ProductCard";
 import CircularCategoriesBar, {

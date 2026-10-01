@@ -2,8 +2,6 @@ import React, {
     useState,
     useEffect,
     useRef,
-    useCallback,
-    useMemo,
 } from "react";
 import { Link, router } from "@inertiajs/react";
 import {
@@ -15,7 +13,6 @@ import {
     CornerDownLeft,
     Loader2,
     Package,
-    Tag,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SITUS_CONFIG } from "../Config/situsConfig";

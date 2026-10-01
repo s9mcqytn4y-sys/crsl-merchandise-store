@@ -4,8 +4,6 @@ import {
     Copy,
     Check,
     ChevronRight,
-    Clock,
-    Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 

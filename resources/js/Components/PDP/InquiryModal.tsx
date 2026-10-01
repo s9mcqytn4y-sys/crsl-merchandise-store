@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-    MessageCircle,
     Send,
     CheckCircle2,
     AlertCircle,

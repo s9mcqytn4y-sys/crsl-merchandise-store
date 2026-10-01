@@ -1,5 +1,5 @@
 import { Link } from "@inertiajs/react";
-import { Check, ArrowRight, Sparkles } from "lucide-react";
+import { Check, ArrowRight } from "lucide-react";
 import CardProductPreOrder from "./CardProductPreOrder";
 import { ProdukItem } from "./ProductGridSection";
 import { cn } from "../../lib/utils";

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { usePage } from "@inertiajs/react";
-import { X, Percent, Gift, Mail, ArrowUpRight, HelpCircle } from "lucide-react";
+import { X, Percent, Gift, Mail, ArrowUpRight } from "lucide-react";
 import DiscountsModal from "./PDP/DiscountsModal";
 import { SITUS_CONFIG } from "../Config/situsConfig";
 import { useKeranjangStore } from "../Stores/useKeranjangStore";
@@ -8,6 +8,8 @@ import { cn } from "../lib/utils";
 
 interface FloatingActionHubProps {
     className?: string;
+    cartCount?: number;
+    onOpenCart?: () => void;
 }
 
 // Ikon WhatsApp Vektor Resmi Brand

@@ -7,7 +7,6 @@ import {
     Check,
     RefreshCw,
     ShieldCheck,
-    Info,
     Loader2,
 } from "lucide-react";
 import { toast } from "sonner";

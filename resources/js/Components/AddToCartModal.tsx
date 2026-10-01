@@ -273,7 +273,7 @@ export default function AddToCartModal() {
                                                 const imgThumb =
                                                     normalizeMediaUrl(
                                                         varian.gambar_varian ||
-                                                            product.gambar_utama,
+                                                            activeProduct?.gambar_utama || "",
                                                     );
 
                                                 return (

@@ -33,7 +33,7 @@ const PLACEHOLDER_IMAGE = "/assets/gambar/produk-placeholder.webp";
  * Normalisasi URL gambar aman (mendukung path storage lokal & remote CDN)
  */
 function normalizeImageUrl(gambar?: string | null): string {
-    if (!gambar) return "";
+    if (!gambar) return PLACEHOLDER_IMAGE;
     const g = gambar.trim();
     if (
         g.startsWith("http://") ||

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Search, MapPin, Loader2, Check, X, AlertCircle } from "lucide-react";
+import { MapPin, Loader2, Check, X, AlertCircle } from "lucide-react";
 import { cn } from "../lib/utils";
 
 export interface AreaOption {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { X, Gift, Crown, Sparkles, Check, Lock, Coins } from "lucide-react";
+import { X, Crown, Sparkles, Check, Lock } from "lucide-react";
 import { formatRupiah } from "../../Utils/formatters";
 import { useAuthStore } from "../../Stores/useAuthStore";
 

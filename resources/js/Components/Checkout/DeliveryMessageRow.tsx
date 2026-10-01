@@ -1,4 +1,4 @@
-import { MessageSquare, ChevronRight, Edit3 } from "lucide-react";
+import { MessageSquare, ChevronRight } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 interface DeliveryMessageRowProps {
@@ -35,6 +35,7 @@ export default function DeliveryMessageRow({
                 hasMessage
                     ? "border-red-200/80 bg-red-50/30 hover:bg-red-50/50 shadow-2xs"
                     : "border-slate-200/90 bg-slate-50/60 hover:bg-slate-100/70 hover:border-slate-300",
+                className,
             )}
         >
             <div className="flex items-center gap-2.5 min-w-0 pr-2">

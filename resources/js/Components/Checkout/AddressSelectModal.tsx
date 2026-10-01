@@ -51,9 +51,9 @@ export default function AddressSelectModal({
     className,
 }: AddressSelectModalProps) {
     const isVisible = Boolean(isOpen);
-    const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [deletingId, setDeletingId] = useState<number | string | null>(null);
 
-    const handleHapusAlamat = (e: React.MouseEvent, id: number) => {
+    const handleHapusAlamat = (e: React.MouseEvent, id: number | string) => {
         e.stopPropagation();
         if (
             !window.confirm(

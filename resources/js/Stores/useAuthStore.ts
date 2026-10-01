@@ -182,7 +182,7 @@ export const useAuthStore = create<AuthState>()(
                     return;
                 }
 
-                const u = user as Record<string, unknown>;
+                const u = user as unknown as Record<string, unknown>;
                 const normalized: UserProfile = {
                     id: Number(u.id),
                     nama: String(u.nama || u.name || "Pelanggan CRSL"),

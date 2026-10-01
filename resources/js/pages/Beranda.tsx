@@ -33,7 +33,6 @@ interface BerandaProps {
 }
 
 export default function Beranda({
-    kategori = [],
     produkBestSeller = [],
     produkTerbaru = [],
     produkPromo = [],

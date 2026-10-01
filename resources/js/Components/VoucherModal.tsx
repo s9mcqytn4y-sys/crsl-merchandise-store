@@ -207,11 +207,6 @@ export default function VoucherModal({
                                             const isCopied =
                                                 copiedCode === v.kode;
 
-                                            const isShipping =
-                                                v.tipe === "ongkir";
-                                            const isPercent =
-                                                v.tipe === "persen" ||
-                                                v.tipe === "persentase";
 
                                             return (
                                                 <div

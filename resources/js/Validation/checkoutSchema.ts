@@ -6,9 +6,7 @@ const postalCodeRegex = /^[0-9]{5}$/;
 
 // Skema Item Pembelian dalam Order
 export const orderItemSchema = z.object({
-    id: z.union([z.number(), z.string()], {
-        required_error: "ID produk wajib diisi.",
-    }),
+    id: z.union([z.number(), z.string()]),
     varian_id: z.union([z.number(), z.string()]).nullish(),
     nama: z.string().min(1, "Nama produk tidak boleh kosong."),
     harga: z.number().nonnegative("Harga produk tidak boleh negatif."),

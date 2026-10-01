@@ -17,8 +17,8 @@ createInertiaApp({
         resolvePageComponent(
             `./pages/${name}.tsx`,
             import.meta.glob("./pages/**/*.tsx"),
-        ),
-    setup({ el, App, props }) {
+        ) as any,
+    setup({ el, App, props }: any) {
         if (!el) {
             throw new Error("Root element #app tidak ditemukan.");
         }

@@ -73,7 +73,7 @@ export default function ProfileLayout({
 
     const {
         isSearchOpen,
-        isMenuOpen,
+        isMobileMenuOpen: isMenuOpen,
         isPrefOpen,
         country,
         language,

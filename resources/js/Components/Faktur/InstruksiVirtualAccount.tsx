@@ -64,7 +64,6 @@ export default function InstruksiVirtualAccount({
     metodeBayar = "Virtual Account",
     nomorVa,
     instruksiBayar,
-    nomorPesanan,
     isDevMode = Boolean(import.meta.env.DEV),
     onRefreshVa,
 }: InstruksiVirtualAccountProps) {

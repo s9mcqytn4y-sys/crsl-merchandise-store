@@ -83,7 +83,7 @@ const DEFAULT_PRODUK_FILTER: AdminProdukFilter = {
 
 export const useAdminStore = create<AdminState>()(
     persist(
-        (set, get) => ({
+        (set) => ({
             // Sidebar
             isSidebarCollapsed: false,
             activeSidebarMenu: "dashboard",

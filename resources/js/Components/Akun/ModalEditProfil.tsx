@@ -19,7 +19,6 @@ export default function ModalEditProfil({
 }: ModalEditProfilProps) {
     const [nama, setNama] = useState(user?.name || '');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isKonfirmasiHapus, setIsKonfirmasiHapus] = useState(false);
 
     if (!isOpen) return null;
 

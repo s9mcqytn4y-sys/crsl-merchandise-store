@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useId } from "react";
+import React, { useState, useEffect } from "react";
 import { Head, Link, usePage } from "@inertiajs/react";
 import StorefrontLayout from "../Layouts/StorefrontLayout";
 import KartuLoyalitas from "../Components/Akun/KartuLoyalitas";
@@ -10,7 +10,7 @@ import ModalLoyaltyTiers, {
 } from "../Components/Akun/ModalLoyaltyTiers";
 import { useAuthStore } from "../Stores/useAuthStore";
 import { toast } from "sonner";
-import { User, Settings, ShoppingBag, Heart, ShieldCheck } from "lucide-react";
+import { Settings, ShoppingBag, Heart, ShieldCheck } from "lucide-react";
 import { cn } from "../lib/utils";
 
 export interface UserAccountData {
@@ -308,9 +308,10 @@ function useMemoTabFromUrl(
     url: string,
     defaultTab: "orders" | "wishlist",
 ): "orders" | "wishlist" {
-    if (typeof window === "undefined") return defaultTab;
+    if (typeof window === "undefined" && !url) return defaultTab;
     try {
-        const params = new URLSearchParams(window.location.search);
+        const search = url && url.includes("?") ? url.split("?")[1] : (typeof window !== "undefined" ? window.location.search : "");
+        const params = new URLSearchParams(search);
         const queryTab = params.get("tab");
         if (queryTab === "wishlist" || queryTab === "orders") {
             return queryTab;

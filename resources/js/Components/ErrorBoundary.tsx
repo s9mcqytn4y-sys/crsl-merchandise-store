@@ -58,10 +58,6 @@ export default class ErrorBoundary extends Component<Props, State> {
         });
     };
 
-    private handleReload = () => {
-        window.location.reload();
-    };
-
     private handleGoHome = () => {
         window.location.href = "/";
     };
