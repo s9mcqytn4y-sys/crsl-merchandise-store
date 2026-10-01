@@ -28,8 +28,8 @@ declare(strict_types=1);
         'email' => config('mail.default'),
         'midtrans_produksi' => config('services.midtrans.is_production'),
         'midtrans_terkonfigurasi' => filled(config('services.midtrans.server_key')),
-        'rajaongkir_terkonfigurasi' => filled(config('services.rajaongkir.api_key')),
         'biteship_terkonfigurasi' => filled(config('services.biteship.api_key')),
+        'biteship_zero_balance' => config('services.biteship.testing_zero_balance'),
         'ekstensi' => array_intersect(['pdo_pgsql', 'pdo_sqlite', 'mbstring', 'openssl'], get_loaded_extensions()),
     ]);
     $daftarPaket = json_decode(file_get_contents(base_path('package-lock.json')), true, flags: JSON_THROW_ON_ERROR);

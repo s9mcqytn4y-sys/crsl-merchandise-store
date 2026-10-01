@@ -55,6 +55,14 @@ interface KeranjangState {
         },
         jumlah?: number,
     ) => void;
+    tambahItem: (
+        item: Partial<KeranjangItem> & {
+            produk_id: number;
+            nama_produk: string;
+            harga: number;
+        },
+        jumlah?: number,
+    ) => void;
     perbaruiJumlah: (id: string | number, jumlah: number) => void;
     ubahJumlah: (id: string | number, delta: number) => void;
     hapus: (id: string | number) => void;
@@ -144,6 +152,10 @@ export const useKeranjangStore = create<KeranjangState>()(
                     };
                     set({ items: [...currentItems, newItem] });
                 }
+            },
+
+            tambahItem: (itemBaru, jumlah = 1) => {
+                get().tambah(itemBaru, jumlah);
             },
 
             perbaruiJumlah: (id, jumlah) => {

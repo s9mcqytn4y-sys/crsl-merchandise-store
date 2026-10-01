@@ -40,7 +40,7 @@ Route::get('/checkout', [PembayaranController::class, 'index'])->name('checkout'
 Route::post('/checkout', [PembayaranController::class, 'proses'])->name('checkout.proses');
 Route::post('/checkout/proses', [PembayaranController::class, 'proses'])->name('checkout.proses.alias');
 
-// Endpoint Layanan Ekspedisi RajaOngkir (Checkout & Form Alamat)
+// Endpoint Layanan Ekspedisi Biteship (Checkout & Form Alamat)
 Route::post('/checkout/cek-ongkir', [PembayaranController::class, 'cekOngkir'])->name('checkout.cek-ongkir');
 Route::get('/checkout/cari-kota', [PembayaranController::class, 'cariKota'])->name('checkout.cari-kota');
 
@@ -76,11 +76,9 @@ Route::post('/profile/account/hapus', [AuthController::class, 'hapusAkun'])->nam
 
 Route::post('/wishlist/toggle', [AkunController::class, 'toggleWishlist'])->name('wishlist.toggle');
 
-// API Wilayah & Ongkir (Mendukung Endpoint RajaOngkir & Fallback Wilayah)
-Route::get('/api/wilayah/cari', [PembayaranController::class, 'cariKota'])->name('api.wilayah.cari');
-Route::post('/api/wilayah/ongkir', [PembayaranController::class, 'cekOngkir'])->name('api.wilayah.ongkir');
-Route::get('/api/rajaongkir/kota', [PembayaranController::class, 'cariKota'])->name('api.rajaongkir.kota');
-Route::post('/api/rajaongkir/ongkir', [PembayaranController::class, 'cekOngkir'])->name('api.rajaongkir.ongkir');
+// API Wilayah & Ongkir Biteship
+Route::get('/api/wilayah/cari', [WilayahController::class, 'cari'])->name('api.wilayah.cari');
+Route::post('/api/wilayah/ongkir', [WilayahController::class, 'ongkir'])->name('api.wilayah.ongkir');
 
 // API Voucher, Webhook Midtrans, Webhook Biteship & Status Realtime
 Route::post('/api/voucher/validasi', [PembayaranController::class, 'validasiVoucher'])->name('api.voucher.validasi');

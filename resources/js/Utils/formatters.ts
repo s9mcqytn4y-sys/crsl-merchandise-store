@@ -13,11 +13,12 @@ const rupiahFormatter = new Intl.NumberFormat("id-ID", {
 /**
  * Format angka numerik ke format Rupiah standar Indonesia (misal: "Rp 197.100").
  */
-export const formatRupiah = (num: number | null | undefined): string => {
-    if (typeof num !== "number" || isNaN(num)) {
+export const formatRupiah = (num: string | number | null | undefined): string => {
+    const val = typeof num === "string" ? parseFloat(num) : num;
+    if (typeof val !== "number" || isNaN(val)) {
         return rupiahFormatter.format(0);
     }
-    return rupiahFormatter.format(num);
+    return rupiahFormatter.format(val);
 };
 
 // Inisialisasi date formatter terpusat

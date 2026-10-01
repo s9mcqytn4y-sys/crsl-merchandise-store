@@ -343,7 +343,7 @@ export default function TrackOrder({
         "Alamat tidak tercatat";
 
     const recipientNotes =
-        parsedPayload.catatan || activeOrder?.pengiriman?.catatan;
+        parsedPayload.catatan || (activeOrder?.pengiriman as { catatan?: string } | undefined)?.catatan;
 
     const hasWaybill = Boolean(activeOrder?.pengiriman?.nomor_resi);
 

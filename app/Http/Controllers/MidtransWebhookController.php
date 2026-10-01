@@ -53,9 +53,28 @@ class MidtransWebhookController extends Controller
             return response()->json(['sukses' => false, 'pesan' => 'Signature Key tidak valid'], 403);
         }
 
-        // Bersihkan suffix attempt (misal: INV-CRSL-20260927-0001-A2 -> INV/CRSL/20260927/0001)
-        $cleanOrderId = preg_replace('/-A\d+$/i', '', $orderId);
-        $nomorPesananAsli = str_replace('-', '/', $cleanOrderId);
+        // Identifikasi kandidat nomor pesanan:
+        // Format pesanan CRSL: INV/CRSL/YYYYMMDD/XXXX atau INV/CRSL/YYYYMMDD/XXXX-SUFFIX
+        // Midtrans mengirim orderId dengan dash (-) sebagai pengganti slash (/)
+        $cleanOrderId = preg_replace('/-[AQ]\d+$/i', '', $orderId);
+        $cleanOrderIdFallback = preg_replace('/-[A-Za-z0-9]+$/i', '', $orderId);
+
+        // Ubah 3 dash pertama menjadi slash agar suffix seperti -XYZ atau -Q1 tetap utuh
+        $slashFirstThree = preg_replace('/^([^-]+)-([^-]+)-([^-]+)-/', '$1/$2/$3/', $orderId);
+        $cleanSlashFirstThree = preg_replace('/^([^-]+)-([^-]+)-([^-]+)-/', '$1/$2/$3/', $cleanOrderId);
+        $cleanFallbackSlashFirstThree = preg_replace('/^([^-]+)-([^-]+)-([^-]+)-/', '$1/$2/$3/', $cleanOrderIdFallback);
+        
+        $kandidatNomor = array_unique(array_filter([
+            $orderId,
+            $slashFirstThree,
+            str_replace('-', '/', $orderId),
+            $cleanOrderId,
+            $cleanSlashFirstThree,
+            str_replace('-', '/', $cleanOrderId),
+            $cleanOrderIdFallback,
+            $cleanFallbackSlashFirstThree,
+            str_replace('-', '/', $cleanOrderIdFallback),
+        ]));
 
         $needsSendEmail = false;
         $orderToSend = null;
@@ -65,15 +84,13 @@ class MidtransWebhookController extends Controller
 
             /** @var Pesanan|null $pesanan */
             $pesanan = Pesanan::with(['pengguna', 'pengiriman', 'pembayaran', 'items'])
-                ->where('nomor_pesanan', $nomorPesananAsli)
-                ->orWhere('nomor_pesanan', $cleanOrderId)
-                ->orWhere('nomor_pesanan', $orderId)
+                ->whereIn('nomor_pesanan', $kandidatNomor)
                 ->lockForUpdate()
                 ->first();
 
             if (!$pesanan) {
                 DB::rollBack();
-                Log::warning("Midtrans Webhook Order Not Found: {$orderId} (Raw: {$nomorPesananAsli})");
+                Log::warning("Midtrans Webhook Order Not Found: {$orderId} (Kandidat: " . implode(', ', $kandidatNomor) . ")");
                 return response()->json(['sukses' => true, 'pesan' => 'Pesanan tidak ditemukan di database'], 200);
             }
 
@@ -97,7 +114,7 @@ class MidtransWebhookController extends Controller
             }
 
             // 3. Cek Idempotensi
-            if (in_array($pesanan->status, ['akan_dikirim', 'dikirim', 'selesai', 'dibatalkan'])) {
+            if (in_array($pesanan->status, ['akan_dikirim', 'dikirim', 'selesai', 'dibatalkan', 'expired'])) {
                 DB::rollBack();
                 return response()->json(['sukses' => true, 'pesan' => 'Pesanan sudah berada di status terminal']);
             }

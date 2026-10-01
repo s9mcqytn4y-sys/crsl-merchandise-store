@@ -1,23 +1,8 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-export interface AddressItem {
-    id: number | string;
-    label?: string;
-    nama_penerima: string;
-    telepon: string;
-    email?: string;
-    area_id?: string;
-    biteship_area_id?: string;
-    provinsi?: string;
-    kota?: string;
-    kecamatan?: string;
-    kelurahan?: string;
-    kode_pos?: string;
-    alamat_lengkap: string;
-    format_lengkap?: string;
-    adalah_utama?: boolean;
-}
+import { AddressItem } from "../Components/Checkout/AddressSelectModal";
+export type { AddressItem };
 
 interface CheckoutState {
     // 1. Modal States (UI Only - Tidak Dipersist)

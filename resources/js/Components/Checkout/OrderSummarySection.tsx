@@ -28,9 +28,9 @@ export interface CartItem {
     harga?: number;
     harga_asli?: number;
     jumlah?: number;
-    gambar?: string;
-    ukuran?: string;
-    warna?: string;
+    gambar?: string | null;
+    ukuran?: string | null;
+    warna?: string | null;
     is_bundle?: boolean;
     bundle_name?: string;
     sub_items?: BundleSubItemPayload[];

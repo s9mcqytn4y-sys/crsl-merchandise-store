@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Domains\Pembayaran\Services\MidtransService;
-use App\Domains\Pengiriman\Services\RajaOngkirService;
+use App\Domains\Pengiriman\Services\BiteshipService;
 use App\Domains\Pesanan\Actions\BuatPesananAction;
 use App\Models\AlamatPengguna;
 use App\Models\Keranjang;
@@ -24,7 +24,7 @@ class PembayaranController extends Controller
 {
     public function __construct(
         protected MidtransService $midtransService,
-        protected RajaOngkirService $rajaOngkirService,
+        protected BiteshipService $biteshipService,
         protected BuatPesananAction $buatPesananAction
     ) {}
 
@@ -165,47 +165,45 @@ class PembayaranController extends Controller
     }
 
     /**
-     * Hitung ongkos kirim real-time ke RajaOngkir dari halaman checkout.
+     * Hitung ongkos kirim real-time dari halaman checkout via BiteshipService.
      */
     public function cekOngkir(Request $request): JsonResponse
     {
-        $request->validate([
-            'destination_city_id' => 'required|string',
-            'kurir' => 'nullable|string',
-            'items' => 'nullable|array',
-            'berat' => 'nullable|integer|min:1',
-        ]);
+        $destinationAreaId = (string) (
+            $request->input('biteship_area_id')
+            ?? $request->input('destination_area_id')
+            ?? $request->input('area_id')
+            ?? $request->input('destination_city_id')
+            ?? $request->input('city_id')
+            ?? ''
+        );
 
-        $destinationCityId = trim($request->input('destination_city_id'));
-        $kurir = $request->input('kurir', 'jne,pos,tiki');
+        $kurir = (string) $request->input('kurir', 'jne,jnt,sicepat,anteraja');
 
         $items = $request->input('items');
         if (empty($items)) {
             $items = session()->get('keranjang', []);
         }
 
-        $beratGram = (int) $request->input('berat', 0);
-        $payloadWeight = $beratGram > 0 ? $beratGram : (array) $items;
-
-        $rates = $this->rajaOngkirService->kalkulasiOngkir($destinationCityId, $payloadWeight, $kurir);
+        $rates = $this->biteshipService->kalkulasiOngkir($destinationAreaId, (array) $items, $kurir);
 
         return response()->json([
             'sukses' => true,
-            'data' => $rates,
+            'data'   => $rates,
         ]);
     }
 
     /**
-     * Endpoint autocomplete/search database kota RajaOngkir untuk dropdown alamat.
+     * Endpoint autocomplete/search database area untuk dropdown alamat.
      */
     public function cariKota(Request $request): JsonResponse
     {
-        $keyword = (string) $request->input('q', '');
-        $hasil = $this->rajaOngkirService->cariKota($keyword);
+        $keyword = (string) ($request->input('q') ?? $request->input('keyword') ?? '');
+        $hasil = $this->biteshipService->cariArea($keyword);
 
         return response()->json([
             'sukses' => true,
-            'data' => array_slice($hasil, 0, 20),
+            'data'   => array_slice($hasil, 0, 20),
         ]);
     }
 

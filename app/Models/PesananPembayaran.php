@@ -16,12 +16,14 @@ class PesananPembayaran extends Model
         'pesanan_id',
         'metode_bayar',
         'midtrans_id',
+        'midtrans_transaction_id',
         'midtrans_status',
         'nomor_va',
         'kode_biller',
         'qr_string',
         'qr_code_url',
         'waktu_kedaluwarsa',
+        'batas_waktu',
         'waktu_bayar',
         'instruksi_bayar',
         'payment_payload',
@@ -29,6 +31,7 @@ class PesananPembayaran extends Model
 
     protected $casts = [
         'waktu_kedaluwarsa' => 'datetime',
+        'batas_waktu' => 'datetime',
         'waktu_bayar' => 'datetime',
         'instruksi_bayar' => 'array',
         'payment_payload' => 'array',

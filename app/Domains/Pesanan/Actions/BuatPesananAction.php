@@ -6,7 +6,7 @@ namespace App\Domains\Pesanan\Actions;
 
 use App\Domains\Inventori\Services\InventoriService;
 use App\Domains\Pembayaran\Services\MidtransService;
-use App\Domains\Pengiriman\Services\RajaOngkirService;
+use App\Domains\Pengiriman\Services\BiteshipService;
 use App\Models\AlamatPengguna;
 use App\Models\ItemPesanan;
 use App\Models\PenggunaLoyalitas;
@@ -27,7 +27,7 @@ class BuatPesananAction
 {
     public function __construct(
         protected InventoriService $inventoriService,
-        protected RajaOngkirService $rajaOngkirService,
+        protected BiteshipService $biteshipService,
         protected MidtransService $midtransService
     ) {}
 
@@ -38,6 +38,23 @@ class BuatPesananAction
 
     public function execute(array $dataInput, array $keranjang = [], ?int $penggunaId = null): Pesanan
     {
+        // 0. Proteksi Idempotensi Checkout Berulang
+        $idempotencyKey = (string)($dataInput['idempotency_key'] ?? '');
+        if (!empty($idempotencyKey)) {
+            $cachedPesananId = Cache::get("idempotency_order:{$idempotencyKey}");
+            if ($cachedPesananId) {
+                $existingPesanan = Pesanan::find($cachedPesananId);
+                if ($existingPesanan) {
+                    return $existingPesanan;
+                }
+            }
+        }
+
+        // Validasi input ongkir tidak boleh negatif jika dikirim
+        if (isset($dataInput['ongkir']) && (float)$dataInput['ongkir'] < 0) {
+            throw new Exception("Biaya ongkos kirim tidak boleh bernilai negatif.");
+        }
+
         // Normalisasi format item keranjang
         if (isset($dataInput['items']) && !isset($keranjang['items']) && !isset($keranjang[0])) {
             $temp = $keranjang;
@@ -57,21 +74,24 @@ class BuatPesananAction
         $itemsDiproses = $validatedCart['items'];
         $totalBeratGram = $validatedCart['total_berat'];
 
-        // 2. Resolusi ID Kota Tujuan RajaOngkir
-        $cityId = $this->resolveDestinationCityId($dataInput);
+        // 2. Resolusi ID Area Tujuan Biteship (Server-Authoritative)
+        $areaId = $this->resolveDestinationAreaId($dataInput);
 
-        // 3. Tentukan Ongkir & Layanan Kurir
-        $biayaOngkir = isset($dataInput['ongkir']) ? (float)$dataInput['ongkir'] : null;
-        $layananKurir = $dataInput['layanan_kurir'] ?? null;
+        // 3. Kalkulasi Server-Authoritative Ongkir & Layanan Kurir
         $kurirDipilih = strtolower((string)($dataInput['kurir'] ?? 'jne'));
+        $layananInput = strtolower((string)($dataInput['layanan_kurir'] ?? $dataInput['layanan'] ?? ''));
 
-        if ($biayaOngkir === null) {
-            $rates = $this->rajaOngkirService->kalkulasiOngkir($cityId, $totalBeratGram, $kurirDipilih);
-            $matchedRate = collect($rates)->firstWhere('kurir_kode', $kurirDipilih) ?? collect($rates)->first();
+        $rates = $this->biteshipService->kalkulasiOngkir($areaId, $itemsDiproses, $kurirDipilih);
 
-            $biayaOngkir = (float)($matchedRate['harga'] ?? 18000);
-            $layananKurir = $matchedRate['layanan_kode'] ?? ($matchedRate['layanan'] ?? 'reg');
-        }
+        $matchedRate = collect($rates)->first(function ($r) use ($kurirDipilih, $layananInput) {
+            $rKurir = strtolower((string)($r['kurir_kode'] ?? $r['kurir'] ?? ''));
+            $rLayanan = strtolower((string)($r['layanan_kode'] ?? $r['layanan'] ?? ''));
+            return $rKurir === $kurirDipilih && (!empty($layananInput) ? $rLayanan === $layananInput : true);
+        }) ?? collect($rates)->firstWhere('kurir_kode', $kurirDipilih) ?? collect($rates)->first();
+
+        // Nilai ongkir mutlak ditentukan oleh backend (Server-Authoritative)
+        $biayaOngkir = (float)($matchedRate['harga'] ?? $matchedRate['biaya'] ?? 18000);
+        $layananKurir = $matchedRate['layanan_kode'] ?? ($matchedRate['layanan'] ?? ($layananInput ?: 'reg'));
 
         $namaPenerima = $dataInput['nama_penerima'] ?? $dataInput['nama_lengkap'] ?? 'Pelanggan';
 
@@ -80,10 +100,11 @@ class BuatPesananAction
             $dataInput,
             $itemsDiproses,
             $subtotal,
+            $totalBeratGram,
             $biayaOngkir,
             $layananKurir,
             $kurirDipilih,
-            $cityId,
+            $areaId,
             $namaPenerima,
             $penggunaId
         ) {
@@ -101,6 +122,10 @@ class BuatPesananAction
 
                 if (!$voucher) {
                     throw new Exception("Voucher tidak valid atau sudah tidak aktif.");
+                }
+
+                if ($voucher->berlaku_sampai && now()->greaterThan($voucher->berlaku_sampai)) {
+                    throw new Exception("Voucher {$voucher->kode} telah kedaluwarsa.");
                 }
 
                 $minBelanja = (float)($voucher->min_belanja ?? $voucher->minimal_belanja ?? 0);
@@ -154,7 +179,11 @@ class BuatPesananAction
 
             $totalDiskon = $diskonVoucher + $poinDigunakan;
             $asuransi = !empty($dataInput['asuransi_pengiriman']);
-            $biayaAsuransi = $asuransi ? (float)($dataInput['biaya_asuransi'] ?? 2500) : 0;
+            $rawAsuransi = (float)($dataInput['biaya_asuransi'] ?? 2500);
+            if ($asuransi && $rawAsuransi < 0) {
+                throw new Exception("Biaya asuransi pengiriman tidak boleh bernilai negatif.");
+            }
+            $biayaAsuransi = $asuransi ? max(0, $rawAsuransi) : 0;
 
             $total = (int) round(max(0, ($subtotal + $biayaOngkir + $biayaAsuransi) - $totalDiskon));
             $isDropship = !empty($dataInput['is_dropship']);
@@ -192,7 +221,7 @@ class BuatPesananAction
                 AlamatPengguna::firstOrCreate(
                     [
                         'pengguna_id' => $penggunaId,
-                        'area_id' => $cityId,
+                        'area_id' => $areaId,
                         'alamat_lengkap' => $dataInput['alamat_lengkap'] ?? '',
                     ],
                     [
@@ -238,7 +267,8 @@ class BuatPesananAction
                     'kota' => $dataInput['kota'] ?? '',
                     'kecamatan' => $dataInput['kecamatan'] ?? '',
                     'kode_pos' => $dataInput['kode_pos'] ?? '',
-                    'city_id' => $cityId,
+                    'area_id' => $areaId,
+                    'destination_area_id' => $areaId,
                     'total_berat_gram' => $totalBeratGram,
                 ],
             ]);
@@ -303,6 +333,10 @@ class BuatPesananAction
 
             Log::info("Pesanan Domain Action Success: Nomor {$statePesanan['nomor_pesanan']}, Total: {$statePesanan['total']}");
 
+            if (!empty($idempotencyKey)) {
+                Cache::put("idempotency_order:{$idempotencyKey}", $pesanan->id, now()->addHours(1));
+            }
+
             return $pesanan;
         } catch (Exception $e) {
             $this->kompensasiKegagalanPembayaran($pesanan, $statePesanan, $penggunaId);
@@ -338,8 +372,8 @@ class BuatPesananAction
             }
         }
 
-        $varianIds = array_values(array_unique(array_filter($varianIds)));
-        $produkIds = array_values(array_unique(array_filter($produkIds)));
+        $varianIds = array_values(array_unique(array_filter($varianIds, fn($v) => $v !== 0 && $v !== null)));
+        $produkIds = array_values(array_unique(array_filter($produkIds, fn($p) => $p !== 0 && $p !== null)));
 
         $varians = !empty($varianIds)
             ? ProdukVarian::with('produk')->whereIn('id', $varianIds)->get()->keyBy('id')
@@ -363,21 +397,25 @@ class BuatPesananAction
             }
 
             $numericRawId = is_numeric($rawId) ? (int)$rawId : 0;
-            $jumlah = max(1, (int)($item['jumlah'] ?? $item['quantity'] ?? 1));
+            $rawJumlah = (int)($item['jumlah'] ?? $item['quantity'] ?? 1);
+            if ($rawJumlah <= 0) {
+                throw new Exception("Jumlah item belanja harus lebih dari 0.");
+            }
+            $jumlah = $rawJumlah;
 
             // Resolusi Model Varian
             $varian = null;
-            if ($vid > 0 && $varians->has($vid)) {
+            if ($vid !== 0 && $varians->has($vid)) {
                 $varian = $varians->get($vid);
-            } elseif ($vid === 0 && $numericRawId > 0 && $varians->has($numericRawId)) {
+            } elseif ($vid === 0 && $numericRawId !== 0 && $varians->has($numericRawId)) {
                 $varian = $varians->get($numericRawId);
             }
 
             // Resolusi Model Produk
             $produk = null;
-            if ($pid > 0 && $produks->has($pid)) {
+            if ($pid !== 0 && $produks->has($pid)) {
                 $produk = $produks->get($pid);
-            } elseif ($numericRawId > 0 && $produks->has($numericRawId)) {
+            } elseif ($numericRawId !== 0 && $produks->has($numericRawId)) {
                 $produk = $produks->get($numericRawId);
             }
 
@@ -399,6 +437,19 @@ class BuatPesananAction
                 ]);
                 $displayIdx = is_numeric($index) ? ((int)$index + 1) : $index;
                 throw new Exception("Produk atau varian tidak ditemukan di database (Item #{$displayIdx}).");
+            }
+
+            // Validasi Integritas Pasangan Produk & Varian
+            if ($produk && $varian && (int)$varian->produk_id !== (int)$produk->id) {
+                throw new Exception("Varian '{$varian->nama_varian}' tidak sesuai dengan produk '{$produk->nama}'.");
+            }
+
+            // Validasi Status Aktif
+            if ($varian && !$varian->aktif) {
+                throw new Exception("Varian '{$varian->nama_varian}' sedang tidak aktif.");
+            }
+            if ($produk && !$produk->aktif) {
+                throw new Exception("Produk '{$produk->nama}' sedang tidak aktif.");
             }
 
             $hargaDb = (float)($varian?->harga ?? 0);
@@ -446,33 +497,35 @@ class BuatPesananAction
     }
 
     /**
-     * Resolusi ID Kota Tujuan RajaOngkir (Mendukung ID angka langsung, maupun nama kota string).
+     * Resolusi ID Area Tujuan Biteship (Server-Authoritative).
      */
-    protected function resolveDestinationCityId(array $dataInput): string
+    protected function resolveDestinationAreaId(array $dataInput): string
     {
-        $candidate = (string)(
-            $dataInput['destination_city_id']
+        $candidate = trim((string)(
+            $dataInput['biteship_area_id']
+            ?? $dataInput['destination_area_id']
+            ?? $dataInput['area_id']
+            ?? $dataInput['destination_city_id']
             ?? $dataInput['city_id']
-            ?? $dataInput['rajaongkir_city_id']
-            ?? $dataInput['id_kota']
             ?? ''
-        );
+        ));
 
-        if (is_numeric(trim($candidate)) && (int)$candidate > 0) {
-            return trim($candidate);
+        // Jika candidate format Biteship Area ID (panjang > 10 karakter, contoh IDNP... )
+        if (strlen($candidate) > 10) {
+            return $candidate;
         }
 
-        // Jika hanya dikirim nama kota, cari ID-nya via RajaOngkirService
-        $namaKota = trim((string)($dataInput['kota'] ?? ''));
-        if (!empty($namaKota)) {
-            $hasilKota = $this->rajaOngkirService->cariKota($namaKota);
-            if (!empty($hasilKota[0]['city_id'])) {
-                return (string)$hasilKota[0]['city_id'];
+        // Jika hanya dikirim nama kecamatan atau kota, cari via BiteshipService (Master Data Wilayah / Maps)
+        $namaPencarian = trim((string)($dataInput['kecamatan'] ?? $dataInput['kota'] ?? ''));
+        if (!empty($namaPencarian)) {
+            $hasilArea = $this->biteshipService->cariArea($namaPencarian);
+            if (!empty($hasilArea[0]['id'])) {
+                return (string) $hasilArea[0]['id'];
             }
         }
 
-        // Default ID Kota fallback (contoh: 419 untuk Sleman, DI Yogyakarta)
-        return (string)config('services.rajaongkir.default_destination_city_id', '419');
+        // Default Area ID fallback: Depok, Sleman, D.I. Yogyakarta (gudang asal CRSL)
+        return (string) config('services.biteship.origin_area_id', 'IDNP5IDNC412IDND5043IDZ55281');
     }
 
     protected function kompensasiKegagalanPembayaran(Pesanan $pesanan, array $state, ?int $penggunaId): void

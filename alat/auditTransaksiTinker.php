@@ -6,7 +6,7 @@ use App\Domains\Autentikasi\Services\AuthService;
 use App\Domains\Autentikasi\Services\OtpService;
 use App\Domains\Inventori\Services\InventoriService;
 use App\Domains\Pembayaran\Services\MidtransService;
-use App\Domains\Pengiriman\Services\RajaOngkirService;
+use App\Domains\Pengiriman\Services\BiteshipService;
 use App\Domains\Pesanan\Actions\BuatPesananAction;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MidtransWebhookController;
@@ -121,19 +121,31 @@ use Illuminate\Support\Facades\Mail;
         return [$keranjang['subtotal'] === 100000.0, ['subtotal' => $keranjang['subtotal']]];
     });
     $jalankan('T02', 'Ongkir negatif ditolak', static function () use ($buatCheckout): array {
-        $pesanan = $buatCheckout(['ongkir' => -90000]);
-        return [false, ['ongkir' => $pesanan->ongkir, 'total' => $pesanan->total]];
+        try {
+            $pesanan = $buatCheckout(['ongkir' => -90000]);
+            return [false, ['ongkir' => $pesanan->ongkir, 'total' => $pesanan->total]];
+        } catch (\Throwable $e) {
+            return [true, ['pesan' => $e->getMessage()]];
+        }
     });
     $jalankan('T03', 'Jumlah negatif ditolak', static function () use ($buatProduk, $validasiKeranjang): array {
         [$produk, $varian] = $buatProduk();
-        $keranjang = $validasiKeranjang([['produk_id' => $produk->id, 'varian_id' => $varian->id, 'jumlah' => -4]]);
-        return [false, ['jumlah_diterima' => $keranjang['items'][0]['jumlah']]];
+        try {
+            $keranjang = $validasiKeranjang([['produk_id' => $produk->id, 'varian_id' => $varian->id, 'jumlah' => -4]]);
+            return [false, ['jumlah_diterima' => $keranjang['items'][0]['jumlah']]];
+        } catch (\Throwable $e) {
+            return [true, ['pesan' => $e->getMessage()]];
+        }
     });
     $jalankan('T04', 'Pasangan produk dan varian berbeda ditolak', static function () use ($buatProduk, $validasiKeranjang): array {
         [, $varian] = $buatProduk();
         $produkLain = Produk::where('id', '>', 0)->firstOrFail();
-        $keranjang = $validasiKeranjang([['produk_id' => $produkLain->id, 'varian_id' => $varian->id, 'jumlah' => 1]]);
-        return [false, ['produk_diterima' => $keranjang['items'][0]['produk_id'], 'produk_pemilik_varian' => $varian->produk_id]];
+        try {
+            $keranjang = $validasiKeranjang([['produk_id' => $produkLain->id, 'varian_id' => $varian->id, 'jumlah' => 1]]);
+            return [false, ['produk_diterima' => $keranjang['items'][0]['produk_id'], 'produk_pemilik_varian' => $varian->produk_id]];
+        } catch (\Throwable $e) {
+            return [true, ['pesan' => $e->getMessage()]];
+        }
     });
     $jalankan('T05', 'Inventori menolak stok tidak cukup', static function () use ($buatProduk): array {
         [, $varian] = $buatProduk();
@@ -147,18 +159,30 @@ use Illuminate\Support\Facades\Mail;
     $jalankan('T06', 'Inventori menolak varian nonaktif', static function () use ($buatProduk): array {
         [, $varian] = $buatProduk();
         $varian->update(['aktif' => false]);
-        app(InventoriService::class)->kunciDanKurangiStok([['varian_id' => $varian->id, 'jumlah' => 1]]);
-        return [false, ['stok' => $varian->fresh()->stok]];
+        try {
+            app(InventoriService::class)->kunciDanKurangiStok([['varian_id' => $varian->id, 'jumlah' => 1]]);
+            return [false, ['stok' => $varian->fresh()->stok]];
+        } catch (\Throwable $e) {
+            return [true, ['pesan' => $e->getMessage()]];
+        }
     });
     $jalankan('T07', 'Voucher kedaluwarsa ditolak saat membuat pesanan', static function () use ($buatCheckout): array {
         Voucher::create(['kode' => 'AUDITKEDALUWARSA', 'judul' => 'Voucher audit', 'nilai' => 50000, 'tipe' => 'nominal', 'min_belanja' => 0, 'kuota' => 10, 'aktif' => true, 'berlaku_sampai' => now()->subDay()]);
-        $pesanan = $buatCheckout(['kode_voucher' => 'AUDITKEDALUWARSA']);
-        return [false, ['diskon' => $pesanan->diskon, 'total' => $pesanan->total]];
+        try {
+            $pesanan = $buatCheckout(['kode_voucher' => 'AUDITKEDALUWARSA']);
+            return [false, ['diskon' => $pesanan->diskon, 'total' => $pesanan->total]];
+        } catch (\Throwable $e) {
+            return [true, ['pesan' => $e->getMessage()]];
+        }
     });
     $jalankan('T08', 'Faktur pengguna tidak dapat dibaca tamu', static function () use ($buatPengguna, $buatPesanan): array {
         $pesanan = $buatPesanan($buatPengguna()->id);
-        $respons = app(PesananController::class)->faktur($pesanan->nomor_pesanan);
-        return [false, ['kelas_respons' => $respons::class, 'tamu' => Auth::guest()]];
+        try {
+            $respons = app(PesananController::class)->faktur($pesanan->nomor_pesanan);
+            return [false, ['kelas_respons' => $respons::class, 'tamu' => Auth::guest()]];
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            return [$e->getStatusCode() === 403, ['http' => $e->getStatusCode()]];
+        }
     });
     $jalankan('T09', 'Tamu tidak dapat membatalkan pesanan pengguna', static function () use ($buatPengguna, $buatPesanan): array {
         $pesanan = $buatPesanan($buatPengguna()->id);
@@ -170,8 +194,12 @@ use Illuminate\Support\Facades\Mail;
         $lingkungan = app()->environment();
         try {
             app()->instance('env', 'production');
-            app(PesananController::class)->simulasiBayarDev($pesanan->nomor_pesanan);
-            return [$pesanan->fresh()->status === 'belum_bayar', ['status' => $pesanan->fresh()->status, 'lingkungan_proses' => app()->environment()]];
+            try {
+                app(PesananController::class)->simulasiBayarDev($pesanan->nomor_pesanan);
+                return [false, ['status' => $pesanan->fresh()->status]];
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+                return [$e->getStatusCode() === 403 && $pesanan->fresh()->status === 'belum_bayar', ['http' => $e->getStatusCode()]];
+            }
         } finally {
             app()->instance('env', $lingkungan);
         }
@@ -254,14 +282,18 @@ use Illuminate\Support\Facades\Mail;
         $terpasang = in_array(App\Http\Middleware\HandleInertiaRequests::class, $middleware, true);
         return [$terpasang, ['terpasang' => $terpasang]];
     });
-    $jalankan('T23', 'RajaOngkir tanpa kunci berhenti tanpa tarif simulasi', static function (): array {
-        config(['services.rajaongkir.api_key' => '']);
-        $tarif = app(RajaOngkirService::class)->kalkulasiOngkir('419', 1000, 'jne');
-        return [$tarif === [], ['jumlah_tarif' => count($tarif), 'simulasi' => $tarif[0]['is_mock'] ?? null]];
+    $jalankan('T23', 'Biteship Zero Balance menghasilkan tarif simulasi tanpa api key', static function (): array {
+        config(['services.biteship.testing_zero_balance' => true, 'services.biteship.use_real_rates' => false]);
+        $tarif = app(BiteshipService::class)->kalkulasiOngkir('IDNP5IDNC412IDND5043IDZ55281', [['nama' => 'Test', 'harga' => 50000, 'berat' => 300, 'kuantitas' => 1]]);
+        return [count($tarif) > 0 && !empty($tarif[0]['is_mock']), ['jumlah_tarif' => count($tarif), 'simulasi' => $tarif[0]['is_mock'] ?? null]];
     });
     $jalankan('T24', 'Biaya asuransi negatif ditolak', static function () use ($buatCheckout): array {
-        $pesanan = $buatCheckout(['asuransi_pengiriman' => true, 'biaya_asuransi' => -90000]);
-        return [false, ['asuransi' => $pesanan->biaya_asuransi, 'total' => $pesanan->total]];
+        try {
+            $pesanan = $buatCheckout(['asuransi_pengiriman' => true, 'biaya_asuransi' => -90000]);
+            return [false, ['asuransi' => $pesanan->biaya_asuransi, 'total' => $pesanan->total]];
+        } catch (\Throwable $e) {
+            return [true, ['pesan' => $e->getMessage()]];
+        }
     });
     $jalankan('T25', 'Checkout berulang memiliki idempotensi', static function () use ($buatProduk): array {
         [$produk, $varian] = $buatProduk();

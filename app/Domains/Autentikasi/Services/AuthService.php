@@ -52,7 +52,6 @@ class AuthService
             'pesan' => 'Pendaftaran berhasil. Silakan masukkan kode OTP 6 digit yang telah dikirim ke email Anda.',
             'status' => 200,
             'user' => $user,
-            'otp' => $otpCode,
         ];
     }
 
@@ -66,7 +65,7 @@ class AuthService
         if (!$this->otpService->verifyOtp($email, $otpCode)) {
             return [
                 'sukses' => false,
-                'pesan' => 'Kode OTP 6 digit salah atau sudah kedaluwarsa. Gunakan kode 123456.',
+                'pesan' => 'Kode OTP 6 digit salah atau sudah kedaluwarsa.',
                 'status' => 400,
             ];
         }
@@ -130,6 +129,14 @@ class AuthService
                 'sukses' => false,
                 'pesan' => 'Email/Nomor HP atau kata sandi tidak cocok. Silakan periksa kembali.',
                 'status' => 401,
+            ];
+        }
+
+        if (!$user->email_verified_at) {
+            return [
+                'sukses' => false,
+                'pesan' => 'Akun Anda belum diverifikasi. Silakan masukkan kode OTP yang telah dikirim ke email Anda.',
+                'status' => 403,
             ];
         }
 

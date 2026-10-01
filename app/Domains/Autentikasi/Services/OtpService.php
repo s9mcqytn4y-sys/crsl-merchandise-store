@@ -134,12 +134,9 @@ class OtpService
         }
 
         $inputClean = trim($otpCode);
+        $isMatch = hash_equals((string)$storedOtp, $inputClean);
 
-        // Fallback testing local OTP '123456' untuk environment lokal bila diizinkan
-        $isLocalMatch = app()->environment('local') && $inputClean === '123456';
-        $isMatch = $inputClean === $storedOtp;
-
-        if ($isMatch || $isLocalMatch) {
+        if ($isMatch) {
             Cache::forget($cacheKey);
             Cache::forget($attemptsKey);
             Log::info("[AUTH-OTP] Verifikasi OTP SUKSES untuk {$emailKey}");
@@ -174,9 +171,9 @@ class OtpService
         }
 
         $inputClean = trim($otpCode);
-        $isLocalMatch = app()->environment('local') && $inputClean === '123456';
+        $isMatch = hash_equals((string)$storedOtp, $inputClean);
 
-        if ($inputClean === $storedOtp || $isLocalMatch) {
+        if ($isMatch) {
             Cache::forget($cacheKey);
             Cache::forget($attemptsKey);
             // Berikan token otorisasi reset password selama 15 menit

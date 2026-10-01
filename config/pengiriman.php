@@ -60,10 +60,9 @@ return [
     | Default asal pengiriman (Warehouse CRSL Johar Baru, Jakarta Pusat)
     */
     'asal' => [
-        'area_id'      => env('BITESHIP_ORIGIN_AREA_ID', 'IDNP6IDNC147IDND830IDZ10560'),
-        'city_id'      => env('RAJAONGKIR_ORIGIN_CITY_ID', '152'), // 152 = Jakarta Pusat
-        'provinsi'     => env('SHIPPING_ORIGIN_PROVINCE', 'DKI Jakarta'),
-        'kota'         => env('SHIPPING_ORIGIN_CITY', 'Jakarta Pusat'),
+        'area_id'      => env('BITESHIP_ORIGIN_AREA_ID', 'IDNP5IDNC412IDND5043IDZ55281'),
+        'provinsi'     => env('SHIPPING_ORIGIN_PROVINCE', 'D.I. Yogyakarta'),
+        'kota'         => env('SHIPPING_ORIGIN_CITY', 'Sleman'),
         'kecamatan'    => env('SHIPPING_ORIGIN_SUBDISTRICT', 'Johar Baru'),
         'kode_pos'     => env('SHIPPING_ORIGIN_POSTAL_CODE', '10560'),
         'alamat'       => env('SHIPPING_ORIGIN_ADDRESS', 'Jl. Percetakan Negara 2, Johar Baru'),

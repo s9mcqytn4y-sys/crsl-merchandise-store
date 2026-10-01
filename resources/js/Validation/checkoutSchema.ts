@@ -23,17 +23,17 @@ export const checkoutFormSchema = z
     .object({
         // Data Kontak Penerima
         nama_lengkap: z
-            .string({ required_error: "Nama lengkap penerima wajib diisi." })
+            .string()
             .trim()
             .min(3, "Nama lengkap penerima minimal 3 karakter.")
             .max(100, "Nama terlalu panjang (maksimal 100 karakter)."),
         email: z
-            .string({ required_error: "Alamat email wajib diisi." })
+            .string()
             .trim()
             .email("Format alamat email tidak valid.")
             .max(150, "Email terlalu panjang."),
         telepon: z
-            .string({ required_error: "Nomor handphone wajib diisi." })
+            .string()
             .trim()
             .transform((val) => val.replace(/[\s\-()]/g, ""))
             .refine((val) => phoneRegex.test(val), {
@@ -43,9 +43,7 @@ export const checkoutFormSchema = z
 
         // Data Alamat Pengiriman
         alamat_lengkap: z
-            .string({
-                required_error: "Alamat lengkap pengiriman wajib diisi.",
-            })
+            .string()
             .trim()
             .min(8, "Alamat lengkap jalan/nomor rumah minimal 8 karakter.")
             .max(300, "Alamat terlalu panjang (maksimal 300 karakter)."),
@@ -55,20 +53,20 @@ export const checkoutFormSchema = z
             .min(1, "Area pengiriman Biteship wajib dipilih.")
             .nullish(),
         provinsi: z
-            .string({ required_error: "Provinsi tujuan wajib diisi." })
+            .string()
             .trim()
             .min(2, "Provinsi tidak valid."),
         kota: z
-            .string({ required_error: "Kota/Kabupaten tujuan wajib diisi." })
+            .string()
             .trim()
             .min(2, "Kota/Kabupaten wajib diisi."),
         kecamatan: z
-            .string({ required_error: "Kecamatan tujuan wajib diisi." })
+            .string()
             .trim()
             .min(2, "Kecamatan tujuan wajib diisi."),
         kelurahan: z.string().trim().nullish(),
         kode_pos: z
-            .string({ required_error: "Kode pos wajib diisi." })
+            .string()
             .trim()
             .refine((val) => postalCodeRegex.test(val), {
                 message: "Kode pos harus terdiri dari 5 digit angka.",
@@ -76,7 +74,7 @@ export const checkoutFormSchema = z
 
         // Kurir & Logistik
         kurir: z
-            .string({ required_error: "Layanan kurir wajib dipilih." })
+            .string()
             .trim()
             .min(1, "Silakan pilih layanan kurir pengiriman."),
         layanan_kurir: z.string().trim().default("reguler"),
@@ -86,7 +84,7 @@ export const checkoutFormSchema = z
 
         // Metode Pembayaran (Midtrans / Gateway)
         metode_pembayaran: z
-            .string({ required_error: "Metode pembayaran wajib dipilih." })
+            .string()
             .trim()
             .min(1, "Silakan pilih metode pembayaran."),
 
@@ -112,7 +110,7 @@ export const checkoutFormSchema = z
             .min(1, "Keranjang belanja tidak boleh kosong."),
 
         // Direct Checkout Meta
-        buy_now_item: z.record(z.unknown()).nullish(),
+        buy_now_item: z.record(z.string(), z.unknown()).nullish(),
     })
     // Validasi Independen: Nama Pengirim Dropship
     .refine(

@@ -303,11 +303,11 @@ export default function DetailProduk({
         activeProduct.hargaDiskon !== undefined &&
         activeProduct.hargaDiskon < activeProduct.hargaDasar;
 
-    const basePrice = isDiscounted
+    const basePrice = Number(isDiscounted
         ? (activeProduct.hargaDiskon as number)
-        : activeProduct.hargaDasar;
+        : activeProduct.hargaDasar);
 
-    const currentPrice = basePrice + (selectedVariant?.harga_tambahan || 0);
+    const currentPrice = basePrice + Number(selectedVariant?.harga_tambahan || 0);
     const currentStock = selectedVariant
         ? (selectedVariant.stok ?? 0)
         : activeProduct.stokTotal;

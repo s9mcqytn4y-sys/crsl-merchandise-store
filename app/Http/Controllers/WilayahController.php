@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Domains\Pengiriman\Services\BiteshipService;
-use App\Domains\Pengiriman\Services\RajaOngkirService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -13,13 +12,12 @@ use Illuminate\Support\Facades\Log;
 class WilayahController extends Controller
 {
     public function __construct(
-        protected BiteshipService $biteshipService,
-        protected RajaOngkirService $rajaOngkirService
+        protected BiteshipService $biteshipService
     ) {}
 
     /**
      * Endpoint API pencarian area/wilayah untuk autocomplete frontend.
-     * Mendukung pencarian via Biteship Maps atau fallback daftar kota RajaOngkir.
+     * Menggunakan Biteship Maps atau Master Data Wilayah Lokal (Zero Balance).
      */
     public function cari(Request $request): JsonResponse
     {
@@ -32,25 +30,7 @@ class WilayahController extends Controller
             ]);
         }
 
-        // 1. Coba pencarian area Biteship Maps
         $hasil = $this->biteshipService->cariArea($kataKunci);
-
-        // 2. Jika Biteship kosong atau mock, perkaya dengan pencarian kota RajaOngkir
-        if (empty($hasil) && !empty(config('services.rajaongkir.api_key'))) {
-            $kotaRajaOngkir = $this->rajaOngkirService->cariKota($kataKunci);
-            $hasil = array_map(function (array $k): array {
-                $namaLengkap = "{$k['type']} {$k['city_name']}, {$k['province']} ({$k['postal_code']})";
-                return [
-                    'id'          => (string) $k['city_id'],
-                    'city_id'     => (string) $k['city_id'],
-                    'nama'        => $namaLengkap,
-                    'kota'        => $k['city_name'],
-                    'provinsi'    => $k['province'],
-                    'kode_pos'    => (string) $k['postal_code'],
-                    'sumber'      => 'rajaongkir',
-                ];
-            }, $kotaRajaOngkir);
-        }
 
         return response()->json([
             'sukses' => true,
@@ -59,19 +39,22 @@ class WilayahController extends Controller
     }
 
     /**
-     * Endpoint API kalkulasi tarif ongkos kirim multi-provider.
-     * Prioritas: RajaOngkir -> Biteship -> Dev Fallback Mock.
+     * Endpoint API kalkulasi tarif ongkos kirim multi-kurir Biteship.
      */
     public function ongkir(Request $request): JsonResponse
     {
-        $destinationAreaId = (string) ($request->input('area_id') ?? $request->input('destination_area_id', ''));
-        $cityId = (string) ($request->input('city_id') ?? '');
+        $destinationAreaId = (string) (
+            $request->input('area_id')
+            ?? $request->input('destination_area_id')
+            ?? $request->input('city_id')
+            ?? ''
+        );
         $items = (array) $request->input('items', []);
 
-        if (empty($destinationAreaId) && empty($cityId)) {
+        if (empty($destinationAreaId)) {
             return response()->json([
                 'sukses' => false,
-                'pesan'  => 'Parameter area_id atau city_id tujuan wajib diisi.',
+                'pesan'  => 'Parameter area_id tujuan pengiriman wajib diisi.',
                 'data'   => [],
             ], 422);
         }
@@ -84,31 +67,12 @@ class WilayahController extends Controller
         }, $items));
 
         $totalWeight = max(100, $totalWeight);
-        $rates = [];
-        $sumberTarif = '';
+        $couriers = (string) $request->input('kurir', 'jne,jnt,sicepat,anteraja');
 
-        // 1. Eksekusi RajaOngkir (jika city_id tersedia atau area_id numerik)
-        $targetCityId = !empty($cityId) ? $cityId : (is_numeric($destinationAreaId) ? $destinationAreaId : '');
-        if (!empty($targetCityId) && !empty(config('services.rajaongkir.api_key'))) {
-            $kurirDipilih = (string) $request->input('kurir', config('services.rajaongkir.couriers', 'jne,pos,tiki'));
-            $rates = $this->rajaOngkirService->kalkulasiOngkir($targetCityId, $totalWeight, $kurirDipilih);
-            if (!empty($rates)) {
-                $sumberTarif = 'RajaOngkir API Resmi';
-            }
-        }
-
-        // 2. Eksekusi Biteship jika RajaOngkir belum menghasilkan tarif dan area_id Biteship tersedia
-        if (empty($rates) && !empty($destinationAreaId)) {
-            $couriers = (string) $request->input('kurir', 'jne,jnt,sicepat,anteraja');
-            $rates = $this->biteshipService->kalkulasiOngkir($destinationAreaId, $items, $couriers);
-            if (!empty($rates)) {
-                $isMock = !empty($rates[0]['is_mock']);
-                $sumberTarif = $isMock ? 'Simulasi Ekspedisi Lokal (Sandbox)' : 'Biteship API Resmi';
-            }
-        }
+        $rates = $this->biteshipService->kalkulasiOngkir($destinationAreaId, $items, $couriers);
 
         if (empty($rates)) {
-            Log::warning('[Ongkir Error] Semua provider pengiriman gagal merespons tarif.');
+            Log::warning('[Ongkir Error] Biteship gagal merespons tarif pengiriman.');
             return response()->json([
                 'sukses'         => false,
                 'kurir_tersedia' => false,
@@ -119,14 +83,16 @@ class WilayahController extends Controller
         }
 
         $isMock = !empty($rates[0]['is_mock'] ?? false);
+        $sumberTarif = $isMock ? 'Simulasi Ekspedisi Lokal (Sandbox)' : 'Biteship API Resmi';
 
         return response()->json([
             'sukses'         => true,
             'kurir_tersedia' => true,
             'is_mock'        => $isMock,
-            'sumber_tarif'   => $sumberTarif ?: ($isMock ? 'Simulasi Ekspedisi Lokal (Sandbox)' : 'Ekspedisi Resmi'),
+            'sumber_tarif'   => $sumberTarif,
             'total_berat'    => $totalWeight,
             'data'           => $rates,
         ]);
     }
 }
+

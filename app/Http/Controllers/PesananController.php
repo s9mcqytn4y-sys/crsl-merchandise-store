@@ -80,7 +80,7 @@ class PesananController extends Controller
     {
         $pesanan = $this->temukanPesanan($nomorPesanan, ['items.produk', 'items.varian', 'pembayaran', 'pengiriman']);
 
-        if (Auth::check() && $pesanan->pengguna_id && $pesanan->pengguna_id !== Auth::id()) {
+        if ($pesanan->pengguna_id && $pesanan->pengguna_id !== Auth::id()) {
             abort(403, 'Anda tidak memiliki hak akses untuk melihat faktur pesanan ini.');
         }
 
@@ -225,7 +225,7 @@ class PesananController extends Controller
     }
 
     /**
-     * Halaman pelacakan status pesanan & resi ekspedisi via RajaOngkir.
+     * Halaman pelacakan status pesanan & resi ekspedisi via Biteship.
      */
     public function lacak(Request $request): Response
     {
@@ -283,6 +283,10 @@ class PesananController extends Controller
 
         if (Auth::check() && $pesanan->pengguna_id && $pesanan->pengguna_id !== Auth::id()) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke pesanan ini.');
+        }
+
+        if ($pesanan->status === 'selesai') {
+            return redirect()->back()->with('info', "Pesanan {$pesanan->nomor_pesanan} sudah selesai.");
         }
 
         $pesanan->status = 'selesai';
@@ -411,6 +415,10 @@ class PesananController extends Controller
     {
         $pesanan = $this->temukanPesanan($nomorPesanan, ['items', 'pembayaran']);
 
+        if ($pesanan->pengguna_id && $pesanan->pengguna_id !== Auth::id()) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki hak akses untuk membatalkan pesanan ini.');
+        }
+
         if ($pesanan->status !== 'belum_bayar') {
             return redirect()->back()->with('error', 'Hanya pesanan yang belum dibayar yang dapat dibatalkan.');
         }
@@ -501,6 +509,10 @@ class PesananController extends Controller
      */
     public function simulasiBayarDev(string $nomorPesanan): RedirectResponse
     {
+        if (app()->environment('production')) {
+            abort(403, 'Simulasi pembayaran dinonaktifkan pada lingkungan produksi.');
+        }
+
         $pesanan = $this->temukanPesanan($nomorPesanan, ['pengiriman']);
 
         $pesanan->status = 'akan_dikirim';

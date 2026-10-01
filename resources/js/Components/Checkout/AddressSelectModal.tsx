@@ -13,7 +13,7 @@ import { toastNotifikasi } from "../../Utils/toastNotifikasi";
 import { cn } from "../../lib/utils";
 
 export interface AddressItem {
-    id: number;
+    id: number | string;
     label?: string;
     nama_penerima: string;
     telepon: string;
@@ -26,14 +26,14 @@ export interface AddressItem {
     kode_pos?: string;
     alamat_lengkap: string;
     format_lengkap?: string;
-    adalah_utama: boolean;
+    adalah_utama?: boolean;
 }
 
 interface AddressSelectModalProps {
     isOpen?: boolean;
     onClose: () => void;
     addresses?: AddressItem[];
-    selectedAddressId?: number | null;
+    selectedAddressId?: number | string | null;
     onSelectAddress: (addr: AddressItem) => void;
     onOpenAddModal: () => void;
     onOpenEditModal: (addr: AddressItem) => void;

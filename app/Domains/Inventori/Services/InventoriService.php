@@ -69,9 +69,9 @@ class InventoriService
                 ->lockForUpdate()
                 ->first();
 
-            if (!$varian || $varian->stok < $jumlah) {
+            if (!$varian || !$varian->aktif || $varian->stok < $jumlah) {
                 $nama = $varian ? $varian->nama_varian : "ID #{$varianId}";
-                throw new Exception("Stok untuk varian {$nama} tiba-tiba habis atau tidak mencukupi.");
+                throw new Exception("Stok untuk varian {$nama} tidak mencukupi atau varian sedang tidak aktif.");
             }
 
             $varian->stok -= $jumlah;

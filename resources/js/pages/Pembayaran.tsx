@@ -61,7 +61,7 @@ export interface ExtendedCartItem extends CartItem {
     berat_gram?: number;
     weight?: number;
     slug?: string;
-    sku?: string;
+    sku?: string | null;
 }
 
 export interface PembayaranPageProps {
@@ -693,7 +693,7 @@ export default function Pembayaran({
 
         router.post(
             "/checkout/proses",
-            payloadData as unknown as Record<string, unknown>,
+            payloadData as any,
             {
                 preserveScroll: true,
                 onSuccess: (page) => {
