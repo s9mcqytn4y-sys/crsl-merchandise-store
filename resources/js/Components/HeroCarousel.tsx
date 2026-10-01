@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "@inertiajs/react";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import gsap from "gsap";
+import { ArrowRight } from "lucide-react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 export interface HeroSlide {
     gambar: string;

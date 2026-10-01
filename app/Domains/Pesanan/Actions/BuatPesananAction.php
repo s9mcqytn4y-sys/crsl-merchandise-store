@@ -6,7 +6,7 @@ namespace App\Domains\Pesanan\Actions;
 
 use App\Domains\Inventori\Services\InventoriService;
 use App\Domains\Pembayaran\Services\MidtransService;
-use App\Domains\Pengiriman\Services\BiteshipService;
+use App\Domains\Pengiriman\Services\RajaOngkirService;
 use App\Models\AlamatPengguna;
 use App\Models\ItemPesanan;
 use App\Models\PenggunaLoyalitas;
@@ -27,7 +27,7 @@ class BuatPesananAction
 {
     public function __construct(
         protected InventoriService $inventoriService,
-        protected BiteshipService $biteshipService,
+        protected RajaOngkirService $rajaOngkirService,
         protected MidtransService $midtransService
     ) {}
 
@@ -38,6 +38,7 @@ class BuatPesananAction
 
     public function execute(array $dataInput, array $keranjang = [], ?int $penggunaId = null): Pesanan
     {
+        // Normalisasi format item keranjang
         if (isset($dataInput['items']) && !isset($keranjang['items']) && !isset($keranjang[0])) {
             $temp = $keranjang;
             $keranjang = $dataInput['items'];
@@ -46,31 +47,46 @@ class BuatPesananAction
             $keranjang = $dataInput['items'];
         }
 
-        if (empty($keranjang)) {
+        if (empty($keranjang) || !is_array($keranjang)) {
             throw new Exception("Keranjang belanja kosong.");
         }
 
-        // 1. Validasi item dan kalkulasi harga server-side
+        // 1. Validasi item dan kalkulasi harga & bobot server-side
         $validatedCart = $this->validasiDanHitungKeranjang($keranjang);
         $subtotal = $validatedCart['subtotal'];
         $itemsDiproses = $validatedCart['items'];
+        $totalBeratGram = $validatedCart['total_berat'];
 
-        // 2. Tentukan Ongkir & Layanan Kurir
+        // 2. Resolusi ID Kota Tujuan RajaOngkir
+        $cityId = $this->resolveDestinationCityId($dataInput);
+
+        // 3. Tentukan Ongkir & Layanan Kurir
         $biayaOngkir = isset($dataInput['ongkir']) ? (float)$dataInput['ongkir'] : null;
         $layananKurir = $dataInput['layanan_kurir'] ?? null;
-        $areaId = $dataInput['biteship_area_id'] ?? 'IDNP6IDNC147IDND830IDZ10560';
+        $kurirDipilih = strtolower((string)($dataInput['kurir'] ?? 'jne'));
 
         if ($biayaOngkir === null) {
-            $rates = $this->biteshipService->kalkulasiOngkir($areaId, $itemsDiproses, $dataInput['kurir'] ?? 'jne');
-            $matchedRate = collect($rates)->firstWhere('kurir_kode', strtolower($dataInput['kurir'] ?? 'jne'));
+            $rates = $this->rajaOngkirService->kalkulasiOngkir($cityId, $totalBeratGram, $kurirDipilih);
+            $matchedRate = collect($rates)->firstWhere('kurir_kode', $kurirDipilih) ?? collect($rates)->first();
+
             $biayaOngkir = (float)($matchedRate['harga'] ?? 18000);
-            $layananKurir = $matchedRate['layanan_kode'] ?? 'reg';
+            $layananKurir = $matchedRate['layanan_kode'] ?? ($matchedRate['layanan'] ?? 'reg');
         }
 
         $namaPenerima = $dataInput['nama_penerima'] ?? $dataInput['nama_lengkap'] ?? 'Pelanggan';
 
-        // 3. Simpan Pesanan di dalam DB Transaction
-        $statePesanan = DB::transaction(function () use ($dataInput, $itemsDiproses, $subtotal, $biayaOngkir, $layananKurir, $areaId, $namaPenerima, $penggunaId) {
+        // 4. Simpan Pesanan di dalam DB Transaction
+        $statePesanan = DB::transaction(function () use (
+            $dataInput,
+            $itemsDiproses,
+            $subtotal,
+            $biayaOngkir,
+            $layananKurir,
+            $kurirDipilih,
+            $cityId,
+            $namaPenerima,
+            $penggunaId
+        ) {
             $this->inventoriService->kunciDanKurangiStok($itemsDiproses);
 
             $nomorPesanan = $this->generateNomorPesanan();
@@ -78,7 +94,7 @@ class BuatPesananAction
             $voucherDipakai = null;
             $diskonVoucher = 0;
             if (!empty($dataInput['kode_voucher'])) {
-                $voucher = Voucher::where('kode', strtoupper(trim($dataInput['kode_voucher'])))
+                $voucher = Voucher::where('kode', strtoupper(trim((string)$dataInput['kode_voucher'])))
                     ->where('aktif', true)
                     ->lockForUpdate()
                     ->first();
@@ -109,7 +125,7 @@ class BuatPesananAction
                     $voucher->decrement('kuota', 1);
                 }
 
-                if (isset($voucher->tipe) && in_array($voucher->tipe, ['persen', 'persentase'])) {
+                if (isset($voucher->tipe) && in_array($voucher->tipe, ['persen', 'persentase'], true)) {
                     $diskonKalkulasi = round($subtotal * ($voucher->nilai / 100));
                     $diskonVoucher = !empty($voucher->maksimal_diskon) ? min($diskonKalkulasi, (float)$voucher->maksimal_diskon) : $diskonKalkulasi;
                 } else {
@@ -140,7 +156,6 @@ class BuatPesananAction
             $asuransi = !empty($dataInput['asuransi_pengiriman']);
             $biayaAsuransi = $asuransi ? (float)($dataInput['biaya_asuransi'] ?? 2500) : 0;
 
-            // Bulatkan total akhir ke integer untuk kepatuhan payment gateway IDR
             $total = (int) round(max(0, ($subtotal + $biayaOngkir + $biayaAsuransi) - $totalDiskon));
             $isDropship = !empty($dataInput['is_dropship']);
 
@@ -177,7 +192,7 @@ class BuatPesananAction
                 AlamatPengguna::firstOrCreate(
                     [
                         'pengguna_id' => $penggunaId,
-                        'area_id' => $areaId,
+                        'area_id' => $cityId,
                         'alamat_lengkap' => $dataInput['alamat_lengkap'] ?? '',
                     ],
                     [
@@ -211,9 +226,9 @@ class BuatPesananAction
 
             PesananPengiriman::create([
                 'pesanan_id' => $pesanan->id,
-                'kurir' => strtolower($dataInput['kurir'] ?? 'jne'),
-                'layanan' => strtolower($layananKurir ?? 'reg'),
-                'tracking_status' => 'allocated',
+                'kurir' => strtolower($kurirDipilih),
+                'layanan' => strtolower((string)$layananKurir),
+                'tracking_status' => 'pending',
                 'json_payload' => [
                     'nama_penerima' => $namaPenerima,
                     'telepon' => $dataInput['telepon'] ?? '',
@@ -223,7 +238,8 @@ class BuatPesananAction
                     'kota' => $dataInput['kota'] ?? '',
                     'kecamatan' => $dataInput['kecamatan'] ?? '',
                     'kode_pos' => $dataInput['kode_pos'] ?? '',
-                    'area_id' => $areaId,
+                    'city_id' => $cityId,
+                    'total_berat_gram' => $totalBeratGram,
                 ],
             ]);
 
@@ -239,7 +255,7 @@ class BuatPesananAction
 
         $pesanan = $statePesanan['pesanan'];
 
-        // 4. Inisialisasi Midtrans di Luar Transaksi Database
+        // 5. Inisialisasi Midtrans di Luar Transaksi Database
         try {
             $pembeli = [
                 'nama' => $namaPenerima,
@@ -248,8 +264,6 @@ class BuatPesananAction
             ];
 
             $metode = strtolower(str_replace(['va_', 'va-'], '', (string) ($dataInput['metode_pembayaran'] ?? 'qris')));
-
-            // Format order ID resmi yang dikirim ke gateway
             $gatewayOrderId = str_replace('/', '-', $statePesanan['nomor_pesanan']);
 
             $pesananData = [
@@ -269,7 +283,6 @@ class BuatPesananAction
                 throw new Exception($chargeRes['pesan'] ?? 'Gagal memproses pembayaran melalui Midtrans.');
             }
 
-            // Normalisasi penampungan nomor_va untuk semua channel bank
             $resolvedVa = $chargeRes['nomor_va']
                 ?? $chargeRes['bill_key']
                 ?? ($chargeRes['raw']['va_numbers'][0]['va_number'] ?? null)
@@ -305,47 +318,103 @@ class BuatPesananAction
 
         foreach ($keranjang as $item) {
             $vid = $item['varian_id'] ?? $item['produk_varian_id'] ?? null;
-            $pid = $item['produk_id'] ?? ($item['id'] ?? null);
-            if ($vid) $varianIds[] = (int)$vid;
-            if ($pid) $produkIds[] = (int)$pid;
+            $pid = $item['produk_id'] ?? null;
+            $rawId = $item['id'] ?? null;
+
+            if ($vid) {
+                $varianIds[] = (int)$vid;
+            } elseif ($rawId) {
+                $varianIds[] = (int)$rawId;
+            }
+
+            if ($pid) {
+                $produkIds[] = (int)$pid;
+            } elseif ($rawId) {
+                $produkIds[] = (int)$rawId;
+            }
         }
 
-        $varians = ProdukVarian::with('produk')->whereIn('id', array_filter($varianIds))->get()->keyBy('id');
-        $produks = Produk::whereIn('id', array_filter($produkIds))->get()->keyBy('id');
+        $varianIds = array_values(array_unique(array_filter($varianIds)));
+        $produkIds = array_values(array_unique(array_filter($produkIds)));
+
+        $varians = !empty($varianIds)
+            ? ProdukVarian::with('produk')->whereIn('id', $varianIds)->get()->keyBy('id')
+            : collect();
+
+        $produks = !empty($produkIds)
+            ? Produk::whereIn('id', $produkIds)->get()->keyBy('id')
+            : collect();
 
         $subtotal = 0;
+        $totalBerat = 0;
         $items = [];
 
-        foreach ($keranjang as $item) {
+        foreach ($keranjang as $index => $item) {
             $vid = (int)($item['varian_id'] ?? $item['produk_varian_id'] ?? 0);
-            $pid = (int)($item['produk_id'] ?? ($item['id'] ?? 0));
+            $pid = (int)($item['produk_id'] ?? 0);
+            $rawId = (int)($item['id'] ?? 0);
             $jumlah = max(1, (int)($item['jumlah'] ?? $item['quantity'] ?? 1));
 
-            $varian = $varians->get($vid);
-            $produk = $produks->get($pid) ?? $varian?->produk;
+            // Resolusi Model Varian
+            $varian = null;
+            if ($vid > 0 && $varians->has($vid)) {
+                $varian = $varians->get($vid);
+            } elseif ($vid === 0 && $rawId > 0 && $varians->has($rawId)) {
+                $varian = $varians->get($rawId);
+            }
+
+            // Resolusi Model Produk
+            $produk = null;
+            if ($pid > 0 && $produks->has($pid)) {
+                $produk = $produks->get($pid);
+            } elseif ($rawId > 0 && $produks->has($rawId)) {
+                $produk = $produks->get($rawId);
+            }
+
+            if (!$produk && $varian?->produk) {
+                $produk = $varian->produk;
+            }
 
             if (!$produk && !$varian) {
-                throw new Exception("Produk atau varian tidak ditemukan di database.");
+                Log::error("Validasi Keranjang Gagal pada item index {$index}", [
+                    'payload_item' => $item,
+                    'resolved_vid' => $vid,
+                    'resolved_pid' => $pid,
+                    'raw_id'       => $rawId,
+                ]);
+                throw new Exception("Produk atau varian tidak ditemukan di database (Item #" . ($index + 1) . ").");
             }
 
-            $hargaDb = (float)($varian?->harga ?? $produk?->harga ?? 0);
+            $hargaDb = (float)($varian?->harga ?? 0);
             if ($hargaDb <= 0 && $produk) {
-                $hargaDb = (float)($produk->harga_diskon ?? $produk->harga_dasar ?? 0) + (float)($varian?->harga_tambahan ?? 0);
+                $hargaDasar = (float)($produk->harga_diskon ?: ($produk->harga_dasar ?: ($produk->harga ?? 0)));
+                $hargaTambahan = (float)($varian?->harga_tambahan ?? 0);
+                $hargaDb = $hargaDasar + $hargaTambahan;
             }
+
             if ($hargaDb <= 0) {
-                throw new Exception("Harga produk tidak valid.");
+                throw new Exception("Harga produk '" . ($produk?->nama ?? 'Unknown') . "' tidak valid atau 0.");
+            }
+
+            // Resolusi Berat (gram)
+            $beratPerItem = (int)($varian?->berat ?? $produk?->berat ?? 250);
+            if ($beratPerItem <= 0) {
+                $beratPerItem = 250;
             }
 
             $subtotal += ($hargaDb * $jumlah);
+            $totalBerat += ($beratPerItem * $jumlah);
+
             $gambar = $varian?->gambar_varian ?? $produk?->gambar_utama ?? '/assets/gambar/drinke-tumblr.webp';
             $namaVarian = $varian?->nama_varian ?? $varian?->nama ?? '';
 
             $items[] = [
-                'produk_id' => $produk?->id,
+                'produk_id' => $produk?->id ?? $varian?->produk_id,
                 'varian_id' => $varian?->id,
-                'nama_produk' => $varian && $namaVarian !== '' ? ($produk->nama . ' - ' . $namaVarian) : ($produk->nama ?? 'Produk'),
+                'nama_produk' => ($varian && $namaVarian !== '') ? ($produk->nama . ' - ' . $namaVarian) : ($produk->nama ?? 'Produk'),
                 'sku' => $varian?->sku ?? $produk?->sku ?? ('CRSL-' . ($produk?->id ?? 'ITEM')),
                 'harga' => $hargaDb,
+                'berat' => $beratPerItem,
                 'jumlah' => $jumlah,
                 'ukuran' => $item['ukuran'] ?? $varian?->ukuran ?? null,
                 'warna' => $item['warna'] ?? $varian?->warna ?? null,
@@ -355,8 +424,39 @@ class BuatPesananAction
 
         return [
             'subtotal' => $subtotal,
+            'total_berat' => max(100, $totalBerat),
             'items' => $items,
         ];
+    }
+
+    /**
+     * Resolusi ID Kota Tujuan RajaOngkir (Mendukung ID angka langsung, maupun nama kota string).
+     */
+    protected function resolveDestinationCityId(array $dataInput): string
+    {
+        $candidate = (string)(
+            $dataInput['destination_city_id']
+            ?? $dataInput['city_id']
+            ?? $dataInput['rajaongkir_city_id']
+            ?? $dataInput['id_kota']
+            ?? ''
+        );
+
+        if (is_numeric(trim($candidate)) && (int)$candidate > 0) {
+            return trim($candidate);
+        }
+
+        // Jika hanya dikirim nama kota, cari ID-nya via RajaOngkirService
+        $namaKota = trim((string)($dataInput['kota'] ?? ''));
+        if (!empty($namaKota)) {
+            $hasilKota = $this->rajaOngkirService->cariKota($namaKota);
+            if (!empty($hasilKota[0]['city_id'])) {
+                return (string)$hasilKota[0]['city_id'];
+            }
+        }
+
+        // Default ID Kota fallback (contoh: 419 untuk Sleman, DI Yogyakarta)
+        return (string)config('services.rajaongkir.default_destination_city_id', '419');
     }
 
     protected function kompensasiKegagalanPembayaran(Pesanan $pesanan, array $state, ?int $penggunaId): void
@@ -384,37 +484,33 @@ class BuatPesananAction
         });
     }
 
-    /**
-     * Membentuk nomor pesanan harian anti-tabrakan dengan sequence dan random entropy.
-     */
     protected function generateNomorPesanan(): string
     {
         $today = date('Y-m-d');
         $dateStr = date('Ymd');
+
+        DB::table('nomor_pesanan_harian')->insertOrIgnore([
+            'tanggal' => $today,
+            'urutan' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         $sequence = DB::table('nomor_pesanan_harian')
             ->where('tanggal', $today)
             ->lockForUpdate()
             ->first();
 
-        if ($sequence) {
-            $nextVal = $sequence->urutan + 1;
-            DB::table('nomor_pesanan_harian')
-                ->where('tanggal', $today)
-                ->update(['urutan' => $nextVal, 'updated_at' => now()]);
-        } else {
-            $nextVal = 1;
-            DB::table('nomor_pesanan_harian')->insert([
-                'tanggal' => $today,
-                'urutan' => 1,
-                'created_at' => now(),
+        $nextVal = ($sequence->urutan ?? 0) + 1;
+
+        DB::table('nomor_pesanan_harian')
+            ->where('tanggal', $today)
+            ->update([
+                'urutan' => $nextVal,
                 'updated_at' => now(),
             ]);
-        }
 
         $paddedCounter = str_pad((string)$nextVal, 4, '0', STR_PAD_LEFT);
-
-        // Tambahkan 3 karakter random uppercase di lokal/sandbox untuk mencegah collision dengan sandbox Midtrans lama
         $entropy = app()->isProduction() ? '' : '-' . strtoupper(Str::random(3));
 
         return "INV/CRSL/{$dateStr}/{$paddedCounter}{$entropy}";

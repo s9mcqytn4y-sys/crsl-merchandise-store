@@ -6,9 +6,11 @@ namespace App\Http\Controllers;
 
 use App\Domains\Inventori\Services\InventoriService;
 use App\Domains\Pembayaran\Services\MidtransService;
-use App\Domains\Pengiriman\Jobs\AlokasiPengirimanBiteshipJob;
-use App\Domains\Pengiriman\Services\BiteshipService;
+use App\Domains\Pengiriman\Services\RajaOngkirService;
+use App\Models\PenggunaLoyalitas;
 use App\Models\Pesanan;
+use App\Models\Voucher;
+use App\Models\VoucherTerpakai;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,12 +25,12 @@ class PesananController extends Controller
 {
     public function __construct(
         protected MidtransService $midtransService,
-        protected BiteshipService $biteshipService,
+        protected RajaOngkirService $rajaOngkirService,
         protected InventoriService $inventoriService
     ) {}
 
     /**
-     * Helper normalisasi payload pengiriman dari JSON String maupun Array.
+     * Normalisasi payload pengiriman dari JSON String maupun Array.
      */
     protected function getPengirimanPayload(?Pesanan $pesanan): array
     {
@@ -47,7 +49,7 @@ class PesananController extends Controller
     }
 
     /**
-     * Helper pencarian nomor invoice fleksibel (slash, dash, urlencoded).
+     * Helper pencarian invoice fleksibel.
      */
     protected function temukanPesanan(string $nomorPesanan, array $with = []): Pesanan
     {
@@ -62,11 +64,11 @@ class PesananController extends Controller
 
         return $query->where(function ($q) use ($decoded, $versiSlash, $versiStrip) {
             $q->where('nomor_pesanan', $decoded)
-              ->orWhere('nomor_pesanan', $versiSlash)
-              ->orWhere('nomor_pesanan', $versiStrip)
-              ->orWhereRaw('LOWER(nomor_pesanan) = ?', [strtolower($decoded)])
-              ->orWhereRaw('LOWER(nomor_pesanan) = ?', [strtolower($versiSlash)])
-              ->orWhereRaw('LOWER(nomor_pesanan) = ?', [strtolower($versiStrip)]);
+                ->orWhere('nomor_pesanan', $versiSlash)
+                ->orWhere('nomor_pesanan', $versiStrip)
+                ->orWhereRaw('LOWER(nomor_pesanan) = ?', [strtolower($decoded)])
+                ->orWhereRaw('LOWER(nomor_pesanan) = ?', [strtolower($versiSlash)])
+                ->orWhereRaw('LOWER(nomor_pesanan) = ?', [strtolower($versiStrip)]);
         })->firstOrFail();
     }
 
@@ -127,7 +129,7 @@ class PesananController extends Controller
     }
 
     /**
-     * Endpoint API pengecekan status pembayaran real-time dari Midtrans (Anti-Tampering).
+     * Endpoint API pengecekan status pembayaran real-time dari Midtrans.
      */
     public function cekStatusRealtime(string $nomorPesanan): JsonResponse
     {
@@ -156,7 +158,6 @@ class PesananController extends Controller
         if (!empty($res['sukses']) && !empty($res['raw'])) {
             $raw = $res['raw'];
 
-            // Sync Nomor VA jika terlambat masuk
             if ($pesanan->pembayaran && empty($pesanan->pembayaran->nomor_va)) {
                 if (!empty($raw['va_numbers'][0]['va_number'])) {
                     $pesanan->pembayaran->nomor_va = $raw['va_numbers'][0]['va_number'];
@@ -170,9 +171,8 @@ class PesananController extends Controller
             if (!empty($res['status_pesanan']) && $res['status_pesanan'] === 'akan_dikirim' && $pesanan->status === 'belum_bayar') {
                 $rawGrossAmount = (float) ($raw['gross_amount'] ?? 0);
 
-                // Proteksi Integritas Nominal (Anti-Tampering)
                 if ((int) round((float) $pesanan->total) !== (int) round($rawGrossAmount)) {
-                    Log::critical("SECURITY ALERT: Polling mendeteksi mismatch nominal untuk {$pesanan->nomor_pesanan}. DB: {$pesanan->total}, Gateway: {$rawGrossAmount}");
+                    Log::critical("SECURITY ALERT: Polling mismatch nominal untuk {$pesanan->nomor_pesanan}. DB: {$pesanan->total}, Gateway: {$rawGrossAmount}");
 
                     $pesanan->status = 'menunggu_verifikasi_manual';
                     $pesanan->save();
@@ -193,9 +193,13 @@ class PesananController extends Controller
                     $pesanan->pembayaran->save();
                 }
 
-                // Tambah Poin Loyalitas
+                if ($pesanan->pengiriman) {
+                    $pesanan->pengiriman->tracking_status = 'akan_dikirim';
+                    $pesanan->pengiriman->save();
+                }
+
                 if ($pesanan->pengguna_id && $pesanan->poin_didapat > 0) {
-                    $loyalitas = \App\Models\PenggunaLoyalitas::firstOrCreate(
+                    $loyalitas = PenggunaLoyalitas::firstOrCreate(
                         ['pengguna_id' => $pesanan->pengguna_id],
                         ['poin' => 0, 'total_belanja' => 0]
                     );
@@ -206,8 +210,6 @@ class PesananController extends Controller
                     Cache::forget("pengguna:akun:{$pesanan->pengguna_id}");
                     Cache::forget("pengguna:profil:{$pesanan->pengguna_id}");
                 }
-
-                AlokasiPengirimanBiteshipJob::dispatch($pesanan->id);
             }
         }
 
@@ -219,7 +221,7 @@ class PesananController extends Controller
     }
 
     /**
-     * Halaman pelacakan status pesanan & resi ekspedisi.
+     * Halaman pelacakan status pesanan & resi ekspedisi via RajaOngkir.
      */
     public function lacak(Request $request): Response
     {
@@ -232,21 +234,10 @@ class PesananController extends Controller
                 $pesanan = $this->temukanPesanan($nomorPesanan, ['items.produk', 'items.varian', 'pembayaran', 'pengiriman']);
                 if ($pesanan) {
                     $kurir = strtolower((string) ($pesanan->pengiriman->kurir ?? 'jne'));
-                    $payloadPengiriman = $this->getPengirimanPayload($pesanan);
+                    $nomorResi = (string) ($pesanan->pengiriman?->nomor_resi ?? '');
 
-                    if (!empty($pesanan->pengiriman?->nomor_resi)) {
-                        $tracking = $this->biteshipService->lacakPengiriman(
-                            (string) $pesanan->pengiriman->nomor_resi,
-                            $kurir
-                        );
-
-                        $officialTrackingUrl = $payloadPengiriman['biteship_response']['tracking_url']
-                            ?? $payloadPengiriman['biteship_response']['courier']['link']
-                            ?? null;
-
-                        if ($officialTrackingUrl) {
-                            $tracking['link'] = $officialTrackingUrl;
-                        }
+                    if (!empty($nomorResi)) {
+                        $tracking = $this->rajaOngkirService->lacakResi($nomorResi, $kurir);
                     } else {
                         $isPaid = in_array($pesanan->status, ['akan_dikirim', 'dikirim', 'selesai']);
                         $tracking = [
@@ -258,7 +249,7 @@ class PesananController extends Controller
                             'history'         => [
                                 [
                                     'note' => $isPaid
-                                        ? 'Pesanan terverifikasi lunas. Sedang disiapkan & dikemas di Gudang Logistik CRSL.'
+                                        ? 'Pesanan telah diverifikasi. Paket sedang disiapkan oleh tim gudang CRSL.'
                                         : 'Pesanan telah dibuat. Menunggu konfirmasi pembayaran.',
                                     'updated_at' => $pesanan->created_at->toIso8601String(),
                                     'status'     => $isPaid ? 'allocated' : 'order_placed',
@@ -280,9 +271,6 @@ class PesananController extends Controller
         ]);
     }
 
-    /**
-     * Konfirmasi penerimaan paket oleh pembeli.
-     */
     public function konfirmasiDiterima(string $nomorPesanan): RedirectResponse
     {
         $pesanan = $this->temukanPesanan($nomorPesanan);
@@ -295,7 +283,7 @@ class PesananController extends Controller
         $pesanan->save();
 
         if ($pesanan->pengguna_id) {
-            $loyalitas = \App\Models\PenggunaLoyalitas::firstOrCreate(
+            $loyalitas = PenggunaLoyalitas::firstOrCreate(
                 ['pengguna_id' => $pesanan->pengguna_id],
                 ['poin' => 0, 'total_belanja' => 0]
             );
@@ -312,15 +300,12 @@ class PesananController extends Controller
         return redirect()->back()->with('sukses', "Pesanan {$pesanan->nomor_pesanan} telah selesai. Terima kasih!");
     }
 
-    /**
-     * Ubah detail penerima pada faktur sebelum barang dikirim.
-     */
     public function ubahAlamat(Request $request, string $nomorPesanan): RedirectResponse
     {
         $pesanan = $this->temukanPesanan($nomorPesanan, ['pengiriman']);
 
         if (in_array($pesanan->status, ['dikirim', 'selesai', 'dibatalkan']) || !empty($pesanan->pengiriman?->nomor_resi)) {
-            return redirect()->back()->with('error', 'Pesanan yang telah dialokasikan nomor resi kurir tidak dapat diubah alamatnya.');
+            return redirect()->back()->with('error', 'Pesanan yang telah memiliki nomor resi tidak dapat diubah alamatnya.');
         }
 
         $validated = $request->validate([
@@ -348,9 +333,6 @@ class PesananController extends Controller
         return redirect()->back()->with('sukses', 'Data penerima berhasil diperbarui.');
     }
 
-    /**
-     * Ganti metode pembayaran in-place dengan suffix attempt terisolasi.
-     */
     public function gantiMetodeBayar(Request $request, string $nomorPesanan): RedirectResponse
     {
         $pesanan = $this->temukanPesanan($nomorPesanan, ['pembayaran', 'pengiriman', 'items']);
@@ -373,12 +355,11 @@ class PesananController extends Controller
 
             $payloadPengiriman = $this->getPengirimanPayload($pesanan);
             $pembeli = [
-                'nama'    => $payloadPengiriman['nama_penerima'] ?? ($pesanan->pengguna?->name ?? 'Adopter CRSL'),
-                'email'   => $payloadPengiriman['email'] ?? ($pesanan->pengguna?->email ?? 'adopter@crsl-store.id'),
+                'nama'    => $payloadPengiriman['nama_penerima'] ?? ($pesanan->pengguna?->name ?? 'Pelanggan CRSL'),
+                'email'   => $payloadPengiriman['email'] ?? ($pesanan->pengguna?->email ?? 'pelanggan@crsl-store.id'),
                 'telepon' => $payloadPengiriman['telepon'] ?? ($pesanan->pengguna?->telepon ?? '08123456789'),
             ];
 
-            // Cegah collision order ID di Midtrans dengan sequence attempt
             $attempt = Cache::increment("order_attempt:{$pesanan->id}");
             $orderIdUnik = str_replace('/', '-', $pesanan->nomor_pesanan) . "-A{$attempt}";
 
@@ -420,9 +401,6 @@ class PesananController extends Controller
         }
     }
 
-    /**
-     * Batalkan pesanan, kembalikan stok fisik & poin loyalitas.
-     */
     public function batalkanPesanan(string $nomorPesanan): RedirectResponse
     {
         $pesanan = $this->temukanPesanan($nomorPesanan, ['items', 'pembayaran']);
@@ -441,7 +419,7 @@ class PesananController extends Controller
                 $this->inventoriService->kembalikanStok($itemsArray);
 
                 if ($pesanan->pengguna_id && $pesanan->poin_digunakan > 0) {
-                    $loyalitas = \App\Models\PenggunaLoyalitas::firstOrCreate(
+                    $loyalitas = PenggunaLoyalitas::firstOrCreate(
                         ['pengguna_id' => $pesanan->pengguna_id],
                         ['poin' => 0, 'total_belanja' => 0]
                     );
@@ -451,8 +429,8 @@ class PesananController extends Controller
                 }
 
                 if ($pesanan->kode_voucher) {
-                    \App\Models\Voucher::where('kode', $pesanan->kode_voucher)->increment('kuota', 1);
-                    \App\Models\VoucherTerpakai::where('pesanan_id', $pesanan->id)->delete();
+                    Voucher::where('kode', $pesanan->kode_voucher)->increment('kuota', 1);
+                    VoucherTerpakai::where('pesanan_id', $pesanan->id)->delete();
                 }
 
                 if ($pesanan->pembayaran) {
@@ -472,9 +450,6 @@ class PesananController extends Controller
         }
     }
 
-    /**
-     * Refresh / Regenerate QRIS string.
-     */
     public function refreshQris(string $nomorPesanan): RedirectResponse
     {
         $pesanan = $this->temukanPesanan($nomorPesanan, ['pembayaran', 'pengiriman']);
@@ -486,8 +461,8 @@ class PesananController extends Controller
         try {
             $payloadPengiriman = $this->getPengirimanPayload($pesanan);
             $pembeli = [
-                'nama'    => $payloadPengiriman['nama_penerima'] ?? ($pesanan->pengguna?->name ?? 'Adopter CRSL'),
-                'email'   => $payloadPengiriman['email'] ?? ($pesanan->pengguna?->email ?? 'adopter@crsl-store.id'),
+                'nama'    => $payloadPengiriman['nama_penerima'] ?? ($pesanan->pengguna?->name ?? 'Pelanggan CRSL'),
+                'email'   => $payloadPengiriman['email'] ?? ($pesanan->pengguna?->email ?? 'pelanggan@crsl-store.id'),
                 'telepon' => $payloadPengiriman['telepon'] ?? ($pesanan->pengguna?->telepon ?? '08123456789'),
             ];
 
@@ -531,14 +506,16 @@ class PesananController extends Controller
             $pesanan->pembayaran->save();
         }
 
+        if ($pesanan->pengiriman) {
+            $pesanan->pengiriman->tracking_status = 'akan_dikirim';
+            $pesanan->pengiriman->save();
+        }
+
         if ($pesanan->pengguna_id) {
             Cache::forget("pengguna:akun:{$pesanan->pengguna_id}");
             Cache::forget("pengguna:profil:{$pesanan->pengguna_id}");
         }
 
-        // Otomatis dispatch job pembuatan resi kurir agar development end-to-end
-        AlokasiPengirimanBiteshipJob::dispatch($pesanan->id);
-
-        return redirect()->back()->with('sukses', 'Simulasi pembayaran sukses! Status: Perlu Dikirim & Resi Kurir sedang dialokasikan.');
+        return redirect()->back()->with('sukses', 'Simulasi pembayaran sukses! Status: Siap Dikemas & Dikirim.');
     }
 }

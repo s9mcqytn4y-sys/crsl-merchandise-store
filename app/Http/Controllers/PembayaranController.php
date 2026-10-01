@@ -1,22 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Domains\Pembayaran\Services\MidtransService;
-use App\Domains\Pengiriman\Services\BiteshipService;
+use App\Domains\Pengiriman\Services\RajaOngkirService;
 use App\Domains\Pesanan\Actions\BuatPesananAction;
 use App\Models\AlamatPengguna;
-use App\Models\ItemPesanan;
+use App\Models\Keranjang;
 use App\Models\Pesanan;
-use App\Models\PesananPembayaran;
-use App\Models\PesananPengiriman;
-use App\Models\ProdukVarian;
 use App\Models\Voucher;
+use App\Models\VoucherTerpakai;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -24,7 +24,7 @@ class PembayaranController extends Controller
 {
     public function __construct(
         protected MidtransService $midtransService,
-        protected BiteshipService $biteshipService,
+        protected RajaOngkirService $rajaOngkirService,
         protected BuatPesananAction $buatPesananAction
     ) {}
 
@@ -60,6 +60,7 @@ class PembayaranController extends Controller
                     'nama_penerima'  => $a->nama_penerima,
                     'telepon'        => $a->telepon,
                     'email'          => $a->email ?? auth()->user()->email,
+                    'city_id'        => $a->area_id ?? $a->city_id ?? '',
                     'area_id'        => $a->area_id ?? '',
                     'provinsi'       => $a->provinsi ?? '',
                     'kota'           => $a->kota ?? '',
@@ -74,9 +75,10 @@ class PembayaranController extends Controller
 
             $alamatUtama = !empty($allAddresses) ? $allAddresses[0] : null;
 
-            $dbKeranjang = \App\Models\Keranjang::with(['items.produk', 'items.produk_varian'])
+            $dbKeranjang = Keranjang::with(['items.produk', 'items.produk_varian'])
                 ->where('pengguna_id', $user->id)
                 ->first();
+
             if ($dbKeranjang && $dbKeranjang->items->isNotEmpty() && empty($keranjang)) {
                 $keranjang = [];
                 foreach ($dbKeranjang->items as $item) {
@@ -94,6 +96,7 @@ class PembayaranController extends Controller
                             'nama_produk' => $p->nama . ($v ? " ({$v->nama_varian})" : ''),
                             'sku' => $v?->sku ?? "CRSL-{$p->id}",
                             'harga' => (float)$harga,
+                            'berat' => (int)($v?->berat ?? $p->berat ?? 250),
                             'jumlah' => $item->jumlah,
                             'ukuran' => $v?->ukuran,
                             'warna' => $v?->warna,
@@ -105,21 +108,20 @@ class PembayaranController extends Controller
             }
         }
 
-        $subtotal = collect($keranjang)->sum(fn ($item) => ($item['harga'] ?? 0) * ($item['jumlah'] ?? 1));
+        $subtotal = collect($keranjang)->sum(fn($item) => ($item['harga'] ?? 0) * ($item['jumlah'] ?? 1));
 
         $usedVoucherIds = auth()->check()
-            ? \App\Models\VoucherTerpakai::where('pengguna_id', auth()->id())->pluck('voucher_id')->all()
+            ? VoucherTerpakai::where('pengguna_id', auth()->id())->pluck('voucher_id')->all()
             : [];
 
-        // Ambil voucher aktif dari database
         $vouchers = Voucher::where('aktif', true)
             ->where(function ($q) {
                 $q->whereNull('berlaku_sampai')
-                  ->orWhere('berlaku_sampai', '>=', now());
+                    ->orWhere('berlaku_sampai', '>=', now());
             })
             ->where(function ($q) {
                 $q->whereNull('kuota')
-                  ->orWhere('kuota', '>', 0);
+                    ->orWhere('kuota', '>', 0);
             })
             ->get()
             ->map(function ($v) use ($usedVoucherIds) {
@@ -150,19 +152,65 @@ class PembayaranController extends Controller
             'addresses' => $allAddresses,
             'loyaltyPoint' => $loyaltyPoint,
             'vouchers' => $vouchers,
-            'kurirList' => collect(config('pengiriman.kurir', []))
-                ->filter(fn ($k) => !empty($k['aktif']))
-                ->values()
-                ->all(),
+            'kurirList' => collect(config('pengiriman.kurir', [
+                ['kode' => 'jne', 'nama' => 'JNE Express', 'aktif' => true],
+                ['kode' => 'pos', 'nama' => 'POS Indonesia', 'aktif' => true],
+                ['kode' => 'tiki', 'nama' => 'TIKI', 'aktif' => true],
+            ]))->filter(fn($k) => !empty($k['aktif']))->values()->all(),
             'metodeBayarList' => collect(config('pembayaran.metode', []))
-                ->filter(fn ($m) => !empty($m['aktif']))
+                ->filter(fn($m) => !empty($m['aktif']))
                 ->values()
                 ->all(),
         ]);
     }
 
     /**
-     * Validasi kode voucher dan hitung diskon real-time langsung dari database dan cache.
+     * Hitung ongkos kirim real-time ke RajaOngkir dari halaman checkout.
+     */
+    public function cekOngkir(Request $request): JsonResponse
+    {
+        $request->validate([
+            'destination_city_id' => 'required|string',
+            'kurir' => 'nullable|string',
+            'items' => 'nullable|array',
+            'berat' => 'nullable|integer|min:1',
+        ]);
+
+        $destinationCityId = trim($request->input('destination_city_id'));
+        $kurir = $request->input('kurir', 'jne,pos,tiki');
+
+        $items = $request->input('items');
+        if (empty($items)) {
+            $items = session()->get('keranjang', []);
+        }
+
+        $beratGram = (int) $request->input('berat', 0);
+        $payloadWeight = $beratGram > 0 ? $beratGram : (array) $items;
+
+        $rates = $this->rajaOngkirService->kalkulasiOngkir($destinationCityId, $payloadWeight, $kurir);
+
+        return response()->json([
+            'sukses' => true,
+            'data' => $rates,
+        ]);
+    }
+
+    /**
+     * Endpoint autocomplete/search database kota RajaOngkir untuk dropdown alamat.
+     */
+    public function cariKota(Request $request): JsonResponse
+    {
+        $keyword = (string) $request->input('q', '');
+        $hasil = $this->rajaOngkirService->cariKota($keyword);
+
+        return response()->json([
+            'sukses' => true,
+            'data' => array_slice($hasil, 0, 20),
+        ]);
+    }
+
+    /**
+     * Validasi kode voucher dan hitung diskon real-time.
      */
     public function validasiVoucher(Request $request): JsonResponse
     {
@@ -183,7 +231,6 @@ class PembayaranController extends Controller
             ], 404);
         }
 
-        // Cek masa berlaku
         if ($voucher->berlaku_sampai && now()->greaterThan($voucher->berlaku_sampai)) {
             return response()->json([
                 'sukses' => false,
@@ -191,7 +238,6 @@ class PembayaranController extends Controller
             ], 422);
         }
 
-        // Cek kuota
         if ($voucher->kuota !== null && $voucher->kuota <= 0) {
             return response()->json([
                 'sukses' => false,
@@ -199,9 +245,8 @@ class PembayaranController extends Controller
             ], 422);
         }
 
-        // Cek riwayat penggunaan akun jika user sedang login
         if (auth()->check()) {
-            $sudahPernahPakai = \App\Models\VoucherTerpakai::where('voucher_id', $voucher->id)
+            $sudahPernahPakai = VoucherTerpakai::where('voucher_id', $voucher->id)
                 ->where('pengguna_id', auth()->id())
                 ->exists();
 
@@ -213,7 +258,6 @@ class PembayaranController extends Controller
             }
         }
 
-        // Cek minimum belanja (dukung min_belanja & minimal_belanja)
         $minBelanja = (float)($voucher->min_belanja ?? $voucher->minimal_belanja ?? 0);
         if ($minBelanja > 0 && $subtotal < $minBelanja) {
             return response()->json([
@@ -222,7 +266,6 @@ class PembayaranController extends Controller
             ], 422);
         }
 
-        // Hitung diskon riil (nominal atau persentase dengan capping maksimal diskon)
         if (in_array($voucher->tipe, ['persen', 'persentase'])) {
             $diskonKalkulasi = round($subtotal * ($voucher->nilai / 100));
             $nilaiDiskon = !empty($voucher->maksimal_diskon)
@@ -256,22 +299,26 @@ class PembayaranController extends Controller
         $buyNowJson = $request->input('buy_now_item');
         if (!empty($buyNowJson)) {
             $buyNowData = is_array($buyNowJson) ? $buyNowJson : json_decode($buyNowJson, true);
-            if ($buyNowData && isset($buyNowData['produk_id'])) {
-                $cartKey = 'buynow-' . $buyNowData['produk_id'] . (!empty($buyNowData['varian_id']) ? '_' . $buyNowData['varian_id'] : '');
-                $keranjang = [$cartKey => $buyNowData];
+            if ($buyNowData && (!empty($buyNowData['produk_id']) || !empty($buyNowData['id']))) {
+                $pId = $buyNowData['produk_id'] ?? $buyNowData['id'];
+                $vId = $buyNowData['varian_id'] ?? null;
+                $cartKey = 'buynow-' . $pId . ($vId ? "_{$vId}" : '');
+                $keranjang[$cartKey] = $buyNowData;
             }
         } elseif ($request->has('items') && is_array($request->input('items')) && count($request->input('items')) > 0) {
             foreach ($request->input('items') as $idx => $it) {
-                $pId = $it['id'] ?? ($it['produk_id'] ?? $idx);
-                $vId = $it['varian_id'] ?? null;
-                $cartKey = "req-{$pId}" . ($vId ? "_{$vId}" : '');
+                $pId = $it['produk_id'] ?? $it['id'] ?? null;
+                $vId = $it['varian_id'] ?? $it['produk_varian_id'] ?? null;
+                $cartKey = "req-" . ($pId ?? "item_{$idx}") . ($vId ? "_{$vId}" : '');
+
                 $keranjang[$cartKey] = [
                     'id'          => $cartKey,
-                    'produk_id'   => $pId,
-                    'varian_id'   => $vId,
+                    'produk_id'   => $pId ? (int)$pId : null,
+                    'varian_id'   => $vId ? (int)$vId : null,
                     'nama_produk' => $it['nama'] ?? ($it['nama_produk'] ?? 'Produk CRSL'),
                     'harga'       => (float)($it['harga'] ?? 0),
-                    'jumlah'      => (int)($it['jumlah'] ?? 1),
+                    'berat'       => (int)($it['berat'] ?? $it['weight'] ?? 250),
+                    'jumlah'      => (int)($it['jumlah'] ?? $it['quantity'] ?? 1),
                     'warna'       => $it['warna'] ?? null,
                     'ukuran'      => $it['ukuran'] ?? null,
                     'gambar'      => $it['gambar'] ?? ($it['gambar_utama'] ?? null),
@@ -286,70 +333,54 @@ class PembayaranController extends Controller
         }
 
         $validated = $request->validate([
-            'nama_lengkap' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'telepon' => 'required|string|max:20',
-            'biteship_area_id' => 'nullable|string|max:64',
-            'alamat_lengkap' => 'required|string',
-            'provinsi' => 'nullable|string|max:100',
-            'kota' => 'required|string|max:100',
-            'kecamatan' => 'nullable|string|max:100',
-            'kode_pos' => 'required|string|max:10',
-            'kurir' => 'required|string',
-            'metode_pembayaran' => 'required|string',
-            'kode_voucher' => 'nullable|string|max:50',
-            'catatan' => 'nullable|string|max:500',
+            'nama_lengkap'        => 'required|string|max:255',
+            'email'               => 'required|email|max:255',
+            'telepon'             => 'required|string|max:20',
+            'destination_city_id' => 'nullable|string|max:64',
+            'city_id'             => 'nullable|string|max:64',
+            'biteship_area_id'    => 'nullable|string|max:64',
+            'alamat_lengkap'      => 'required|string',
+            'provinsi'            => 'nullable|string|max:100',
+            'kota'                => 'required|string|max:100',
+            'kecamatan'           => 'nullable|string|max:100',
+            'kode_pos'            => 'required|string|max:10',
+            'kurir'               => 'required|string',
+            'layanan_kurir'       => 'nullable|string',
+            'ongkir'              => 'nullable|numeric|min:0',
+            'metode_pembayaran'   => 'required|string',
+            'kode_voucher'        => 'nullable|string|max:50',
+            'catatan'             => 'nullable|string|max:500',
         ]);
 
         try {
-            // Kalkulasi Diskon Voucher awal
-            $subtotalAwal = collect($keranjang)->sum(fn ($item) => ($item['harga'] ?? 0) * ($item['jumlah'] ?? 1));
-            $diskon = 0;
-            if (!empty($validated['kode_voucher'])) {
-                $voucher = Voucher::where('kode', strtoupper(trim($validated['kode_voucher'])))
-                    ->where('aktif', true)
-                    ->first();
-                $minBelanja = (float)($voucher?->min_belanja ?? $voucher?->minimal_belanja ?? 0);
-                if ($voucher && $subtotalAwal >= $minBelanja) {
-                    if (in_array($voucher->tipe, ['persen', 'persentase'])) {
-                        $diskonKalkulasi = round($subtotalAwal * ($voucher->nilai / 100));
-                        $diskon = !empty($voucher->maksimal_diskon)
-                            ? min($diskonKalkulasi, (float)$voucher->maksimal_diskon)
-                            : $diskonKalkulasi;
-                    } else {
-                        $diskon = (float)($voucher->nilai ?? $voucher->nominal ?? 0);
-                    }
-                }
-            }
-
-            // Delegasi Eksekusi ke Domain Action BuatPesananAction
+            // Delegasikan kalkulasi dan pembuatan pesanan secara utuh ke Domain Action
             $pesanan = $this->buatPesananAction->execute(
                 dataInput: array_merge($validated, [
-                    'nilai_diskon' => $diskon,
-                    'use_loyalty_point' => !empty($request->input('use_loyalty_point')),
-                    'is_dropship' => !empty($request->input('is_dropship')),
-                    'dropship_pengirim' => $request->input('dropship_pengirim'),
-                    'dropship_telepon' => $request->input('dropship_telepon'),
+                    'destination_city_id' => $validated['destination_city_id'] ?? $validated['city_id'] ?? null,
+                    'use_loyalty_point'   => !empty($request->input('use_loyalty_point')),
+                    'is_dropship'         => !empty($request->input('is_dropship')),
+                    'dropship_pengirim'   => $request->input('dropship_pengirim'),
+                    'dropship_telepon'    => $request->input('dropship_telepon'),
                     'asuransi_pengiriman' => !empty($request->input('asuransi_pengiriman')),
-                    'biaya_asuransi' => $request->input('biaya_asuransi'),
-                    'ongkir' => $request->input('ongkir'),
-                    'layanan_kurir' => $request->input('layanan_kurir'),
+                    'biaya_asuransi'      => $request->input('biaya_asuransi'),
+                    'ongkir'              => $request->input('ongkir'),
+                    'layanan_kurir'       => $request->input('layanan_kurir'),
                 ]),
                 keranjang: $keranjang,
                 penggunaId: auth()->id()
             );
 
+            // Bersihkan sesi keranjang setelah pesanan terbentuk
             session()->forget('keranjang');
             session(['nomor_pesanan_terakhir' => $pesanan->nomor_pesanan]);
 
             if (auth()->check()) {
-                \Illuminate\Support\Facades\Cache::forget('pengguna:akun:' . auth()->id());
-                \Illuminate\Support\Facades\Cache::forget('pengguna:profil:' . auth()->id());
+                Cache::forget('pengguna:akun:' . auth()->id());
+                Cache::forget('pengguna:profil:' . auth()->id());
             }
 
             return redirect()->route('faktur', ['nomorPesanan' => $pesanan->nomor_pesanan])
                 ->with('sukses', 'Pesanan berhasil dibuat. Silakan selesaikan pembayaran!');
-
         } catch (\Throwable $e) {
             report($e);
             return redirect()->back()->with('error', 'Gagal memproses pesanan: ' . $e->getMessage());
