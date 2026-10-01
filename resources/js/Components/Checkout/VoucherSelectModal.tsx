@@ -254,7 +254,7 @@ export default function VoucherSelectModal({
                                 {/* Header Modal */}
                                 <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 shrink-0">
                                     <div className="flex items-center gap-2.5">
-                                        <div className="w-9 h-9 rounded-2xl bg-red-50 text-[#E52027] border border-red-100 flex items-center justify-center shrink-0">
+                                        <div className="w-9 h-9 rounded-2xl bg-red-50 text-primary border border-red-100 flex items-center justify-center shrink-0">
                                             <TicketPercent className="w-4 h-4 stroke-[2.2]" />
                                         </div>
                                         <div>
@@ -271,7 +271,7 @@ export default function VoucherSelectModal({
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                         aria-label="Tutup jendela voucher"
                                     >
                                         <X className="w-4 h-4 stroke-[2.2]" />
@@ -301,12 +301,12 @@ export default function VoucherSelectModal({
                                                 setManualError("");
                                             }}
                                             placeholder="CONTOH: CRSLDISC10"
-                                            className="flex-1 px-3.5 py-2.5 text-xs sm:text-sm border border-slate-300 rounded-2xl focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10 focus:outline-none uppercase font-mono font-bold text-slate-900 transition-all shadow-2xs placeholder:font-normal placeholder:text-slate-400"
+                                            className="flex-1 px-3.5 py-2.5 text-xs sm:text-sm border border-slate-300 rounded-2xl focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none uppercase font-mono font-bold text-slate-900 transition-all shadow-2xs placeholder:font-normal placeholder:text-slate-400"
                                         />
                                         <button
                                             type="submit"
                                             disabled={isLoadingManual}
-                                            className="px-5 py-2.5 rounded-2xl bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.99] text-white text-xs font-bold transition-all cursor-pointer shrink-0 disabled:opacity-50 flex items-center gap-1.5 shadow-md shadow-red-500/20"
+                                            className="px-5 py-2.5 rounded-2xl bg-primary hover:bg-primary-hover active:scale-[0.99] text-white text-xs font-bold transition-all cursor-pointer shrink-0 disabled:opacity-50 flex items-center gap-1.5 shadow-md shadow-red-500/20"
                                         >
                                             {isLoadingManual ? (
                                                 <>
@@ -417,7 +417,7 @@ export default function VoucherSelectModal({
                                                         }
                                                     }}
                                                     className={cn(
-                                                        "p-3.5 sm:p-4 rounded-2xl border transition-all text-left relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]",
+                                                        "p-3.5 sm:p-4 rounded-2xl border transition-all text-left relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                                                         isSelected
                                                             ? "border-emerald-500 bg-emerald-50/40 ring-2 ring-emerald-500/20 shadow-2xs"
                                                             : isEligible

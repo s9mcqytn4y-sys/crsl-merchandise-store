@@ -54,7 +54,7 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
                                 {label}
                                 {showRequiredMark && (
                                     <span
-                                        className="text-[#E52027] ml-1 font-bold"
+                                        className="text-primary ml-1 font-bold"
                                         aria-hidden="true"
                                     >
                                         *
@@ -76,7 +76,7 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
                         "relative flex items-center gap-3 px-3.5 sm:px-4 py-2.5 rounded-2xl bg-white border transition-all duration-200 shadow-2xs",
                         error
                             ? "border-rose-500 ring-2 ring-rose-500/10 focus-within:border-rose-600 focus-within:ring-rose-500/20"
-                            : "border-slate-200/90 hover:border-slate-300 focus-within:border-[#E52027] focus-within:ring-2 focus-within:ring-[#E52027]/10",
+                            : "border-slate-200/90 hover:border-slate-300 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10",
                         disabled &&
                             "bg-slate-50/80 opacity-60 cursor-not-allowed select-none pointer-events-none",
                     )}
@@ -88,7 +88,7 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
                                 "shrink-0 transition-colors pointer-events-none",
                                 error
                                     ? "text-rose-500"
-                                    : "text-slate-400 group-focus-within:text-[#E52027]",
+                                    : "text-slate-400 group-focus-within:text-primary",
                             )}
                             aria-hidden="true"
                         >

@@ -112,7 +112,7 @@ export default function InstruksiQris({
                 {/* Header Verifikasi Nasional */}
                 <div className="text-xs font-bold text-slate-700 flex items-center justify-center gap-1.5 border-b border-slate-200/60 pb-3 w-full">
                     <QrCode
-                        className="w-4 h-4 text-[#E52027]"
+                        className="w-4 h-4 text-primary"
                         aria-hidden="true"
                     />
                     <span>QRIS Standar Pembayaran Nasional</span>
@@ -141,7 +141,7 @@ export default function InstruksiQris({
                                 <button
                                     type="button"
                                     onClick={onRefreshQris}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[#E52027] hover:bg-red-50 border border-red-200 transition-colors cursor-pointer"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-primary hover:bg-red-50 border border-red-200 transition-colors cursor-pointer"
                                 >
                                     <RefreshCw className="w-3.5 h-3.5" />
                                     <span>Muat Ulang</span>

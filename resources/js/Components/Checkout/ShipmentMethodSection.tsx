@@ -150,7 +150,7 @@ export default function ShipmentMethodSection({
                 aria-invalid={Boolean(error)}
                 aria-describedby={error ? "shipment-method-error" : undefined}
                 className={cn(
-                    "w-full text-left rounded-2xl border p-4 shadow-2xs transition-all duration-200 cursor-pointer flex items-center justify-between gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] focus-visible:ring-offset-1 group",
+                    "w-full text-left rounded-2xl border p-4 shadow-2xs transition-all duration-200 cursor-pointer flex items-center justify-between gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 group",
                     error
                         ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
                         : selectedCourier
@@ -193,7 +193,7 @@ export default function ShipmentMethodSection({
                 <div className="flex items-center gap-2 shrink-0">
                     {isLoading ? (
                         <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1.5">
-                            <Loader2 className="w-3.5 h-3.5 text-[#E52027] animate-spin" />
+                            <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
                             <span>Memperbarui tarif...</span>
                         </span>
                     ) : (

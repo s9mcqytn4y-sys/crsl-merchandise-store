@@ -132,7 +132,7 @@ export default function StorefrontLayout({ children }: StorefrontLayoutProps) {
     };
 
     return (
-        <div className="min-h-dvh flex flex-col bg-slate-50 text-slate-800 font-sans relative antialiased selection:bg-[#E52027] selection:text-white">
+        <div className="min-h-dvh flex flex-col bg-slate-50 text-slate-800 font-sans relative antialiased selection:bg-primary selection:text-white">
             {/* Konfigurasi Global Head Meta */}
             <Head>
                 <meta name="theme-color" content="#E52027" />
@@ -153,7 +153,7 @@ export default function StorefrontLayout({ children }: StorefrontLayoutProps) {
             {/* Aksesibilitas: Skip Link ke Konten Utama */}
             <a
                 href="#main-content"
-                className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2.5 focus:bg-[#E52027] focus:text-white focus:font-bold focus:text-xs focus:rounded-xl focus:shadow-lg focus:outline-none"
+                className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2.5 focus:bg-primary focus:text-white focus:font-bold focus:text-xs focus:rounded-xl focus:shadow-lg focus:outline-none"
             >
                 Lewati ke Konten Utama
             </a>

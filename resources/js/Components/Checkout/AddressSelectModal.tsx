@@ -115,7 +115,7 @@ export default function AddressSelectModal({
                                 {/* Header Modal */}
                                 <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 shrink-0">
                                     <div className="flex items-center gap-2.5">
-                                        <div className="w-9 h-9 rounded-2xl bg-red-50 text-[#E52027] border border-red-100 flex items-center justify-center shrink-0">
+                                        <div className="w-9 h-9 rounded-2xl bg-red-50 text-primary border border-red-100 flex items-center justify-center shrink-0">
                                             <MapPin className="w-4 h-4 stroke-[2.2]" />
                                         </div>
                                         <div>
@@ -135,7 +135,7 @@ export default function AddressSelectModal({
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                         aria-label="Tutup jendela daftar alamat"
                                     >
                                         <X className="w-4 h-4 stroke-[2.2]" />
@@ -185,9 +185,9 @@ export default function AddressSelectModal({
                                                         }
                                                     }}
                                                     className={cn(
-                                                        "p-4 rounded-2xl border transition-all cursor-pointer relative space-y-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]",
+                                                        "p-4 rounded-2xl border transition-all cursor-pointer relative space-y-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                                                         isSelected
-                                                            ? "border-[#E52027] bg-red-50/20 ring-2 ring-[#E52027]/20 shadow-2xs"
+                                                            ? "border-primary bg-red-50/20 ring-2 ring-primary/20 shadow-2xs"
                                                             : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60",
                                                     )}
                                                 >
@@ -210,7 +210,7 @@ export default function AddressSelectModal({
                                                                 )}
 
                                                                 {addr.adalah_utama && (
-                                                                    <span className="text-[10px] bg-red-50 text-[#E52027] font-black px-2 py-0.5 rounded-md border border-red-200 uppercase tracking-wider">
+                                                                    <span className="text-[10px] bg-red-50 text-primary font-black px-2 py-0.5 rounded-md border border-red-200 uppercase tracking-wider">
                                                                         Utama
                                                                     </span>
                                                                 )}
@@ -279,7 +279,7 @@ export default function AddressSelectModal({
 
                                                         {/* Indikator Pilihan Centang Merah */}
                                                         {isSelected ? (
-                                                            <div className="w-5 h-5 rounded-full bg-[#E52027] text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                                                            <div className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
                                                                 <Check className="w-3 h-3 stroke-[3]" />
                                                             </div>
                                                         ) : (
@@ -338,7 +338,7 @@ export default function AddressSelectModal({
                                             onClose();
                                             onOpenAddModal();
                                         }}
-                                        className="w-full min-h-[46px] py-3 bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.99] text-white rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-md shadow-red-500/20 flex items-center justify-center gap-2 cursor-pointer"
+                                        className="w-full min-h-[46px] py-3 bg-primary hover:bg-primary-hover active:scale-[0.99] text-white rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-md shadow-red-500/20 flex items-center justify-center gap-2 cursor-pointer"
                                     >
                                         <Plus className="w-4 h-4 stroke-[2.5]" />
                                         <span>Tambah Alamat Baru</span>

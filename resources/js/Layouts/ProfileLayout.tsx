@@ -168,7 +168,7 @@ export default function ProfileLayout({
                                         className={cn(
                                             "flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all",
                                             isActive
-                                                ? "text-[#E52027] bg-red-50/70 shadow-2xs"
+                                                ? "text-primary bg-red-50/70 shadow-2xs"
                                                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-50",
                                         )}
                                     >
@@ -176,7 +176,7 @@ export default function ProfileLayout({
                                             className={cn(
                                                 "w-4 h-4 stroke-[2.2] shrink-0",
                                                 isActive
-                                                    ? "text-[#E52027]"
+                                                    ? "text-primary"
                                                     : "text-slate-400",
                                             )}
                                         />
@@ -277,7 +277,7 @@ export default function ProfileLayout({
                                             type="button"
                                             onClick={handleAksiLogout}
                                             disabled={isSubmittingLogout}
-                                            className="inline-flex items-center gap-1.5 px-6 py-2.5 bg-[#E52027] hover:bg-[#CC1C22] active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs shadow-red-500/20 transition-all cursor-pointer disabled:opacity-50"
+                                            className="inline-flex items-center gap-1.5 px-6 py-2.5 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs shadow-red-500/20 transition-all cursor-pointer disabled:opacity-50"
                                         >
                                             {isSubmittingLogout ? (
                                                 <>

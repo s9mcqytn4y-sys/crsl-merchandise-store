@@ -263,7 +263,7 @@ export default function ModalUbahAlamat({
                                 }
                                 required
                                 placeholder="Contoh: Budi Santoso"
-                                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E52027]/20 focus:border-[#E52027] transition-all"
+                                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                             />
                         </div>
 
@@ -291,7 +291,7 @@ export default function ModalUbahAlamat({
                                 }
                                 required
                                 placeholder="Contoh: 081234567890"
-                                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E52027]/20 focus:border-[#E52027] transition-all"
+                                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                             />
                         </div>
                     </div>
@@ -320,7 +320,7 @@ export default function ModalUbahAlamat({
                             rows={3}
                             required
                             placeholder="Nama jalan, nomor rumah/kantor, RT/RW, dan patokan penjemputan terdekat..."
-                            className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E52027]/20 focus:border-[#E52027] transition-all resize-none leading-relaxed"
+                            className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none leading-relaxed"
                         />
                     </div>
 
@@ -343,7 +343,7 @@ export default function ModalUbahAlamat({
                                 handleFormChange("catatan", e.target.value)
                             }
                             placeholder="Contoh: Titipkan ke satpam jika penerima tidak ada di tempat"
-                            className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E52027]/20 focus:border-[#E52027] transition-all"
+                            className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                         />
                     </div>
 
@@ -360,7 +360,7 @@ export default function ModalUbahAlamat({
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.98] text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+                            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover active:scale-[0.98] text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
                         >
                             {isSubmitting ? (
                                 <>

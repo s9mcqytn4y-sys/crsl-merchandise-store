@@ -192,9 +192,9 @@ export default function ShipmentSelectModal({
                 }}
                 onClick={() => setTemporarySelectedId(itemKey)}
                 className={cn(
-                    "rounded-2xl border p-3.5 sm:p-4 transition-all cursor-pointer relative select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]",
+                    "rounded-2xl border p-3.5 sm:p-4 transition-all cursor-pointer relative select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                     isSelected
-                        ? "border-[#E52027] bg-red-50/20 ring-2 ring-[#E52027]/20 shadow-2xs"
+                        ? "border-primary bg-red-50/20 ring-2 ring-primary/20 shadow-2xs"
                         : "border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50/60",
                 )}
             >
@@ -206,7 +206,7 @@ export default function ShipmentSelectModal({
                                 className={cn(
                                     "w-4 h-4 rounded-full border flex items-center justify-center transition-colors",
                                     isSelected
-                                        ? "border-[#E52027] bg-[#E52027]"
+                                        ? "border-primary bg-primary"
                                         : "border-slate-300 bg-white",
                                 )}
                             >
@@ -283,7 +283,7 @@ export default function ShipmentSelectModal({
                             id={`insurance-${itemKey}`}
                             checked={tempInsurance}
                             onChange={(e) => setTempInsurance(e.target.checked)}
-                            className="mt-0.5 w-4 h-4 rounded-md border-slate-300 text-[#E52027] focus:ring-[#E52027] cursor-pointer"
+                            className="mt-0.5 w-4 h-4 rounded-md border-slate-300 text-primary focus:ring-primary cursor-pointer"
                         />
                         <label
                             htmlFor={`insurance-${itemKey}`}
@@ -345,7 +345,7 @@ export default function ShipmentSelectModal({
                                 {/* Header Modal */}
                                 <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
                                     <div className="flex items-center gap-2.5">
-                                        <div className="w-9 h-9 rounded-2xl bg-red-50 text-[#E52027] border border-red-100 flex items-center justify-center shrink-0">
+                                        <div className="w-9 h-9 rounded-2xl bg-red-50 text-primary border border-red-100 flex items-center justify-center shrink-0">
                                             <Truck className="w-4 h-4 stroke-[2.2]" />
                                         </div>
                                         <div>
@@ -365,7 +365,7 @@ export default function ShipmentSelectModal({
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                         aria-label="Tutup modal pengiriman"
                                     >
                                         <X className="w-4 h-4 stroke-[2.2]" />
@@ -418,7 +418,7 @@ export default function ShipmentSelectModal({
                                                                 (prev) => !prev,
                                                             )
                                                         }
-                                                        className="w-full py-2 flex items-center justify-center gap-1.5 text-xs font-bold text-[#E52027] hover:text-[#CC1C22] transition-colors cursor-pointer"
+                                                        className="w-full py-2 flex items-center justify-center gap-1.5 text-xs font-bold text-primary hover:text-primary-hover transition-colors cursor-pointer"
                                                     >
                                                         <span>
                                                             {showAllCouriers
@@ -458,7 +458,7 @@ export default function ShipmentSelectModal({
                                         className={cn(
                                             "w-full min-h-[46px] py-3 px-6 rounded-2xl font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-md flex items-center justify-center gap-2",
                                             activeSelectedCourier
-                                                ? "bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.99] text-white shadow-red-500/20"
+                                                ? "bg-primary hover:bg-primary-hover active:scale-[0.99] text-white shadow-red-500/20"
                                                 : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none",
                                         )}
                                     >

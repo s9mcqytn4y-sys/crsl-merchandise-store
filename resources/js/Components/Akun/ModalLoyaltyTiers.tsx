@@ -128,7 +128,7 @@ export default function ModalLoyaltyTiers({
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header Banner */}
-                <div className="p-6 bg-gradient-to-r from-primary to-rose-600 text-white flex items-center justify-between">
+                <div className="p-6 bg-linear-to-r from-primary to-rose-600 text-white flex items-center justify-between">
                     <div className="space-y-1">
                         <div className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-200 uppercase tracking-widest">
                             <Crown className="w-4 h-4 text-amber-300" />

@@ -15,7 +15,7 @@ interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 const BADGE_VARIANTS: Record<BadgeVariant, string> = {
-    primary: "bg-[#E52027] text-white border-transparent shadow-2xs",
+    primary: "bg-primary text-white border-transparent shadow-2xs",
     emerald: "bg-emerald-50 text-emerald-800 border-emerald-200/90",
     amber: "bg-amber-50 text-amber-900 border-amber-200/90",
     rose: "bg-rose-50 text-rose-800 border-rose-200/90",

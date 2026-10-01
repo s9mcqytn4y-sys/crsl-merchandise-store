@@ -131,7 +131,7 @@ export default function PengingatPesananBelumBayar() {
         <aside
             role="alert"
             aria-label="Pengingat pesanan menunggu pembayaran"
-            className="bg-[#E52027] text-white border-b border-[#CC1C22] relative z-40 transition-all duration-300 shadow-xs select-none"
+            className="bg-primary text-white border-b border-primary-hover relative z-40 transition-all duration-300 shadow-xs select-none"
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3 text-xs">
                 {/* Informasi Pesanan */}
@@ -168,7 +168,7 @@ export default function PengingatPesananBelumBayar() {
                 <div className="flex items-center gap-2 shrink-0">
                     <Link
                         href={`/faktur/${fakturSlug}`}
-                        className="bg-white hover:bg-slate-100 text-[#E52027] font-black px-3.5 py-1 rounded-full text-xs transition-transform active:scale-95 shadow-sm inline-flex items-center gap-1 cursor-pointer"
+                        className="bg-white hover:bg-slate-100 text-primary font-black px-3.5 py-1 rounded-full text-xs transition-transform active:scale-95 shadow-sm inline-flex items-center gap-1 cursor-pointer"
                     >
                         <span>Bayar</span>
                         <ArrowRight className="w-3 h-3 stroke-[2.5]" />

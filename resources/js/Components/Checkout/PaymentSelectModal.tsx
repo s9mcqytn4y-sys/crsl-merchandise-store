@@ -246,7 +246,7 @@ export default function PaymentSelectModal({
                                             onClick={() =>
                                                 setShowingVaSubmenu(false)
                                             }
-                                            className="absolute left-4 p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer flex items-center gap-1 text-xs font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                            className="absolute left-4 p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer flex items-center gap-1 text-xs font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                             aria-label="Kembali ke pilihan utama pembayaran"
                                         >
                                             <ArrowLeft className="w-4 h-4 stroke-[2.2]" />
@@ -266,7 +266,7 @@ export default function PaymentSelectModal({
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="absolute right-4 p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                        className="absolute right-4 p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                         aria-label="Tutup jendela pembayaran"
                                     >
                                         <X className="w-4 h-4 stroke-[2.2]" />
@@ -371,7 +371,7 @@ export default function PaymentSelectModal({
 
                                                             <div className="shrink-0">
                                                                 {isSelected ? (
-                                                                    <span className="w-5 h-5 rounded-full bg-[#E52027] text-white flex items-center justify-center shadow-2xs">
+                                                                    <span className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center shadow-2xs">
                                                                         <Check className="w-3 h-3 stroke-[3]" />
                                                                     </span>
                                                                 ) : (
@@ -396,9 +396,9 @@ export default function PaymentSelectModal({
                                                         )
                                                     }
                                                     className={cn(
-                                                        "w-full h-16 sm:h-18 px-5 rounded-2xl border-2 flex items-center justify-between transition-all cursor-pointer shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]",
+                                                        "w-full h-16 sm:h-18 px-5 rounded-2xl border-2 flex items-center justify-between transition-all cursor-pointer shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                                                         temporaryId === "qris"
-                                                            ? "border-[#E52027] bg-red-50/20 ring-2 ring-[#E52027]/20"
+                                                            ? "border-primary bg-red-50/20 ring-2 ring-primary/20"
                                                             : "border-slate-200 hover:border-slate-300 bg-white",
                                                     )}
                                                 >
@@ -433,7 +433,7 @@ export default function PaymentSelectModal({
                                                     <div className="shrink-0">
                                                         {temporaryId ===
                                                         "qris" ? (
-                                                            <span className="w-5 h-5 rounded-full bg-[#E52027] text-white flex items-center justify-center shadow-2xs">
+                                                            <span className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center shadow-2xs">
                                                                 <Check className="w-3 h-3 stroke-[3]" />
                                                             </span>
                                                         ) : (
@@ -479,7 +479,7 @@ export default function PaymentSelectModal({
                                                                 "h-16 px-3.5 rounded-2xl border flex items-center justify-center transition-all cursor-pointer shadow-2xs",
                                                                 temporaryId ===
                                                                     "ovo"
-                                                                    ? "border-[#E52027] bg-red-50/20 ring-1 ring-[#E52027]"
+                                                                    ? "border-primary bg-red-50/20 ring-1 ring-primary"
                                                                     : "border-slate-200 hover:border-slate-300 bg-white",
                                                             )}
                                                         >
@@ -499,14 +499,14 @@ export default function PaymentSelectModal({
                                                             className={cn(
                                                                 "h-16 px-3.5 rounded-2xl border flex flex-col items-center justify-center transition-all cursor-pointer shadow-2xs",
                                                                 isVaSelected
-                                                                    ? "border-[#E52027] bg-red-50/20 ring-1 ring-[#E52027]"
+                                                                    ? "border-primary bg-red-50/20 ring-1 ring-primary"
                                                                     : "border-slate-200 hover:border-slate-300 bg-white",
                                                             )}
                                                         >
                                                             <span className="text-xs font-bold text-slate-900 leading-tight">
                                                                 Virtual Account
                                                             </span>
-                                                            <span className="text-[10px] text-[#E52027] font-bold truncate max-w-full mt-0.5">
+                                                            <span className="text-[10px] text-primary font-bold truncate max-w-full mt-0.5">
                                                                 {isVaSelected
                                                                     ? VA_BANKS.find(
                                                                           (b) =>
@@ -530,7 +530,7 @@ export default function PaymentSelectModal({
                                                                 "h-16 px-3.5 rounded-2xl border flex items-center justify-center transition-all cursor-pointer shadow-2xs",
                                                                 temporaryId ===
                                                                     "alfamart"
-                                                                    ? "border-[#E52027] bg-red-50/20 ring-1 ring-[#E52027]"
+                                                                    ? "border-primary bg-red-50/20 ring-1 ring-primary"
                                                                     : "border-slate-200 hover:border-slate-300 bg-white",
                                                             )}
                                                         >
@@ -561,7 +561,7 @@ export default function PaymentSelectModal({
                                                                 "h-16 px-3.5 rounded-2xl border flex items-center justify-center transition-all cursor-pointer shadow-2xs",
                                                                 temporaryId ===
                                                                     "akulaku"
-                                                                    ? "border-[#E52027] bg-red-50/20 ring-1 ring-[#E52027]"
+                                                                    ? "border-primary bg-red-50/20 ring-1 ring-primary"
                                                                     : "border-slate-200 hover:border-slate-300 bg-white",
                                                             )}
                                                         >
@@ -582,7 +582,7 @@ export default function PaymentSelectModal({
                                                                 "col-span-2 h-14 px-4 rounded-2xl border flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs",
                                                                 temporaryId ===
                                                                     "credit_card"
-                                                                    ? "border-[#E52027] bg-red-50/20 ring-1 ring-[#E52027]"
+                                                                    ? "border-primary bg-red-50/20 ring-1 ring-primary"
                                                                     : "border-slate-200 hover:border-slate-300 bg-white",
                                                             )}
                                                         >
@@ -608,7 +608,7 @@ export default function PaymentSelectModal({
                                         className={cn(
                                             "w-full min-h-[46px] py-3 px-6 rounded-2xl font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-md flex items-center justify-center gap-2",
                                             selectedItem
-                                                ? "bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.99] text-white shadow-red-500/20"
+                                                ? "bg-primary hover:bg-primary-hover active:scale-[0.99] text-white shadow-red-500/20"
                                                 : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none",
                                         )}
                                     >

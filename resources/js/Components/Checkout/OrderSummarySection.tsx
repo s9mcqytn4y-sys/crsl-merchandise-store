@@ -199,7 +199,7 @@ export default function OrderSummarySection({
                                     {/* Detail Produk */}
                                     <div className="flex-1 min-w-0">
                                         {item.is_bundle && (
-                                            <span className="text-[10px] font-black text-[#E52027] tracking-wider uppercase block mb-0.5">
+                                            <span className="text-[10px] font-black text-primary tracking-wider uppercase block mb-0.5">
                                                 PAKET BUNDLE
                                             </span>
                                         )}
@@ -354,7 +354,7 @@ export default function OrderSummarySection({
                         onClick={onSubmitOrder}
                         disabled={isSubmitting}
                         aria-busy={isSubmitting}
-                        className="w-full min-h-[50px] px-6 rounded-2xl bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.99] text-white font-extrabold text-sm sm:text-base shadow-lg shadow-red-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full min-h-[50px] px-6 rounded-2xl bg-primary hover:bg-primary-hover active:scale-[0.99] text-white font-extrabold text-sm sm:text-base shadow-lg shadow-red-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isSubmitting ? (
                             <>

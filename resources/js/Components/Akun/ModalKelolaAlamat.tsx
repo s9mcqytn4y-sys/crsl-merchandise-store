@@ -107,7 +107,7 @@ export default function ModalKelolaAlamat({
                                 {/* Header Modal */}
                                 <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
                                     <div className="flex items-center gap-2.5">
-                                        <div className="w-9 h-9 rounded-2xl bg-red-50 text-[#E52027] border border-red-100 flex items-center justify-center shrink-0">
+                                        <div className="w-9 h-9 rounded-2xl bg-red-50 text-primary border border-red-100 flex items-center justify-center shrink-0">
                                             <MapPin className="w-4 h-4 stroke-[2.2]" />
                                         </div>
                                         <div>
@@ -127,7 +127,7 @@ export default function ModalKelolaAlamat({
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="p-1.5 -mr-1 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer"
+                                        className="p-1.5 -mr-1 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
                                         aria-label="Tutup jendela daftar alamat"
                                     >
                                         <X className="w-5 h-5" />
@@ -167,7 +167,7 @@ export default function ModalKelolaAlamat({
                                                     className={cn(
                                                         "group relative rounded-2xl border p-4 transition-all duration-200 cursor-pointer space-y-2 text-xs",
                                                         isSelected
-                                                            ? "border-[#E52027] bg-red-50/20 ring-2 ring-[#E52027]/20 shadow-2xs"
+                                                            ? "border-primary bg-red-50/20 ring-2 ring-primary/20 shadow-2xs"
                                                             : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70",
                                                     )}
                                                 >
@@ -193,7 +193,7 @@ export default function ModalKelolaAlamat({
                                                             </span>
 
                                                             {isSelected && (
-                                                                <div className="w-5 h-5 rounded-full bg-[#E52027] text-white flex items-center justify-center shadow-xs">
+                                                                <div className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center shadow-xs">
                                                                     <Check className="w-3 h-3 stroke-[3]" />
                                                                 </div>
                                                             )}
@@ -266,7 +266,7 @@ export default function ModalKelolaAlamat({
                                                 onClose();
                                                 onAddNewAddress();
                                             }}
-                                            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#E52027] hover:text-[#CC1C22] transition-colors cursor-pointer py-1.5 px-2 -ml-2 rounded-xl hover:bg-red-50"
+                                            className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary-hover transition-colors cursor-pointer py-1.5 px-2 -ml-2 rounded-xl hover:bg-red-50"
                                         >
                                             <Plus className="w-4 h-4 stroke-[2.5]" />
                                             <span>Tambah Alamat Baru</span>

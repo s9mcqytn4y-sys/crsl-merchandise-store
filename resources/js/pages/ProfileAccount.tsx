@@ -74,7 +74,7 @@ export default function ProfileAccount({
             <div className={cn("space-y-6 select-none", className)}>
                 {/* Header Informasi Akun */}
                 <div className="pb-4 border-b border-slate-100">
-                    <span className="text-xs font-black text-[#E52027] uppercase tracking-wider">
+                    <span className="text-xs font-black text-primary uppercase tracking-wider">
                         Keamanan & Privasi
                     </span>
                     <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">
@@ -113,7 +113,7 @@ export default function ProfileAccount({
                                 setDeleteError("");
                                 setIsConfirmDeleteOpen(true);
                             }}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl border border-rose-300 hover:border-rose-400 bg-white text-rose-600 hover:bg-rose-50 text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-2xs active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl border border-rose-300 hover:border-rose-400 bg-white text-rose-600 hover:bg-rose-50 text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-2xs active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         >
                             <Trash2 className="w-4 h-4 stroke-[2.2]" />
                             <span>Hapus Akun Saya</span>
@@ -182,7 +182,7 @@ export default function ProfileAccount({
                                             className="block text-xs font-bold text-slate-700"
                                         >
                                             Ketik{" "}
-                                            <span className="font-mono text-[#E52027] font-bold">
+                                            <span className="font-mono text-primary font-bold">
                                                 DELETE
                                             </span>{" "}
                                             untuk mengonfirmasi:
@@ -210,7 +210,7 @@ export default function ProfileAccount({
                                                 "w-full px-3.5 py-2.5 bg-white border rounded-2xl text-xs sm:text-sm font-mono font-bold text-slate-900 focus:outline-none transition-all shadow-2xs placeholder:font-normal placeholder:text-slate-400",
                                                 deleteError
                                                     ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
-                                                    : "border-slate-300 focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10",
+                                                    : "border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/10",
                                             )}
                                         />
                                         {deleteError && (
@@ -249,7 +249,7 @@ export default function ProfileAccount({
                                                 "inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-xs transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed",
                                                 isDeleteButtonEnabled &&
                                                     !isDeleting
-                                                    ? "bg-[#E52027] hover:bg-[#CC1C22] active:scale-95 shadow-red-500/20"
+                                                    ? "bg-primary hover:bg-primary-hover active:scale-95 shadow-red-500/20"
                                                     : "bg-slate-300",
                                             )}
                                         >

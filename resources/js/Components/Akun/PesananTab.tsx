@@ -323,7 +323,7 @@ export default function PesananTab({
                         onClick={() => setIsFindOrderModalOpen(true)}
                         className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 px-3.5 py-2.5 rounded-xl transition-all shadow-2xs active:scale-95 cursor-pointer"
                     >
-                        <Link2 className="w-3.5 h-3.5 text-[#E52027]" />
+                        <Link2 className="w-3.5 h-3.5 text-primary" />
                         <span>Tautkan Pesanan Tamu</span>
                     </button>
 
@@ -332,7 +332,7 @@ export default function PesananTab({
                         onClick={onCariPesanan}
                         className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-4 py-2.5 rounded-xl transition-all shadow-2xs active:scale-95 shrink-0"
                     >
-                        <Search className="w-3.5 h-3.5 text-[#E52027]" />
+                        <Search className="w-3.5 h-3.5 text-primary" />
                         <span>Lacak Resi Cepat</span>
                     </Link>
                 </div>
@@ -399,7 +399,7 @@ export default function PesananTab({
                     </p>
                     <Link
                         href="/katalog"
-                        className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-[#E52027] hover:bg-[#CC1C22] text-white text-xs font-bold rounded-xl transition-all shadow-xs active:scale-95"
+                        className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl transition-all shadow-xs active:scale-95"
                     >
                         <ShoppingBag className="w-3.5 h-3.5" />
                         <span>Jelajahi Produk</span>
@@ -561,7 +561,7 @@ export default function PesananTab({
                                             </div>
                                             <Link
                                                 href={`/faktur/${safeSlug}`}
-                                                className="text-[11px] font-bold text-slate-800 hover:text-[#E52027] inline-flex items-center gap-1 transition-colors"
+                                                className="text-[11px] font-bold text-slate-800 hover:text-primary inline-flex items-center gap-1 transition-colors"
                                             >
                                                 <span>Lihat Faktur</span>
                                                 <ArrowUpRight className="w-3.5 h-3.5" />
@@ -589,7 +589,7 @@ export default function PesananTab({
                                                     href={`/lacak?nomor=${encodeURIComponent(orderNumber)}`}
                                                     className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 text-xs font-bold text-slate-700 transition-all shadow-2xs"
                                                 >
-                                                    <Truck className="w-3.5 h-3.5 text-[#E52027] shrink-0" />
+                                                    <Truck className="w-3.5 h-3.5 text-primary shrink-0" />
                                                     <span>Lacak Paket</span>
                                                 </Link>
                                             )}
@@ -607,7 +607,7 @@ export default function PesananTab({
                                             {statusRaw === "belum_bayar" && (
                                                 <Link
                                                     href={`/faktur/${safeSlug}`}
-                                                    className="flex-1 sm:flex-initial inline-flex items-center justify-center px-4 py-2 rounded-xl bg-[#E52027] hover:bg-[#CC1C22] active:scale-95 text-white text-xs font-bold transition-all shadow-xs"
+                                                    className="flex-1 sm:flex-initial inline-flex items-center justify-center px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-bold transition-all shadow-xs"
                                                 >
                                                     Bayar Sekarang
                                                 </Link>

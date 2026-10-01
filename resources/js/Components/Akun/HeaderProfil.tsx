@@ -55,7 +55,7 @@ export default function HeaderProfil({
             <div className="flex items-center gap-3.5 min-w-0">
                 <div
                     aria-hidden="true"
-                    className="w-12 h-12 rounded-2xl bg-[#E52027] text-white flex items-center justify-center font-black text-lg shadow-xs shrink-0 select-none"
+                    className="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center font-black text-lg shadow-xs shrink-0 select-none"
                 >
                     {inisial}
                 </div>

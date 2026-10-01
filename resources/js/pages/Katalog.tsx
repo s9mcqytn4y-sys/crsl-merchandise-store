@@ -188,7 +188,7 @@ export default function Catalog({
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Cari produk merchandise CRSL..."
-                            className="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200/90 rounded-2xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10 focus:bg-white transition-all shadow-2xs font-medium"
+                            className="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200/90 rounded-2xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 focus:bg-white transition-all shadow-2xs font-medium"
                         />
                         {searchQuery && (
                             <button
@@ -203,7 +203,7 @@ export default function Catalog({
                     </div>
                     <button
                         type="submit"
-                        className="px-4 py-2.5 bg-[#E52027] hover:bg-[#CC1C22] text-white font-bold text-xs rounded-2xl shadow-xs transition-all active:scale-95 cursor-pointer shrink-0"
+                        className="px-4 py-2.5 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-2xl shadow-xs transition-all active:scale-95 cursor-pointer shrink-0"
                     >
                         Cari
                     </button>
@@ -232,12 +232,12 @@ export default function Catalog({
                         aria-expanded={isFilterOpen}
                         aria-controls="drawer-filter-sort"
                         onClick={() => setIsFilterOpen(true)}
-                        className="inline-flex items-center gap-2 px-4 py-2.5 border border-[#E52027] text-[#E52027] hover:bg-[#E52027] hover:text-white rounded-2xl text-xs sm:text-[13px] font-bold tracking-tight transition-all duration-200 shadow-2xs cursor-pointer active:scale-95 group"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 border border-primary text-primary hover:bg-primary hover:text-white rounded-2xl text-xs sm:text-[13px] font-bold tracking-tight transition-all duration-200 shadow-2xs cursor-pointer active:scale-95 group"
                     >
                         <SlidersHorizontal className="w-3.5 h-3.5 stroke-[2.5]" />
                         <span>Filter &amp; Urutkan</span>
                         {activeFilterCount > 0 && (
-                            <span className="w-4 h-4 rounded-full bg-[#E52027] group-hover:bg-white text-white group-hover:text-[#E52027] text-[10px] flex items-center justify-center font-black font-mono transition-colors">
+                            <span className="w-4 h-4 rounded-full bg-primary group-hover:bg-white text-white group-hover:text-primary text-[10px] flex items-center justify-center font-black font-mono transition-colors">
                                 {activeFilterCount}
                             </span>
                         )}
@@ -251,17 +251,17 @@ export default function Catalog({
                             Filter Aktif:
                         </span>
                         {activeFilter.warna && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-[#E52027] border border-red-200/80 rounded-xl text-xs font-bold shadow-2xs">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-primary border border-red-200/80 rounded-xl text-xs font-bold shadow-2xs">
                                 Warna: {activeFilter.warna}
                             </span>
                         )}
                         {activeFilter.ukuran && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-[#E52027] border border-red-200/80 rounded-xl text-xs font-bold shadow-2xs">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-primary border border-red-200/80 rounded-xl text-xs font-bold shadow-2xs">
                                 Ukuran: {activeFilter.ukuran}
                             </span>
                         )}
                         {(activeFilter.min_harga || activeFilter.max_harga) && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-[#E52027] border border-red-200/80 rounded-xl text-xs font-bold font-mono shadow-2xs">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-primary border border-red-200/80 rounded-xl text-xs font-bold font-mono shadow-2xs">
                                 Harga:{" "}
                                 {formatRupiah(
                                     Number(activeFilter.min_harga) || 0,
@@ -277,7 +277,7 @@ export default function Catalog({
                         <button
                             type="button"
                             onClick={handleResetAllFilters}
-                            className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-[#E52027] font-bold underline ml-1 cursor-pointer transition-colors"
+                            className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-primary font-bold underline ml-1 cursor-pointer transition-colors"
                         >
                             <RotateCcw className="w-3 h-3 stroke-[2.2]" />
                             <span>Reset Semua</span>
@@ -299,7 +299,7 @@ export default function Catalog({
                 ) : (
                     /* Empty State */
                     <div className="py-16 text-center space-y-4 max-w-md mx-auto">
-                        <div className="w-16 h-16 rounded-3xl bg-red-50 text-[#E52027] border border-red-100 flex items-center justify-center mx-auto shadow-2xs">
+                        <div className="w-16 h-16 rounded-3xl bg-red-50 text-primary border border-red-100 flex items-center justify-center mx-auto shadow-2xs">
                             <SlidersHorizontal className="w-7 h-7 stroke-[2]" />
                         </div>
                         <div className="space-y-1">
@@ -314,7 +314,7 @@ export default function Catalog({
                         <button
                             type="button"
                             onClick={handleResetAllFilters}
-                            className="inline-flex items-center gap-2 bg-[#E52027] hover:bg-[#CC1C22] text-white text-xs font-bold px-6 py-3 rounded-2xl shadow-xs transition-all active:scale-95 cursor-pointer"
+                            className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white text-xs font-bold px-6 py-3 rounded-2xl shadow-xs transition-all active:scale-95 cursor-pointer"
                         >
                             <RotateCcw className="w-3.5 h-3.5 stroke-[2.2]" />
                             <span>Reset Semua Filter</span>

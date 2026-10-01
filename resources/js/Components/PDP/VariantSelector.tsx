@@ -244,9 +244,9 @@ export default function VariantSelector({
                                     disabled={isSoldOut}
                                     onClick={() => handleVariantClick(v)}
                                     className={cn(
-                                        "group relative overflow-hidden flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] focus-visible:ring-offset-2",
+                                        "group relative overflow-hidden flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                                         isSelected
-                                            ? "border-[#E52027] bg-red-50/40 text-[#E52027] ring-2 ring-[#E52027]/20 shadow-xs"
+                                            ? "border-primary bg-red-50/40 text-primary ring-2 ring-primary/20 shadow-xs"
                                             : isSoldOut
                                               ? "border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed opacity-60"
                                               : "border-slate-200 hover:border-slate-300 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs",
@@ -353,9 +353,9 @@ export default function VariantSelector({
                                     aria-checked={isSizeSelected}
                                     onClick={() => onSelectSize(size)}
                                     className={cn(
-                                        "min-w-[44px] px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]",
+                                        "min-w-[44px] px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                                         isSizeSelected
-                                            ? "border-[#E52027] bg-[#E52027] text-white shadow-sm scale-[1.02]"
+                                            ? "border-primary bg-primary text-white shadow-sm scale-[1.02]"
                                             : "border-slate-200 bg-white hover:border-slate-300 text-slate-700 hover:bg-slate-50",
                                     )}
                                 >
@@ -373,7 +373,7 @@ export default function VariantSelector({
                     Jumlah Pembelian
                 </span>
 
-                <div className="flex items-center border border-slate-300 rounded-xl bg-white overflow-hidden shadow-2xs focus-within:border-[#E52027] focus-within:ring-2 focus-within:ring-[#E52027]/10 w-fit">
+                <div className="flex items-center border border-slate-300 rounded-xl bg-white overflow-hidden shadow-2xs focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10 w-fit">
                     <button
                         type="button"
                         onClick={handleDecrement}

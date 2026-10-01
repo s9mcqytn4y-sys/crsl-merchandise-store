@@ -23,15 +23,15 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 const BASE_BUTTON_STYLES =
-    "inline-flex items-center justify-center font-bold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] focus-visible:ring-offset-2 select-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none active:scale-[0.98]";
+    "inline-flex items-center justify-center font-bold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 select-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none active:scale-[0.98]";
 
 const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
     primary:
-        "bg-[#E52027] hover:bg-[#CC1C22] text-white shadow-2xs border border-transparent",
+        "bg-primary hover:bg-primary-hover text-white shadow-2xs border border-transparent",
     secondary:
         "bg-slate-100 hover:bg-slate-200 text-slate-800 border border-transparent",
     outline:
-        "bg-transparent hover:bg-red-50/60 text-[#E52027] border border-[#E52027]",
+        "bg-transparent hover:bg-red-50/60 text-primary border border-primary",
     ghost: "bg-transparent hover:bg-slate-100 text-slate-700 border border-transparent active:scale-100",
     danger: "bg-rose-600 hover:bg-rose-700 text-white shadow-2xs border border-transparent",
     emerald:

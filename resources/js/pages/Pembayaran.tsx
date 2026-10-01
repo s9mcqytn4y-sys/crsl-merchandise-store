@@ -730,7 +730,7 @@ export default function Pembayaran({
             <Toaster position="top-center" richColors theme="light" />
 
             {/* Banner Promo Atas */}
-            <div className="bg-[#E52027] text-white text-[11px] sm:text-xs font-bold py-2 text-center tracking-wider px-4">
+            <div className="bg-primary text-white text-[11px] sm:text-xs font-bold py-2 text-center tracking-wider px-4">
                 GRATIS ONGKIR SELURUH INDONESIA UNTUK MEMBER CRSL
             </div>
 
@@ -797,8 +797,8 @@ export default function Pembayaran({
 
                         <ChevronRight className="w-3.5 h-3.5 text-slate-300 shrink-0" />
 
-                        <div className="flex items-center gap-1.5 bg-red-50 text-[#E52027] font-black px-3 py-1 rounded-full border border-red-200/60">
-                            <span className="w-5 h-5 rounded-full bg-[#E52027] text-white flex items-center justify-center text-[11px] font-black">
+                        <div className="flex items-center gap-1.5 bg-red-50 text-primary font-black px-3 py-1 rounded-full border border-red-200/60">
+                            <span className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center text-[11px] font-black">
                                 2
                             </span>
                             <span>Checkout &amp; Bayar</span>
@@ -957,7 +957,7 @@ export default function Pembayaran({
                     aria-busy="true"
                 >
                     <div className="bg-white text-slate-900 rounded-3xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center space-y-4 border border-slate-100 animate-in zoom-in-95">
-                        <div className="w-16 h-16 rounded-3xl bg-red-50 flex items-center justify-center text-[#E52027] border border-red-100 shadow-2xs">
+                        <div className="w-16 h-16 rounded-3xl bg-red-50 flex items-center justify-center text-primary border border-red-100 shadow-2xs">
                             <Loader2 className="w-8 h-8 animate-spin stroke-[2.2]" />
                         </div>
                         <div className="space-y-1.5">
@@ -971,7 +971,7 @@ export default function Pembayaran({
                             </p>
                         </div>
                         <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                            <div className="bg-[#E52027] h-full w-2/3 animate-pulse rounded-full" />
+                            <div className="bg-primary h-full w-2/3 animate-pulse rounded-full" />
                         </div>
                     </div>
                 </div>

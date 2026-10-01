@@ -104,7 +104,7 @@ export default function ProfileMyInfo({ user, className }: ProfileMyInfoProps) {
             <div className={cn("space-y-6 select-none", className)}>
                 {/* Header Profil */}
                 <div className="pb-4 border-b border-slate-100">
-                    <span className="text-xs font-black text-[#E52027] uppercase tracking-wider">
+                    <span className="text-xs font-black text-primary uppercase tracking-wider">
                         Data Pengguna
                     </span>
                     <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">
@@ -127,7 +127,7 @@ export default function ProfileMyInfo({ user, className }: ProfileMyInfoProps) {
                             className="block text-xs font-bold text-slate-700"
                         >
                             Nama Lengkap{" "}
-                            <span className="text-[#E52027]">*</span>
+                            <span className="text-primary">*</span>
                         </label>
                         <div className="relative">
                             <input
@@ -148,7 +148,7 @@ export default function ProfileMyInfo({ user, className }: ProfileMyInfoProps) {
                                     "w-full pl-10 pr-4 py-2.5 bg-white border rounded-2xl text-xs sm:text-sm text-slate-900 focus:outline-none transition-all shadow-2xs font-medium",
                                     namaError
                                         ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
-                                        : "border-slate-300 focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10",
+                                        : "border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/10",
                                 )}
                             />
                             <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none stroke-[2.2]" />
@@ -292,7 +292,7 @@ export default function ProfileMyInfo({ user, className }: ProfileMyInfoProps) {
                         <button
                             type="submit"
                             disabled={sedangMenyimpan}
-                            className="inline-flex items-center justify-center gap-2 px-7 py-3 bg-[#E52027] hover:bg-[#CC1C22] active:scale-95 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-md shadow-red-500/20 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="inline-flex items-center justify-center gap-2 px-7 py-3 bg-primary hover:bg-primary-hover active:scale-95 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-md shadow-red-500/20 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {sedangMenyimpan ? (
                                 <>

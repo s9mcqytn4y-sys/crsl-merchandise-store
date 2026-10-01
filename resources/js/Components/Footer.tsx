@@ -68,7 +68,7 @@ export default function Footer({ className }: FooterProps) {
                     <div className="space-y-4">
                         <Link
                             href="/"
-                            className="inline-flex items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] rounded-xl"
+                            className="inline-flex items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl"
                             aria-label="Beranda CRSL Official Store"
                         >
                             <img
@@ -97,7 +97,7 @@ export default function Footer({ className }: FooterProps) {
                         </p>
 
                         <div className="flex items-center gap-2 text-xs text-slate-400">
-                            <MapPin className="w-4 h-4 text-[#E52027] shrink-0" />
+                            <MapPin className="w-4 h-4 text-primary shrink-0" />
                             <span>Sleman, D.I. Yogyakarta, Indonesia</span>
                         </div>
 
@@ -107,7 +107,7 @@ export default function Footer({ className }: FooterProps) {
                                 href="https://instagram.com/crsl.store"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="w-8 h-8 rounded-full bg-slate-900 hover:bg-[#E52027] text-slate-300 hover:text-white flex items-center justify-center transition-all duration-200 cursor-pointer border border-slate-800"
+                                className="w-8 h-8 rounded-full bg-slate-900 hover:bg-primary text-slate-300 hover:text-white flex items-center justify-center transition-all duration-200 cursor-pointer border border-slate-800"
                                 aria-label="Kunjungi Akun Instagram Resmi @crsl.store"
                             >
                                 <svg
@@ -175,7 +175,7 @@ export default function Footer({ className }: FooterProps) {
                                             >
                                                 <span>{link.label}</span>
                                                 {link.badge && (
-                                                    <span className="text-[9px] font-black bg-[#E52027] text-white px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                                    <span className="text-[9px] font-black bg-primary text-white px-2 py-0.5 rounded-full uppercase tracking-wider">
                                                         {link.badge}
                                                     </span>
                                                 )}
@@ -191,7 +191,7 @@ export default function Footer({ className }: FooterProps) {
                     <div className="space-y-4">
                         <div>
                             <h4 className="font-extrabold text-white mb-2.5 text-xs sm:text-sm uppercase tracking-wider flex items-center gap-2">
-                                <CreditCard className="w-4 h-4 text-[#E52027]" />
+                                <CreditCard className="w-4 h-4 text-primary" />
                                 <span>Pembayaran Terverifikasi</span>
                             </h4>
                             <p className="text-xs text-slate-400 leading-relaxed">
@@ -203,7 +203,7 @@ export default function Footer({ className }: FooterProps) {
 
                         <div>
                             <h4 className="font-extrabold text-white mb-2 text-xs uppercase tracking-wider flex items-center gap-2">
-                                <Truck className="w-4 h-4 text-[#E52027]" />
+                                <Truck className="w-4 h-4 text-primary" />
                                 <span>Logistik & Ekspedisi</span>
                             </h4>
                             <p className="text-xs text-slate-400 leading-relaxed">

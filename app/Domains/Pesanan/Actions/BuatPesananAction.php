@@ -441,7 +441,7 @@ class BuatPesananAction
 
             // Validasi Integritas Pasangan Produk & Varian
             if ($produk && $varian && (int)$varian->produk_id !== (int)$produk->id) {
-                throw new Exception("Varian '{$varian->nama_varian}' tidak sesuai dengan produk '{$produk->nama}'.");
+                throw new \InvalidArgumentException("Varian '{$varian->nama_varian}' tidak sesuai dengan produk '{$produk->nama}'.");
             }
 
             // Validasi Status Aktif

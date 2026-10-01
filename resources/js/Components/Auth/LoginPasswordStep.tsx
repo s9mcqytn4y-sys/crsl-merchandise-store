@@ -54,7 +54,7 @@ export default function LoginPasswordStep({
                     type="button"
                     onClick={onChangeIdentifierClick}
                     disabled={loading}
-                    className="text-xs text-[#E52027] hover:text-[#CC1C22] font-bold hover:underline shrink-0 cursor-pointer disabled:opacity-50"
+                    className="text-xs text-primary hover:text-primary-hover font-bold hover:underline shrink-0 cursor-pointer disabled:opacity-50"
                 >
                     Ubah
                 </button>
@@ -67,13 +67,13 @@ export default function LoginPasswordStep({
                         htmlFor="login-password-input"
                         className="block text-xs font-bold text-slate-700"
                     >
-                        Kata Sandi <span className="text-[#E52027]">*</span>
+                        Kata Sandi <span className="text-primary">*</span>
                     </label>
                     <button
                         type="button"
                         onClick={onForgotPasswordClick}
                         disabled={loading}
-                        className="text-xs font-bold text-[#E52027] hover:text-[#CC1C22] hover:underline cursor-pointer disabled:opacity-50"
+                        className="text-xs font-bold text-primary hover:text-primary-hover hover:underline cursor-pointer disabled:opacity-50"
                     >
                         Lupa sandi?
                     </button>
@@ -84,7 +84,7 @@ export default function LoginPasswordStep({
                         "border rounded-2xl px-3.5 py-2.5 sm:py-3 flex items-center gap-2.5 bg-white transition-all shadow-2xs",
                         error
                             ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
-                            : "border-slate-300 focus-within:border-[#E52027] focus-within:ring-2 focus-within:ring-[#E52027]/10",
+                            : "border-slate-300 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10",
                     )}
                 >
                     <Lock className="w-4 h-4 text-slate-400 shrink-0" />
@@ -141,7 +141,7 @@ export default function LoginPasswordStep({
                     className={cn(
                         "w-full min-h-[48px] py-3 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-xs",
                         canSubmit
-                            ? "bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.99] text-white cursor-pointer"
+                            ? "bg-primary hover:bg-primary-hover active:scale-[0.99] text-white cursor-pointer"
                             : "bg-slate-200 text-slate-400 cursor-not-allowed select-none",
                     )}
                 >

@@ -247,7 +247,7 @@ export default function FilterSortDrawer({
                                 Filter & Sort
                             </h2>
                             {activeFiltersCount > 0 && (
-                                <span className="bg-[#E52027] text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-2xs">
+                                <span className="bg-primary text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-2xs">
                                     {activeFiltersCount}
                                 </span>
                             )}
@@ -258,7 +258,7 @@ export default function FilterSortDrawer({
                                 <button
                                     type="button"
                                     onClick={handleResetAll}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-slate-500 hover:text-[#E52027] hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-slate-500 hover:text-primary hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
                                     title="Kembalikan semua filter ke bawaan"
                                 >
                                     <RotateCcw className="w-3 h-3" />
@@ -348,19 +348,19 @@ export default function FilterSortDrawer({
                                                     className={cn(
                                                         "w-4 h-4 rounded-full border flex items-center justify-center transition-colors shrink-0",
                                                         isSelected
-                                                            ? "border-[#E52027]"
+                                                            ? "border-primary"
                                                             : "border-slate-300 group-hover:border-slate-400",
                                                     )}
                                                 >
                                                     {isSelected && (
-                                                        <div className="w-2 h-2 rounded-full bg-[#E52027]" />
+                                                        <div className="w-2 h-2 rounded-full bg-primary" />
                                                     )}
                                                 </div>
                                                 <span
                                                     className={cn(
                                                         "text-xs transition-colors",
                                                         isSelected
-                                                            ? "text-[#E52027] font-bold"
+                                                            ? "text-primary font-bold"
                                                             : "text-slate-700 group-hover:text-slate-900 font-medium",
                                                     )}
                                                 >
@@ -434,19 +434,19 @@ export default function FilterSortDrawer({
                                                     className={cn(
                                                         "w-4 h-4 rounded-full border flex items-center justify-center transition-colors shrink-0",
                                                         isSelected
-                                                            ? "border-[#E52027]"
+                                                            ? "border-primary"
                                                             : "border-slate-300 group-hover:border-slate-400",
                                                     )}
                                                 >
                                                     {isSelected && (
-                                                        <div className="w-2 h-2 rounded-full bg-[#E52027]" />
+                                                        <div className="w-2 h-2 rounded-full bg-primary" />
                                                     )}
                                                 </div>
                                                 <span
                                                     className={cn(
                                                         "text-xs transition-colors",
                                                         isSelected
-                                                            ? "text-[#E52027] font-bold"
+                                                            ? "text-primary font-bold"
                                                             : "text-slate-700 group-hover:text-slate-900 font-medium",
                                                     )}
                                                 >
@@ -511,19 +511,19 @@ export default function FilterSortDrawer({
                                                     className={cn(
                                                         "w-4 h-4 rounded-full border flex items-center justify-center transition-colors shrink-0",
                                                         isSelected
-                                                            ? "border-[#E52027]"
+                                                            ? "border-primary"
                                                             : "border-slate-300 group-hover:border-slate-400",
                                                     )}
                                                 >
                                                     {isSelected && (
-                                                        <div className="w-2 h-2 rounded-full bg-[#E52027]" />
+                                                        <div className="w-2 h-2 rounded-full bg-primary" />
                                                     )}
                                                 </div>
                                                 <span
                                                     className={cn(
                                                         "text-xs transition-colors",
                                                         isSelected
-                                                            ? "text-[#E52027] font-bold"
+                                                            ? "text-primary font-bold"
                                                             : "text-slate-700 group-hover:text-slate-900 font-medium",
                                                     )}
                                                 >
@@ -557,7 +557,7 @@ export default function FilterSortDrawer({
                                     <div className="relative pt-2 pb-3 px-1">
                                         <div className="h-1.5 bg-slate-200 rounded-full relative">
                                             <div
-                                                className="absolute h-full bg-[#E52027] rounded-full"
+                                                className="absolute h-full bg-primary rounded-full"
                                                 style={{
                                                     left: `${minPercent}%`,
                                                     right: `${100 - maxPercent}%`,
@@ -578,7 +578,7 @@ export default function FilterSortDrawer({
                                                     "min",
                                                 )
                                             }
-                                            className="absolute inset-x-0 -top-0.5 w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#E52027] [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none"
+                                            className="absolute inset-x-0 -top-0.5 w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none"
                                             aria-label="Harga Minimum"
                                         />
                                         <input
@@ -593,14 +593,14 @@ export default function FilterSortDrawer({
                                                     "max",
                                                 )
                                             }
-                                            className="absolute inset-x-0 -top-0.5 w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#E52027] [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none"
+                                            className="absolute inset-x-0 -top-0.5 w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none"
                                             aria-label="Harga Maksimum"
                                         />
                                     </div>
 
                                     {/* Kolom Input Angka Presisi */}
                                     <div className="grid grid-cols-2 gap-3">
-                                        <div className="flex flex-col border border-slate-200/90 rounded-xl p-2.5 bg-slate-50/50 focus-within:bg-white focus-within:border-[#E52027] focus-within:ring-2 focus-within:ring-[#E52027]/10 transition-all">
+                                        <div className="flex flex-col border border-slate-200/90 rounded-xl p-2.5 bg-slate-50/50 focus-within:bg-white focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10 transition-all">
                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                                                 Minimum
                                             </span>
@@ -631,7 +631,7 @@ export default function FilterSortDrawer({
                                             </div>
                                         </div>
 
-                                        <div className="flex flex-col border border-slate-200/90 rounded-xl p-2.5 bg-slate-50/50 focus-within:bg-white focus-within:border-[#E52027] focus-within:ring-2 focus-within:ring-[#E52027]/10 transition-all">
+                                        <div className="flex flex-col border border-slate-200/90 rounded-xl p-2.5 bg-slate-50/50 focus-within:bg-white focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10 transition-all">
                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                                                 Maksimum
                                             </span>
@@ -676,7 +676,7 @@ export default function FilterSortDrawer({
                                 <div className="flex items-center gap-2">
                                     <span>Pilihan Warna</span>
                                     {localFilters.warna && (
-                                        <span className="text-[11px] font-bold text-[#E52027] uppercase">
+                                        <span className="text-[11px] font-bold text-primary uppercase">
                                             •{" "}
                                             {
                                                 CRSL_PALET_WARNA.find(
@@ -712,7 +712,7 @@ export default function FilterSortDrawer({
                                                     c.hex === "#ffffff" &&
                                                         "border border-slate-300",
                                                     isSelected
-                                                        ? "ring-2 ring-offset-2 ring-[#E52027] scale-110"
+                                                        ? "ring-2 ring-offset-2 ring-primary scale-110"
                                                         : "hover:scale-110",
                                                 )}
                                                 style={{
@@ -748,7 +748,7 @@ export default function FilterSortDrawer({
                                 <div className="flex items-center gap-2">
                                     <span>Ukuran Pakaian</span>
                                     {localFilters.ukuran && (
-                                        <span className="text-[11px] font-bold text-[#E52027]">
+                                        <span className="text-[11px] font-bold text-primary">
                                             • {localFilters.ukuran}
                                         </span>
                                     )}
@@ -775,7 +775,7 @@ export default function FilterSortDrawer({
                                                 className={cn(
                                                     "min-w-[44px] py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-2xs",
                                                     isSelected
-                                                        ? "border-[#E52027] bg-red-50 text-[#E52027] ring-1 ring-[#E52027]"
+                                                        ? "border-primary bg-red-50 text-primary ring-1 ring-primary"
                                                         : "border-slate-200 text-slate-700 bg-white hover:border-slate-300 hover:bg-slate-50",
                                                 )}
                                             >
@@ -793,7 +793,7 @@ export default function FilterSortDrawer({
                         <button
                             type="button"
                             onClick={handleApply}
-                            className="w-full py-3.5 bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.99] text-white font-bold text-sm rounded-xl transition-all shadow-md cursor-pointer text-center"
+                            className="w-full py-3.5 bg-primary hover:bg-primary-hover active:scale-[0.99] text-white font-bold text-sm rounded-xl transition-all shadow-md cursor-pointer text-center"
                         >
                             Terapkan Filter{" "}
                             {activeFiltersCount > 0

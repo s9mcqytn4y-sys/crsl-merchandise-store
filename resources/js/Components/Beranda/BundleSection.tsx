@@ -137,7 +137,7 @@ function BundleCard({ bundle }: BundleCardProps) {
 
                 {/* Badge Diskon Hemat di Kiri Atas */}
                 {hasDiscount && diskonPersen > 0 && (
-                    <div className="absolute top-2.5 left-2.5 bg-[#E52027] text-white text-[10px] sm:text-[11px] font-black px-2.5 py-0.5 rounded-full shadow-sm tracking-wide pointer-events-none z-10 flex items-center gap-1 font-mono">
+                    <div className="absolute top-2.5 left-2.5 bg-primary text-white text-[10px] sm:text-[11px] font-black px-2.5 py-0.5 rounded-full shadow-sm tracking-wide pointer-events-none z-10 flex items-center gap-1 font-mono">
                         <Tag className="w-3 h-3 stroke-[2.5]" />
                         <span>Hemat {diskonPersen}%</span>
                     </div>
@@ -158,7 +158,7 @@ function BundleCard({ bundle }: BundleCardProps) {
                                 className={cn(
                                     "h-1.5 rounded-full transition-all duration-300 cursor-pointer shadow-xs",
                                     indeksAktif === idx
-                                        ? "w-5 bg-[#E52027]"
+                                        ? "w-5 bg-primary"
                                         : "w-1.5 bg-white/70 hover:bg-white",
                                 )}
                                 aria-label={`Tampilkan slide gambar ${idx + 1}`}
@@ -175,7 +175,7 @@ function BundleCard({ bundle }: BundleCardProps) {
             <div className="pt-3 flex flex-col space-y-1">
                 <Link
                     href={bundleUrl}
-                    className="text-xs sm:text-sm font-bold text-slate-800 hover:text-[#E52027] line-clamp-1 transition-colors leading-snug"
+                    className="text-xs sm:text-sm font-bold text-slate-800 hover:text-primary line-clamp-1 transition-colors leading-snug"
                     title={bundle.judul}
                 >
                     {bundle.judul}
@@ -234,7 +234,7 @@ export default function BundleSection({
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header Section Dinamis */}
                 <div className="text-center max-w-2xl mx-auto mb-6 sm:mb-8 space-y-1.5">
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-[#E52027] rounded-full text-[11px] font-bold tracking-wider uppercase mb-1">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-primary rounded-full text-[11px] font-bold tracking-wider uppercase mb-1">
                         <Package className="w-3.5 h-3.5" />
                         <span>Koleksi Paket Spesial</span>
                     </div>
@@ -265,7 +265,7 @@ export default function BundleSection({
                     <div className="text-center pt-8">
                         <Link
                             href={tautanSemua}
-                            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#E52027] hover:text-[#CC1C22] transition-colors group cursor-pointer"
+                            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-primary hover:text-primary-hover transition-colors group cursor-pointer"
                         >
                             <span>{labelTautan}</span>
                             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />

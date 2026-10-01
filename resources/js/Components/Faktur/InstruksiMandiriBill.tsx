@@ -107,7 +107,7 @@ export default function InstruksiMandiriBill({
                                         "Kode Perusahaan",
                                     )
                                 }
-                                className="text-[#E52027] hover:text-[#CC1C22] transition-colors inline-flex items-center gap-1 cursor-pointer font-semibold"
+                                className="text-primary hover:text-primary-hover transition-colors inline-flex items-center gap-1 cursor-pointer font-semibold"
                                 aria-label="Salin Kode Perusahaan"
                             >
                                 {copiedField === "biller" ? (
@@ -144,7 +144,7 @@ export default function InstruksiMandiriBill({
                                             "Nomor Tagihan",
                                         )
                                     }
-                                    className="text-[#E52027] hover:text-[#CC1C22] transition-colors inline-flex items-center gap-1 cursor-pointer font-semibold"
+                                    className="text-primary hover:text-primary-hover transition-colors inline-flex items-center gap-1 cursor-pointer font-semibold"
                                     aria-label="Salin Nomor Tagihan"
                                 >
                                     {copiedField === "billKey" ? (
@@ -179,7 +179,7 @@ export default function InstruksiMandiriBill({
                                         type="button"
                                         onClick={onRefreshBill}
                                         disabled={isRefreshing}
-                                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-bold text-[#E52027] hover:bg-red-50 border border-red-200 transition-colors disabled:opacity-50 cursor-pointer"
+                                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-bold text-primary hover:bg-red-50 border border-red-200 transition-colors disabled:opacity-50 cursor-pointer"
                                     >
                                         <RefreshCw
                                             className={`w-3 h-3 ${isRefreshing ? "animate-spin" : ""}`}

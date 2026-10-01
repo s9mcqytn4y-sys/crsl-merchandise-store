@@ -338,7 +338,7 @@ export default function ProductCard({
 
                 {/* Badge Promo / Best Seller di Kiri Atas */}
                 {(produk.badge || produk.is_best_seller) && !isOutOfStock && (
-                    <span className="absolute top-2.5 left-2.5 bg-[#E52027] text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md shadow-2xs uppercase tracking-wider pointer-events-none z-10">
+                    <span className="absolute top-2.5 left-2.5 bg-primary text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md shadow-2xs uppercase tracking-wider pointer-events-none z-10">
                         {produk.badge || "Best Seller"}
                     </span>
                 )}
@@ -349,7 +349,7 @@ export default function ProductCard({
                     colorCount > 1 &&
                     !isOutOfStock && (
                         <span className="absolute top-2.5 left-2.5 bg-white/95 backdrop-blur-xs text-slate-800 text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full shadow-2xs border border-slate-200/60 pointer-events-none z-10">
-                            <span className="text-[#E52027] font-black">
+                            <span className="text-primary font-black">
                                 {colorCount}
                             </span>{" "}
                             Pilihan Warna
@@ -362,8 +362,8 @@ export default function ProductCard({
                     onClick={handleWishlistClick}
                     className={`absolute bottom-2.5 right-2.5 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all duration-200 shadow-sm active:scale-125 z-10 cursor-pointer ${
                         isWishlisted
-                            ? "bg-rose-50 text-[#E52027] shadow-rose-100"
-                            : "bg-white/95 text-slate-400 hover:text-[#E52027] hover:bg-white"
+                            ? "bg-rose-50 text-primary shadow-rose-100"
+                            : "bg-white/95 text-slate-400 hover:text-primary hover:bg-white"
                     }`}
                     aria-label={
                         isWishlisted
@@ -374,7 +374,7 @@ export default function ProductCard({
                     <Heart
                         className={`w-4 h-4 sm:w-4.5 sm:h-4.5 transition-transform ${
                             isWishlisted
-                                ? "fill-[#E52027] text-[#E52027] scale-110"
+                                ? "fill-primary text-primary scale-110"
                                 : "hover:scale-110"
                         }`}
                     />
@@ -386,7 +386,7 @@ export default function ProductCard({
                 <div className="space-y-1">
                     <Link
                         href={productUrl}
-                        className="text-xs sm:text-[13px] text-slate-800 hover:text-[#E52027] font-semibold leading-snug line-clamp-2 transition-colors block"
+                        className="text-xs sm:text-[13px] text-slate-800 hover:text-primary font-semibold leading-snug line-clamp-2 transition-colors block"
                         title={produk.nama}
                     >
                         {produk.nama}
@@ -420,7 +420,7 @@ export default function ProductCard({
                         <button
                             type="button"
                             onClick={handleCartClick}
-                            className="w-full py-2 px-3 rounded-xl border border-[#E52027] text-[#E52027] hover:bg-[#E52027] hover:text-white active:scale-[0.98] text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 shadow-2xs group/btn cursor-pointer"
+                            className="w-full py-2 px-3 rounded-xl border border-primary text-primary hover:bg-primary hover:text-white active:scale-[0.98] text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 shadow-2xs group/btn cursor-pointer"
                             aria-label={`Tambah ${produk.nama} ke keranjang`}
                         >
                             <Plus className="w-3.5 h-3.5 group-hover/btn:rotate-90 transition-transform duration-200" />

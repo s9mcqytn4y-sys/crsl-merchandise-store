@@ -311,7 +311,7 @@ export default function DeliveryEstimator({
             {/* Header Delivery */}
             <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
                 <h4 className="font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-2">
-                    <Truck className="w-4 h-4 text-[#E52027]" />
+                    <Truck className="w-4 h-4 text-primary" />
                     <span>Estimasi Pengiriman</span>
                 </h4>
             </div>
@@ -322,7 +322,7 @@ export default function DeliveryEstimator({
                 <button
                     type="button"
                     onClick={() => setIsExpanded(!isExpanded)}
-                    className="text-[#E52027] hover:text-[#CC1C22] font-bold inline-flex items-center gap-1 hover:underline cursor-pointer text-right min-w-0"
+                    className="text-primary hover:text-primary-hover font-bold inline-flex items-center gap-1 hover:underline cursor-pointer text-right min-w-0"
                 >
                     <span className="truncate max-w-[200px] sm:max-w-[260px]">
                         {selectedArea
@@ -345,7 +345,7 @@ export default function DeliveryEstimator({
                 <button
                     type="button"
                     onClick={() => setIsExpanded(true)}
-                    className="text-[#E52027] hover:text-[#CC1C22] font-black hover:underline cursor-pointer tabular-nums font-mono"
+                    className="text-primary hover:text-primary-hover font-black hover:underline cursor-pointer tabular-nums font-mono"
                 >
                     {isLoadingRates ? (
                         <span className="inline-flex items-center gap-1 text-slate-400 font-sans font-normal text-[11px]">
@@ -396,13 +396,13 @@ export default function DeliveryEstimator({
                                 autoCapitalize="off"
                                 autoCorrect="off"
                                 spellCheck={false}
-                                className="w-full pl-8.5 pr-14 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10 transition-all placeholder:text-slate-400 font-medium"
+                                className="w-full pl-8.5 pr-14 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all placeholder:text-slate-400 font-medium"
                             />
                             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
 
                             <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
                                 {isSearching && (
-                                    <Loader2 className="w-3.5 h-3.5 text-[#E52027] animate-spin" />
+                                    <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
                                 )}
                                 {searchQuery.length > 0 && (
                                     <button
@@ -436,9 +436,9 @@ export default function DeliveryEstimator({
                                             }
                                             className="w-full text-left px-3.5 py-2.5 text-xs hover:bg-red-50/50 transition-colors flex items-start gap-2.5 cursor-pointer group"
                                         >
-                                            <MapPin className="w-3.5 h-3.5 text-[#E52027] shrink-0 mt-0.5" />
+                                            <MapPin className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
                                             <div className="min-w-0 flex-1">
-                                                <span className="font-bold text-slate-800 block truncate group-hover:text-[#E52027]">
+                                                <span className="font-bold text-slate-800 block truncate group-hover:text-primary">
                                                     {item.nama ||
                                                         `${item.kecamatan}, ${item.kota}`}
                                                 </span>
@@ -459,7 +459,7 @@ export default function DeliveryEstimator({
                     {/* Loader Tarif */}
                     {isLoadingRates && (
                         <div className="p-3.5 flex items-center justify-center gap-2.5 text-xs text-slate-500 bg-slate-50 rounded-xl border border-slate-100">
-                            <Loader2 className="w-4 h-4 animate-spin text-[#E52027]" />
+                            <Loader2 className="w-4 h-4 animate-spin text-primary" />
                             <span>Menghitung ongkir logistik terupdate...</span>
                         </div>
                     )}

@@ -132,7 +132,7 @@ export default function CircularCategoriesBar({
                     <button
                         type="button"
                         onClick={() => handleScroll("left")}
-                        className="hidden md:flex absolute -left-1 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/95 border border-slate-200 shadow-md items-center justify-center text-slate-700 hover:text-[#E52027] hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                        className="hidden md:flex absolute -left-1 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/95 border border-slate-200 shadow-md items-center justify-center text-slate-700 hover:text-primary hover:scale-105 active:scale-95 transition-all cursor-pointer"
                         aria-label="Geser kategori ke kiri"
                     >
                         <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
@@ -144,7 +144,7 @@ export default function CircularCategoriesBar({
                     <button
                         type="button"
                         onClick={() => handleScroll("right")}
-                        className="hidden md:flex absolute -right-1 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/95 border border-slate-200 shadow-md items-center justify-center text-slate-700 hover:text-[#E52027] hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                        className="hidden md:flex absolute -right-1 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/95 border border-slate-200 shadow-md items-center justify-center text-slate-700 hover:text-primary hover:scale-105 active:scale-95 transition-all cursor-pointer"
                         aria-label="Geser kategori ke kanan"
                     >
                         <ChevronRight className="w-4 h-4 stroke-[2.5]" />
@@ -163,14 +163,14 @@ export default function CircularCategoriesBar({
                         type="button"
                         onClick={() => onSelectCategory("all-products")}
                         aria-pressed={isAllActive}
-                        className="flex flex-col items-center gap-1.5 shrink-0 group/item cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] focus-visible:ring-offset-2 rounded-2xl p-1"
+                        className="flex flex-col items-center gap-1.5 shrink-0 group/item cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-2xl p-1"
                         aria-label="Kategori Semua Produk"
                     >
                         <div
                             className={cn(
                                 "w-14 h-14 sm:w-18 sm:h-18 rounded-full overflow-hidden transition-all duration-300 border-2 p-0.5",
                                 isAllActive
-                                    ? "border-[#E52027] ring-2 ring-red-100 scale-105 shadow-2xs"
+                                    ? "border-primary ring-2 ring-red-100 scale-105 shadow-2xs"
                                     : "border-slate-200 group-hover/item:border-slate-400",
                             )}
                         >
@@ -178,7 +178,7 @@ export default function CircularCategoriesBar({
                                 className={cn(
                                     "w-full h-full rounded-full flex items-center justify-center text-white text-[11px] sm:text-xs font-black tracking-tight transition-colors",
                                     isAllActive
-                                        ? "bg-[#E52027]"
+                                        ? "bg-primary"
                                         : "bg-slate-900 group-hover/item:bg-slate-800",
                                 )}
                             >
@@ -189,7 +189,7 @@ export default function CircularCategoriesBar({
                             className={cn(
                                 "text-[10px] sm:text-[11px] text-center max-w-[68px] sm:max-w-[76px] leading-tight line-clamp-2 transition-colors",
                                 isAllActive
-                                    ? "text-[#E52027] font-bold"
+                                    ? "text-primary font-bold"
                                     : "text-slate-700 font-medium group-hover/item:text-slate-900",
                             )}
                         >
@@ -213,14 +213,14 @@ export default function CircularCategoriesBar({
                                 type="button"
                                 onClick={() => onSelectCategory(cat.slug)}
                                 aria-pressed={isActive}
-                                className="flex flex-col items-center gap-1.5 shrink-0 group/item cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] focus-visible:ring-offset-2 rounded-2xl p-1"
+                                className="flex flex-col items-center gap-1.5 shrink-0 group/item cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-2xl p-1"
                                 aria-label={`Kategori ${cat.nama}`}
                             >
                                 <div
                                     className={cn(
                                         "w-14 h-14 sm:w-18 sm:h-18 rounded-full overflow-hidden transition-all duration-300 border-2 p-0.5 bg-slate-50",
                                         isActive
-                                            ? "border-[#E52027] ring-2 ring-red-100 scale-105 shadow-2xs"
+                                            ? "border-primary ring-2 ring-red-100 scale-105 shadow-2xs"
                                             : "border-slate-200 group-hover/item:border-slate-400",
                                     )}
                                 >
@@ -243,7 +243,7 @@ export default function CircularCategoriesBar({
                                     className={cn(
                                         "text-[10px] sm:text-[11px] text-center max-w-[68px] sm:max-w-[76px] leading-tight line-clamp-2 transition-colors",
                                         isActive
-                                            ? "text-[#E52027] font-bold"
+                                            ? "text-primary font-bold"
                                             : "text-slate-700 font-medium group-hover/item:text-slate-900",
                                     )}
                                 >

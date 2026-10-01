@@ -95,7 +95,7 @@ export default function PreOrderSection({
             id="pre-order-section"
             aria-labelledby="pre-order-heading"
             className={cn(
-                "py-12 sm:py-16 bg-gradient-to-b from-white via-slate-50 to-white border-y border-slate-100 select-none",
+                "py-12 sm:py-16 bg-linear-to-b from-white via-slate-50 to-white border-y border-slate-100 select-none",
                 className,
             )}
         >
@@ -104,8 +104,8 @@ export default function PreOrderSection({
                     {/* Kolom Kiri: Copywriting & Benefit Pre-Order */}
                     <div className="md:col-span-7 flex flex-col gap-4 text-left">
                         {/* Tag Badge */}
-                        <div className="inline-flex items-center gap-2 self-start px-3.5 py-1.5 bg-red-50 text-[#E52027] border border-red-100 rounded-full text-xs font-bold tracking-wider uppercase shadow-2xs">
-                            <span className="w-2 h-2 rounded-full bg-[#E52027] animate-pulse" />
+                        <div className="inline-flex items-center gap-2 self-start px-3.5 py-1.5 bg-red-50 text-primary border border-red-100 rounded-full text-xs font-bold tracking-wider uppercase shadow-2xs">
+                            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                             <span>{tagBadge}</span>
                         </div>
 
@@ -115,7 +115,7 @@ export default function PreOrderSection({
                             className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 leading-tight tracking-tight"
                         >
                             {judul}{" "}
-                            <span className="text-[#E52027]">{judulAksen}</span>
+                            <span className="text-primary">{judulAksen}</span>
                         </h2>
 
                         {/* Deskripsi Produk */}
@@ -138,7 +138,7 @@ export default function PreOrderSection({
                                         key={key}
                                         className="flex items-center gap-3 text-xs sm:text-sm text-slate-700 font-medium"
                                     >
-                                        <span className="shrink-0 w-6 h-6 rounded-full bg-red-50 text-[#E52027] border border-red-100 flex items-center justify-center font-bold">
+                                        <span className="shrink-0 w-6 h-6 rounded-full bg-red-50 text-primary border border-red-100 flex items-center justify-center font-bold">
                                             <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                                         </span>
                                         <span className="leading-snug">
@@ -153,7 +153,7 @@ export default function PreOrderSection({
                         <div className="pt-2">
                             <Link
                                 href={tautanKatalog}
-                                className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#E52027] hover:text-[#CC1C22] transition-colors group cursor-pointer"
+                                className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-primary hover:text-primary-hover transition-colors group cursor-pointer"
                             >
                                 <span>{labelTautan}</span>
                                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />

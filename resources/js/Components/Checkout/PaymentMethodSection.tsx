@@ -109,7 +109,7 @@ export default function PaymentMethodSection({
                 aria-invalid={Boolean(error)}
                 aria-describedby={error ? "payment-method-error" : undefined}
                 className={cn(
-                    "w-full text-left rounded-2xl border p-4 shadow-2xs transition-all duration-200 cursor-pointer flex items-center justify-between gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] focus-visible:ring-offset-1 group",
+                    "w-full text-left rounded-2xl border p-4 shadow-2xs transition-all duration-200 cursor-pointer flex items-center justify-between gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 group",
                     error
                         ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
                         : selectedPayment
@@ -142,7 +142,7 @@ export default function PaymentMethodSection({
                 </div>
 
                 <div className="flex items-center gap-1 text-slate-400 group-hover:text-slate-700 shrink-0 transition-colors">
-                    <span className="text-[11px] font-bold text-[#E52027] hidden sm:inline-block">
+                    <span className="text-[11px] font-bold text-primary hidden sm:inline-block">
                         {selectedPayment ? "Ubah" : "Pilih"}
                     </span>
                     <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />

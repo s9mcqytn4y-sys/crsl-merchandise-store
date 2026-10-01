@@ -143,7 +143,7 @@ export default function DiscountsModal({
                                 {/* Header Modal */}
                                 <div className="border-b border-slate-100 px-5 sm:px-6 py-4 flex items-center justify-between bg-white shrink-0">
                                     <div className="flex items-center gap-3 min-w-0 pr-2">
-                                        <div className="p-2.5 rounded-2xl bg-red-50 text-[#E52027] border border-red-100 shrink-0">
+                                        <div className="p-2.5 rounded-2xl bg-red-50 text-primary border border-red-100 shrink-0">
                                             <TicketPercent className="w-5 h-5 stroke-[2.2]" />
                                         </div>
                                         <div className="min-w-0">
@@ -221,7 +221,7 @@ export default function DiscountsModal({
                                                             "border-emerald-400 bg-emerald-50/40 ring-1 ring-emerald-300",
                                                         !isCurrentlyApplied &&
                                                             isEligible &&
-                                                            "border-dashed border-slate-300 bg-white hover:border-[#E52027] hover:bg-red-50/10 shadow-2xs",
+                                                            "border-dashed border-slate-300 bg-white hover:border-primary hover:bg-red-50/10 shadow-2xs",
                                                         !isCurrentlyApplied &&
                                                             !isEligible &&
                                                             "border-slate-200/90 bg-slate-50/70 opacity-70",
@@ -240,7 +240,7 @@ export default function DiscountsModal({
                                                                         </span>
                                                                     </span>
                                                                 ) : (
-                                                                    <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-red-50 text-[#E52027] border border-red-100">
+                                                                    <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-red-50 text-primary border border-red-100">
                                                                         <Tag className="w-3 h-3" />
                                                                         <span>
                                                                             {isPercent
@@ -334,7 +334,7 @@ export default function DiscountsModal({
                                                                 className={cn(
                                                                     "px-4 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs",
                                                                     isEligible
-                                                                        ? "bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.98] text-white cursor-pointer"
+                                                                        ? "bg-primary hover:bg-primary-hover active:scale-[0.98] text-white cursor-pointer"
                                                                         : "bg-slate-200 text-slate-400 cursor-not-allowed select-none",
                                                                 )}
                                                             >

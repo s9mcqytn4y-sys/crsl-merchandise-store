@@ -149,7 +149,7 @@ export default function SideMenuDrawer({
                                     <Link
                                         href="/"
                                         onClick={onClose}
-                                        className="flex items-center gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] rounded-xl py-1 px-1 transition-transform active:scale-95"
+                                        className="flex items-center gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl py-1 px-1 transition-transform active:scale-95"
                                         aria-label="Beranda CRSL"
                                     >
                                         <img
@@ -165,7 +165,7 @@ export default function SideMenuDrawer({
                                                     "/assets/gambar/placeholder.webp";
                                             }}
                                         />
-                                        <span className="font-black text-lg text-[#E52027] tracking-wider font-mono">
+                                        <span className="font-black text-lg text-primary tracking-wider font-mono">
                                             CRSL
                                         </span>
                                     </Link>
@@ -173,7 +173,7 @@ export default function SideMenuDrawer({
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="p-2 -mr-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:bg-slate-200 rounded-xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer"
+                                        className="p-2 -mr-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:bg-slate-200 rounded-xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
                                         aria-label="Tutup menu navigasi"
                                     >
                                         <X className="w-5 h-5 stroke-[2.2]" />
@@ -213,9 +213,9 @@ export default function SideMenuDrawer({
                                                                     onClose
                                                                 }
                                                                 className={cn(
-                                                                    "group flex items-center justify-between py-2.5 px-3.5 rounded-2xl text-xs sm:text-sm font-bold transition-all duration-150 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]",
+                                                                    "group flex items-center justify-between py-2.5 px-3.5 rounded-2xl text-xs sm:text-sm font-bold transition-all duration-150 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                                                                     isActive &&
-                                                                        "bg-red-50/80 text-[#E52027] shadow-2xs",
+                                                                        "bg-red-50/80 text-primary shadow-2xs",
                                                                     !isActive &&
                                                                         item.isHighlight &&
                                                                         "bg-amber-50/60 text-amber-900 hover:bg-amber-100/60",
@@ -231,7 +231,7 @@ export default function SideMenuDrawer({
                                                             >
                                                                 <span className="flex items-center gap-2.5">
                                                                     {item.isHighlight ? (
-                                                                        <Sparkles className="w-4 h-4 text-[#E52027] shrink-0 animate-pulse" />
+                                                                        <Sparkles className="w-4 h-4 text-primary shrink-0 animate-pulse" />
                                                                     ) : (
                                                                         <ShoppingBag className="w-4 h-4 text-slate-400 group-hover:text-slate-600 shrink-0" />
                                                                     )}
@@ -244,7 +244,7 @@ export default function SideMenuDrawer({
 
                                                                 <div className="flex items-center gap-1.5 shrink-0">
                                                                     {item.badgeText ? (
-                                                                        <span className="text-[10px] uppercase tracking-wider font-black bg-[#E52027] text-white px-2 py-0.5 rounded-md shadow-2xs font-mono">
+                                                                        <span className="text-[10px] uppercase tracking-wider font-black bg-primary text-white px-2 py-0.5 rounded-md shadow-2xs font-mono">
                                                                             {
                                                                                 item.badgeText
                                                                             }
@@ -255,7 +255,7 @@ export default function SideMenuDrawer({
                                                                         className={cn(
                                                                             "w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5",
                                                                             isActive
-                                                                                ? "text-[#E52027]"
+                                                                                ? "text-primary"
                                                                                 : "text-slate-400",
                                                                         )}
                                                                     />
@@ -283,12 +283,12 @@ export default function SideMenuDrawer({
                                                         <Link
                                                             href={`/katalog?kategori=${kat.slug}`}
                                                             onClick={onClose}
-                                                            className="flex items-center justify-between py-2 px-3.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:text-[#E52027] hover:bg-red-50/40 transition-all group"
+                                                            className="flex items-center justify-between py-2 px-3.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:text-primary hover:bg-red-50/40 transition-all group"
                                                         >
                                                             <span>
                                                                 {kat.nama}
                                                             </span>
-                                                            <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:translate-x-0.5 group-hover:text-[#E52027] transition-all" />
+                                                            <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:translate-x-0.5 group-hover:text-primary transition-all" />
                                                         </Link>
                                                     </li>
                                                 ))}
@@ -311,7 +311,7 @@ export default function SideMenuDrawer({
                                                         key={m.nama}
                                                         href={`/katalog?cari=${encodeURIComponent(m.nama)}`}
                                                         onClick={onClose}
-                                                        className="flex items-center gap-2 p-2 rounded-xl border border-slate-200/80 hover:border-[#E52027] hover:bg-red-50/30 transition-all group shadow-2xs"
+                                                        className="flex items-center gap-2 p-2 rounded-xl border border-slate-200/80 hover:border-primary hover:bg-red-50/30 transition-all group shadow-2xs"
                                                     >
                                                         <span
                                                             className="w-2.5 h-2.5 rounded-full shrink-0"
@@ -320,7 +320,7 @@ export default function SideMenuDrawer({
                                                                     m.warnaHex,
                                                             }}
                                                         />
-                                                        <span className="text-xs font-bold text-slate-700 group-hover:text-[#E52027] truncate">
+                                                        <span className="text-xs font-bold text-slate-700 group-hover:text-primary truncate">
                                                             {m.nama}
                                                         </span>
                                                     </Link>
@@ -346,7 +346,7 @@ export default function SideMenuDrawer({
                                                 className="flex items-center gap-3 p-2.5 bg-white border border-slate-200/80 rounded-2xl hover:border-slate-300 transition-all shadow-2xs group cursor-pointer"
                                                 aria-label="Ke halaman akun profil saya"
                                             >
-                                                <div className="w-9 h-9 rounded-xl bg-red-50 text-[#E52027] flex items-center justify-center font-bold text-xs shrink-0 group-hover:scale-105 transition-transform">
+                                                <div className="w-9 h-9 rounded-xl bg-red-50 text-primary flex items-center justify-center font-bold text-xs shrink-0 group-hover:scale-105 transition-transform">
                                                     <User className="w-4 h-4 stroke-[2.2]" />
                                                 </div>
                                                 <div className="min-w-0 flex-1">
@@ -382,7 +382,7 @@ export default function SideMenuDrawer({
                                                 onClose();
                                                 onOpenAuth?.();
                                             }}
-                                            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl text-xs sm:text-sm font-bold text-white bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.99] shadow-md shadow-red-500/20 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer"
+                                            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl text-xs sm:text-sm font-bold text-white bg-primary hover:bg-primary-hover active:scale-[0.99] shadow-md shadow-red-500/20 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
                                             aria-label="Masuk atau buat akun baru"
                                         >
                                             <LogIn className="w-4 h-4 stroke-[2.5]" />

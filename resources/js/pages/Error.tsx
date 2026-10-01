@@ -112,7 +112,7 @@ export default function ErrorPage({
                         <div
                             className={cn(
                                 "h-1.5 w-full",
-                                isServerError ? "bg-amber-400" : "bg-[#E52027]",
+                                isServerError ? "bg-amber-400" : "bg-primary",
                             )}
                         />
 
@@ -128,7 +128,7 @@ export default function ErrorPage({
                                             "inline-flex items-center gap-1.5 text-[11px] font-black tracking-widest uppercase px-3 py-1 rounded-full border font-mono shadow-2xs",
                                             isServerError
                                                 ? "text-amber-800 bg-amber-50 border-amber-200"
-                                                : "text-[#E52027] bg-red-50 border-red-200/80",
+                                                : "text-primary bg-red-50 border-red-200/80",
                                         )}
                                     >
                                         <AlertCircle className="w-3 h-3 stroke-[2.5]" />
@@ -151,7 +151,7 @@ export default function ErrorPage({
                             <div className="flex flex-col sm:flex-row items-center gap-3">
                                 <Link
                                     href="/"
-                                    className="w-full sm:flex-1 inline-flex items-center justify-center gap-2 bg-[#E52027] hover:bg-[#CC1C22] text-white font-bold text-xs sm:text-sm px-5 py-3 rounded-2xl transition-all shadow-md shadow-red-500/20 active:scale-95 cursor-pointer"
+                                    className="w-full sm:flex-1 inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-bold text-xs sm:text-sm px-5 py-3 rounded-2xl transition-all shadow-md shadow-red-500/20 active:scale-95 cursor-pointer"
                                 >
                                     <Home className="w-4 h-4 stroke-[2.2]" />
                                     <span>Ke Beranda</span>
@@ -170,7 +170,7 @@ export default function ErrorPage({
                                 <div>
                                     <Link
                                         href="/katalog"
-                                        className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-[#E52027] font-semibold transition-colors"
+                                        className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-primary font-semibold transition-colors"
                                     >
                                         <Search className="w-3.5 h-3.5 stroke-[2.2]" />
                                         <span>
@@ -202,7 +202,7 @@ export default function ErrorPage({
                         <button
                             type="button"
                             onClick={handleSafeBack}
-                            className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-700 font-semibold transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] rounded-lg px-2 py-1"
+                            className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-700 font-semibold transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg px-2 py-1"
                         >
                             <ArrowLeft className="w-3.5 h-3.5 stroke-[2.2]" />
                             <span>Kembali ke halaman sebelumnya</span>

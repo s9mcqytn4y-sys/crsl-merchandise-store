@@ -116,7 +116,7 @@ export default function Akun({
                         className="space-y-4"
                     >
                         <div>
-                            <span className="text-xs font-black text-[#E52027] uppercase tracking-wider">
+                            <span className="text-xs font-black text-primary uppercase tracking-wider">
                                 CRSL Membership
                             </span>
                             <h1
@@ -130,7 +130,7 @@ export default function Akun({
                         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-5">
                             <div className="space-y-1.5 max-w-xl">
                                 <div className="flex items-center gap-2 text-slate-900 font-black text-base">
-                                    <ShieldCheck className="w-5 h-5 text-[#E52027]" />
+                                    <ShieldCheck className="w-5 h-5 text-primary" />
                                     <h2>Bergabung Menjadi Member CRSL</h2>
                                 </div>
                                 <p className="text-xs text-slate-500 leading-relaxed">
@@ -145,14 +145,14 @@ export default function Akun({
                                 <button
                                     type="button"
                                     onClick={() => openAuthModal("login")}
-                                    className="px-6 py-2.5 rounded-2xl border border-slate-300 hover:border-[#E52027] text-slate-700 hover:text-[#E52027] hover:bg-red-50/30 font-bold text-xs transition-all cursor-pointer shadow-2xs"
+                                    className="px-6 py-2.5 rounded-2xl border border-slate-300 hover:border-primary text-slate-700 hover:text-primary hover:bg-red-50/30 font-bold text-xs transition-all cursor-pointer shadow-2xs"
                                 >
                                     Masuk
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => openAuthModal("register")}
-                                    className="px-6 py-2.5 rounded-2xl bg-[#E52027] hover:bg-[#CC1C22] active:scale-95 text-white font-bold text-xs shadow-md shadow-red-500/20 transition-all cursor-pointer"
+                                    className="px-6 py-2.5 rounded-2xl bg-primary hover:bg-primary-hover active:scale-95 text-white font-bold text-xs shadow-md shadow-red-500/20 transition-all cursor-pointer"
                                 >
                                     Daftar Akun
                                 </button>
@@ -167,7 +167,7 @@ export default function Akun({
                     >
                         <div className="flex flex-wrap items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
                             <div>
-                                <span className="text-xs font-black text-[#E52027] uppercase tracking-wider">
+                                <span className="text-xs font-black text-primary uppercase tracking-wider">
                                     Member Area
                                 </span>
                                 <h1
@@ -187,7 +187,7 @@ export default function Akun({
 
                                 <Link
                                     href="/profile/myinfo"
-                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-300 hover:border-[#E52027] text-slate-700 hover:text-[#E52027] hover:bg-red-50/30 font-bold text-xs transition-all cursor-pointer shadow-2xs"
+                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-300 hover:border-primary text-slate-700 hover:text-primary hover:bg-red-50/30 font-bold text-xs transition-all cursor-pointer shadow-2xs"
                                 >
                                     <Settings className="w-3.5 h-3.5 stroke-[2.2]" />
                                     <span>Pengaturan Akun</span>
@@ -227,9 +227,9 @@ export default function Akun({
                                 type="button"
                                 onClick={() => setTabAktif("orders")}
                                 className={cn(
-                                    "pb-3.5 text-xs sm:text-sm font-black tracking-tight transition-all cursor-pointer relative flex items-center gap-2 focus:outline-none focus-visible:text-[#E52027]",
+                                    "pb-3.5 text-xs sm:text-sm font-black tracking-tight transition-all cursor-pointer relative flex items-center gap-2 focus:outline-none focus-visible:text-primary",
                                     tabAktif === "orders"
-                                        ? "text-[#E52027] border-b-2 border-[#E52027]"
+                                        ? "text-primary border-b-2 border-primary"
                                         : "text-slate-400 hover:text-slate-700",
                                 )}
                             >
@@ -252,9 +252,9 @@ export default function Akun({
                                 type="button"
                                 onClick={() => setTabAktif("wishlist")}
                                 className={cn(
-                                    "pb-3.5 text-xs sm:text-sm font-black tracking-tight transition-all cursor-pointer relative flex items-center gap-2 focus:outline-none focus-visible:text-[#E52027]",
+                                    "pb-3.5 text-xs sm:text-sm font-black tracking-tight transition-all cursor-pointer relative flex items-center gap-2 focus:outline-none focus-visible:text-primary",
                                     tabAktif === "wishlist"
-                                        ? "text-[#E52027] border-b-2 border-[#E52027]"
+                                        ? "text-primary border-b-2 border-primary"
                                         : "text-slate-400 hover:text-slate-700",
                                 )}
                             >

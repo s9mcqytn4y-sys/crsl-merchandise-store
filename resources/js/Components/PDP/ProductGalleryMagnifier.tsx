@@ -224,9 +224,9 @@ export default function ProductGalleryMagnifier({
                                 tabIndex={isActive ? 0 : -1}
                                 onClick={() => onSelectImage(img.url)}
                                 className={cn(
-                                    "group relative rounded-2xl overflow-hidden aspect-square border-2 transition-all duration-200 cursor-pointer w-16 sm:w-18 md:w-full shrink-0 bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] focus-visible:ring-offset-2",
+                                    "group relative rounded-2xl overflow-hidden aspect-square border-2 transition-all duration-200 cursor-pointer w-16 sm:w-18 md:w-full shrink-0 bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                                     isActive
-                                        ? "border-[#E52027] ring-2 ring-[#E52027]/20 shadow-xs opacity-100 scale-[1.02]"
+                                        ? "border-primary ring-2 ring-primary/20 shadow-xs opacity-100 scale-[1.02]"
                                         : "border-slate-200/90 hover:border-slate-300 opacity-70 hover:opacity-100",
                                 )}
                                 aria-label={`Tampilkan foto produk ke-${index + 1}`}
@@ -334,7 +334,7 @@ export default function ProductGalleryMagnifier({
                                 isHovering ? "opacity-0" : "opacity-100",
                             )}
                         >
-                            <ZoomIn className="w-3.5 h-3.5 text-[#E52027]" />
+                            <ZoomIn className="w-3.5 h-3.5 text-primary" />
                             <span>Arahkan kursor untuk zoom</span>
                         </span>
                     </>

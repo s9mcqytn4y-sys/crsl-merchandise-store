@@ -361,7 +361,7 @@ export default function ProfileDelivery({
                 {/* Header Alamat Pengiriman */}
                 <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                     <div>
-                        <span className="text-xs font-black text-[#E52027] uppercase tracking-wider">
+                        <span className="text-xs font-black text-primary uppercase tracking-wider">
                             Informasi Pengiriman
                         </span>
                         <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">
@@ -376,7 +376,7 @@ export default function ProfileDelivery({
                     <button
                         type="button"
                         onClick={bukaModalTambah}
-                        className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-[#E52027] hover:bg-[#CC1C22] active:scale-95 text-white font-bold text-xs rounded-2xl shadow-xs shadow-red-500/20 transition-all cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-primary hover:bg-primary-hover active:scale-95 text-white font-bold text-xs rounded-2xl shadow-xs shadow-red-500/20 transition-all cursor-pointer"
                     >
                         <Plus className="w-4 h-4 stroke-[2.5]" />
                         <span>Tambah Alamat</span>
@@ -414,7 +414,7 @@ export default function ProfileDelivery({
                                             </span>
                                         )}
                                         {addr.adalah_utama && (
-                                            <span className="text-[10px] font-black uppercase tracking-wider bg-red-100 text-[#E52027] px-2.5 py-0.5 rounded-full border border-red-200/80 font-mono">
+                                            <span className="text-[10px] font-black uppercase tracking-wider bg-red-100 text-primary px-2.5 py-0.5 rounded-full border border-red-200/80 font-mono">
                                                 Alamat Utama
                                             </span>
                                         )}
@@ -521,7 +521,7 @@ export default function ProfileDelivery({
                                     {/* Header Modal */}
                                     <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 shrink-0">
                                         <div className="flex items-center gap-2.5">
-                                            <div className="w-9 h-9 rounded-2xl bg-red-50 text-[#E52027] border border-red-100 flex items-center justify-center shrink-0">
+                                            <div className="w-9 h-9 rounded-2xl bg-red-50 text-primary border border-red-100 flex items-center justify-center shrink-0">
                                                 <MapPin className="w-4 h-4 stroke-[2.2]" />
                                             </div>
                                             <div>
@@ -546,7 +546,7 @@ export default function ProfileDelivery({
                                             onClick={() =>
                                                 setIsModalOpen(false)
                                             }
-                                            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                             aria-label="Tutup jendela alamat"
                                         >
                                             <X className="w-4 h-4 stroke-[2.2]" />
@@ -574,7 +574,7 @@ export default function ProfileDelivery({
                                                     setLabel(e.target.value)
                                                 }
                                                 placeholder="Contoh: Rumah, Kantor, Kos"
-                                                className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-2xl text-xs sm:text-sm text-slate-900 focus:outline-none focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10 transition-all shadow-2xs font-medium"
+                                                className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-2xl text-xs sm:text-sm text-slate-900 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all shadow-2xs font-medium"
                                             />
                                         </div>
 
@@ -585,7 +585,7 @@ export default function ProfileDelivery({
                                                 className="block text-xs font-bold text-slate-700"
                                             >
                                                 Nama Penerima{" "}
-                                                <span className="text-[#E52027]">
+                                                <span className="text-primary">
                                                     *
                                                 </span>
                                             </label>
@@ -621,7 +621,7 @@ export default function ProfileDelivery({
                                                     "w-full px-3.5 py-2.5 bg-white border rounded-2xl text-xs sm:text-sm text-slate-900 focus:outline-none transition-all shadow-2xs font-medium",
                                                     errors.namaPenerima
                                                         ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
-                                                        : "border-slate-300 focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10",
+                                                        : "border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/10",
                                                 )}
                                             />
                                             {errors.namaPenerima && (
@@ -646,7 +646,7 @@ export default function ProfileDelivery({
                                                     className="block text-xs font-bold text-slate-700"
                                                 >
                                                     Nomor Telepon WhatsApp{" "}
-                                                    <span className="text-[#E52027]">
+                                                    <span className="text-primary">
                                                         *
                                                     </span>
                                                 </label>
@@ -684,7 +684,7 @@ export default function ProfileDelivery({
                                                         "w-full px-3.5 py-2.5 bg-white border rounded-2xl text-xs sm:text-sm text-slate-900 focus:outline-none transition-all shadow-2xs font-mono font-bold",
                                                         errors.telepon
                                                             ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
-                                                            : "border-slate-300 focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10",
+                                                            : "border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/10",
                                                     )}
                                                 />
                                                 {errors.telepon && (
@@ -716,7 +716,7 @@ export default function ProfileDelivery({
                                                         setEmail(e.target.value)
                                                     }
                                                     placeholder="alamat@email.com"
-                                                    className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-2xl text-xs sm:text-sm text-slate-900 focus:outline-none focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10 transition-all shadow-2xs font-medium"
+                                                    className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-2xl text-xs sm:text-sm text-slate-900 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all shadow-2xs font-medium"
                                                 />
                                             </div>
                                         </div>
@@ -732,7 +732,7 @@ export default function ProfileDelivery({
                                                     className="block text-xs font-bold text-slate-700"
                                                 >
                                                     Kecamatan / Kota (Biteship){" "}
-                                                    <span className="text-[#E52027]">
+                                                    <span className="text-primary">
                                                         *
                                                     </span>
                                                 </label>
@@ -775,12 +775,12 @@ export default function ProfileDelivery({
                                                         "w-full pl-9 pr-9 py-2.5 bg-white border rounded-2xl text-xs sm:text-sm text-slate-900 focus:outline-none transition-all shadow-2xs font-medium",
                                                         errors.area_id
                                                             ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
-                                                            : "border-slate-300 focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10",
+                                                            : "border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/10",
                                                     )}
                                                 />
                                                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none stroke-[2.2]" />
                                                 {isSearchingArea && (
-                                                    <Loader2 className="w-4 h-4 text-[#E52027] animate-spin absolute right-3 top-3" />
+                                                    <Loader2 className="w-4 h-4 text-primary animate-spin absolute right-3 top-3" />
                                                 )}
                                             </div>
 
@@ -853,7 +853,7 @@ export default function ProfileDelivery({
                                             {/* Pratinjau Wilayah Terpilih */}
                                             {selectedAreaText && (
                                                 <div className="mt-2 p-3 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-start gap-2.5 text-xs shadow-2xs">
-                                                    <MapPin className="w-4 h-4 text-[#E52027] shrink-0 mt-0.5 stroke-[2.2]" />
+                                                    <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5 stroke-[2.2]" />
                                                     <div className="flex-1 space-y-0.5">
                                                         <span className="font-bold text-slate-900 block">
                                                             {selectedAreaText}
@@ -878,7 +878,7 @@ export default function ProfileDelivery({
                                             >
                                                 Alamat Lengkap (Jalan, No Rumah,
                                                 RT/RW, Patokan){" "}
-                                                <span className="text-[#E52027]">
+                                                <span className="text-primary">
                                                     *
                                                 </span>
                                             </label>
@@ -914,7 +914,7 @@ export default function ProfileDelivery({
                                                     "w-full px-3.5 py-2.5 bg-white border rounded-2xl text-xs sm:text-sm text-slate-900 focus:outline-none resize-none transition-all shadow-2xs font-medium",
                                                     errors.alamatLengkap
                                                         ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
-                                                        : "border-slate-300 focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10",
+                                                        : "border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/10",
                                                 )}
                                             />
                                             {errors.alamatLengkap && (
@@ -941,7 +941,7 @@ export default function ProfileDelivery({
                                                         e.target.checked,
                                                     )
                                                 }
-                                                className="rounded-md text-[#E52027] focus:ring-[#E52027] w-4 h-4 cursor-pointer"
+                                                className="rounded-md text-primary focus:ring-primary w-4 h-4 cursor-pointer"
                                             />
                                             <span className="text-xs font-bold text-slate-800">
                                                 Jadikan sebagai alamat
@@ -965,7 +965,7 @@ export default function ProfileDelivery({
                                             <button
                                                 type="submit"
                                                 disabled={sedangSimpan}
-                                                className="inline-flex items-center gap-1.5 px-6 py-2.5 bg-[#E52027] hover:bg-[#CC1C22] active:scale-95 text-white font-bold text-xs rounded-2xl shadow-md shadow-red-500/20 transition-all cursor-pointer disabled:opacity-50"
+                                                className="inline-flex items-center gap-1.5 px-6 py-2.5 bg-primary hover:bg-primary-hover active:scale-95 text-white font-bold text-xs rounded-2xl shadow-md shadow-red-500/20 transition-all cursor-pointer disabled:opacity-50"
                                             >
                                                 {sedangSimpan ? (
                                                     <>

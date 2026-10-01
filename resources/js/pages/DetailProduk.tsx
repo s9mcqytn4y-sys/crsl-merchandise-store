@@ -511,11 +511,11 @@ export default function DetailProduk({
                                     type="button"
                                     onClick={handleToggleWishlist}
                                     disabled={isWishlistLoading}
-                                    className="p-2 text-slate-400 hover:text-[#E52027] rounded-xl hover:bg-red-50/50 transition-colors cursor-pointer disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                    className="p-2 text-slate-400 hover:text-primary rounded-xl hover:bg-red-50/50 transition-colors cursor-pointer disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                     aria-label="Simpan ke Wishlist Saya"
                                 >
                                     {isWishlistLoading ? (
-                                        <Loader2 className="w-5 h-5 animate-spin text-[#E52027]" />
+                                        <Loader2 className="w-5 h-5 animate-spin text-primary" />
                                     ) : (
                                         <Heart className="w-5 h-5 stroke-[2]" />
                                     )}
@@ -547,10 +547,10 @@ export default function DetailProduk({
                             aria-expanded={isDiscountsModalOpen}
                             aria-controls="modal-diskon-produk"
                             onClick={() => setIsDiscountsModalOpen(true)}
-                            className="w-full flex items-center justify-between px-4 py-3 bg-slate-50/70 border border-slate-200/90 rounded-2xl text-left hover:border-slate-300 hover:bg-slate-100/60 transition-all cursor-pointer group shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                            className="w-full flex items-center justify-between px-4 py-3 bg-slate-50/70 border border-slate-200/90 rounded-2xl text-left hover:border-slate-300 hover:bg-slate-100/60 transition-all cursor-pointer group shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         >
                             <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center text-[#E52027] shrink-0 shadow-2xs">
+                                <div className="w-8 h-8 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center text-primary shrink-0 shadow-2xs">
                                     <TicketPercent className="w-4 h-4 stroke-[2.2]" />
                                 </div>
                                 <div>
@@ -585,7 +585,7 @@ export default function DetailProduk({
                                 type="button"
                                 onClick={handleAddToCart}
                                 disabled={isOutOfStock}
-                                className="w-full min-h-[48px] bg-white hover:bg-red-50/40 disabled:opacity-50 text-[#E52027] border-2 border-[#E52027] font-extrabold text-sm rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed shadow-2xs active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                className="w-full min-h-[48px] bg-white hover:bg-red-50/40 disabled:opacity-50 text-primary border-2 border-primary font-extrabold text-sm rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed shadow-2xs active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             >
                                 <ShoppingBag className="w-4 h-4 stroke-[2.2]" />
                                 <span>
@@ -599,7 +599,7 @@ export default function DetailProduk({
                                 type="button"
                                 onClick={handleBuyNow}
                                 disabled={isOutOfStock}
-                                className="w-full min-h-[48px] bg-[#E52027] hover:bg-[#CC1C22] disabled:opacity-50 text-white font-extrabold text-sm rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed shadow-lg shadow-red-500/20 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                className="w-full min-h-[48px] bg-primary hover:bg-primary-hover disabled:opacity-50 text-white font-extrabold text-sm rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed shadow-lg shadow-red-500/20 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             >
                                 <Zap className="w-4 h-4 stroke-[2.2]" />
                                 <span>Beli Sekarang</span>
@@ -638,9 +638,9 @@ export default function DetailProduk({
                                 aria-expanded={isInquiryModalOpen}
                                 aria-controls="modal-inquiry-produk"
                                 onClick={() => setIsInquiryModalOpen(true)}
-                                className="w-full py-2.5 min-h-[44px] bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-xs rounded-2xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                className="w-full py-2.5 min-h-[44px] bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-xs rounded-2xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             >
-                                <MessageCircle className="w-4 h-4 text-[#E52027] stroke-[2.2]" />
+                                <MessageCircle className="w-4 h-4 text-primary stroke-[2.2]" />
                                 <span>Tanya Produk</span>
                             </button>
 

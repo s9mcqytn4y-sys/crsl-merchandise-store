@@ -95,7 +95,7 @@ export default function DeliveryMessageModal({
                                 {/* Header Modal */}
                                 <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
                                     <div className="flex items-center gap-2.5">
-                                        <div className="w-9 h-9 rounded-2xl bg-red-50 text-[#E52027] border border-red-100 flex items-center justify-center shrink-0">
+                                        <div className="w-9 h-9 rounded-2xl bg-red-50 text-primary border border-red-100 flex items-center justify-center shrink-0">
                                             <MessageSquare className="w-4 h-4 stroke-[2.2]" />
                                         </div>
                                         <div>
@@ -112,7 +112,7 @@ export default function DeliveryMessageModal({
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                         aria-label="Tutup catatan pengiriman"
                                     >
                                         <X className="w-4 h-4 stroke-[2.2]" />
@@ -142,7 +142,7 @@ export default function DeliveryMessageModal({
                                                         className={cn(
                                                             "px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all cursor-pointer border text-left",
                                                             isIncluded
-                                                                ? "bg-red-50 text-[#E52027] border-red-200"
+                                                                ? "bg-red-50 text-primary border-red-200"
                                                                 : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100",
                                                         )}
                                                     >
@@ -170,7 +170,7 @@ export default function DeliveryMessageModal({
                                                 setMessage(e.target.value)
                                             }
                                             placeholder="Tulis instruksi khusus pengiriman di sini..."
-                                            className="w-full px-3.5 py-3 text-xs sm:text-sm border border-slate-300 rounded-2xl focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10 focus:outline-none transition-all resize-none shadow-2xs text-slate-900 placeholder:text-slate-400 font-medium"
+                                            className="w-full px-3.5 py-3 text-xs sm:text-sm border border-slate-300 rounded-2xl focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all resize-none shadow-2xs text-slate-900 placeholder:text-slate-400 font-medium"
                                             autoFocus
                                         />
                                         <div className="flex justify-between items-center text-[11px] text-slate-400 mt-1 font-mono">
@@ -200,7 +200,7 @@ export default function DeliveryMessageModal({
                                     <button
                                         type="button"
                                         onClick={handleSave}
-                                        className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.99] text-white text-xs font-bold transition-all shadow-md shadow-red-500/20 cursor-pointer"
+                                        className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover active:scale-[0.99] text-white text-xs font-bold transition-all shadow-md shadow-red-500/20 cursor-pointer"
                                     >
                                         <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                                         <span>Simpan Catatan</span>

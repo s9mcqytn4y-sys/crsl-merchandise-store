@@ -145,7 +145,7 @@ export default function FloatingActionHub({
                 <button
                     type="button"
                     onClick={() => setIsVoucherOpen(true)}
-                    className="pointer-events-auto flex items-center gap-1.5 py-3 px-2 bg-[#E52027] hover:bg-[#CC1C22] active:scale-95 text-white rounded-l-2xl shadow-xl transition-all duration-200 hover:-translate-x-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E52027] cursor-pointer group border-y border-l border-white/20"
+                    className="pointer-events-auto flex items-center gap-1.5 py-3 px-2 bg-primary hover:bg-primary-hover active:scale-95 text-white rounded-l-2xl shadow-xl transition-all duration-200 hover:-translate-x-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary cursor-pointer group border-y border-l border-white/20"
                     aria-label="Lihat kupon diskon dan promo voucher belanja CRSL"
                 >
                     <Percent className="w-4 h-4 stroke-[2.5] group-hover:rotate-12 transition-transform duration-200" />
@@ -164,7 +164,7 @@ export default function FloatingActionHub({
                     <button
                         type="button"
                         onClick={() => setIsVoucherOpen(true)}
-                        className="w-12 h-12 rounded-2xl bg-white hover:bg-slate-50 active:scale-95 text-slate-800 shadow-xl border border-slate-200/90 flex items-center justify-center transition-all duration-200 hover:shadow-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer"
+                        className="w-12 h-12 rounded-2xl bg-white hover:bg-slate-50 active:scale-95 text-slate-800 shadow-xl border border-slate-200/90 flex items-center justify-center transition-all duration-200 hover:shadow-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
                         aria-label="Buka reward dan promo eksklusif CRSL"
                     >
                         {!mascotError ? (
@@ -177,13 +177,13 @@ export default function FloatingActionHub({
                                 onError={() => setMascotError(true)}
                             />
                         ) : (
-                            <Gift className="w-5 h-5 text-[#E52027]" />
+                            <Gift className="w-5 h-5 text-primary" />
                         )}
 
                         {/* Indikator Badge Promo Aktif */}
                         <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-[#E52027] border-2 border-white" />
+                            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-primary border-2 border-white" />
                         </span>
                     </button>
 

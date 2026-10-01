@@ -101,13 +101,13 @@ export default class ErrorBoundary extends Component<Props, State> {
                         {/* Header Icon */}
                         <div className="flex justify-center">
                             <div className="w-16 h-16 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center shadow-xs">
-                                <AlertTriangle className="w-8 h-8 text-[#E52027] stroke-[2.2]" />
+                                <AlertTriangle className="w-8 h-8 text-primary stroke-[2.2]" />
                             </div>
                         </div>
 
                         {/* Title & Description */}
                         <div className="space-y-2">
-                            <span className="inline-block text-[10px] font-black uppercase tracking-widest text-[#E52027] bg-red-50 px-3 py-1 rounded-full border border-red-100">
+                            <span className="inline-block text-[10px] font-black uppercase tracking-widest text-primary bg-red-50 px-3 py-1 rounded-full border border-red-100">
                                 Kendala Tampilan
                             </span>
                             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
@@ -129,7 +129,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                                         onClick={this.toggleDetails}
                                         className="flex-1 flex items-center justify-between text-slate-700 font-bold hover:text-slate-900 truncate pr-2 cursor-pointer"
                                     >
-                                        <span className="text-[#E52027] truncate">
+                                        <span className="text-primary truncate">
                                             {error.name}: {error.message}
                                         </span>
                                         {showDetails ? (
@@ -167,7 +167,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                             <button
                                 type="button"
                                 onClick={this.handleReset}
-                                className="flex-1 inline-flex items-center justify-center gap-2 bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.98] text-white font-bold text-xs sm:text-sm py-3 px-5 rounded-2xl transition-all shadow-md shadow-red-500/10 cursor-pointer"
+                                className="flex-1 inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover active:scale-[0.98] text-white font-bold text-xs sm:text-sm py-3 px-5 rounded-2xl transition-all shadow-md shadow-red-500/10 cursor-pointer"
                             >
                                 <RefreshCw className="w-4 h-4 stroke-[2.2]" />
                                 <span>Coba Lagi</span>

@@ -97,7 +97,7 @@ export default function MyInfoSection({
                             value={nama}
                             onChange={(e) => setNama(e.target.value)}
                             placeholder="Masukkan nama lengkap Anda"
-                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:border-[#E52027] focus:ring-1 focus:ring-[#E52027] focus:outline-none transition-all"
+                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all"
                             required
                         />
                     </div>
@@ -138,7 +138,7 @@ export default function MyInfoSection({
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
                             placeholder="08123456789"
-                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:border-[#E52027] focus:ring-1 focus:ring-[#E52027] focus:outline-none transition-all"
+                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all"
                         />
                     </div>
                 </div>
@@ -157,7 +157,7 @@ export default function MyInfoSection({
                             value={birthDay}
                             onChange={(e) => setBirthDay(e.target.value)}
                             placeholder="Hari (1-31)"
-                            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 text-center focus:bg-white focus:border-[#E52027] focus:ring-1 focus:ring-[#E52027] focus:outline-none"
+                            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 text-center focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
                         />
                         <input
                             type="number"
@@ -166,7 +166,7 @@ export default function MyInfoSection({
                             value={birthMonth}
                             onChange={(e) => setBirthMonth(e.target.value)}
                             placeholder="Bulan (1-12)"
-                            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 text-center focus:bg-white focus:border-[#E52027] focus:ring-1 focus:ring-[#E52027] focus:outline-none"
+                            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 text-center focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
                         />
                         <input
                             type="number"
@@ -175,7 +175,7 @@ export default function MyInfoSection({
                             value={birthYear}
                             onChange={(e) => setBirthYear(e.target.value)}
                             placeholder="Tahun"
-                            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 text-center focus:bg-white focus:border-[#E52027] focus:ring-1 focus:ring-[#E52027] focus:outline-none"
+                            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 text-center focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
                         />
                     </div>
                 </div>
@@ -193,7 +193,7 @@ export default function MyInfoSection({
                                 value="female"
                                 checked={gender === "female"}
                                 onChange={(e) => setGender(e.target.value)}
-                                className="accent-[#E52027]"
+                                className="accent-primary"
                             />
                             <span>Perempuan</span>
                         </label>
@@ -204,7 +204,7 @@ export default function MyInfoSection({
                                 value="male"
                                 checked={gender === "male"}
                                 onChange={(e) => setGender(e.target.value)}
-                                className="accent-[#E52027]"
+                                className="accent-primary"
                             />
                             <span>Laki-laki</span>
                         </label>
@@ -221,7 +221,7 @@ export default function MyInfoSection({
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="px-5 py-2.5 bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.98] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                        className="px-5 py-2.5 bg-primary hover:bg-primary-hover active:scale-[0.98] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                         <Save className="w-3.5 h-3.5" />
                         <span>{isGuest ? "Simpan / Masuk" : "Simpan Perubahan"}</span>

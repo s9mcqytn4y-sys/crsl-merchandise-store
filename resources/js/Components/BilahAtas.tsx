@@ -64,7 +64,7 @@ export default function BilahAtas({
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
             className={cn(
-                "bg-[#E52027] text-white h-9 overflow-hidden relative select-none z-30 flex items-center justify-center border-b border-[#CC1C22]/30 px-4",
+                "bg-primary text-white h-9 overflow-hidden relative select-none z-30 flex items-center justify-center border-b border-primary-hover/30 px-4",
                 className,
             )}
         >

@@ -161,7 +161,7 @@ export default function InquiryModal({
                                         className="block text-xs font-bold text-slate-700 mb-1"
                                     >
                                         Nama Anda{" "}
-                                        <span className="text-[#E52027]">
+                                        <span className="text-primary">
                                             *
                                         </span>
                                     </label>
@@ -177,7 +177,7 @@ export default function InquiryModal({
                                             )
                                         }
                                         placeholder="Nama lengkap"
-                                        className="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10 outline-none transition-all"
+                                        className="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all"
                                         required
                                     />
                                     {errors.nama_pengirim && (
@@ -193,7 +193,7 @@ export default function InquiryModal({
                                         className="block text-xs font-bold text-slate-700 mb-1"
                                     >
                                         No. WhatsApp / Email{" "}
-                                        <span className="text-[#E52027]">
+                                        <span className="text-primary">
                                             *
                                         </span>
                                     </label>
@@ -206,7 +206,7 @@ export default function InquiryModal({
                                             setData("kontak", e.target.value)
                                         }
                                         placeholder="0812... / email"
-                                        className="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10 outline-none transition-all"
+                                        className="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all"
                                         required
                                     />
                                     {errors.kontak && (
@@ -225,7 +225,7 @@ export default function InquiryModal({
                                 className="block text-xs font-bold text-slate-700"
                             >
                                 Pertanyaan Anda{" "}
-                                <span className="text-[#E52027]">*</span>
+                                <span className="text-primary">*</span>
                             </label>
                             <textarea
                                 id="inquiry-pesan"
@@ -236,7 +236,7 @@ export default function InquiryModal({
                                     setData("pesan", e.target.value)
                                 }
                                 placeholder="Contoh: Apakah varian ini ready stock dan bisa dikirim hari ini? Apakah bahannya tahan air?"
-                                className="w-full text-xs p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#E52027]/10 focus:border-[#E52027] outline-none transition-all resize-none disabled:opacity-60"
+                                className="w-full text-xs p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all resize-none disabled:opacity-60"
                                 required
                             />
                             {errors.pesan && (

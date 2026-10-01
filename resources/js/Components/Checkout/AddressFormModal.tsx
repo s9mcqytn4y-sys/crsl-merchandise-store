@@ -365,7 +365,7 @@ export default function AddressFormModal({
                                 {/* Header Modal */}
                                 <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
                                     <div className="flex items-center gap-2.5">
-                                        <div className="w-9 h-9 rounded-2xl bg-red-50 text-[#E52027] border border-red-100 flex items-center justify-center shrink-0">
+                                        <div className="w-9 h-9 rounded-2xl bg-red-50 text-primary border border-red-100 flex items-center justify-center shrink-0">
                                             <MapPin className="w-4 h-4 stroke-[2.2]" />
                                         </div>
                                         <DialogTitle className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
@@ -377,7 +377,7 @@ export default function AddressFormModal({
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                         aria-label="Tutup form alamat"
                                     >
                                         <X className="w-4 h-4 stroke-[2.2]" />
@@ -425,7 +425,7 @@ export default function AddressFormModal({
                                             className="block text-xs font-bold text-slate-700 mb-1"
                                         >
                                             Nama Lengkap Penerima{" "}
-                                            <span className="text-[#E52027]">
+                                            <span className="text-primary">
                                                 *
                                             </span>
                                         </label>
@@ -447,7 +447,7 @@ export default function AddressFormModal({
                                                 "w-full px-3.5 py-2.5 rounded-2xl border text-xs sm:text-sm text-slate-900 focus:outline-none transition-all shadow-2xs",
                                                 errors.nama_penerima
                                                     ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
-                                                    : "border-slate-300 focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10",
+                                                    : "border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/10",
                                             )}
                                         />
                                         {errors.nama_penerima && (
@@ -474,7 +474,7 @@ export default function AddressFormModal({
                                             className="block text-xs font-bold text-slate-700 mb-1"
                                         >
                                             Nomor Handphone / WhatsApp{" "}
-                                            <span className="text-[#E52027]">
+                                            <span className="text-primary">
                                                 *
                                             </span>
                                         </label>
@@ -497,7 +497,7 @@ export default function AddressFormModal({
                                                 "w-full px-3.5 py-2.5 rounded-2xl border text-xs sm:text-sm font-mono text-slate-900 focus:outline-none transition-all shadow-2xs",
                                                 errors.telepon
                                                     ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
-                                                    : "border-slate-300 focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10",
+                                                    : "border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/10",
                                             )}
                                         />
                                         {errors.telepon && (
@@ -521,7 +521,7 @@ export default function AddressFormModal({
                                             className="block text-xs font-bold text-slate-700 mb-1"
                                         >
                                             Kecamatan, Kota, atau Kode Pos{" "}
-                                            <span className="text-[#E52027]">
+                                            <span className="text-primary">
                                                 *
                                             </span>
                                         </label>
@@ -566,12 +566,12 @@ export default function AddressFormModal({
                                                         errors.kode_pos ||
                                                         errors.area_id
                                                         ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
-                                                        : "border-slate-300 focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10",
+                                                        : "border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/10",
                                                 )}
                                             />
                                             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                                             {isSearchingArea && (
-                                                <Loader2 className="w-4 h-4 text-[#E52027] animate-spin absolute right-3 top-1/2 -translate-y-1/2" />
+                                                <Loader2 className="w-4 h-4 text-primary animate-spin absolute right-3 top-1/2 -translate-y-1/2" />
                                             )}
                                         </div>
 
@@ -662,7 +662,7 @@ export default function AddressFormModal({
                                             className="block text-xs font-bold text-slate-700 mb-1"
                                         >
                                             Alamat Lengkap & Patokan{" "}
-                                            <span className="text-[#E52027]">
+                                            <span className="text-primary">
                                                 *
                                             </span>
                                         </label>
@@ -684,7 +684,7 @@ export default function AddressFormModal({
                                                 "w-full px-3.5 py-2.5 rounded-2xl border text-xs sm:text-sm text-slate-900 focus:outline-none transition-all shadow-2xs resize-none",
                                                 errors.alamat_lengkap
                                                     ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
-                                                    : "border-slate-300 focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10",
+                                                    : "border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/10",
                                             )}
                                         />
                                         {errors.alamat_lengkap && (
@@ -710,7 +710,7 @@ export default function AddressFormModal({
                                             <input
                                                 type="checkbox"
                                                 {...register("adalah_utama")}
-                                                className="w-4 h-4 rounded-md border-slate-300 text-[#E52027] focus:ring-[#E52027] cursor-pointer"
+                                                className="w-4 h-4 rounded-md border-slate-300 text-primary focus:ring-primary cursor-pointer"
                                             />
                                             <span className="text-xs font-bold text-slate-700">
                                                 Jadikan sebagai alamat
@@ -724,7 +724,7 @@ export default function AddressFormModal({
                                         <button
                                             type="submit"
                                             disabled={loading}
-                                            className="w-full min-h-[46px] py-3 bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.99] text-white rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-md shadow-red-500/20 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                                            className="w-full min-h-[46px] py-3 bg-primary hover:bg-primary-hover active:scale-[0.99] text-white rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-md shadow-red-500/20 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
                                         >
                                             {loading ? (
                                                 <>

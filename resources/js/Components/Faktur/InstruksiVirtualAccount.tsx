@@ -197,7 +197,7 @@ export default function InstruksiVirtualAccount({
                 {/* Header Sub-Metode Bank */}
                 <div className="flex items-center justify-between text-xs font-bold text-slate-700 border-b border-slate-200/70 pb-3">
                     <span className="flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-lg bg-red-50 text-[#E52027] flex items-center justify-center shrink-0">
+                        <span className="w-6 h-6 rounded-lg bg-red-50 text-primary flex items-center justify-center shrink-0">
                             <Building2
                                 className="w-3.5 h-3.5"
                                 aria-hidden="true"
@@ -231,7 +231,7 @@ export default function InstruksiVirtualAccount({
                                         type="button"
                                         onClick={handleSync}
                                         disabled={isSyncing}
-                                        className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-[#E52027] hover:bg-red-50 border border-red-200 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+                                        className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-primary hover:bg-red-50 border border-red-200 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
                                         title="Segarkan nomor VA"
                                     >
                                         <RefreshCw
@@ -252,7 +252,7 @@ export default function InstruksiVirtualAccount({
                             className={`inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer select-none shrink-0 ${
                                 isCopied
                                     ? "bg-emerald-50 text-emerald-700 border border-emerald-200 ring-1 ring-emerald-200"
-                                    : "bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.98] text-white"
+                                    : "bg-primary hover:bg-primary-hover active:scale-[0.98] text-white"
                             }`}
                         >
                             {isCopied ? (

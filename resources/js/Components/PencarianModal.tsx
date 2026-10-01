@@ -296,13 +296,13 @@ export default function PencarianModal({
                     />
 
                     {isSearching && (
-                        <Loader2 className="w-4 h-4 text-[#E52027] animate-spin shrink-0" />
+                        <Loader2 className="w-4 h-4 text-primary animate-spin shrink-0" />
                     )}
 
                     {query.trim().length > 0 && !isSearching && (
                         <button
                             type="submit"
-                            className="p-1.5 bg-red-50 text-[#E52027] hover:bg-[#E52027] hover:text-white rounded-xl transition-colors flex items-center gap-1 text-xs font-bold cursor-pointer"
+                            className="p-1.5 bg-red-50 text-primary hover:bg-primary hover:text-white rounded-xl transition-colors flex items-center gap-1 text-xs font-bold cursor-pointer"
                             title="Tekan Enter untuk mencari"
                         >
                             <CornerDownLeft className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -378,7 +378,7 @@ export default function PencarianModal({
                                                 </div>
 
                                                 <div className="flex-1 min-w-0">
-                                                    <h5 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-[#E52027] truncate transition-colors">
+                                                    <h5 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-primary truncate transition-colors">
                                                         {item.nama}
                                                     </h5>
                                                     <div className="flex items-center gap-2 mt-0.5 font-mono text-xs">
@@ -397,7 +397,7 @@ export default function PencarianModal({
                                                     </div>
                                                 </div>
 
-                                                <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-[#E52027] group-hover:translate-x-0.5 transition-all shrink-0" />
+                                                <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
                                             </Link>
                                         );
                                     })}
@@ -406,7 +406,7 @@ export default function PencarianModal({
                                         <button
                                             type="button"
                                             onClick={() => eksekusiCari(query)}
-                                            className="text-xs font-bold text-[#E52027] hover:underline inline-flex items-center gap-1.5 py-1"
+                                            className="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1.5 py-1"
                                         >
                                             <span>
                                                 Lihat semua hasil untuk "{query}
@@ -455,7 +455,7 @@ export default function PencarianModal({
                                                 onClick={() =>
                                                     eksekusiCari(item)
                                                 }
-                                                className="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-red-50 hover:text-[#E52027] text-slate-800 px-3.5 py-1.5 rounded-full text-xs font-bold cursor-pointer transition-colors group"
+                                                className="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-red-50 hover:text-primary text-slate-800 px-3.5 py-1.5 rounded-full text-xs font-bold cursor-pointer transition-colors group"
                                             >
                                                 <span>{item}</span>
                                                 <button
@@ -466,7 +466,7 @@ export default function PencarianModal({
                                                             e,
                                                         )
                                                     }
-                                                    className="text-slate-400 group-hover:text-[#E52027] p-0.5 rounded-full hover:bg-slate-200 transition-colors"
+                                                    className="text-slate-400 group-hover:text-primary p-0.5 rounded-full hover:bg-slate-200 transition-colors"
                                                     aria-label={`Hapus ${item} dari riwayat`}
                                                 >
                                                     <X className="w-3 h-3" />
@@ -488,7 +488,7 @@ export default function PencarianModal({
                                             key={term}
                                             type="button"
                                             onClick={() => eksekusiCari(term)}
-                                            className="px-3.5 py-1.5 bg-slate-50 hover:bg-[#E52027] text-slate-700 hover:text-white border border-slate-200/80 hover:border-[#E52027] rounded-full text-xs font-bold transition-all duration-150 active:scale-95 cursor-pointer shadow-2xs"
+                                            className="px-3.5 py-1.5 bg-slate-50 hover:bg-primary text-slate-700 hover:text-white border border-slate-200/80 hover:border-primary rounded-full text-xs font-bold transition-all duration-150 active:scale-95 cursor-pointer shadow-2xs"
                                         >
                                             {term}
                                         </button>
@@ -506,7 +506,7 @@ export default function PencarianModal({
                                         <Link
                                             href="/katalog"
                                             onClick={onClose}
-                                            className="text-xs font-bold text-[#E52027] hover:underline inline-flex items-center gap-1"
+                                            className="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1"
                                         >
                                             <span>Lihat Katalog</span>
                                             <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -540,10 +540,10 @@ export default function PencarianModal({
                                                     )}
                                                 </div>
 
-                                                <h5 className="font-bold text-[11px] text-slate-900 line-clamp-2 leading-snug group-hover:text-[#E52027] transition-colors mb-1">
+                                                <h5 className="font-bold text-[11px] text-slate-900 line-clamp-2 leading-snug group-hover:text-primary transition-colors mb-1">
                                                     {prod.nama}
                                                 </h5>
-                                                <div className="mt-auto font-black text-xs text-[#E52027] font-mono">
+                                                <div className="mt-auto font-black text-xs text-primary font-mono">
                                                     {formatRupiah(prod.harga)}
                                                 </div>
                                             </Link>

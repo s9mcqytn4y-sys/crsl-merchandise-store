@@ -125,7 +125,7 @@ export default function ModalCariPesanan({
                                 {/* Header Modal */}
                                 <div className="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-2xl bg-red-50 text-[#E52027] border border-red-100 flex items-center justify-center shrink-0">
+                                        <div className="w-10 h-10 rounded-2xl bg-red-50 text-primary border border-red-100 flex items-center justify-center shrink-0">
                                             <Search className="w-5 h-5 stroke-[2.2]" />
                                         </div>
                                         <div>
@@ -145,7 +145,7 @@ export default function ModalCariPesanan({
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                        className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                         aria-label="Tutup modal tautkan pesanan"
                                     >
                                         <X className="w-5 h-5" />
@@ -186,7 +186,7 @@ export default function ModalCariPesanan({
                                                 setNomorPesanan(e.target.value)
                                             }
                                             placeholder="Contoh: INV/2026/09/CRSL-0001"
-                                            className="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10 font-mono font-bold text-slate-900 placeholder:font-normal placeholder:text-slate-400 transition-all"
+                                            className="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 font-mono font-bold text-slate-900 placeholder:font-normal placeholder:text-slate-400 transition-all"
                                             autoFocus
                                             autoComplete="off"
                                             spellCheck={false}
@@ -209,7 +209,7 @@ export default function ModalCariPesanan({
                                                     setEmail(e.target.value)
                                                 }
                                                 placeholder="nama@email.com"
-                                                className="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10 text-slate-900 placeholder:text-slate-400 transition-all"
+                                                className="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 text-slate-900 placeholder:text-slate-400 transition-all"
                                                 autoCapitalize="none"
                                                 autoCorrect="off"
                                                 spellCheck={false}
@@ -237,7 +237,7 @@ export default function ModalCariPesanan({
                                                     )
                                                 }
                                                 placeholder="08123456789"
-                                                className="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10 font-mono text-slate-900 placeholder:text-slate-400 transition-all"
+                                                className="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 font-mono text-slate-900 placeholder:text-slate-400 transition-all"
                                             />
                                         </div>
                                     </div>
@@ -255,7 +255,7 @@ export default function ModalCariPesanan({
                                         <button
                                             type="submit"
                                             disabled={isLoading}
-                                            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#E52027] hover:bg-[#CC1C22] active:scale-95 text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+                                            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
                                         >
                                             {isLoading ? (
                                                 <>

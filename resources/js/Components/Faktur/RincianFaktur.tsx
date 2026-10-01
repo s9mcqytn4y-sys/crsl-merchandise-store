@@ -186,7 +186,7 @@ export default function RincianFaktur({
             <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                     <h2 className="font-bold text-sm text-slate-900 flex items-center gap-2">
-                        <Truck className="w-4 h-4 text-[#E52027]" />
+                        <Truck className="w-4 h-4 text-primary" />
                         <span>Informasi Pengiriman</span>
                     </h2>
 
@@ -200,7 +200,7 @@ export default function RincianFaktur({
                             <button
                                 type="button"
                                 onClick={onOpenEditRecipient}
-                                className="inline-flex items-center gap-1 text-xs font-bold text-[#E52027] hover:underline transition-colors cursor-pointer"
+                                className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline transition-colors cursor-pointer"
                             >
                                 <Edit3 className="w-3.5 h-3.5" />
                                 <span>Ubah</span>

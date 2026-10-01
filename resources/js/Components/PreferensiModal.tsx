@@ -145,7 +145,7 @@ export default function PreferensiModal({
                                 {/* Header Modal */}
                                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                                     <div className="flex items-center gap-2.5">
-                                        <div className="w-7 h-7 rounded-xl bg-red-50 text-[#E52027] border border-red-100 flex items-center justify-center shrink-0">
+                                        <div className="w-7 h-7 rounded-xl bg-red-50 text-primary border border-red-100 flex items-center justify-center shrink-0">
                                             <Globe className="w-4 h-4 stroke-[2.2]" />
                                         </div>
                                         <div>
@@ -165,7 +165,7 @@ export default function PreferensiModal({
                                     <button
                                         type="button"
                                         onClick={handleClose}
-                                        className="p-1.5 -mr-1 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer"
+                                        className="p-1.5 -mr-1 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
                                         aria-label="Tutup pengaturan preferensi"
                                     >
                                         <X className="w-4 h-4" />
@@ -189,7 +189,7 @@ export default function PreferensiModal({
                                                 onChange={(e) =>
                                                     setCountry(e.target.value)
                                                 }
-                                                className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl pl-3.5 pr-10 py-2.5 font-bold text-slate-900 focus:outline-none focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10 focus:bg-white transition-all cursor-pointer"
+                                                className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl pl-3.5 pr-10 py-2.5 font-bold text-slate-900 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 focus:bg-white transition-all cursor-pointer"
                                             >
                                                 {COUNTRIES.map((item) => (
                                                     <option
@@ -220,7 +220,7 @@ export default function PreferensiModal({
                                                 onChange={(e) =>
                                                     setLanguage(e.target.value)
                                                 }
-                                                className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl pl-3.5 pr-10 py-2.5 font-bold text-slate-900 focus:outline-none focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10 focus:bg-white transition-all cursor-pointer"
+                                                className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl pl-3.5 pr-10 py-2.5 font-bold text-slate-900 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 focus:bg-white transition-all cursor-pointer"
                                             >
                                                 {LANGUAGES.map((item) => (
                                                     <option
@@ -250,7 +250,7 @@ export default function PreferensiModal({
                                                 onChange={(e) =>
                                                     setCurrency(e.target.value)
                                                 }
-                                                className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl pl-3.5 pr-10 py-2.5 font-bold text-slate-900 focus:outline-none focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10 focus:bg-white transition-all cursor-pointer font-mono"
+                                                className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl pl-3.5 pr-10 py-2.5 font-bold text-slate-900 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 focus:bg-white transition-all cursor-pointer font-mono"
                                             >
                                                 {CURRENCIES.map((item) => (
                                                     <option
@@ -286,7 +286,7 @@ export default function PreferensiModal({
                                         <button
                                             type="button"
                                             onClick={handleSave}
-                                            className="w-full py-2.5 bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.99] text-white font-bold text-xs rounded-xl shadow-xs transition-all tracking-wide flex items-center justify-center gap-1.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                            className="w-full py-2.5 bg-primary hover:bg-primary-hover active:scale-[0.99] text-white font-bold text-xs rounded-xl shadow-xs transition-all tracking-wide flex items-center justify-center gap-1.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                         >
                                             <Check className="w-4 h-4 stroke-[2.5]" />
                                             <span>Simpan Preferensi</span>

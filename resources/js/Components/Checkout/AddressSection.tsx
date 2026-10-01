@@ -64,7 +64,7 @@ export default function AddressSection({
                             <button
                                 type="button"
                                 onClick={onOpenSelectModal}
-                                className="text-xs sm:text-sm font-semibold text-slate-600 hover:text-[#E52027] transition-colors shrink-0 underline underline-offset-4 cursor-pointer pt-0.5"
+                                className="text-xs sm:text-sm font-semibold text-slate-600 hover:text-primary transition-colors shrink-0 underline underline-offset-4 cursor-pointer pt-0.5"
                             >
                                 Ubah
                             </button>

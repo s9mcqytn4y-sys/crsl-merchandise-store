@@ -57,7 +57,7 @@ export default function ProductGridSection({
             aria-labelledby={judul ? headingId : undefined}
             className={cn(
                 "py-10 sm:py-14 select-none transition-colors",
-                isCrimson && "bg-[#E52027] text-white",
+                isCrimson && "bg-primary text-white",
                 isSlate && "bg-slate-900 text-white",
                 !isCrimson && !isSlate && "bg-white text-slate-900",
                 className,
@@ -76,7 +76,7 @@ export default function ProductGridSection({
                                         isSlate && "text-slate-400",
                                         !isCrimson &&
                                             !isSlate &&
-                                            "text-[#E52027]",
+                                            "text-primary",
                                     )}
                                 >
                                     {labelSubjudul}
@@ -107,7 +107,7 @@ export default function ProductGridSection({
                                         "text-slate-200 hover:text-white",
                                     !isCrimson &&
                                         !isSlate &&
-                                        "text-[#E52027] hover:text-[#CC1C22]",
+                                        "text-primary hover:text-primary-hover",
                                 )}
                                 aria-label={linkLabel}
                             >
@@ -137,12 +137,12 @@ export default function ProductGridSection({
                             className={cn(
                                 "inline-flex items-center justify-center gap-2 text-xs font-black px-6 py-3 rounded-full shadow-sm transition-all active:scale-[0.98] cursor-pointer",
                                 isCrimson &&
-                                    "bg-white text-[#E52027] hover:bg-red-50",
+                                    "bg-white text-primary hover:bg-red-50",
                                 isSlate &&
                                     "bg-white text-slate-900 hover:bg-slate-100",
                                 !isCrimson &&
                                     !isSlate &&
-                                    "bg-[#E52027] text-white hover:bg-[#CC1C22]",
+                                    "bg-primary text-white hover:bg-primary-hover",
                             )}
                             aria-label={linkLabel}
                         >

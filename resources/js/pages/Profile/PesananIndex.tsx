@@ -217,7 +217,7 @@ export default function PesananIndex({ pesanan }: PesananIndexProps) {
                 <div className="max-w-6xl mx-auto px-4 sm:px-6">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
-                            <span className="text-xs font-black text-[#E52027] uppercase tracking-wider">
+                            <span className="text-xs font-black text-primary uppercase tracking-wider">
                                 Order History
                             </span>
                             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
@@ -259,7 +259,7 @@ export default function PesananIndex({ pesanan }: PesananIndexProps) {
                         <div className="pt-2">
                             <Link
                                 href="/katalog"
-                                className="inline-flex items-center justify-center gap-2 bg-[#E52027] hover:bg-[#CC1C22] text-white font-bold text-xs px-6 py-3 rounded-xl shadow-xs transition-all active:scale-95"
+                                className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-bold text-xs px-6 py-3 rounded-xl shadow-xs transition-all active:scale-95"
                             >
                                 <ShoppingBag className="w-4 h-4 stroke-[2.2]" />
                                 <span>Jelajahi Katalog</span>
@@ -425,7 +425,7 @@ export default function PesananIndex({ pesanan }: PesananIndexProps) {
                                                 <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">
                                                     Total Tagihan:
                                                 </span>
-                                                <span className="text-[#E52027] font-black text-sm sm:text-base font-mono tabular-nums">
+                                                <span className="text-primary font-black text-sm sm:text-base font-mono tabular-nums">
                                                     {formatRupiah(ord.total)}
                                                 </span>
                                             </div>
@@ -436,7 +436,7 @@ export default function PesananIndex({ pesanan }: PesananIndexProps) {
                                                     "belum_bayar" && (
                                                     <Link
                                                         href={`/faktur/${safeSlug}`}
-                                                        className="inline-flex items-center gap-1.5 bg-[#E52027] hover:bg-[#CC1C22] text-white font-bold text-xs px-5 py-2.5 rounded-xl transition-all shadow-xs active:scale-95 shrink-0"
+                                                        className="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-hover text-white font-bold text-xs px-5 py-2.5 rounded-xl transition-all shadow-xs active:scale-95 shrink-0"
                                                     >
                                                         <CreditCard className="w-3.5 h-3.5 stroke-[2.2]" />
                                                         <span>

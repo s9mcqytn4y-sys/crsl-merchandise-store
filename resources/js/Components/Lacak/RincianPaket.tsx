@@ -49,7 +49,7 @@ export default function RincianPaket({
             <div className="space-y-3">
                 <div className="flex items-center justify-between">
                     <h4 className="font-bold text-xs text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                        <Package className="w-4 h-4 text-[#E52027]" />
+                        <Package className="w-4 h-4 text-primary" />
                         <span>
                             Produk Dalam Paket ({items.length} Macam /{" "}
                             {totalItemCount} Pcs)
@@ -163,7 +163,7 @@ export default function RincianPaket({
             {(penerima || alamatLengkap) && (
                 <div className="p-4 sm:p-5 bg-slate-50/70 border border-slate-200/80 rounded-2xl space-y-3 text-xs">
                     <h5 className="font-bold flex items-center gap-1.5 uppercase text-[11px] tracking-wider text-slate-500">
-                        <MapPin className="w-3.5 h-3.5 text-[#E52027]" />
+                        <MapPin className="w-3.5 h-3.5 text-primary" />
                         <span>Tujuan Pengiriman Paket:</span>
                     </h5>
 

@@ -148,7 +148,7 @@ export default function KartuVoucher({
                     return (
                         <div
                             key={v.id || idx}
-                            className="group relative border border-slate-200/90 hover:border-slate-300 rounded-xl p-3.5 flex items-center justify-between gap-3 bg-gradient-to-r from-white to-slate-50/50 transition-all shadow-2xs"
+                            className="group relative border border-slate-200/90 hover:border-slate-300 rounded-xl p-3.5 flex items-center justify-between gap-3 bg-linear-to-r from-white to-slate-50/50 transition-all shadow-2xs"
                         >
                             <div className="flex items-center gap-3 min-w-0">
                                 <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">

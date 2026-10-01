@@ -380,7 +380,14 @@ class PembayaranController extends Controller
             return redirect()->route('faktur', ['nomorPesanan' => $pesanan->nomor_pesanan])
                 ->with('sukses', 'Pesanan berhasil dibuat. Silakan selesaikan pembayaran!');
         } catch (\Throwable $e) {
-            report($e);
+            if ($e instanceof \InvalidArgumentException || $e instanceof \DomainException) {
+                Log::warning('Pesanan dibatalkan karena validasi domain: ' . $e->getMessage(), [
+                    'user_id' => auth()->id(),
+                    'pesan' => $e->getMessage(),
+                ]);
+            } else {
+                report($e);
+            }
             return redirect()->back()->with('error', 'Gagal memproses pesanan: ' . $e->getMessage());
         }
     }

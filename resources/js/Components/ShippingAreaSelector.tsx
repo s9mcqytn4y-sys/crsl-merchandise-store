@@ -225,7 +225,7 @@ export default function ShippingAreaSelector({
         >
             {label && (
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    {label} <span className="text-[#E52027]">*</span>
+                    {label} <span className="text-primary">*</span>
                 </label>
             )}
 
@@ -250,7 +250,7 @@ export default function ShippingAreaSelector({
                         "w-full bg-slate-50 border rounded-2xl pl-10 pr-10 py-3 text-xs sm:text-sm font-medium text-slate-900 focus:bg-white transition-all outline-none",
                         error
                             ? "border-rose-400 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
-                            : "border-slate-200 focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10",
+                            : "border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/10",
                         disabled &&
                             "opacity-60 cursor-not-allowed bg-slate-100",
                     )}
@@ -268,7 +268,7 @@ export default function ShippingAreaSelector({
 
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
                     {isLoading && (
-                        <Loader2 className="w-4 h-4 text-[#E52027] animate-spin" />
+                        <Loader2 className="w-4 h-4 text-primary animate-spin" />
                     )}
                     {query && !isLoading && !disabled && (
                         <button
@@ -326,7 +326,7 @@ export default function ShippingAreaSelector({
                                         className={cn(
                                             "w-4 h-4 shrink-0 mt-0.5 transition-transform group-hover:scale-110",
                                             isCurrent || isHighlighted
-                                                ? "text-[#E52027]"
+                                                ? "text-primary"
                                                 : "text-slate-400",
                                         )}
                                     />

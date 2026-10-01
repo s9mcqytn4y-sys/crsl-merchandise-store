@@ -110,14 +110,14 @@ export default function RegisterStep({
                     htmlFor="register-fullname"
                     className="block text-xs font-bold text-slate-700 mb-1"
                 >
-                    Nama Lengkap <span className="text-[#E52027]">*</span>
+                    Nama Lengkap <span className="text-primary">*</span>
                 </label>
                 <div
                     className={cn(
                         "border rounded-2xl px-3.5 py-2.5 sm:py-3 bg-white transition-all shadow-2xs flex items-center gap-2.5",
                         errors.fullName
                             ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
-                            : "border-slate-300 focus-within:border-[#E52027] focus-within:ring-2 focus-within:ring-[#E52027]/10",
+                            : "border-slate-300 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10",
                     )}
                 >
                     <User className="w-4 h-4 text-slate-400 shrink-0" />
@@ -156,14 +156,14 @@ export default function RegisterStep({
                     htmlFor="register-email"
                     className="block text-xs font-bold text-slate-700 mb-1"
                 >
-                    Alamat Email <span className="text-[#E52027]">*</span>
+                    Alamat Email <span className="text-primary">*</span>
                 </label>
                 <div
                     className={cn(
                         "border rounded-2xl px-3.5 py-2.5 sm:py-3 flex items-center gap-2.5 bg-white transition-all shadow-2xs",
                         errors.regEmail
                             ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
-                            : "border-slate-300 focus-within:border-[#E52027] focus-within:ring-2 focus-within:ring-[#E52027]/10",
+                            : "border-slate-300 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10",
                     )}
                 >
                     <span className="text-slate-400 text-xs font-bold">@</span>
@@ -214,7 +214,7 @@ export default function RegisterStep({
                             "border rounded-2xl px-3.5 py-2.5 sm:py-3 flex items-center gap-2.5 bg-white transition-all shadow-2xs",
                             errors.phone
                                 ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
-                                : "border-slate-300 focus-within:border-[#E52027] focus-within:ring-2 focus-within:ring-[#E52027]/10",
+                                : "border-slate-300 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10",
                         )}
                     >
                         <Phone className="w-4 h-4 text-slate-400 shrink-0" />
@@ -240,14 +240,14 @@ export default function RegisterStep({
                     htmlFor="register-password"
                     className="block text-xs font-bold text-slate-700 mb-1"
                 >
-                    Kata Sandi <span className="text-[#E52027]">*</span>
+                    Kata Sandi <span className="text-primary">*</span>
                 </label>
                 <div
                     className={cn(
                         "border rounded-2xl px-3.5 py-2.5 sm:py-3 flex items-center gap-2.5 bg-white transition-all shadow-2xs",
                         errors.regPassword
                             ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
-                            : "border-slate-300 focus-within:border-[#E52027] focus-within:ring-2 focus-within:ring-[#E52027]/10",
+                            : "border-slate-300 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10",
                     )}
                 >
                     <Lock className="w-4 h-4 text-slate-400 shrink-0" />
@@ -314,7 +314,7 @@ export default function RegisterStep({
                             disabled={loading}
                             value={birthDay}
                             onChange={(e) => onChangeBirthDay(e.target.value)}
-                            className="w-full appearance-none bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-900 pr-7 focus:outline-none focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10 cursor-pointer font-bold font-mono"
+                            className="w-full appearance-none bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-900 pr-7 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 cursor-pointer font-bold font-mono"
                         >
                             {Array.from(
                                 { length: maxDaysInMonth },
@@ -338,7 +338,7 @@ export default function RegisterStep({
                             disabled={loading}
                             value={birthMonth}
                             onChange={(e) => onChangeBirthMonth(e.target.value)}
-                            className="w-full appearance-none bg-white border border-slate-300 rounded-xl px-2.5 py-2.5 text-xs text-slate-900 pr-7 focus:outline-none focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10 cursor-pointer font-semibold truncate"
+                            className="w-full appearance-none bg-white border border-slate-300 rounded-xl px-2.5 py-2.5 text-xs text-slate-900 pr-7 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 cursor-pointer font-semibold truncate"
                         >
                             {MONTH_NAMES.map((m) => (
                                 <option key={m.value} value={m.value}>
@@ -356,7 +356,7 @@ export default function RegisterStep({
                             disabled={loading}
                             value={birthYear}
                             onChange={(e) => onChangeBirthYear(e.target.value)}
-                            className="w-full appearance-none bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-900 pr-7 focus:outline-none focus:border-[#E52027] focus:ring-2 focus:ring-[#E52027]/10 cursor-pointer font-bold font-mono"
+                            className="w-full appearance-none bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-900 pr-7 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 cursor-pointer font-bold font-mono"
                         >
                             {Array.from({ length: 70 }, (_, i) => 2026 - i).map(
                                 (y) => (
@@ -379,7 +379,7 @@ export default function RegisterStep({
                     className={cn(
                         "w-full min-h-[48px] py-3 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-xs",
                         isRegisterComplete
-                            ? "bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.99] text-white cursor-pointer"
+                            ? "bg-primary hover:bg-primary-hover active:scale-[0.99] text-white cursor-pointer"
                             : "bg-slate-200 text-slate-400 cursor-not-allowed select-none",
                     )}
                 >
@@ -399,7 +399,7 @@ export default function RegisterStep({
                 <button
                     type="button"
                     onClick={onSwitchToLogin}
-                    className="text-[#E52027] hover:text-[#CC1C22] font-bold hover:underline cursor-pointer"
+                    className="text-primary hover:text-primary-hover font-bold hover:underline cursor-pointer"
                 >
                     Masuk di sini
                 </button>

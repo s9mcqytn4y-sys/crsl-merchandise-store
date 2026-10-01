@@ -62,7 +62,7 @@ export default function ModalEditProfil({
             <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 p-6 space-y-5">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
                     <h3 className="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
-                        <User className="w-4 h-4 text-[#E52027]" />
+                        <User className="w-4 h-4 text-primary" />
                         Pengaturan Profil
                     </h3>
                     <button
@@ -83,7 +83,7 @@ export default function ModalEditProfil({
                             type="text"
                             value={nama}
                             onChange={(e) => setNama(e.target.value)}
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:border-[#E52027] focus:ring-1 focus:ring-[#E52027] text-slate-800 font-medium"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:border-primary focus:ring-1 focus:ring-primary text-slate-800 font-medium"
                             placeholder="Nama Lengkap Anda"
                             required
                         />
@@ -118,7 +118,7 @@ export default function ModalEditProfil({
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="px-5 py-2.5 rounded-xl bg-[#E52027] hover:bg-[#CC1C22] text-white font-bold transition-all shadow-xs disabled:opacity-50 inline-flex items-center gap-1.5"
+                            className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold transition-all shadow-xs disabled:opacity-50 inline-flex items-center gap-1.5"
                         >
                             <Check className="w-4 h-4" />
                             {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}

@@ -524,7 +524,7 @@ export default function Faktur({ pesanan, is_baru, className }: InvoiceProps) {
                         <div>
                             <Link
                                 href="/katalog"
-                                className="group inline-flex items-center gap-1.5 -ml-1 px-2.5 py-1 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                className="group inline-flex items-center gap-1.5 -ml-1 px-2.5 py-1 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             >
                                 <ArrowLeft className="w-3.5 h-3.5 transition-transform duration-150 ease-out group-hover:-translate-x-0.5 stroke-[2.2]" />
                                 <span>Kembali ke Belanja</span>
@@ -552,7 +552,7 @@ export default function Faktur({ pesanan, is_baru, className }: InvoiceProps) {
 
                                 <div className="flex items-center gap-2 min-w-0">
                                     <h1 className="text-lg sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 font-mono break-all sm:break-normal">
-                                        <span className="text-[#E52027] select-none">
+                                        <span className="text-primary select-none">
                                             #
                                         </span>
                                         <span>{activeOrder.nomor_pesanan}</span>
@@ -568,7 +568,7 @@ export default function Faktur({ pesanan, is_baru, className }: InvoiceProps) {
                                         }
                                         aria-label="Salin nomor pesanan"
                                         className={cn(
-                                            "inline-flex items-center justify-center p-1.5 rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] shrink-0 cursor-pointer shadow-2xs",
+                                            "inline-flex items-center justify-center p-1.5 rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary shrink-0 cursor-pointer shadow-2xs",
                                             copiedInvoice
                                                 ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-300"
                                                 : "text-slate-400 hover:text-slate-700 hover:bg-slate-100",
@@ -589,7 +589,7 @@ export default function Faktur({ pesanan, is_baru, className }: InvoiceProps) {
                                 <button
                                     type="button"
                                     onClick={() => window.print()}
-                                    className="group inline-flex items-center gap-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 text-xs font-bold px-3.5 py-2 rounded-2xl shadow-2xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer"
+                                    className="group inline-flex items-center gap-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 text-xs font-bold px-3.5 py-2 rounded-2xl shadow-2xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
                                 >
                                     <Printer className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-800 stroke-[2.2]" />
                                     <span>Cetak Faktur</span>
@@ -954,7 +954,7 @@ export default function Faktur({ pesanan, is_baru, className }: InvoiceProps) {
                                     <div className="pt-1">
                                         <Link
                                             href="/katalog"
-                                            className="inline-flex items-center gap-2 bg-[#E52027] hover:bg-[#CC1C22] text-white font-bold text-xs px-5 py-2.5 rounded-2xl transition-all shadow-xs active:scale-95"
+                                            className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white font-bold text-xs px-5 py-2.5 rounded-2xl transition-all shadow-xs active:scale-95"
                                         >
                                             <ShoppingBag className="w-4 h-4 stroke-[2.2]" />
                                             <span>Buat Pesanan Baru</span>
@@ -971,7 +971,7 @@ export default function Faktur({ pesanan, is_baru, className }: InvoiceProps) {
                                 <div className="flex items-start sm:items-center gap-3">
                                     <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200/90 flex items-center justify-center shrink-0 shadow-2xs">
                                         <HelpCircle
-                                            className="w-5 h-5 text-[#E52027] stroke-[2.2]"
+                                            className="w-5 h-5 text-primary stroke-[2.2]"
                                             aria-hidden="true"
                                         />
                                     </div>
@@ -996,7 +996,7 @@ export default function Faktur({ pesanan, is_baru, className }: InvoiceProps) {
                                             onClick={() =>
                                                 setIsTermsModalOpen(true)
                                             }
-                                            className="text-slate-500 hover:text-slate-900 font-bold text-[11px] underline-offset-4 hover:underline rounded-lg px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer"
+                                            className="text-slate-500 hover:text-slate-900 font-bold text-[11px] underline-offset-4 hover:underline rounded-lg px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
                                         >
                                             S&amp;K Pembayaran
                                         </button>
@@ -1115,7 +1115,7 @@ export default function Faktur({ pesanan, is_baru, className }: InvoiceProps) {
                                     <DialogPanel className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-200/90 text-left transition-all space-y-4">
                                         <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
                                             <div className="flex items-center gap-2.5">
-                                                <div className="w-8 h-8 rounded-xl bg-red-50 text-[#E52027] border border-red-100 flex items-center justify-center shrink-0">
+                                                <div className="w-8 h-8 rounded-xl bg-red-50 text-primary border border-red-100 flex items-center justify-center shrink-0">
                                                     <ShieldAlert className="w-4 h-4 stroke-[2.2]" />
                                                 </div>
                                                 <DialogTitle
@@ -1132,7 +1132,7 @@ export default function Faktur({ pesanan, is_baru, className }: InvoiceProps) {
                                                     setIsTermsModalOpen(false)
                                                 }
                                                 aria-label="Tutup jendela syarat dan ketentuan"
-                                                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                             >
                                                 <X className="w-4 h-4 stroke-[2.2]" />
                                             </button>
@@ -1186,7 +1186,7 @@ export default function Faktur({ pesanan, is_baru, className }: InvoiceProps) {
                                                 onClick={() =>
                                                     setIsTermsModalOpen(false)
                                                 }
-                                                className="w-full bg-[#E52027] hover:bg-[#CC1C22] text-white font-bold py-2.5 rounded-2xl transition-all text-xs shadow-md shadow-red-500/20 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer"
+                                                className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-2.5 rounded-2xl transition-all text-xs shadow-md shadow-red-500/20 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
                                             >
                                                 Saya Mengerti
                                             </button>

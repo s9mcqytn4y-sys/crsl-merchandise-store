@@ -112,7 +112,7 @@ export default function LoyaltyProgressBar({
                 ) : progressData.willUnlockNewTier ? (
                     <Sparkles className="w-4 h-4 text-amber-500 shrink-0 mt-0.5 animate-bounce" />
                 ) : (
-                    <Gift className="w-4 h-4 text-[#E52027] shrink-0 mt-0.5" />
+                    <Gift className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                 )}
 
                 <div className="min-w-0 flex-1">
@@ -124,7 +124,7 @@ export default function LoyaltyProgressBar({
                     ) : progressData.willUnlockNewTier ? (
                         <span>
                             Pesanan ini akan membuka tingkatan{" "}
-                            <strong className="font-bold text-[#E52027]">
+                            <strong className="font-bold text-primary">
                                 {progressData.unlockedTierName}
                             </strong>
                             ! 🎉
@@ -136,7 +136,7 @@ export default function LoyaltyProgressBar({
                                 {formatRupiah(progressData.sisaBelanja)}
                             </strong>{" "}
                             lagi untuk membuka tingkatan{" "}
-                            <strong className="font-bold text-[#E52027]">
+                            <strong className="font-bold text-primary">
                                 {progressData.targetTier?.name}
                             </strong>
                         </span>
@@ -154,7 +154,7 @@ export default function LoyaltyProgressBar({
                 className="w-full bg-slate-200/80 h-1.5 rounded-full overflow-hidden"
             >
                 <div
-                    className="bg-[#E52027] h-full rounded-full transition-all duration-500 ease-out"
+                    className="bg-primary h-full rounded-full transition-all duration-500 ease-out"
                     style={{ width: `${progressData.persentase}%` }}
                 />
             </div>
@@ -171,7 +171,7 @@ export default function LoyaltyProgressBar({
                 <Link
                     href="/akun"
                     onClick={onCloseDrawer}
-                    className="inline-flex items-center gap-0.5 font-bold text-[#E52027] hover:underline transition-colors"
+                    className="inline-flex items-center gap-0.5 font-bold text-primary hover:underline transition-colors"
                 >
                     <span>Rincian Keuntungan</span>
                     <ChevronRight className="w-3 h-3" />

@@ -106,7 +106,7 @@ export default function DrawerItemRow({
                             )}
                         </div>
                         <div className="flex-1 min-w-0 space-y-0.5">
-                            <span className="text-[10px] font-black text-[#E52027] tracking-wider uppercase block">
+                            <span className="text-[10px] font-black text-primary tracking-wider uppercase block">
                                 Paket Bundle Hemat
                             </span>
                             <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug truncate">
@@ -251,7 +251,7 @@ export default function DrawerItemRow({
                         type="button"
                         onClick={() => onUbahJumlah(item.id, -1)}
                         disabled={item.jumlah <= 1}
-                        className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-[#E52027] hover:bg-red-50 disabled:text-slate-300 disabled:hover:bg-transparent disabled:cursor-not-allowed rounded-full transition-colors cursor-pointer active:scale-95"
+                        className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-primary hover:bg-red-50 disabled:text-slate-300 disabled:hover:bg-transparent disabled:cursor-not-allowed rounded-full transition-colors cursor-pointer active:scale-95"
                         aria-label="Kurangi jumlah barang"
                     >
                         <Minus className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -265,7 +265,7 @@ export default function DrawerItemRow({
                         type="button"
                         onClick={() => onUbahJumlah(item.id, 1)}
                         disabled={isMaxStockReached}
-                        className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-[#E52027] hover:bg-red-50 disabled:text-slate-300 disabled:hover:bg-transparent disabled:cursor-not-allowed rounded-full transition-colors cursor-pointer active:scale-95"
+                        className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-primary hover:bg-red-50 disabled:text-slate-300 disabled:hover:bg-transparent disabled:cursor-not-allowed rounded-full transition-colors cursor-pointer active:scale-95"
                         aria-label="Tambah jumlah barang"
                         aria-disabled={isMaxStockReached}
                     >

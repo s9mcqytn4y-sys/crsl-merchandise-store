@@ -334,7 +334,7 @@ export default function DetailBundle({
                         {/* Kolom Kiri: Galeri Media Sticky */}
                         <div className="lg:col-span-7 space-y-4 lg:sticky lg:top-24">
                             <div className="relative aspect-square sm:aspect-4/3 lg:aspect-square bg-white rounded-3xl border border-slate-200/90 overflow-hidden group shadow-2xs">
-                                <span className="absolute top-3.5 left-3.5 z-10 bg-[#E52027] text-white text-[11px] font-black uppercase px-3 py-1 rounded-full shadow-xs tracking-wider font-mono">
+                                <span className="absolute top-3.5 left-3.5 z-10 bg-primary text-white text-[11px] font-black uppercase px-3 py-1 rounded-full shadow-xs tracking-wider font-mono">
                                     Bundle Spesial
                                 </span>
                                 {bundle.diskon_persen > 0 && (
@@ -376,7 +376,7 @@ export default function DetailBundle({
                                                 className={cn(
                                                     "relative w-20 h-20 rounded-2xl overflow-hidden border transition-all shrink-0 cursor-pointer shadow-2xs",
                                                     isSelected
-                                                        ? "border-[#E52027] ring-2 ring-[#E52027]/20"
+                                                        ? "border-primary ring-2 ring-primary/20"
                                                         : "border-slate-200 hover:border-slate-300 opacity-70 hover:opacity-100",
                                                 )}
                                                 aria-label={`Lihat gambar galeri ${idx + 1}`}
@@ -405,7 +405,7 @@ export default function DetailBundle({
                             {/* Kartu Freebies & Bonus */}
                             {bundle.freebies && bundle.freebies.length > 0 && (
                                 <div className="bg-linear-to-r from-red-50/70 to-orange-50/70 border border-red-200/80 rounded-2xl p-4 sm:p-5 space-y-2.5 shadow-2xs">
-                                    <div className="flex items-center gap-2 text-[#E52027] font-black text-xs uppercase tracking-wide">
+                                    <div className="flex items-center gap-2 text-primary font-black text-xs uppercase tracking-wide">
                                         <Gift className="w-4 h-4 shrink-0 stroke-[2.2]" />
                                         <span>
                                             Bonus Spesial Termasuk dalam Paket
@@ -477,10 +477,10 @@ export default function DetailBundle({
                                 aria-expanded={isDiscountsModalOpen}
                                 aria-controls="modal-discounts-bundle"
                                 onClick={() => setIsDiscountsModalOpen(true)}
-                                className="w-full flex items-center justify-between p-3.5 bg-slate-50/70 hover:bg-slate-100/60 rounded-2xl border border-slate-200/90 text-left transition-colors cursor-pointer group shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                className="w-full flex items-center justify-between p-3.5 bg-slate-50/70 hover:bg-slate-100/60 rounded-2xl border border-slate-200/90 text-left transition-colors cursor-pointer group shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             >
                                 <div className="flex items-center gap-3 text-xs text-slate-800">
-                                    <div className="w-8 h-8 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center text-[#E52027] shrink-0 shadow-2xs">
+                                    <div className="w-8 h-8 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center text-primary shrink-0 shadow-2xs">
                                         <Tag className="w-4 h-4 stroke-[2.2]" />
                                     </div>
                                     <div>
@@ -582,7 +582,7 @@ export default function DetailBundle({
                                                         className={cn(
                                                             "text-xs block mt-0.5 font-medium",
                                                             currentVar
-                                                                ? "text-[#E52027] font-bold"
+                                                                ? "text-primary font-bold"
                                                                 : "text-slate-400 italic",
                                                         )}
                                                     >
@@ -625,7 +625,7 @@ export default function DetailBundle({
                                                                 )
                                                             }
                                                             className={cn(
-                                                                "px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]",
+                                                                "px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                                                                 isOutOfStock
                                                                     ? "opacity-40 bg-slate-100 text-slate-400 border-slate-200 line-through cursor-not-allowed"
                                                                     : isSelected
@@ -739,7 +739,7 @@ export default function DetailBundle({
                                     <button
                                         type="button"
                                         onClick={handleAddToCart}
-                                        className="w-full min-h-[48px] border-2 border-[#E52027] text-[#E52027] hover:bg-red-50/50 font-black text-sm rounded-2xl flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.99] shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                        className="w-full min-h-[48px] border-2 border-primary text-primary hover:bg-red-50/50 font-black text-sm rounded-2xl flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.99] shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                     >
                                         <ShoppingBag className="w-4 h-4 stroke-[2.2]" />
                                         <span>Tambah ke Keranjang</span>
@@ -748,7 +748,7 @@ export default function DetailBundle({
                                     <button
                                         type="button"
                                         onClick={handleBuyNow}
-                                        className="w-full min-h-[48px] bg-[#E52027] hover:bg-[#CC1C22] text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.99] shadow-lg shadow-red-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                        className="w-full min-h-[48px] bg-primary hover:bg-primary-hover text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.99] shadow-lg shadow-red-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                     >
                                         <Zap className="w-4 h-4 fill-white stroke-[2]" />
                                         <span>Beli Sekarang</span>
@@ -763,7 +763,7 @@ export default function DetailBundle({
                                         onClick={() =>
                                             setIsInquiryModalOpen(true)
                                         }
-                                        className="w-full min-h-[44px] border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                                        className="w-full min-h-[44px] border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                     >
                                         <MessageCircle className="w-4 h-4 text-slate-500 stroke-[2.2]" />
                                         <span>Tanya CS Seputar Bundle Ini</span>
@@ -799,7 +799,7 @@ export default function DetailBundle({
                                 </div>
                                 <Link
                                     href="/katalog"
-                                    className="text-xs font-bold text-[#E52027] hover:underline flex items-center gap-1"
+                                    className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
                                 >
                                     <span>Lihat Semua</span>
                                     <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" />

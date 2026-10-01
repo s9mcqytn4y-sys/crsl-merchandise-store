@@ -137,7 +137,7 @@ export default function WishlistTab({
                     className,
                 )}
             >
-                <div className="w-14 h-14 rounded-2xl bg-red-50 text-[#E52027] border border-red-100 flex items-center justify-center mx-auto shadow-2xs">
+                <div className="w-14 h-14 rounded-2xl bg-red-50 text-primary border border-red-100 flex items-center justify-center mx-auto shadow-2xs">
                     <Heart className="w-7 h-7 stroke-[2]" />
                 </div>
                 <div className="space-y-1">
@@ -152,7 +152,7 @@ export default function WishlistTab({
                 <div className="pt-1">
                     <Link
                         href="/katalog"
-                        className="inline-flex items-center gap-2 bg-[#E52027] hover:bg-[#CC1C22] active:scale-95 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition-all shadow-xs cursor-pointer"
+                        className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition-all shadow-xs cursor-pointer"
                     >
                         <ShoppingBag className="w-3.5 h-3.5 stroke-[2.2]" />
                         <span>Jelajahi Katalog Produk</span>
@@ -175,7 +175,7 @@ export default function WishlistTab({
 
                 <Link
                     href="/katalog"
-                    className="text-xs font-bold text-[#E52027] hover:text-[#CC1C22] hover:underline inline-flex items-center gap-1 transition-colors"
+                    className="text-xs font-bold text-primary hover:text-primary-hover hover:underline inline-flex items-center gap-1 transition-colors"
                 >
                     <span>Cari Produk Lain</span>
                     <ArrowRight className="w-3 h-3 stroke-[2.5]" />
@@ -235,7 +235,7 @@ export default function WishlistTab({
                                     <h4 className="font-bold text-xs text-slate-900 line-clamp-2 leading-snug">
                                         {item.nama}
                                     </h4>
-                                    <span className="font-black text-xs sm:text-sm text-[#E52027] block mt-1 tabular-nums font-mono">
+                                    <span className="font-black text-xs sm:text-sm text-primary block mt-1 tabular-nums font-mono">
                                         {formatRupiah(item.harga)}
                                     </span>
                                 </div>
@@ -244,7 +244,7 @@ export default function WishlistTab({
                                     <button
                                         type="button"
                                         onClick={() => handleAddToCart(item)}
-                                        className="w-full inline-flex items-center justify-center gap-1.5 bg-[#E52027] hover:bg-[#CC1C22] active:scale-95 text-white text-[11px] font-bold py-2 rounded-xl transition-all shadow-xs cursor-pointer"
+                                        className="w-full inline-flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-hover active:scale-95 text-white text-[11px] font-bold py-2 rounded-xl transition-all shadow-xs cursor-pointer"
                                     >
                                         <ShoppingBag className="w-3.5 h-3.5 stroke-[2.2]" />
                                         <span>+ Keranjang</span>

@@ -157,7 +157,7 @@ export default function DrawerKeranjang({
                                 {/* Header Drawer */}
                                 <div className="h-16 px-4 sm:px-6 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
                                     <div className="flex items-center gap-2.5">
-                                        <div className="w-8 h-8 rounded-xl bg-red-50 text-[#E52027] flex items-center justify-center font-bold text-xs shrink-0">
+                                        <div className="w-8 h-8 rounded-xl bg-red-50 text-primary flex items-center justify-center font-bold text-xs shrink-0">
                                             <ShoppingBag className="w-4 h-4 stroke-[2.2]" />
                                         </div>
                                         <DialogTitle
@@ -176,7 +176,7 @@ export default function DrawerKeranjang({
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="p-2 -mr-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer"
+                                        className="p-2 -mr-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
                                         aria-label="Tutup keranjang belanja"
                                     >
                                         <X className="w-5 h-5" />
@@ -187,7 +187,7 @@ export default function DrawerKeranjang({
                                 <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-6 no-scrollbar overscroll-contain">
                                     {items.length === 0 ? (
                                         <div className="text-center py-16 sm:py-20 space-y-4">
-                                            <div className="w-16 h-16 mx-auto rounded-3xl bg-red-50 text-[#E52027] flex items-center justify-center border border-red-100 shadow-2xs">
+                                            <div className="w-16 h-16 mx-auto rounded-3xl bg-red-50 text-primary flex items-center justify-center border border-red-100 shadow-2xs">
                                                 <ShoppingBag className="w-8 h-8 stroke-[1.8]" />
                                             </div>
                                             <div className="space-y-1">
@@ -204,7 +204,7 @@ export default function DrawerKeranjang({
                                                 <Link
                                                     href="/katalog"
                                                     onClick={onClose}
-                                                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#E52027] hover:bg-[#CC1C22] active:scale-95 text-white text-xs font-bold rounded-2xl shadow-lg shadow-red-500/20 transition-all cursor-pointer"
+                                                    className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover active:scale-95 text-white text-xs font-bold rounded-2xl shadow-lg shadow-red-500/20 transition-all cursor-pointer"
                                                 >
                                                     <span>Mulai Belanja</span>
                                                     <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -228,11 +228,11 @@ export default function DrawerKeranjang({
                                     <div className="pt-3 border-t border-slate-100">
                                         <div className="grid grid-cols-2 divide-x divide-slate-200 bg-slate-50/80 rounded-2xl py-2.5 text-center text-slate-600 text-[11px] font-semibold border border-slate-200/70 shadow-2xs">
                                             <div className="flex items-center justify-center gap-1.5 px-2">
-                                                <CreditCard className="w-3.5 h-3.5 text-[#E52027]" />
+                                                <CreditCard className="w-3.5 h-3.5 text-primary" />
                                                 <span>Pembayaran Aman</span>
                                             </div>
                                             <div className="flex items-center justify-center gap-1.5 px-2">
-                                                <ShieldCheck className="w-3.5 h-3.5 text-[#E52027]" />
+                                                <ShieldCheck className="w-3.5 h-3.5 text-primary" />
                                                 <span>100% Original CRSL</span>
                                             </div>
                                         </div>

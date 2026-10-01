@@ -73,7 +73,7 @@ export default function OtpVerifyStep({
                         "border rounded-2xl px-4 py-3 flex items-center justify-center gap-3 bg-white transition-all shadow-2xs",
                         error
                             ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
-                            : "border-slate-300 focus-within:border-[#E52027] focus-within:ring-2 focus-within:ring-[#E52027]/10",
+                            : "border-slate-300 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10",
                     )}
                 >
                     <KeyRound className="w-4 h-4 text-slate-400 shrink-0" />
@@ -118,7 +118,7 @@ export default function OtpVerifyStep({
                 className={cn(
                     "w-full min-h-[48px] py-3 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-xs",
                     canSubmit
-                        ? "bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.99] text-white cursor-pointer"
+                        ? "bg-primary hover:bg-primary-hover active:scale-[0.99] text-white cursor-pointer"
                         : "bg-slate-200 text-slate-400 cursor-not-allowed select-none",
                 )}
             >
@@ -147,7 +147,7 @@ export default function OtpVerifyStep({
                         type="button"
                         onClick={onResendOtp}
                         disabled={loading}
-                        className="text-[#E52027] hover:text-[#CC1C22] font-bold hover:underline cursor-pointer disabled:opacity-50"
+                        className="text-primary hover:text-primary-hover font-bold hover:underline cursor-pointer disabled:opacity-50"
                     >
                         Kirim Ulang Kode OTP
                     </button>

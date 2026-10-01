@@ -68,7 +68,7 @@ export default function PemisahSeksi({
                         href={href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                        className="block w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         aria-label={alt}
                     >
                         {bannerContent}
@@ -76,7 +76,7 @@ export default function PemisahSeksi({
                 ) : (
                     <Link
                         href={href}
-                        className="block w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027]"
+                        className="block w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         aria-label={alt}
                     >
                         {bannerContent}

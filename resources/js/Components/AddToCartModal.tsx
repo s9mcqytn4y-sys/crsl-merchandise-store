@@ -197,7 +197,7 @@ export default function AddToCartModal() {
                                         as="h3"
                                         className="text-base font-black text-slate-900 tracking-tight flex items-center gap-2"
                                     >
-                                        <ShoppingBag className="w-4 h-4 text-[#E52027]" />
+                                        <ShoppingBag className="w-4 h-4 text-primary" />
                                         <span>Pilih Varian & Jumlah</span>
                                     </DialogTitle>
                                     <button
@@ -232,21 +232,21 @@ export default function AddToCartModal() {
                                         />
                                     </div>
                                     <div className="flex-1 min-w-0 pr-1">
-                                        <p className="text-xs font-bold text-slate-900 line-clamp-2 leading-snug group-hover:text-[#E52027] transition-colors">
+                                        <p className="text-xs font-bold text-slate-900 line-clamp-2 leading-snug group-hover:text-primary transition-colors">
                                             {activeProduct.nama}
                                         </p>
-                                        <p className="text-xs font-black text-[#E52027] mt-1 font-mono">
+                                        <p className="text-xs font-black text-primary mt-1 font-mono">
                                             {formatRupiah(unitPrice)}
                                         </p>
                                     </div>
-                                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#E52027] group-hover:translate-x-0.5 transition-all shrink-0" />
+                                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
                                 </Link>
 
                                 {/* Swatch Varian Produk */}
                                 {hasVariants && (
                                     <div className="space-y-2 pt-1">
                                         <div className="flex items-center justify-between text-xs">
-                                            <span className="font-extrabold text-[#E52027] tracking-wider uppercase">
+                                            <span className="font-extrabold text-primary tracking-wider uppercase">
                                                 PILIH VARIAN
                                             </span>
                                             {selectedVarian && (
@@ -289,7 +289,7 @@ export default function AddToCartModal() {
                                                         className={cn(
                                                             "relative flex flex-col items-center justify-between p-2 rounded-2xl border transition-all text-center min-h-[92px] group",
                                                             isSelected &&
-                                                                "border-[#E52027] bg-red-50/20 ring-2 ring-[#E52027]/20 shadow-2xs",
+                                                                "border-primary bg-red-50/20 ring-2 ring-primary/20 shadow-2xs",
                                                             !isSelected &&
                                                                 !isOutOfStock &&
                                                                 "border-slate-200 bg-slate-50/70 hover:border-slate-300 hover:bg-white cursor-pointer",
@@ -298,7 +298,7 @@ export default function AddToCartModal() {
                                                         )}
                                                     >
                                                         {isSelected && (
-                                                            <div className="absolute top-1.5 right-1.5 w-4 h-4 bg-[#E52027] text-white rounded-full flex items-center justify-center">
+                                                            <div className="absolute top-1.5 right-1.5 w-4 h-4 bg-primary text-white rounded-full flex items-center justify-center">
                                                                 <Check className="w-2.5 h-2.5 stroke-[3]" />
                                                             </div>
                                                         )}
@@ -345,7 +345,7 @@ export default function AddToCartModal() {
                                     hasAttemptedSubmit && (
                                         <div
                                             role="alert"
-                                            className="bg-rose-50 text-[#E52027] text-xs font-bold px-3.5 py-2.5 rounded-xl border border-rose-200 flex items-center gap-2 animate-in fade-in duration-150"
+                                            className="bg-rose-50 text-primary text-xs font-bold px-3.5 py-2.5 rounded-xl border border-rose-200 flex items-center gap-2 animate-in fade-in duration-150"
                                         >
                                             <AlertCircle className="w-4 h-4 shrink-0" />
                                             <span>
@@ -396,7 +396,7 @@ export default function AddToCartModal() {
                                                 )
                                             }
                                             disabled={jumlah >= maxStock}
-                                            className="w-9 h-8 flex items-center justify-center text-[#E52027] hover:bg-red-50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer font-bold text-base transition-colors"
+                                            className="w-9 h-8 flex items-center justify-center text-primary hover:bg-red-50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer font-bold text-base transition-colors"
                                             aria-label="Tambah jumlah item"
                                         >
                                             +
@@ -408,7 +408,7 @@ export default function AddToCartModal() {
                                 <button
                                     type="button"
                                     onClick={handleAddToCart}
-                                    className="w-full py-3.5 bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.99] text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg shadow-red-500/20 transition-all cursor-pointer flex items-center justify-between px-5"
+                                    className="w-full py-3.5 bg-primary hover:bg-primary-hover active:scale-[0.99] text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg shadow-red-500/20 transition-all cursor-pointer flex items-center justify-between px-5"
                                 >
                                     <span>Tambah ke Keranjang</span>
                                     <span className="font-mono text-white/95">

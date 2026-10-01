@@ -70,14 +70,14 @@ export default function ResetPasswordStep({
                     htmlFor="reset-otp-input"
                     className="block text-xs font-bold text-slate-700 mb-1.5"
                 >
-                    Kode OTP 6 Digit <span className="text-[#E52027]">*</span>
+                    Kode OTP 6 Digit <span className="text-primary">*</span>
                 </label>
                 <div
                     className={cn(
                         "border rounded-2xl px-3.5 py-3 flex items-center gap-2.5 bg-white transition-all shadow-2xs",
                         errors.resetOtp
                             ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
-                            : "border-slate-300 focus-within:border-[#E52027] focus-within:ring-2 focus-within:ring-[#E52027]/10",
+                            : "border-slate-300 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10",
                     )}
                 >
                     <KeyRound className="w-4 h-4 text-slate-400 shrink-0" />
@@ -119,14 +119,14 @@ export default function ResetPasswordStep({
                     htmlFor="reset-new-password"
                     className="block text-xs font-bold text-slate-700 mb-1.5"
                 >
-                    Kata Sandi Baru <span className="text-[#E52027]">*</span>
+                    Kata Sandi Baru <span className="text-primary">*</span>
                 </label>
                 <div
                     className={cn(
                         "border rounded-2xl px-3.5 py-3 flex items-center gap-2.5 bg-white transition-all shadow-2xs",
                         errors.newPassword
                             ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
-                            : "border-slate-300 focus-within:border-[#E52027] focus-within:ring-2 focus-within:ring-[#E52027]/10",
+                            : "border-slate-300 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10",
                     )}
                 >
                     <Lock className="w-4 h-4 text-slate-400 shrink-0" />
@@ -182,14 +182,14 @@ export default function ResetPasswordStep({
                     className="block text-xs font-bold text-slate-700 mb-1.5"
                 >
                     Ulangi Kata Sandi Baru{" "}
-                    <span className="text-[#E52027]">*</span>
+                    <span className="text-primary">*</span>
                 </label>
                 <div
                     className={cn(
                         "border rounded-2xl px-3.5 py-3 flex items-center gap-2.5 bg-white transition-all shadow-2xs",
                         errors.confirmNewPassword
                             ? "border-rose-400 bg-rose-50/20 ring-2 ring-rose-400/20"
-                            : "border-slate-300 focus-within:border-[#E52027] focus-within:ring-2 focus-within:ring-[#E52027]/10",
+                            : "border-slate-300 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10",
                     )}
                 >
                     <Lock className="w-4 h-4 text-slate-400 shrink-0" />
@@ -248,7 +248,7 @@ export default function ResetPasswordStep({
                     className={cn(
                         "w-full min-h-[48px] py-3 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-xs",
                         isFormValid
-                            ? "bg-[#E52027] hover:bg-[#CC1C22] active:scale-[0.99] text-white cursor-pointer"
+                            ? "bg-primary hover:bg-primary-hover active:scale-[0.99] text-white cursor-pointer"
                             : "bg-slate-200 text-slate-400 cursor-not-allowed select-none",
                     )}
                 >

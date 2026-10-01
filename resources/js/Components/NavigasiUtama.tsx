@@ -148,7 +148,7 @@ export default function NavigasiUtama({
                         id="btn-hamburger-menu"
                         type="button"
                         onClick={onMenuOpen}
-                        className="p-2 -ml-2 text-slate-700 hover:text-[#E52027] hover:bg-red-50/50 active:bg-red-50 rounded-2xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer"
+                        className="p-2 -ml-2 text-slate-700 hover:text-primary hover:bg-red-50/50 active:bg-red-50 rounded-2xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
                         aria-label="Buka menu navigasi utama"
                         aria-expanded={isMenuOpen}
                         aria-controls="side-menu-drawer"
@@ -161,7 +161,7 @@ export default function NavigasiUtama({
                 <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
                     <Link
                         href="/"
-                        className="flex items-center gap-2 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] rounded-xl p-1 transition-transform active:scale-95"
+                        className="flex items-center gap-2 group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl p-1 transition-transform active:scale-95"
                         aria-label="CRSL Official Store - Beranda"
                     >
                         <img
@@ -187,7 +187,7 @@ export default function NavigasiUtama({
                         id="btn-preferensi-wilayah"
                         type="button"
                         onClick={onPrefOpen}
-                        className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-slate-700 hover:text-slate-900 px-2 sm:px-2.5 py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer shadow-2xs"
+                        className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-slate-700 hover:text-slate-900 px-2 sm:px-2.5 py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer shadow-2xs"
                         aria-label={`Mata uang aktif: ${currency}`}
                     >
                         <IkonBendera currency={currency} />
@@ -201,7 +201,7 @@ export default function NavigasiUtama({
                         id="btn-pencarian"
                         type="button"
                         onClick={onSearchOpen}
-                        className="p-2 text-slate-700 hover:text-[#E52027] hover:bg-red-50/60 rounded-2xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer"
+                        className="p-2 text-slate-700 hover:text-primary hover:bg-red-50/60 rounded-2xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
                         aria-label="Cari produk toko"
                     >
                         <Search className="w-5 h-5 stroke-[2.2]" />
@@ -213,10 +213,10 @@ export default function NavigasiUtama({
                             href="/account"
                             id="btn-akun"
                             className={cn(
-                                "p-2 rounded-2xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer relative",
+                                "p-2 rounded-2xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer relative",
                                 isAccountActive
-                                    ? "bg-red-50 text-[#E52027]"
-                                    : "text-slate-700 hover:text-[#E52027] hover:bg-red-50/60",
+                                    ? "bg-red-50 text-primary"
+                                    : "text-slate-700 hover:text-primary hover:bg-red-50/60",
                             )}
                             aria-label={`Profil ${authUser.name || (authUser as any).nama || "Akun"}`}
                         >
@@ -233,7 +233,7 @@ export default function NavigasiUtama({
                                     onMenuOpen();
                                 }
                             }}
-                            className="p-2 text-slate-700 hover:text-[#E52027] hover:bg-red-50/60 rounded-2xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] cursor-pointer"
+                            className="p-2 text-slate-700 hover:text-primary hover:bg-red-50/60 rounded-2xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
                             aria-label="Masuk atau daftar akun"
                         >
                             <User className="w-5 h-5 stroke-[2.2]" />

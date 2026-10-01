@@ -43,7 +43,7 @@ export default function VoucherRow({
                     : "Gunakan voucher atau kode promo diskon"
             }
             className={cn(
-                "p-3.5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 cursor-pointer select-none group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E52027] focus-visible:ring-offset-1",
+                "p-3.5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 cursor-pointer select-none group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
                 isApplied
                     ? "bg-emerald-50/70 border-emerald-300 ring-2 ring-emerald-300/30 shadow-2xs"
                     : "bg-slate-50/60 border-slate-200/90 hover:border-slate-300 hover:bg-slate-100/70 shadow-2xs",

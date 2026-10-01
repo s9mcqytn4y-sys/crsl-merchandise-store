@@ -270,7 +270,7 @@ export default function RecentViewed({
 
                                 {/* Badge Diskon Dinamis */}
                                 {hasDiscount && diskonPersen > 0 && (
-                                    <span className="absolute top-2 left-2 bg-[#E52027] text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md shadow-2xs flex items-center gap-0.5 font-mono">
+                                    <span className="absolute top-2 left-2 bg-primary text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md shadow-2xs flex items-center gap-0.5 font-mono">
                                         <Tag className="w-2.5 h-2.5 stroke-[2.5]" />
                                         <span>-{diskonPersen}%</span>
                                     </span>
@@ -279,7 +279,7 @@ export default function RecentViewed({
 
                             {/* Deskripsi & Harga */}
                             <div className="p-3 space-y-1">
-                                <h4 className="text-xs font-bold text-slate-800 line-clamp-2 leading-snug group-hover:text-[#E52027] transition-colors">
+                                <h4 className="text-xs font-bold text-slate-800 line-clamp-2 leading-snug group-hover:text-primary transition-colors">
                                     {item.nama}
                                 </h4>
 
