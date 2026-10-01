@@ -210,9 +210,16 @@ class MidtransWebhookController extends Controller
             return response()->json(['sukses' => false, 'pesan' => 'Terjadi kesalahan sistem internal'], 500);
         }
 
-        // 4. Kirim Email Konfirmasi Pembayaran (Asynchronous)
+        // 4. Kirim Email Konfirmasi & Alokasikan Pengiriman Kurir via Biteship Queue
         if ($needsSendEmail && $orderToSend) {
             $this->kirimEmailKonfirmasi($orderToSend);
+
+            try {
+                \App\Domains\Pengiriman\Jobs\AlokasiPengirimanBiteshipJob::dispatch((string) $orderToSend->id);
+                Log::info("[Midtrans Webhook] Job Alokasi Biteship diantrekan untuk pesanan {$orderToSend->nomor_pesanan}");
+            } catch (\Throwable $e) {
+                Log::warning("[Midtrans Webhook] Gagal mengantrekan Alokasi Biteship: {$e->getMessage()}");
+            }
         }
 
         return response()->json(['sukses' => true, 'pesan' => 'Webhook berhasil diproses']);

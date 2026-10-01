@@ -3,6 +3,7 @@
 use App\Http\Controllers\AkunController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BerandaController;
+use App\Http\Controllers\BiteshipWebhookController;
 use App\Http\Controllers\BundleController;
 use App\Http\Controllers\KatalogController;
 use App\Http\Controllers\KeranjangController;
@@ -81,10 +82,12 @@ Route::post('/api/wilayah/ongkir', [PembayaranController::class, 'cekOngkir'])->
 Route::get('/api/rajaongkir/kota', [PembayaranController::class, 'cariKota'])->name('api.rajaongkir.kota');
 Route::post('/api/rajaongkir/ongkir', [PembayaranController::class, 'cekOngkir'])->name('api.rajaongkir.ongkir');
 
-// API Voucher, Webhook Midtrans & Status Realtime
+// API Voucher, Webhook Midtrans, Webhook Biteship & Status Realtime
 Route::post('/api/voucher/validasi', [PembayaranController::class, 'validasiVoucher'])->name('api.voucher.validasi');
 Route::post('/api/midtrans/webhook', [MidtransWebhookController::class, 'handle'])->name('api.midtrans.webhook');
 Route::post('/api/webhooks/midtrans', [MidtransWebhookController::class, 'handle'])->name('api.webhooks.midtrans');
+Route::post('/api/biteship/webhook', [BiteshipWebhookController::class, 'handle'])->name('api.biteship.webhook');
+Route::post('/api/webhooks/biteship', [BiteshipWebhookController::class, 'handle'])->name('api.webhooks.biteship');
 Route::get('/api/pesanan/{nomorPesanan}/status', [PesananController::class, 'cekStatusRealtime'])->name('api.pesanan.status')->where('nomorPesanan', '.*');
 
 // Autentikasi & Akun

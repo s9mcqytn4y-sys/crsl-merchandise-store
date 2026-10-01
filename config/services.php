@@ -42,8 +42,17 @@ return [
         'base_url' => env('BITESHIP_BASE_URL', 'https://api.biteship.com'),
         // Default area ID resmi untuk Depok, Sleman, DIY (gudang asal CRSL)
         'origin_area_id' => env('BITESHIP_ORIGIN_AREA_ID', 'IDNP5IDNC412IDND5043IDZ55281'),
-        'origin_postal_code' => env('BITESHIP_ORIGIN_POSTAL_CODE', 55281),
+        'origin_postal_code' => (int) env('BITESHIP_ORIGIN_POSTAL_CODE', 55281),
         'origin_city' => env('BITESHIP_ORIGIN_CITY', 'Sleman, D.I. Yogyakarta'),
+        'origin_address' => env('BITESHIP_ORIGIN_ADDRESS', 'Jl. Affandi No. 20, Condongcatur, Sleman, D.I. Yogyakarta'),
+        'environment' => env('BITESHIP_ENVIRONMENT', 'testing'),
+        'testing_zero_balance' => (bool) env('BITESHIP_TESTING_ZERO_BALANCE', true),
+        'use_real_maps' => (bool) env('BITESHIP_USE_REAL_MAPS', false),
+        'use_real_rates' => (bool) env('BITESHIP_USE_REAL_RATES', false),
+        'use_real_orders' => (bool) env('BITESHIP_USE_REAL_ORDERS', true),
+        'use_real_tracking' => (bool) env('BITESHIP_USE_REAL_TRACKING', true),
+        'use_public_tracking' => (bool) env('BITESHIP_USE_PUBLIC_TRACKING', false),
+        'webhook_secret' => env('BITESHIP_WEBHOOK_SECRET', ''),
     ],
 
     // ============================================================

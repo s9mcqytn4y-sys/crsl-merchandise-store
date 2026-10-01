@@ -18,6 +18,12 @@ class BiteshipService
     protected string $originAreaId;
     protected string $baseUrl;
     protected int $timeoutSeconds;
+    protected bool $testingZeroBalance;
+    protected bool $useRealMaps;
+    protected bool $useRealRates;
+    protected bool $useRealOrders;
+    protected bool $useRealTracking;
+    protected bool $usePublicTracking;
 
     public function __construct()
     {
@@ -25,6 +31,12 @@ class BiteshipService
         $this->originAreaId = (string) config('services.biteship.origin_area_id', 'IDNP5IDNC412IDND5043IDZ55281');
         $this->baseUrl = rtrim((string) config('services.biteship.base_url', 'https://api.biteship.com'), '/');
         $this->timeoutSeconds = 10;
+        $this->testingZeroBalance = (bool) config('services.biteship.testing_zero_balance', true);
+        $this->useRealMaps = (bool) config('services.biteship.use_real_maps', false);
+        $this->useRealRates = (bool) config('services.biteship.use_real_rates', false);
+        $this->useRealOrders = (bool) config('services.biteship.use_real_orders', true);
+        $this->useRealTracking = (bool) config('services.biteship.use_real_tracking', true);
+        $this->usePublicTracking = (bool) config('services.biteship.use_public_tracking', false);
     }
 
     /**
@@ -46,6 +58,7 @@ class BiteshipService
 
     /**
      * Cari lokasi/wilayah berdasarkan kata kunci autocomplete.
+     * Dalam mode Zero Balance, pencarian dilakukan secara lokal menggunakan database master wilayah_indonesia.
      *
      * @param string $kataKunci
      * @return array<int, array<string, mixed>>
@@ -53,7 +66,7 @@ class BiteshipService
     public function cariArea(string $kataKunci): array
     {
         $kataKunci = trim($kataKunci);
-        if (mb_strlen($kataKunci) < 3) {
+        if (mb_strlen($kataKunci) < 2) {
             return [];
         }
 
@@ -64,9 +77,13 @@ class BiteshipService
             return (array) Cache::get($cacheKey, []);
         }
 
-        // 2. Proteksi API Key
-        if (empty($this->apiKey)) {
-            Log::channel('single')->error('[Biteship] API Key belum dikonfigurasi di services.biteship.api_key');
+        // 2. Jika Zero Balance atau Real Maps dinonaktifkan: gunakan master data lokal PostgreSQL
+        if ($this->testingZeroBalance || !$this->useRealMaps || empty($this->apiKey)) {
+            $hasilLokal = $this->cariAreaLokal($kataKunci);
+            if (!empty($hasilLokal)) {
+                Cache::put($cacheKey, $hasilLokal, now()->addHours(24));
+                return $hasilLokal;
+            }
             return $this->filterFallbackAreas($kataKunci);
         }
 
@@ -105,8 +122,58 @@ class BiteshipService
             ]);
         }
 
-        // Jangan simpan fallback ke cache
-        return $this->filterFallbackAreas($kataKunci);
+        return $this->cariAreaLokal($kataKunci) ?: $this->filterFallbackAreas($kataKunci);
+    }
+
+    /**
+     * Pencarian wilayah lokal dari tabel PostgreSQL master wilayah_indonesia.
+     *
+     * @param string $kataKunci
+     * @return array<int, array<string, mixed>>
+     */
+    public function cariAreaLokal(string $kataKunci): array
+    {
+        try {
+            $rows = \App\Models\WilayahIndonesia::query()
+                ->where(function ($q) use ($kataKunci) {
+                    $q->where('kota', 'ilike', "%{$kataKunci}%")
+                      ->orWhere('kecamatan', 'ilike', "%{$kataKunci}%")
+                      ->orWhere('kelurahan', 'ilike', "%{$kataKunci}%")
+                      ->orWhere('provinsi', 'ilike', "%{$kataKunci}%")
+                      ->orWhere('kode_pos', 'like', "%{$kataKunci}%");
+                })
+                ->limit(20)
+                ->get();
+
+            if ($rows->isEmpty()) {
+                return [];
+            }
+
+            return $rows->map(function ($row) {
+                $nama = "{$row->kecamatan}, {$row->kota}, {$row->provinsi} ({$row->kode_pos})";
+                return [
+                    'id'                                   => $row->biteship_area_id ?: "AREA-LOCAL-{$row->id}",
+                    'nama'                                 => $nama,
+                    'name'                                 => $nama,
+                    'kota'                                 => $row->kota,
+                    'city'                                 => $row->kota,
+                    'kecamatan'                            => $row->kecamatan,
+                    'district'                             => $row->kecamatan,
+                    'kelurahan'                            => $row->kelurahan,
+                    'administrative_division_level_3_name' => $row->kecamatan,
+                    'administrative_division_level_2_name' => $row->kota,
+                    'administrative_division_level_1_name' => $row->provinsi,
+                    'provinsi'                             => $row->provinsi,
+                    'province'                             => $row->provinsi,
+                    'kode_pos'                             => (string) $row->kode_pos,
+                    'postal_code'                          => (string) $row->kode_pos,
+                    'sumber'                               => 'Master Data Wilayah',
+                ];
+            })->toArray();
+        } catch (\Throwable $e) {
+            Log::warning("[Biteship cariAreaLokal Exception] {$e->getMessage()}");
+            return [];
+        }
     }
 
     /**
@@ -138,14 +205,10 @@ class BiteshipService
         }, $items);
 
         $totalWeight = array_sum(array_map(fn($item) => ($item['weight'] ?? 250) * ($item['quantity'] ?? 1), $formattedItems));
-        $isMock = app()->isLocal() || (bool) config('services.biteship.mock', false);
 
-        if (empty($this->apiKey)) {
-            if ($isMock) {
-                return $this->getMockCouriers($totalWeight);
-            }
-            Log::error('[Biteship] API Key kosong saat memanggil kalkulasi ongkir.');
-            return [];
+        // Jika testing zero balance atau real rates dinonaktifkan: gunakan tarif mock lokal terkalibrasi
+        if ($this->testingZeroBalance || !$this->useRealRates || empty($this->apiKey)) {
+            return $this->getMockCouriers($totalWeight);
         }
 
         try {
@@ -201,6 +264,7 @@ class BiteshipService
         $weightKg = max(1, (int) ceil($totalWeightGram / 1000));
         return [
             [
+                'kurir'         => 'jne',
                 'kurir_kode'    => 'jne',
                 'kurir_nama'    => 'JNE',
                 'layanan_kode'  => 'reg',
@@ -209,6 +273,7 @@ class BiteshipService
                 'nama'          => 'JNE Reguler',
                 'layanan'       => 'Reguler',
                 'harga'         => 18000 * $weightKg,
+                'biaya'         => 18000 * $weightKg,
                 'estimasi'      => '2 - 3 hari',
                 'estimasi_hari' => '2 - 3 hari',
                 'etd'           => '2 - 3 hari',
@@ -219,6 +284,7 @@ class BiteshipService
                 'sumber'        => 'Sandbox Simulasi',
             ],
             [
+                'kurir'         => 'sicepat',
                 'kurir_kode'    => 'sicepat',
                 'kurir_nama'    => 'SiCepat',
                 'layanan_kode'  => 'siuntung',
@@ -227,6 +293,7 @@ class BiteshipService
                 'nama'          => 'SiCepat SiUntung',
                 'layanan'       => 'SiUntung',
                 'harga'         => 17000 * $weightKg,
+                'biaya'         => 17000 * $weightKg,
                 'estimasi'      => '2 - 3 hari',
                 'estimasi_hari' => '2 - 3 hari',
                 'etd'           => '2 - 3 hari',
@@ -237,6 +304,7 @@ class BiteshipService
                 'sumber'        => 'Sandbox Simulasi',
             ],
             [
+                'kurir'         => 'jnt',
                 'kurir_kode'    => 'jnt',
                 'kurir_nama'    => 'J&T Express',
                 'layanan_kode'  => 'ez',
@@ -245,6 +313,7 @@ class BiteshipService
                 'nama'          => 'J&T EZ',
                 'layanan'       => 'EZ',
                 'harga'         => 19000 * $weightKg,
+                'biaya'         => 19000 * $weightKg,
                 'estimasi'      => '1 - 2 hari',
                 'estimasi_hari' => '1 - 2 hari',
                 'etd'           => '1 - 2 hari',
@@ -255,6 +324,7 @@ class BiteshipService
                 'sumber'        => 'Sandbox Simulasi',
             ],
             [
+                'kurir'         => 'anteraja',
                 'kurir_kode'    => 'anteraja',
                 'kurir_nama'    => 'Anteraja',
                 'layanan_kode'  => 'reg',
@@ -263,6 +333,7 @@ class BiteshipService
                 'nama'          => 'Anteraja Reguler',
                 'layanan'       => 'Reguler',
                 'harga'         => 16000 * $weightKg,
+                'biaya'         => 16000 * $weightKg,
                 'estimasi'      => '2 - 3 hari',
                 'estimasi_hari' => '2 - 3 hari',
                 'etd'           => '2 - 3 hari',
@@ -283,20 +354,24 @@ class BiteshipService
      */
     public function buatOrderPengiriman(array $dataPesanan): array
     {
-        if (empty($this->apiKey)) {
+        if (empty($this->apiKey) || !$this->useRealOrders) {
             $simulasiResi = strtoupper($dataPesanan['kurir'] ?? 'JNE') . '-MOCK-' . date('Ymd') . '-' . strtoupper(Str::random(6));
-            Log::channel('single')->info('[Biteship Pickup Simulation (No Key)]', [
+            $mockTrackingId = 'mock_track_' . Str::uuid();
+            Log::channel('single')->info('[Biteship Pickup Simulation]', [
                 'resi' => $simulasiResi,
+                'tracking_id' => $mockTrackingId,
                 'data' => $dataPesanan,
             ]);
 
             return [
-                'sukses'            => true,
-                'biteship_order_id' => 'mock_order_' . Str::uuid(),
-                'waybill_id'        => $simulasiResi,
-                'status'            => 'allocated',
-                'tracking_url'      => 'https://track.biteship.com/' . $simulasiResi,
-                'is_simulasi'       => true,
+                'sukses'               => true,
+                'biteship_order_id'    => 'mock_order_' . Str::uuid(),
+                'biteship_tracking_id' => $mockTrackingId,
+                'biteship_waybill_id'  => $simulasiResi,
+                'waybill_id'           => $simulasiResi,
+                'status'               => 'allocated',
+                'tracking_url'         => 'https://track.biteship.com/' . $simulasiResi,
+                'is_simulasi'          => true,
             ];
         }
 
@@ -360,12 +435,21 @@ class BiteshipService
             $response = $this->newRequest(15)->post("{$this->baseUrl}/v1/orders", $payload);
 
             if ($response->successful()) {
+                $orderId = (string) $response->json('id');
+                $waybillId = (string) ($response->json('courier.waybill_id') ?? '');
+                $trackingId = (string) ($response->json('courier.tracking_id') ?? $orderId);
+                $status = (string) $response->json('status', 'allocated');
+                $trackingUrl = $response->json('courier.link') ?? $response->json('courier.tracking_url') ?? (!empty($waybillId) ? "https://track.biteship.com/{$waybillId}" : null);
+
                 return [
-                    'sukses'            => true,
-                    'biteship_order_id' => $response->json('id'),
-                    'waybill_id'        => $response->json('courier.waybill_id'),
-                    'status'            => $response->json('status', 'allocated'),
-                    'tracking_url' => $response->json('courier.link') ?? $response->json('courier.tracking_url'),                    'raw'               => $response->json(),
+                    'sukses'               => true,
+                    'biteship_order_id'    => $orderId,
+                    'biteship_tracking_id' => $trackingId,
+                    'biteship_waybill_id'  => $waybillId ?: null,
+                    'waybill_id'           => $waybillId ?: null,
+                    'status'               => $status,
+                    'tracking_url'         => $trackingUrl,
+                    'raw'                  => $response->json(),
                 ];
             }
 
@@ -375,14 +459,17 @@ class BiteshipService
 
             if (app()->isLocal()) {
                 $simulasiResi = strtoupper($kurirKode) . '-DEV-' . date('Ymd') . '-' . strtoupper(Str::random(6));
+                $devTrackingId = 'dev_track_' . Str::uuid();
                 Log::info("[Biteship Order Dev Fallback] Resi: {$simulasiResi}");
                 return [
-                    'sukses'            => true,
-                    'biteship_order_id' => 'dev_order_' . Str::uuid(),
-                    'waybill_id'        => $simulasiResi,
-                    'status'            => 'allocated',
-                    'tracking_url'      => 'https://track.biteship.com/' . $simulasiResi,
-                    'is_simulasi'       => true,
+                    'sukses'               => true,
+                    'biteship_order_id'    => 'dev_order_' . Str::uuid(),
+                    'biteship_tracking_id' => $devTrackingId,
+                    'biteship_waybill_id'  => $simulasiResi,
+                    'waybill_id'           => $simulasiResi,
+                    'status'               => 'allocated',
+                    'tracking_url'         => 'https://track.biteship.com/' . $simulasiResi,
+                    'is_simulasi'          => true,
                 ];
             }
 
@@ -395,14 +482,17 @@ class BiteshipService
 
             if (app()->isLocal()) {
                 $simulasiResi = strtoupper($kurirKode) . '-DEV-' . date('Ymd') . '-' . strtoupper(Str::random(6));
+                $devTrackingId = 'dev_track_' . Str::uuid();
                 Log::info("[Biteship Order Dev Fallback on Exception] Resi: {$simulasiResi}");
                 return [
-                    'sukses'            => true,
-                    'biteship_order_id' => 'dev_order_' . Str::uuid(),
-                    'waybill_id'        => $simulasiResi,
-                    'status'            => 'allocated',
-                    'tracking_url'      => 'https://track.biteship.com/' . $simulasiResi,
-                    'is_simulasi'       => true,
+                    'sukses'               => true,
+                    'biteship_order_id'    => 'dev_order_' . Str::uuid(),
+                    'biteship_tracking_id' => $devTrackingId,
+                    'biteship_waybill_id'  => $simulasiResi,
+                    'waybill_id'           => $simulasiResi,
+                    'status'               => 'allocated',
+                    'tracking_url'         => 'https://track.biteship.com/' . $simulasiResi,
+                    'is_simulasi'          => true,
                 ];
             }
 
@@ -457,7 +547,6 @@ class BiteshipService
             ],
         ];
 
-        // Filter ketat tanpa Elvis fallback. Jika tidak cocok, kembalikan []
         return array_values(array_filter($sample, function (array $area) use ($kataKunci): bool {
             return stripos($area['nama'], $kataKunci) !== false
                 || stripos($area['kecamatan'], $kataKunci) !== false
@@ -468,55 +557,77 @@ class BiteshipService
 
     /**
      * Lacak pengiriman paket via Biteship Tracking API.
+     * Mendukung tracking_id (Sandbox Zero Balance) dan waybill + kurir.
      *
-     * @param string $waybillId Nomor resi pengiriman
+     * @param string $identifier Nomor tracking_id atau waybill_id
      * @param string $courierCode Kode kurir (jne, jnt, sicepat, anteraja)
      * @return array<string, mixed>
      */
-    public function lacakPengiriman(string $waybillId, string $courierCode = 'jne'): array
+    public function lacakPengiriman(string $identifier, string $courierCode = 'jne'): array
     {
-        $waybillId = trim($waybillId);
+        $identifier = trim($identifier);
         $courierCode = strtolower(trim($courierCode));
 
-        if (empty($waybillId)) {
+        if (empty($identifier)) {
             return [
                 'sukses' => false,
-                'pesan'  => 'Nomor resi tidak valid.',
+                'pesan'  => 'Nomor resi atau ID pelacakan tidak valid.',
             ];
         }
 
         // Cache 60 detik agar tidak membebani rate limit Biteship
-        $cacheKey = "biteship_track_{$courierCode}_{$waybillId}";
+        $cacheKey = "biteship_track_{$courierCode}_{$identifier}";
 
-        return Cache::remember($cacheKey, 60, function () use ($waybillId, $courierCode) {
-            if (empty($this->apiKey) || str_contains($waybillId, 'MOCK') || str_contains($waybillId, 'DEV')) {
-                return $this->getMockTracking($waybillId, $courierCode);
+        return Cache::remember($cacheKey, 60, function () use ($identifier, $courierCode) {
+            if (empty($this->apiKey) || str_contains($identifier, 'MOCK') || str_contains($identifier, 'DEV')) {
+                return $this->getMockTracking($identifier, $courierCode);
             }
 
-            try {
-                $response = $this->newRequest(15)
-                    ->get("{$this->baseUrl}/v1/trackings/{$waybillId}/couriers/{$courierCode}");
+            // Jika tracking real diaktifkan
+            if ($this->useRealTracking) {
+                try {
+                    // Coba via /v1/trackings/{tracking_id} jika formatnya ID Biteship
+                    $url = "{$this->baseUrl}/v1/trackings/{$identifier}";
+                    $response = $this->newRequest(15)->get($url);
 
-                if ($response->successful()) {
-                    $json = $response->json();
-                    return [
-                        'sukses'     => true,
-                        'waybill_id' => $waybillId,
-                        'kurir'      => $courierCode,
-                        'status'     => $json['status'] ?? 'allocated',
-                        'history'    => $json['history'] ?? [],
-                        'link'       => $json['link'] ?? "https://track.biteship.com/{$waybillId}",
-                        'raw'        => $json,
-                    ];
+                    if ($response->successful()) {
+                        $json = $response->json();
+                        return [
+                            'sukses'      => true,
+                            'waybill_id'  => $json['courier']['waybill_id'] ?? $identifier,
+                            'tracking_id' => $identifier,
+                            'kurir'       => strtolower($json['courier']['company'] ?? $courierCode),
+                            'status'      => $json['status'] ?? 'allocated',
+                            'history'     => $json['history'] ?? [],
+                            'link'        => $json['link'] ?? "https://track.biteship.com/{$identifier}",
+                            'raw'         => $json,
+                        ];
+                    }
+
+                    // Hanya panggil public tracking jika diizinkan (pada zero balance testing dilarang)
+                    if ($this->usePublicTracking) {
+                        $pubResponse = $this->newRequest(15)->get("{$this->baseUrl}/v1/trackings/{$identifier}/couriers/{$courierCode}");
+                        if ($pubResponse->successful()) {
+                            $pubJson = $pubResponse->json();
+                            return [
+                                'sukses'     => true,
+                                'waybill_id' => $identifier,
+                                'kurir'      => $courierCode,
+                                'status'     => $pubJson['status'] ?? 'allocated',
+                                'history'    => $pubJson['history'] ?? [],
+                                'link'       => $pubJson['link'] ?? "https://track.biteship.com/{$identifier}",
+                                'raw'        => $pubJson,
+                            ];
+                        }
+                    }
+
+                    Log::warning("[Biteship Tracking Error] Status {$response->status()}: {$response->body()}");
+                } catch (\Throwable $e) {
+                    Log::error("[Biteship Tracking Exception] {$e->getMessage()}");
                 }
-
-                Log::warning("[Biteship Tracking Error] Status {$response->status()}: {$response->body()}");
-
-                return $this->getMockTracking($waybillId, $courierCode);
-            } catch (\Throwable $e) {
-                Log::error("[Biteship Tracking Exception] {$e->getMessage()}");
-                return $this->getMockTracking($waybillId, $courierCode);
             }
+
+            return $this->getMockTracking($identifier, $courierCode);
         });
     }
 

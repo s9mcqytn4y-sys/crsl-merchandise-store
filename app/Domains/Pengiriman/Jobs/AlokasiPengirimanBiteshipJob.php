@@ -92,7 +92,7 @@ class AlokasiPengirimanBiteshipJob implements ShouldQueue, ShouldBeUnique
             ->toArray();
 
         $dataBiteship = [
-            'area_id'           => $savedAddress['area_id'] ?? 'IDNP6IDNC147IDND830IDZ10560',
+            'area_id'           => $savedAddress['area_id'] ?? $savedAddress['biteship_area_id'] ?? 'IDNP5IDNC412IDND5043IDZ55281',
             'nama_penerima'     => $savedAddress['nama_penerima'] ?? ($pesanan->pengguna->name ?? 'Pelanggan'),
             'telepon'           => $savedAddress['telepon'] ?? '081234567890',
             'alamat_lengkap'    => $savedAddress['alamat_lengkap'] ?? '',
@@ -112,6 +112,9 @@ class AlokasiPengirimanBiteshipJob implements ShouldQueue, ShouldBeUnique
         }
 
         $pengiriman->biteship_order_id = $resBiteship['biteship_order_id'] ?? null;
+        $pengiriman->biteship_tracking_id = $resBiteship['biteship_tracking_id'] ?? null;
+        $pengiriman->biteship_waybill_id = $resBiteship['biteship_waybill_id'] ?? $resBiteship['waybill_id'] ?? null;
+        $pengiriman->tracking_url = $resBiteship['tracking_url'] ?? null;
         $pengiriman->nomor_resi = !empty($resBiteship['waybill_id'])
             ? $resBiteship['waybill_id']
             : (strtoupper($pengiriman->kurir ?? 'JNE') . '-' . date('Ymd') . '-' . strtoupper(Str::random(6)));
@@ -119,7 +122,7 @@ class AlokasiPengirimanBiteshipJob implements ShouldQueue, ShouldBeUnique
         $pengiriman->json_payload = array_merge($savedAddress, ['biteship_response' => $resBiteship]);
         $pengiriman->save();
 
-        Log::info("[Biteship Job Success] Resi {$pengiriman->nomor_resi} berhasil diterbitkan untuk {$pesanan->nomor_pesanan}");
+        Log::info("[Biteship Job Success] Resi {$pengiriman->nomor_resi} (Tracking ID: {$pengiriman->biteship_tracking_id}) berhasil diterbitkan untuk {$pesanan->nomor_pesanan}");
     }
 
     /**

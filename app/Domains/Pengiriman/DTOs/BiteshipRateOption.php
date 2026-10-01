@@ -33,14 +33,19 @@ class BiteshipRateOption
     public function toArray(): array
     {
         return [
-            'kurir_kode' => $this->kurirKode,
-            'kurir_nama' => $this->kurirNama,
-            'layanan_kode' => $this->layananKode,
-            'layanan_nama' => $this->layananNama,
-            'harga' => $this->harga,
+            'kurir'         => $this->kurirKode,
+            'kurir_kode'    => $this->kurirKode,
+            'kurir_nama'    => $this->kurirNama,
+            'layanan'       => $this->layananKode,
+            'layanan_kode'  => $this->layananKode,
+            'layanan_nama'  => $this->layananNama,
+            'harga'         => $this->harga,
+            'biaya'         => $this->harga,
+            'estimasi'      => $this->estimasiHari,
             'estimasi_hari' => $this->estimasiHari,
-            'logo_url' => $this->logoUrl,
-            'ikon' => $this->logoUrl,
+            'etd'           => $this->estimasiHari,
+            'logo_url'      => $this->logoUrl,
+            'ikon'          => $this->logoUrl,
         ];
     }
 }

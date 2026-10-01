@@ -6,7 +6,8 @@ namespace App\Http\Controllers;
 
 use App\Domains\Inventori\Services\InventoriService;
 use App\Domains\Pembayaran\Services\MidtransService;
-use App\Domains\Pengiriman\Services\RajaOngkirService;
+use App\Domains\Pengiriman\Jobs\AlokasiPengirimanBiteshipJob;
+use App\Domains\Pengiriman\Services\BiteshipService;
 use App\Models\PenggunaLoyalitas;
 use App\Models\Pesanan;
 use App\Models\Voucher;
@@ -25,7 +26,7 @@ class PesananController extends Controller
 {
     public function __construct(
         protected MidtransService $midtransService,
-        protected RajaOngkirService $rajaOngkirService,
+        protected BiteshipService $biteshipService,
         protected InventoriService $inventoriService
     ) {}
 
@@ -198,6 +199,9 @@ class PesananController extends Controller
                     $pesanan->pengiriman->save();
                 }
 
+                // Dispatch alokasi pengiriman otomatis ke Biteship
+                AlokasiPengirimanBiteshipJob::dispatch((string) $pesanan->id);
+
                 if ($pesanan->pengguna_id && $pesanan->poin_didapat > 0) {
                     $loyalitas = PenggunaLoyalitas::firstOrCreate(
                         ['pengguna_id' => $pesanan->pengguna_id],
@@ -234,10 +238,12 @@ class PesananController extends Controller
                 $pesanan = $this->temukanPesanan($nomorPesanan, ['items.produk', 'items.varian', 'pembayaran', 'pengiriman']);
                 if ($pesanan) {
                     $kurir = strtolower((string) ($pesanan->pengiriman->kurir ?? 'jne'));
+                    $trackingId = (string) ($pesanan->pengiriman?->biteship_tracking_id ?? '');
                     $nomorResi = (string) ($pesanan->pengiriman?->nomor_resi ?? '');
+                    $identifier = !empty($trackingId) ? $trackingId : $nomorResi;
 
-                    if (!empty($nomorResi)) {
-                        $tracking = $this->rajaOngkirService->lacakResi($nomorResi, $kurir);
+                    if (!empty($identifier)) {
+                        $tracking = $this->biteshipService->lacakPengiriman($identifier, $kurir);
                     } else {
                         $isPaid = in_array($pesanan->status, ['akan_dikirim', 'dikirim', 'selesai']);
                         $tracking = [
@@ -510,6 +516,9 @@ class PesananController extends Controller
             $pesanan->pengiriman->tracking_status = 'akan_dikirim';
             $pesanan->pengiriman->save();
         }
+
+        // Jalankan alokasi Biteship otomatis
+        AlokasiPengirimanBiteshipJob::dispatch((string) $pesanan->id);
 
         if ($pesanan->pengguna_id) {
             Cache::forget("pengguna:akun:{$pesanan->pengguna_id}");
