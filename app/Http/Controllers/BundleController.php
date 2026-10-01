@@ -101,10 +101,19 @@ class BundleController extends Controller
 
     public function show(int $id, ?string $slug = null): Response
     {
-        $bundle = $this->bundleDatabase[$id] ?? $this->bundleDatabase[3516];
+        $dbProduk = Produk::with(['kategori', 'varian'])->find($id);
+        $bundleConfig = $this->bundleDatabase[$id] ?? $this->bundleDatabase[3516];
+
+        $bundle = array_merge($bundleConfig, [
+            'id' => $dbProduk?->id ?? $bundleConfig['id'],
+            'judul' => $dbProduk?->nama ?? $bundleConfig['judul'],
+            'harga_paket' => (int)($dbProduk?->harga_diskon ?? $bundleConfig['harga_paket']),
+            'harga_asli' => (int)($dbProduk?->harga_dasar ?? $bundleConfig['harga_asli']),
+        ]);
 
         $rekomendasi = Produk::with(['kategori', 'varian'])
             ->where('aktif', true)
+            ->whereNotIn('id', [$id])
             ->inRandomOrder()
             ->take(4)
             ->get();

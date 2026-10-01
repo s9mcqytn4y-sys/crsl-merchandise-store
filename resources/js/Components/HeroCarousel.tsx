@@ -4,13 +4,18 @@ import { ArrowRight } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 export interface HeroSlide {
-    gambar: string;
-    tag: string;
+    gambar?: string;
+    gambar_desktop?: string;
+    gambar_mobile?: string;
+    tag?: string;
     judul: string;
-    subjudul: string;
-    tombol: string;
+    subjudul?: string;
+    tombol?: string;
+    tombol_label?: string;
     tautan: string;
-    alt: string;
+    alt?: string;
+    alt_teks?: string;
+    id?: string | number;
 }
 
 const DEFAULT_SLIDES: HeroSlide[] = [
@@ -225,9 +230,18 @@ export default function HeroCarousel({
             >
                 {activeSlides.map((slide, idx) => {
                     const isCurrent = idx === currentIndex;
+                    const imgSrc =
+                        slide.gambar ||
+                        slide.gambar_desktop ||
+                        "/assets/gambar/banner-hero-main.webp";
+                    const tagText = slide.tag || "CRSL EXCLUSIVE";
+                    const tombolText =
+                        slide.tombol || slide.tombol_label || "Lihat Koleksi";
+                    const altText = slide.alt || slide.alt_teks || slide.judul;
+
                     return (
                         <div
-                            key={slide.tautan + idx}
+                            key={(slide.tautan || "") + idx}
                             data-slide-index={idx}
                             className="flex-none w-full h-full relative overflow-hidden shrink-0"
                             role="group"
@@ -238,14 +252,14 @@ export default function HeroCarousel({
                             {/* Layer Gambar Background dengan Parallax */}
                             <div className="w-full h-full relative overflow-hidden">
                                 <img
-                                    src={slide.gambar}
-                                    alt={slide.alt}
+                                    src={imgSrc}
+                                    alt={altText}
                                     className="hero-bg-image absolute inset-0 w-full h-full object-cover object-center will-change-transform transform scale-105"
                                     loading={idx === 0 ? "eager" : "lazy"}
                                     fetchPriority={idx === 0 ? "high" : "auto"}
                                 />
-                                <div className="absolute inset-0 bg-linear-to-r from-slate-950/90 via-slate-950/50 to-transparent pointer-events-none" />
-                                <div className="absolute inset-0 bg-linear-to-t from-slate-950/80 via-transparent to-black/20 pointer-events-none" />
+                                <div className="absolute inset-0 bg-linear-to-r from-slate-950/85 via-slate-950/40 to-transparent pointer-events-none" />
+                                <div className="absolute inset-0 bg-linear-to-t from-slate-950/70 via-transparent to-black/10 pointer-events-none" />
                             </div>
 
                             {/* Konten Teks Slide */}
@@ -253,23 +267,25 @@ export default function HeroCarousel({
                                 <div className="max-w-xl text-white space-y-4 pointer-events-auto">
                                     <div>
                                         <span className="hero-tag inline-block bg-primary text-white text-[11px] font-black px-3.5 py-1 rounded-full tracking-wider uppercase shadow-xs">
-                                            {slide.tag}
+                                            {tagText}
                                         </span>
                                     </div>
                                     <h2 className="hero-title text-3xl sm:text-5xl lg:text-6xl font-black leading-tight tracking-tight drop-shadow-sm text-white">
                                         {slide.judul}
                                     </h2>
-                                    <p className="hero-subtitle text-xs sm:text-sm md:text-base text-slate-200/90 leading-relaxed drop-shadow-xs max-w-lg">
-                                        {slide.subjudul}
-                                    </p>
+                                    {slide.subjudul && (
+                                        <p className="hero-subtitle text-xs sm:text-sm md:text-base text-slate-200/90 leading-relaxed drop-shadow-xs max-w-lg">
+                                            {slide.subjudul}
+                                        </p>
+                                    )}
                                     <div className="pt-2">
                                         <Link
                                             href={slide.tautan}
                                             tabIndex={isCurrent ? 0 : -1}
                                             className="hero-btn inline-flex items-center gap-2.5 bg-primary hover:bg-primary-hover text-white font-extrabold text-xs sm:text-sm px-7 py-3.5 rounded-full shadow-lg transition-all duration-200 active:scale-95 group/btn cursor-pointer"
-                                            aria-label={`${slide.tombol} - ${slide.judul}`}
+                                            aria-label={`${tombolText} - ${slide.judul}`}
                                         >
-                                            <span>{slide.tombol}</span>
+                                            <span>{tombolText}</span>
                                             <ArrowRight className="w-4 h-4 text-white group-hover/btn:translate-x-1 transition-transform" />
                                         </Link>
                                     </div>

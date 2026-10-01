@@ -224,6 +224,36 @@ class MerchandiseSeeder extends Seeder
                 'aktif' => true,
                 'is_best_seller' => true,
             ],
+            [
+                'id' => 3516,
+                'kategori_id' => 1,
+                'nama' => 'BACK TO SCHOOL with Miflo',
+                'slug' => 'back-to-school-with-miflo',
+                'deskripsi' => 'Paket Back to School terlengkap bersama Miflo the Cat! Nikmati ransel mini kanvas water-repellent yang stylish dilengkapi kompartemen lengkap, ditambah gantungan kunci karakter Ropy yang imut dan koleksi stiker BTS 2026 eksklusif.',
+                'harga_dasar' => 343100,
+                'harga_diskon' => 289000,
+                'stok_total' => 22,
+                'berat_gram' => 650,
+                'gambar_utama' => '/assets/gambar/bundle-miflo-cover.webp',
+                'tipe_produk' => 'bundle',
+                'aktif' => true,
+                'is_best_seller' => true,
+            ],
+            [
+                'id' => 2188,
+                'kategori_id' => 1,
+                'nama' => 'BACK TO SCHOOL WITH HARU!',
+                'slug' => 'back-to-school-with-haru',
+                'deskripsi' => 'Paket Back to School edisi spesial Haru! Ransel motif tartan plaid premium bernuansa retro modern dengan kapasitas besar untuk laptop 14 inci, dipadukan dengan set pin badge 5 karakter enamel dan keychain tartan limited edition.',
+                'harga_dasar' => 395000,
+                'harga_diskon' => 329000,
+                'stok_total' => 17,
+                'berat_gram' => 850,
+                'gambar_utama' => '/assets/gambar/bundle-haru-cover.webp',
+                'tipe_produk' => 'bundle',
+                'aktif' => true,
+                'is_best_seller' => true,
+            ],
         ];
 
         foreach ($produkList as $p) {
@@ -241,6 +271,14 @@ class MerchandiseSeeder extends Seeder
             ['id' => 6, 'produk_id' => 7, 'sku' => 'CRSL-TMB-DRN-32-ODIN', 'nama_varian' => 'ODIN YELLOW', 'tipe_varian' => 'karakter', 'warna' => 'Yellow', 'warna_hex' => '#eab308', 'ukuran' => '900ml / 32oz', 'harga_tambahan' => 0, 'stok' => 80, 'gambar_varian' => '/assets/gambar/drinke-tumblr.webp', 'aktif' => true],
             ['id' => 7, 'produk_id' => 7, 'sku' => 'CRSL-TMB-DRN-32-CHOCO', 'nama_varian' => 'CHOCO GREY', 'tipe_varian' => 'karakter', 'warna' => 'Grey', 'warna_hex' => '#6b7280', 'ukuran' => '900ml / 32oz', 'harga_tambahan' => 0, 'stok' => 75, 'gambar_varian' => '/assets/gambar/drinke-tumblr.webp', 'aktif' => true],
             ['id' => 8, 'produk_id' => 7, 'sku' => 'CRSL-TMB-DRN-32-PIGKO', 'nama_varian' => 'PIGKO PEACH', 'tipe_varian' => 'karakter', 'warna' => 'Peach', 'warna_hex' => '#f97316', 'ukuran' => '900ml / 32oz', 'harga_tambahan' => 0, 'stok' => 90, 'gambar_varian' => '/assets/gambar/drinke-tumblr.webp', 'aktif' => true],
+
+            // Varian Bundle 3516 (Miflo BTS)
+            ['id' => 351601, 'produk_id' => 3516, 'sku' => 'CRSL-BND-MFL-PNK', 'nama_varian' => 'Pink Pastel', 'tipe_varian' => 'bundle', 'warna' => 'Pink Pastel', 'warna_hex' => '#ec4899', 'ukuran' => 'Paket Bundle', 'harga_tambahan' => 0, 'stok' => 14, 'gambar_varian' => '/assets/gambar/bundle-miflo-cover.webp', 'aktif' => true],
+            ['id' => 351602, 'produk_id' => 3516, 'sku' => 'CRSL-BND-MFL-BLK', 'nama_varian' => 'Black Charcoal', 'tipe_varian' => 'bundle', 'warna' => 'Black Charcoal', 'warna_hex' => '#1e293b', 'ukuran' => 'Paket Bundle', 'harga_tambahan' => 0, 'stok' => 8, 'gambar_varian' => '/assets/gambar/bundle-miflo-cover.webp', 'aktif' => true],
+
+            // Varian Bundle 2188 (Haru BTS)
+            ['id' => 218801, 'produk_id' => 2188, 'sku' => 'BND-2188-CRSL-BND-HRU-BRN-CRSL-BND-PIN-SQD', 'nama_varian' => 'Brown Plaid', 'tipe_varian' => 'bundle', 'warna' => 'Brown Plaid', 'warna_hex' => '#78350f', 'ukuran' => 'Paket Bundle', 'harga_tambahan' => 0, 'stok' => 12, 'gambar_varian' => '/assets/gambar/bundle-haru-cover.webp', 'aktif' => true],
+            ['id' => 218802, 'produk_id' => 2188, 'sku' => 'BND-2188-CRSL-BND-HRU-GRY-CRSL-BND-PIN-SQD', 'nama_varian' => 'Grey Tartan', 'tipe_varian' => 'bundle', 'warna' => 'Grey Tartan', 'warna_hex' => '#64748b', 'ukuran' => 'Paket Bundle', 'harga_tambahan' => 0, 'stok' => 5, 'gambar_varian' => '/assets/gambar/bundle-haru-cover.webp', 'aktif' => true],
         ];
 
         foreach ($varianList as $v) {

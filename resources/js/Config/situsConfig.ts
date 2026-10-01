@@ -5,13 +5,17 @@
 
 export interface HeroSlideCMS {
     id: string | number;
+    tag: string;
     judul: string;
-    subjudul?: string;
-    gambar_desktop: string;
-    gambar_mobile: string;
-    tautan: string;
+    subjudul: string;
+    gambar: string;
+    gambar_desktop?: string;
+    gambar_mobile?: string;
+    tombol: string;
     tombol_label?: string;
-    alt_teks: string;
+    tautan: string;
+    alt: string;
+    alt_teks?: string;
 }
 
 export interface MascotCharacter {
@@ -101,26 +105,79 @@ export const SITUS_CONFIG: SitusConfig = {
 
     heroSlidesCMS: [
         {
-            id: "bts-2026",
-            judul: "Back to School Collection 2026",
+            id: "bts-hero-main",
+            tag: "BTS ESSENTIALS",
+            judul: "Back to School with Odin & Friends",
             subjudul:
-                "Tingkatkan semangat harimu bersama ransel dan perlengkapan terbaru dari CRSL.",
-            gambar_desktop: "/assets/gambar/hero-bts-desktop.webp",
-            gambar_mobile: "/assets/gambar/hero-bts-mobile.webp",
+                "Ransel water-repellent, kapasitas laptop 14 inci, dan kompartemen lengkap.",
+            gambar: "/assets/gambar/banner-hero-main.webp",
+            gambar_desktop: "/assets/gambar/banner-hero-main.webp",
+            gambar_mobile: "/assets/gambar/banner-hero-main.webp",
+            tombol: "Lihat Ransel",
+            tombol_label: "Lihat Ransel",
             tautan: "/katalog?kategori=tas",
-            tombol_label: "Jelajahi Koleksi",
-            alt_teks: "Koleksi Back to School CRSL Official Store",
+            alt: "CRSL Back to School Essentials",
+            alt_teks: "CRSL Back to School Essentials",
         },
         {
-            id: "new-arrival-apparel",
-            judul: "New Daily Tees & Outerwear",
+            id: "new-season-animals",
+            tag: "NEW SEASON",
+            judul: "Animals as your Bestfriends!",
             subjudul:
-                "Bahan katun premium lembut dengan bordir karakter maskot eksklusif.",
-            gambar_desktop: "/assets/gambar/hero-apparel-desktop.webp",
-            gambar_mobile: "/assets/gambar/hero-apparel-mobile.webp",
-            tautan: "/katalog?urutan=terbaru",
-            tombol_label: "Lihat New Arrival",
-            alt_teks: "Koleksi Apparel Terbaru CRSL Official",
+                "Merchandise karakter hewan lucu & fungsional untuk menemani hari-harimu.",
+            gambar: "/assets/gambar/banner-1.webp",
+            gambar_desktop: "/assets/gambar/banner-1.webp",
+            gambar_mobile: "/assets/gambar/banner-1.webp",
+            tombol: "Adopt Now",
+            tombol_label: "Adopt Now",
+            tautan: "/katalog",
+            alt: "CRSL Koleksi Terbaru",
+            alt_teks: "CRSL Koleksi Terbaru",
+        },
+        {
+            id: "everyday-hydration",
+            tag: "EVERYDAY HYDRATION",
+            judul: "Tumbler Termos 12 Jam Dingin",
+            subjudul:
+                "Stainless steel food-grade anti tumpah dengan karakter imut Popo si Panda.",
+            gambar: "/assets/gambar/banner-tumbler.webp",
+            gambar_desktop: "/assets/gambar/banner-tumbler.webp",
+            gambar_mobile: "/assets/gambar/banner-tumbler.webp",
+            tombol: "Pilih Tumbler",
+            tombol_label: "Pilih Tumbler",
+            tautan: "/katalog?kategori=aksesoris",
+            alt: "CRSL Tumbler Collection",
+            alt_teks: "CRSL Tumbler Collection",
+        },
+        {
+            id: "cassie-wallet",
+            tag: "BEST SELLER",
+            judul: "Compact & Stylish Cassie Wallet",
+            subjudul:
+                "Dompet kanvas lipat wanita dengan motif plaid ikonik dan slot kartu lengkap.",
+            gambar: "/assets/gambar/banner-cassie.webp",
+            gambar_desktop: "/assets/gambar/banner-cassie.webp",
+            gambar_mobile: "/assets/gambar/banner-cassie.webp",
+            tombol: "Beli Cassie Wallet",
+            tombol_label: "Beli Cassie Wallet",
+            tautan: "/katalog?kategori=aksesoris",
+            alt: "CRSL Cassie Wallet",
+            alt_teks: "CRSL Cassie Wallet",
+        },
+        {
+            id: "five-squad",
+            tag: "SPECIAL EDITION",
+            judul: "Meet The 5 Bestfriends Squad",
+            subjudul:
+                "Temukan kepribadianmu bersama Odin, Chilo, Pigko, Popo, dan Choco.",
+            gambar: "/assets/gambar/banner-2.webp",
+            gambar_desktop: "/assets/gambar/banner-2.webp",
+            gambar_mobile: "/assets/gambar/banner-2.webp",
+            tombol: "Kenali Karakter",
+            tombol_label: "Kenali Karakter",
+            tautan: "/katalog",
+            alt: "CRSL Animal Characters",
+            alt_teks: "CRSL Animal Characters",
         },
     ],
 

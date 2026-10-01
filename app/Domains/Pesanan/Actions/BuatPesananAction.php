@@ -318,18 +318,22 @@ class BuatPesananAction
 
         foreach ($keranjang as $item) {
             $vid = $item['varian_id'] ?? $item['produk_varian_id'] ?? null;
-            $pid = $item['produk_id'] ?? null;
+            $pid = $item['produk_id'] ?? $item['bundle_id'] ?? null;
             $rawId = $item['id'] ?? null;
 
-            if ($vid) {
+            if (!$pid && is_string($rawId) && preg_match('/(?:bundle|buynow)-(\d+)/', $rawId, $m)) {
+                $pid = (int)$m[1];
+            }
+
+            if ($vid && is_numeric($vid)) {
                 $varianIds[] = (int)$vid;
-            } elseif ($rawId) {
+            } elseif ($rawId && is_numeric($rawId)) {
                 $varianIds[] = (int)$rawId;
             }
 
-            if ($pid) {
+            if ($pid && is_numeric($pid)) {
                 $produkIds[] = (int)$pid;
-            } elseif ($rawId) {
+            } elseif ($rawId && is_numeric($rawId)) {
                 $produkIds[] = (int)$rawId;
             }
         }
@@ -351,28 +355,39 @@ class BuatPesananAction
 
         foreach ($keranjang as $index => $item) {
             $vid = (int)($item['varian_id'] ?? $item['produk_varian_id'] ?? 0);
-            $pid = (int)($item['produk_id'] ?? 0);
-            $rawId = (int)($item['id'] ?? 0);
+            $pid = (int)($item['produk_id'] ?? $item['bundle_id'] ?? 0);
+            $rawId = $item['id'] ?? null;
+
+            if ($pid === 0 && is_string($rawId) && preg_match('/(?:bundle|buynow)-(\d+)/', $rawId, $m)) {
+                $pid = (int)$m[1];
+            }
+
+            $numericRawId = is_numeric($rawId) ? (int)$rawId : 0;
             $jumlah = max(1, (int)($item['jumlah'] ?? $item['quantity'] ?? 1));
 
             // Resolusi Model Varian
             $varian = null;
             if ($vid > 0 && $varians->has($vid)) {
                 $varian = $varians->get($vid);
-            } elseif ($vid === 0 && $rawId > 0 && $varians->has($rawId)) {
-                $varian = $varians->get($rawId);
+            } elseif ($vid === 0 && $numericRawId > 0 && $varians->has($numericRawId)) {
+                $varian = $varians->get($numericRawId);
             }
 
             // Resolusi Model Produk
             $produk = null;
             if ($pid > 0 && $produks->has($pid)) {
                 $produk = $produks->get($pid);
-            } elseif ($rawId > 0 && $produks->has($rawId)) {
-                $produk = $produks->get($rawId);
+            } elseif ($numericRawId > 0 && $produks->has($numericRawId)) {
+                $produk = $produks->get($numericRawId);
             }
 
             if (!$produk && $varian?->produk) {
                 $produk = $varian->produk;
+            }
+
+            // Fallback: Jika varian belum ter-resolve tapi produk berjenis bundle atau punya varian
+            if ($produk && !$varian) {
+                $varian = $produk->varian()->first();
             }
 
             if (!$produk && !$varian) {
@@ -382,7 +397,8 @@ class BuatPesananAction
                     'resolved_pid' => $pid,
                     'raw_id'       => $rawId,
                 ]);
-                throw new Exception("Produk atau varian tidak ditemukan di database (Item #" . ($index + 1) . ").");
+                $displayIdx = is_numeric($index) ? ((int)$index + 1) : $index;
+                throw new Exception("Produk atau varian tidak ditemukan di database (Item #{$displayIdx}).");
             }
 
             $hargaDb = (float)($varian?->harga ?? 0);
