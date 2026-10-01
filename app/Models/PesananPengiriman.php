@@ -18,6 +18,9 @@ class PesananPengiriman extends Model
         'layanan',
         'nomor_resi',
         'biteship_order_id',
+        'biteship_tracking_id',
+        'biteship_waybill_id',
+        'tracking_url',
         'tracking_status',
         'json_payload',
     ];
