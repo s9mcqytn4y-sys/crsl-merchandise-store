@@ -399,7 +399,7 @@ export default function PesananIndex({ pesanan }: PesananIndexProps) {
                                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-3.5 border-t border-slate-100 text-xs">
                                         {/* Informasi Kurir */}
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <Truck className="w-4 h-4 text-slate-400 shrink-0 stroke-[2]" />
+                                            <Truck className="w-4 h-4 text-slate-400 shrink-0 stroke-2" />
                                             <span className="text-slate-500 font-medium">
                                                 Ekspedisi:
                                             </span>

@@ -227,7 +227,7 @@ export default function ShipmentSelectModal({
                                     onError={() => handleLogoError(itemKey)}
                                 />
                             ) : (
-                                <Truck className="w-4 h-4 text-slate-400 stroke-[2]" />
+                                <Truck className="w-4 h-4 text-slate-400 stroke-2" />
                             )}
                         </div>
 
@@ -456,7 +456,7 @@ export default function ShipmentSelectModal({
                                         onClick={handleConfirm}
                                         disabled={!activeSelectedCourier}
                                         className={cn(
-                                            "w-full min-h-[46px] py-3 px-6 rounded-2xl font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-md flex items-center justify-center gap-2",
+                                            "w-full min-h-11.5 py-3 px-6 rounded-2xl font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-md flex items-center justify-center gap-2",
                                             activeSelectedCourier
                                                 ? "bg-primary hover:bg-primary-hover active:scale-[0.99] text-white shadow-sm hover:shadow-md"
                                                 : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none",

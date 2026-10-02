@@ -324,7 +324,7 @@ export default function DeliveryEstimator({
                     onClick={() => setIsExpanded(!isExpanded)}
                     className="text-primary hover:text-primary-hover font-bold inline-flex items-center gap-1 hover:underline cursor-pointer text-right min-w-0"
                 >
-                    <span className="truncate max-w-[200px] sm:max-w-[260px]">
+                    <span className="truncate max-w-50 sm:max-w-[260px]">
                         {selectedArea
                             ? `${selectedArea.kota}, ${selectedArea.kecamatan}`
                             : "Pilih wilayah tujuan"}
@@ -497,7 +497,7 @@ export default function DeliveryEstimator({
                                                 </span>
                                                 {isBestPrice && (
                                                     <span className="inline-flex items-center gap-0.5 text-[9px] font-black uppercase px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md">
-                                                        <Check className="w-2.5 h-2.5 stroke-[3]" />
+                                                        <Check className="w-2.5 h-2.5 stroke-3" />
                                                         <span>Termurah</span>
                                                     </span>
                                                 )}

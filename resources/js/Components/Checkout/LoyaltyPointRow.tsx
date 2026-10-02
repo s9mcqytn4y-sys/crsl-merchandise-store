@@ -56,7 +56,7 @@ export default function LoyaltyPointRow({
                             : "bg-amber-100 text-amber-700",
                     )}
                 >
-                    <Coins className="w-5 h-5 stroke-[2]" />
+                    <Coins className="w-5 h-5 stroke-2" />
                 </div>
 
                 <div className="space-y-0.5 min-w-0">

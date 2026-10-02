@@ -131,7 +131,7 @@ export default function RecommendedProducts({
                                         aria-label={`Tambah ${prod.nama_produk} ke keranjang`}
                                     >
                                         {isAdded ? (
-                                            <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                            <Check className="w-3.5 h-3.5 stroke-3" />
                                         ) : (
                                             <ShoppingBag className="w-3.5 h-3.5" />
                                         )}

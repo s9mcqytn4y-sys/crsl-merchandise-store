@@ -52,7 +52,7 @@ export default function DrawerFooter({
                     <button
                         type="button"
                         disabled
-                        className="w-full min-h-[44px] py-3.5 px-6 rounded-full bg-slate-200 text-slate-400 font-extrabold text-sm sm:text-base cursor-not-allowed text-center transition-all select-none"
+                        className="w-full min-h-11 py-3.5 px-6 rounded-full bg-slate-200 text-slate-400 font-extrabold text-sm sm:text-base cursor-not-allowed text-center transition-all select-none"
                         aria-label="Keranjang belanja kosong"
                     >
                         Pilih Produk Dahulu
@@ -61,7 +61,7 @@ export default function DrawerFooter({
                     <Link
                         href="/pembayaran"
                         onClick={onClose}
-                        className="w-full min-h-[44px] py-3.5 px-6 rounded-full bg-primary hover:bg-primary-hover active:scale-[0.99] text-white font-extrabold text-sm sm:text-base shadow-md hover:shadow-lg flex items-center justify-center text-center transition-all cursor-pointer"
+                        className="w-full min-h-11 py-3.5 px-6 rounded-full bg-primary hover:bg-primary-hover active:scale-[0.99] text-white font-extrabold text-sm sm:text-base shadow-md hover:shadow-lg flex items-center justify-center text-center transition-all cursor-pointer"
                         aria-label="Lanjut ke halaman pembayaran"
                     >
                         Lanjut ke Pembayaran

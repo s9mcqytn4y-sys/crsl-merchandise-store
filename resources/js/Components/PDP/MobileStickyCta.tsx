@@ -34,7 +34,7 @@ export default function MobileStickyCta({
             <div className="max-w-md mx-auto flex items-center justify-between gap-3">
                 {/* Informasi Harga & Varian Singkat */}
                 <div className="flex flex-col min-w-0 pr-1">
-                    <span className="text-[11px] font-medium text-slate-500 truncate max-w-[130px]">
+                    <span className="text-[11px] font-medium text-slate-500 truncate max-w-32.5">
                         {namaVarian || "Pilihan Standar"}
                     </span>
                     <div className="flex items-baseline gap-1.5">

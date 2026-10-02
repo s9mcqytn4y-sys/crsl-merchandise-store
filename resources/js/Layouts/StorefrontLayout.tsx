@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useMemo } from "react";
 import { Head, router, usePage } from "@inertiajs/react";
-import { Toaster, toast } from "sonner";
+import { toast } from "sonner";
 import BilahAtas from "../Components/BilahAtas";
 import PengingatPesananBelumBayar from "../Components/PengingatPesananBelumBayar";
 import NavigasiUtama from "../Components/NavigasiUtama";
@@ -110,6 +110,9 @@ export default function StorefrontLayout({ children }: StorefrontLayoutProps) {
 
         lastToastRef.current = flashMessage;
 
+        // Tutup notifikasi sebelumnya agar tidak menumpuk
+        toast.dismiss();
+
         if (flash?.sukses) {
             toast.success(flash.sukses);
         } else if (flash?.error) {
@@ -137,18 +140,6 @@ export default function StorefrontLayout({ children }: StorefrontLayoutProps) {
             <Head>
                 <meta name="theme-color" content="#E52027" />
             </Head>
-
-            {/* Sonner Toast Notification */}
-            <Toaster
-                position="top-center"
-                richColors
-                theme="light"
-                toastOptions={{
-                    style: {
-                        borderRadius: "16px",
-                    },
-                }}
-            />
 
             {/* Aksesibilitas: Skip Link ke Konten Utama */}
             <a

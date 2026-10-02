@@ -48,7 +48,7 @@ export default function ProductInfo({
                     Katalog
                 </Link>
                 <span>/</span>
-                <span className="text-slate-800 font-semibold truncate max-w-[200px]">
+                <span className="text-slate-800 font-semibold truncate max-w-50">
                     {kategoriNama || "Merchandise"}
                 </span>
             </div>

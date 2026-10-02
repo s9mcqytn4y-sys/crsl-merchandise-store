@@ -189,7 +189,7 @@ export default function ProfileMyInfo({ user, className }: ProfileMyInfoProps) {
                                 tabIndex={-1}
                                 className="w-full pl-10 pr-4 py-2.5 bg-slate-100/80 border border-slate-200/90 rounded-2xl text-xs sm:text-sm text-slate-500 cursor-not-allowed select-none font-medium"
                             />
-                            <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none stroke-[2]" />
+                            <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none stroke-2" />
                         </div>
                     </div>
 
@@ -217,7 +217,7 @@ export default function ProfileMyInfo({ user, className }: ProfileMyInfoProps) {
                                 tabIndex={-1}
                                 className="w-full pl-10 pr-4 py-2.5 bg-slate-100/80 border border-slate-200/90 rounded-2xl text-xs sm:text-sm text-slate-500 cursor-not-allowed select-none font-mono font-medium"
                             />
-                            <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none stroke-[2]" />
+                            <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none stroke-2" />
                         </div>
                     </div>
 
@@ -279,7 +279,7 @@ export default function ProfileMyInfo({ user, className }: ProfileMyInfoProps) {
                             </div>
                         ) : (
                             <div className="p-3 bg-slate-100/80 border border-slate-200/90 rounded-2xl flex items-center gap-2 text-xs text-slate-500 font-medium">
-                                <Calendar className="w-4 h-4 text-slate-400 shrink-0 stroke-[2]" />
+                                <Calendar className="w-4 h-4 text-slate-400 shrink-0 stroke-2" />
                                 <span>
                                     Tanggal lahir belum diatur pada akun Anda.
                                 </span>

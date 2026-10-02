@@ -254,7 +254,7 @@ function LiveTrackingEmbed({
                 </a>
             </div>
 
-            <div className="relative w-full h-[520px] bg-slate-50">
+            <div className="relative w-full h-130 bg-slate-50">
                 {isLoading && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/90 z-10 gap-3">
                         <Loader2 className="w-7 h-7 text-primary animate-spin" />

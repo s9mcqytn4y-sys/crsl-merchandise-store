@@ -135,7 +135,7 @@ export default function ProductActionButtons({
                     >
                         <Minus className="w-3.5 h-3.5" />
                     </button>
-                    <span className="px-4 text-xs font-extrabold text-slate-900 min-w-[36px] text-center">
+                    <span className="px-4 text-xs font-extrabold text-slate-900 min-w-9 text-center">
                         {kuantitas}
                     </span>
                     <button

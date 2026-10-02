@@ -739,7 +739,7 @@ export default function DetailBundle({
                                     <button
                                         type="button"
                                         onClick={handleAddToCart}
-                                        className="w-full min-h-[48px] border-2 border-primary text-primary hover:bg-red-50/50 font-black text-sm rounded-2xl flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.99] shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                        className="w-full min-h-12 border-2 border-primary text-primary hover:bg-red-50/50 font-black text-sm rounded-2xl flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.99] shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                     >
                                         <ShoppingBag className="w-4 h-4 stroke-[2.2]" />
                                         <span>Tambah ke Keranjang</span>
@@ -748,9 +748,9 @@ export default function DetailBundle({
                                     <button
                                         type="button"
                                         onClick={handleBuyNow}
-                                        className="w-full min-h-[48px] bg-primary hover:bg-primary-hover text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.99] shadow-sm hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                        className="w-full min-h-12 bg-primary hover:bg-primary-hover text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.99] shadow-sm hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                     >
-                                        <Zap className="w-4 h-4 fill-white stroke-[2]" />
+                                        <Zap className="w-4 h-4 fill-white stroke-2" />
                                         <span>Beli Sekarang</span>
                                     </button>
 
@@ -763,7 +763,7 @@ export default function DetailBundle({
                                         onClick={() =>
                                             setIsInquiryModalOpen(true)
                                         }
-                                        className="w-full min-h-[44px] border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                        className="w-full min-h-11 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                     >
                                         <MessageCircle className="w-4 h-4 text-slate-500 stroke-[2.2]" />
                                         <span>Tanya CS Seputar Bundle Ini</span>

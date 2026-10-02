@@ -287,7 +287,7 @@ export default function AddToCartModal() {
                                                             )
                                                         }
                                                         className={cn(
-                                                            "relative flex flex-col items-center justify-between p-2 rounded-2xl border transition-all text-center min-h-[92px] group",
+                                                            "relative flex flex-col items-center justify-between p-2 rounded-2xl border transition-all text-center min-h-23 group",
                                                             isSelected &&
                                                                 "border-primary bg-red-50/20 ring-2 ring-primary/20 shadow-2xs",
                                                             !isSelected &&
@@ -299,7 +299,7 @@ export default function AddToCartModal() {
                                                     >
                                                         {isSelected && (
                                                             <div className="absolute top-1.5 right-1.5 w-4 h-4 bg-primary text-white rounded-full flex items-center justify-center">
-                                                                <Check className="w-2.5 h-2.5 stroke-[3]" />
+                                                                <Check className="w-2.5 h-2.5 stroke-3" />
                                                             </div>
                                                         )}
 

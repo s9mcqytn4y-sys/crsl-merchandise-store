@@ -300,7 +300,7 @@ export default function Catalog({
                     /* Empty State */
                     <div className="py-16 text-center space-y-4 max-w-md mx-auto">
                         <div className="w-16 h-16 rounded-3xl bg-red-50 text-primary border border-red-100 flex items-center justify-center mx-auto shadow-2xs">
-                            <SlidersHorizontal className="w-7 h-7 stroke-[2]" />
+                            <SlidersHorizontal className="w-7 h-7 stroke-2" />
                         </div>
                         <div className="space-y-1">
                             <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">

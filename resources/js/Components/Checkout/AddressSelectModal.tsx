@@ -111,7 +111,7 @@ export default function AddressSelectModal({
                             leaveFrom="opacity-100 scale-100 translate-y-0"
                             leaveTo="opacity-0 scale-95 -translate-y-2"
                         >
-                            <DialogPanel className="w-full max-w-[520px] transform overflow-hidden rounded-3xl bg-white p-5 sm:p-7 text-left align-middle shadow-2xl transition-all border border-slate-200/90 flex flex-col max-h-[calc(100dvh-3rem)]">
+                            <DialogPanel className="w-full max-w-130 transform overflow-hidden rounded-3xl bg-white p-5 sm:p-7 text-left align-middle shadow-2xl transition-all border border-slate-200/90 flex flex-col max-h-[calc(100dvh-3rem)]">
                                 {/* Header Modal */}
                                 <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 shrink-0">
                                     <div className="flex items-center gap-2.5">
@@ -280,7 +280,7 @@ export default function AddressSelectModal({
                                                         {/* Indikator Pilihan Centang Merah */}
                                                         {isSelected ? (
                                                             <div className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
-                                                                <Check className="w-3 h-3 stroke-[3]" />
+                                                                <Check className="w-3 h-3 stroke-3" />
                                                             </div>
                                                         ) : (
                                                             <div className="w-5 h-5 rounded-full border border-slate-300 shrink-0 mt-0.5" />
@@ -338,7 +338,7 @@ export default function AddressSelectModal({
                                             onClose();
                                             onOpenAddModal();
                                         }}
-                                        className="w-full min-h-[46px] py-3 bg-primary hover:bg-primary-hover active:scale-[0.99] text-white rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                                        className="w-full min-h-11.5 py-3 bg-primary hover:bg-primary-hover active:scale-[0.99] text-white rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
                                     >
                                         <Plus className="w-4 h-4 stroke-[2.5]" />
                                         <span>Tambah Alamat Baru</span>

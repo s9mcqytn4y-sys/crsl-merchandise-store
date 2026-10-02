@@ -59,7 +59,7 @@ export default function VoucherRow({
                             : "bg-white text-slate-400 border border-slate-200/80 group-hover:text-slate-600",
                     )}
                 >
-                    <TicketPercent className="w-5 h-5 stroke-[2]" />
+                    <TicketPercent className="w-5 h-5 stroke-2" />
                 </div>
 
                 <div className="space-y-0.5 min-w-0">

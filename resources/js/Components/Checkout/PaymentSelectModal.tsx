@@ -372,7 +372,7 @@ export default function PaymentSelectModal({
                                                             <div className="shrink-0">
                                                                 {isSelected ? (
                                                                     <span className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center shadow-2xs">
-                                                                        <Check className="w-3 h-3 stroke-[3]" />
+                                                                        <Check className="w-3 h-3 stroke-3" />
                                                                     </span>
                                                                 ) : (
                                                                     <span className="w-5 h-5 rounded-full border border-slate-300 bg-white block" />
@@ -434,7 +434,7 @@ export default function PaymentSelectModal({
                                                         {temporaryId ===
                                                         "qris" ? (
                                                             <span className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center shadow-2xs">
-                                                                <Check className="w-3 h-3 stroke-[3]" />
+                                                                <Check className="w-3 h-3 stroke-3" />
                                                             </span>
                                                         ) : (
                                                             <span className="w-5 h-5 rounded-full border border-slate-300 bg-white block" />
@@ -606,7 +606,7 @@ export default function PaymentSelectModal({
                                         onClick={handleConfirm}
                                         disabled={!selectedItem}
                                         className={cn(
-                                            "w-full min-h-[46px] py-3 px-6 rounded-2xl font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-md flex items-center justify-center gap-2",
+                                            "w-full min-h-11.5 py-3 px-6 rounded-2xl font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-md flex items-center justify-center gap-2",
                                             selectedItem
                                                 ? "bg-primary hover:bg-primary-hover active:scale-[0.99] text-white shadow-sm hover:shadow-md"
                                                 : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none",

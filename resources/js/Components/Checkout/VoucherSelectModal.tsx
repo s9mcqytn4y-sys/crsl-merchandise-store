@@ -478,7 +478,7 @@ export default function VoucherSelectModal({
                                                         <div className="shrink-0 pt-0.5">
                                                             {isSelected ? (
                                                                 <div className="flex items-center gap-1 text-emerald-800 font-bold text-xs bg-emerald-100/90 px-3 py-1.5 rounded-xl border border-emerald-200 font-mono">
-                                                                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                                                    <Check className="w-3.5 h-3.5 stroke-3" />
                                                                     <span>
                                                                         Terpasang
                                                                     </span>

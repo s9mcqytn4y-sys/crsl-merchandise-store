@@ -41,7 +41,7 @@ const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
 const BUTTON_SIZES: Record<ButtonSize, string> = {
     sm: "px-3 py-1.5 text-xs rounded-xl min-h-[34px] gap-1.5",
     md: "px-4 py-2.5 text-xs sm:text-sm rounded-xl min-h-[42px] gap-2",
-    lg: "px-6 py-3.5 text-sm sm:text-base rounded-2xl min-h-[48px] gap-2.5",
+    lg: "px-6 py-3.5 text-sm sm:text-base rounded-2xl min-h-12 gap-2.5",
 };
 
 export default function Button({

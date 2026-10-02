@@ -206,7 +206,7 @@ export default function ProductGalleryMagnifier({
                     role="tablist"
                     aria-label="Daftar foto galeri produk"
                     onKeyDown={handleKeyDown}
-                    className="flex md:flex-col gap-2 sm:gap-2.5 overflow-x-auto md:overflow-y-auto max-h-[540px] w-full md:w-20 lg:w-22 shrink-0 py-1 no-scrollbar scroll-smooth overscroll-contain"
+                    className="flex md:flex-col gap-2 sm:gap-2.5 overflow-x-auto md:overflow-y-auto max-h-135 w-full md:w-20 lg:w-22 shrink-0 py-1 no-scrollbar scroll-smooth overscroll-contain"
                 >
                     {displayImages.map((img, index) => {
                         const isActive = activeIndex === index;

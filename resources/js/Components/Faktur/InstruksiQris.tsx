@@ -119,7 +119,7 @@ export default function InstruksiQris({
                 </div>
 
                 {/* QR Canvas / Image Container */}
-                <div className="p-4 bg-white border border-slate-200/90 rounded-2xl shadow-xs min-h-[240px] flex items-center justify-center w-full max-w-[240px] relative overflow-hidden">
+                <div className="p-4 bg-white border border-slate-200/90 rounded-2xl shadow-xs min-h-60 flex items-center justify-center w-full max-w-60 relative overflow-hidden">
                     {effectiveQrImage ? (
                         <div className="relative group">
                             <img

@@ -47,7 +47,7 @@ export default function DeliveryMessageRow({
                             : "bg-white text-slate-400 border border-slate-200/80 group-hover:text-slate-600",
                     )}
                 >
-                    <MessageSquare className="w-4 h-4 stroke-[2]" />
+                    <MessageSquare className="w-4 h-4 stroke-2" />
                 </div>
 
                 <div className="min-w-0">

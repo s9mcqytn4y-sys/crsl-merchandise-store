@@ -353,7 +353,7 @@ export default function VariantSelector({
                                     aria-checked={isSizeSelected}
                                     onClick={() => onSelectSize(size)}
                                     className={cn(
-                                        "min-w-[44px] px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                                        "min-w-11 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                                         isSizeSelected
                                             ? "border-primary bg-primary text-white shadow-sm scale-[1.02]"
                                             : "border-slate-200 bg-white hover:border-slate-300 text-slate-700 hover:bg-slate-50",

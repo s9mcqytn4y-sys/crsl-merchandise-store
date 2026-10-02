@@ -17,7 +17,6 @@ import {
     Loader2,
     AlertCircle,
 } from "lucide-react";
-import { Toaster } from "sonner";
 import BilahAtas from "../Components/BilahAtas";
 import NavigasiUtama from "../Components/NavigasiUtama";
 import FloatingActionHub from "../Components/FloatingActionHub";
@@ -118,8 +117,6 @@ export default function ProfileLayout({
 
     return (
         <div className="min-h-screen flex flex-col bg-[#F9FAFB] text-slate-800 font-sans relative select-none">
-            <Toaster position="top-center" richColors theme="light" />
-
             {/* Bilah Atas Merah Resmi CRSL */}
             <BilahAtas />
 

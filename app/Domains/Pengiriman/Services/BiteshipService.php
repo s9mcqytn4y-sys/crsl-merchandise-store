@@ -384,6 +384,34 @@ class BiteshipService
         $kurirKode = strtolower((string) ($dataPesanan['kurir'] ?? 'jne'));
         $layananKode = strtolower((string) ($dataPesanan['layanan'] ?? 'reg'));
 
+        // Normalisasi tipe layanan kurir sesuai spesifikasi resmi Biteship v1
+        $layananBiteship = match ($kurirKode) {
+            'sicepat' => match ($layananKode) {
+                'siuntung', 'reg', 'regular', 'standard' => 'standard',
+                'gokil', 'cargo' => 'cargo',
+                'best' => 'best',
+                default => 'standard',
+            },
+            'jnt', 'j&t' => match ($layananKode) {
+                'ez', 'reg', 'regular', 'standard' => 'standard',
+                'jemari' => 'jemari',
+                default => 'standard',
+            },
+            'anteraja' => match ($layananKode) {
+                'reg', 'regular', 'standard' => 'regular',
+                'nextday' => 'next_day',
+                'sameday' => 'same_day',
+                default => 'regular',
+            },
+            'jne' => match ($layananKode) {
+                'reg', 'regular', 'standard' => 'reg',
+                'oke' => 'oke',
+                'yes' => 'yes',
+                default => 'reg',
+            },
+            default => $layananKode,
+        };
+
         // Payload yang telah disesuaikan penuh dengan Biteship API v1
         $payload = [
             // 1. Data Asal (Origin / Pickup)
@@ -422,10 +450,10 @@ class BiteshipService
 
             // 3. Konfigurasi Kurir & Waktu
             'courier_company' => $kurirKode,
-            'courier_type'    => $layananKode,
+            'courier_type'    => $layananBiteship,
             'courier' => [
                 'company' => $kurirKode,
-                'type'    => $layananKode,
+                'type'    => $layananBiteship,
             ],
             'delivery_type'   => 'now',
             'items'           => (array) ($dataPesanan['items'] ?? []),
@@ -579,7 +607,15 @@ class BiteshipService
         $cacheKey = "biteship_track_{$courierCode}_{$identifier}";
 
         return Cache::remember($cacheKey, 60, function () use ($identifier, $courierCode) {
-            if (empty($this->apiKey) || str_contains($identifier, 'MOCK') || str_contains($identifier, 'DEV')) {
+            $upperId = strtoupper($identifier);
+            $lowerId = strtolower($identifier);
+            if (
+                empty($this->apiKey)
+                || str_contains($upperId, 'MOCK')
+                || str_contains($upperId, 'DEV')
+                || str_starts_with($lowerId, 'dev_')
+                || str_starts_with($lowerId, 'mock_')
+            ) {
                 return $this->getMockTracking($identifier, $courierCode);
             }
 
@@ -621,7 +657,11 @@ class BiteshipService
                         }
                     }
 
-                    Log::warning("[Biteship Tracking Error] Status {$response->status()}: {$response->body()}");
+                    if (!app()->isLocal()) {
+                        Log::warning("[Biteship Tracking Error] Status {$response->status()}: {$response->body()}");
+                    } else {
+                        Log::info("[Biteship Tracking Local Fallback] Status {$response->status()} untuk {$identifier}, beralih ke simulasi.");
+                    }
                 } catch (\Throwable $e) {
                     Log::error("[Biteship Tracking Exception] {$e->getMessage()}");
                 }

@@ -139,7 +139,7 @@ export default function LoginPasswordStep({
                     type="submit"
                     disabled={!canSubmit}
                     className={cn(
-                        "w-full min-h-[48px] py-3 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-xs",
+                        "w-full min-h-12 py-3 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-xs",
                         canSubmit
                             ? "bg-primary hover:bg-primary-hover active:scale-[0.99] text-white cursor-pointer"
                             : "bg-slate-200 text-slate-400 cursor-not-allowed select-none",

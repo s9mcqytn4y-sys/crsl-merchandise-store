@@ -724,7 +724,7 @@ export default function FilterSortDrawer({
                                                 {isSelected && (
                                                     <Check
                                                         className={cn(
-                                                            "w-3.5 h-3.5 stroke-[3]",
+                                                            "w-3.5 h-3.5 stroke-3",
                                                             c.isDark
                                                                 ? "text-white"
                                                                 : "text-slate-900",
@@ -773,7 +773,7 @@ export default function FilterSortDrawer({
                                                     handleSizeClick(s)
                                                 }
                                                 className={cn(
-                                                    "min-w-[44px] py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-2xs",
+                                                    "min-w-11 py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-2xs",
                                                     isSelected
                                                         ? "border-primary bg-red-50 text-primary ring-1 ring-primary"
                                                         : "border-slate-200 text-slate-700 bg-white hover:border-slate-300 hover:bg-slate-50",

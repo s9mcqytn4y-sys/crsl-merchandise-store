@@ -9,6 +9,7 @@ import { createRoot } from "react-dom/client";
 import { createInertiaApp } from "@inertiajs/react";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 
+import { Toaster } from "sonner";
 import ErrorBoundary from "./Components/ErrorBoundary";
 
 createInertiaApp({
@@ -25,6 +26,19 @@ createInertiaApp({
         createRoot(el).render(
             <ErrorBoundary>
                 <App {...props} />
+                <Toaster
+                    position="top-center"
+                    richColors
+                    closeButton
+                    expand={false}
+                    visibleToasts={1}
+                    duration={3500}
+                    toastOptions={{
+                        style: {
+                            borderRadius: "16px",
+                        },
+                    }}
+                />
             </ErrorBoundary>,
         );
     },

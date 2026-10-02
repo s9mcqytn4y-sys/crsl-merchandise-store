@@ -207,7 +207,7 @@ export default function FloatingActionHub({
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="cs-support-title"
-                        className="w-[310px] sm:w-[340px] max-w-[calc(100vw-32px)] bg-white rounded-3xl shadow-2xl border border-slate-200/90 p-5 flex flex-col gap-4 animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-200 z-50 text-left"
+                        className="w-77.5 sm:w-85 max-w-[calc(100vw-32px)] bg-white rounded-3xl shadow-2xl border border-slate-200/90 p-5 flex flex-col gap-4 animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-200 z-50 text-left"
                     >
                         {/* Header Dialog */}
                         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -291,7 +291,7 @@ export default function FloatingActionHub({
                     type="button"
                     onClick={() => setIsWaOpen(!isWaOpen)}
                     className={cn(
-                        "w-12 h-12 sm:w-[52px] sm:h-[52px] rounded-2xl shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#25D366] cursor-pointer border-2 border-white",
+                        "w-12 h-12 sm:w-13 sm:h-13 rounded-2xl shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#25D366] cursor-pointer border-2 border-white",
                         isWaOpen
                             ? "bg-slate-900 text-white hover:bg-slate-800"
                             : "bg-[#25D366] hover:bg-[#20ba5a] text-white",

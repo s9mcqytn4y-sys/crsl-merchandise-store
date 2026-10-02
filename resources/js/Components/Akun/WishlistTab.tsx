@@ -138,7 +138,7 @@ export default function WishlistTab({
                 )}
             >
                 <div className="w-14 h-14 rounded-2xl bg-red-50 text-primary border border-red-100 flex items-center justify-center mx-auto shadow-2xs">
-                    <Heart className="w-7 h-7 stroke-[2]" />
+                    <Heart className="w-7 h-7 stroke-2" />
                 </div>
                 <div className="space-y-1">
                     <h3 className="font-black text-base text-slate-900 tracking-tight">
@@ -224,7 +224,7 @@ export default function WishlistTab({
                                     {isDeleting ? (
                                         <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-500" />
                                     ) : (
-                                        <Trash2 className="w-4 h-4 stroke-[2]" />
+                                        <Trash2 className="w-4 h-4 stroke-2" />
                                     )}
                                 </button>
                             </div>

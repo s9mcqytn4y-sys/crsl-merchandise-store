@@ -13,7 +13,7 @@ import {
     Loader2,
     ShoppingBag,
 } from "lucide-react";
-import { Toaster, toast } from "sonner";
+import { toast } from "sonner";
 
 function getXsrfToken(): string {
     if (typeof document === "undefined") return "";
@@ -136,7 +136,7 @@ const DEFAULT_COURIERS: CourierOption[] = [
     {
         id: "sicepat_reg",
         kurir_kode: "sicepat",
-        layanan_kode: "siuntung",
+        layanan_kode: "standard",
         nama: "SiCepat",
         layanan: "SiUntung (Reguler)",
         biaya: 50000,
@@ -708,7 +708,7 @@ export default function Pembayaran({
                     } else {
                         kosongkanKeranjang();
                     }
-                    toast.success("Pesanan berhasil dibuat!");
+                    toast.dismiss();
                 },
                 onError: (err) => {
                     setErrors(err as Record<string, string>);
@@ -727,7 +727,6 @@ export default function Pembayaran({
     return (
         <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex flex-col select-none">
             <Head title="Checkout Pesanan - CRSL Official Store" />
-            <Toaster position="top-center" richColors theme="light" />
 
             {/* Banner Promo Atas */}
             <div className="bg-primary text-white text-[11px] sm:text-xs font-bold py-2 text-center tracking-wider px-4">
@@ -788,7 +787,7 @@ export default function Pembayaran({
                     >
                         <div className="flex items-center gap-1.5 text-emerald-700 font-bold">
                             <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[11px] font-black">
-                                <Check className="w-3 h-3 stroke-[3]" />
+                                <Check className="w-3 h-3 stroke-3" />
                             </span>
                             <span className="hidden md:inline">
                                 1. Keranjang
