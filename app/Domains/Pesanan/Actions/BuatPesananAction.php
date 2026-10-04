@@ -238,12 +238,16 @@ class BuatPesananAction
             }
 
             if ($voucherDipakai && $penggunaId) {
-                VoucherTerpakai::create([
-                    'voucher_id' => $voucherDipakai->id,
-                    'pengguna_id' => $penggunaId,
-                    'pesanan_id' => $pesanan->id,
-                    'dipakai_pada' => now(),
-                ]);
+                try {
+                    VoucherTerpakai::create([
+                        'voucher_id' => $voucherDipakai->id,
+                        'pengguna_id' => $penggunaId,
+                        'pesanan_id' => $pesanan->id,
+                        'dipakai_pada' => now(),
+                    ]);
+                } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+                    throw new Exception("Voucher {$voucherDipakai->kode} sedang atau sudah pernah digunakan oleh akun Anda.");
+                }
             }
 
             if ($penggunaId) {
