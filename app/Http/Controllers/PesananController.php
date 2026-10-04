@@ -68,6 +68,10 @@ class PesananController extends Controller
             $q->where('nomor_pesanan', $decoded)
                 ->orWhere('nomor_pesanan', $versiSlash)
                 ->orWhere('nomor_pesanan', $versiStrip)
+                ->orWhereRaw("REPLACE(nomor_pesanan, '/', '-') = ?", [$decoded])
+                ->orWhereRaw("REPLACE(nomor_pesanan, '/', '-') = ?", [$versiStrip])
+                ->orWhereRaw("LOWER(REPLACE(nomor_pesanan, '/', '-')) = ?", [strtolower($decoded)])
+                ->orWhereRaw("LOWER(REPLACE(nomor_pesanan, '/', '-')) = ?", [strtolower($versiStrip)])
                 ->orWhereRaw('LOWER(nomor_pesanan) = ?', [strtolower($decoded)])
                 ->orWhereRaw('LOWER(nomor_pesanan) = ?', [strtolower($versiSlash)])
                 ->orWhereRaw('LOWER(nomor_pesanan) = ?', [strtolower($versiStrip)]);

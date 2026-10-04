@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { usePage } from "@inertiajs/react";
 import {
     Dialog,
     DialogPanel,
@@ -52,10 +53,15 @@ export default function VoucherModal({
     onContinueShopping,
     onSelectVoucher,
     activeVoucherCode,
-    vouchers = [],
+    vouchers: propVouchers = [],
     cartTotal = 0,
     className,
 }: VoucherModalProps) {
+    const page = usePage<{ vouchers?: VoucherItem[] }>();
+    const vouchers = (propVouchers && propVouchers.length > 0)
+        ? propVouchers
+        : (page.props.vouchers || []);
+
     const [copiedCode, setCopiedCode] = useState<string | null>(null);
     const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 

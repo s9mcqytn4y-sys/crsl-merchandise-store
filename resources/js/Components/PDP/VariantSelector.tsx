@@ -172,16 +172,16 @@ export default function VariantSelector({
 
     return (
         <div className={cn("space-y-5 select-none", className)}>
-            {/* 1. Pemilih Warna / Varian Utama */}
+            {/* 1. Pemilih Warna / Varian Utama (Thumbnail Cards) */}
             {variants.length > 0 && (
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                     <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-slate-900 tracking-tight">
-                            Pilihan Varian
+                        <span className="font-extrabold text-slate-900 tracking-tight uppercase">
+                            Warna
                             {activeColorName && (
-                                <span className="font-normal text-slate-500 ml-1.5">
+                                <span className="font-normal text-slate-500 ml-1.5 normal-case">
                                     :{" "}
-                                    <strong className="font-bold text-slate-800">
+                                    <strong className="font-bold text-slate-800 uppercase">
                                         {activeColorName}
                                     </strong>
                                 </span>
@@ -190,7 +190,7 @@ export default function VariantSelector({
 
                         {currentVariantStock > 0 &&
                             currentVariantStock <= 5 && (
-                                <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200/90 px-2 py-0.5 rounded-md">
+                                <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200/90 px-2 py-0.5 rounded-md font-mono">
                                     Sisa {currentVariantStock} item
                                 </span>
                             )}
@@ -204,8 +204,8 @@ export default function VariantSelector({
 
                     <div
                         role="radiogroup"
-                        aria-label="Pilihan varian produk"
-                        className="flex flex-wrap gap-2 sm:gap-2.5"
+                        aria-label="Pilihan varian warna produk"
+                        className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5 sm:gap-3"
                     >
                         {variants.map((v) => {
                             const isSelected = selectedVariant?.id === v.id;
@@ -221,13 +221,13 @@ export default function VariantSelector({
 
                             const label =
                                 sizePart && colorPart && !hasMultipleSizes
-                                    ? `${colorPart.toUpperCase()} • ${sizePart.toUpperCase()}`
+                                    ? `${colorPart} • ${sizePart}`
                                     : (
                                           colorPart ||
                                           sizePart ||
                                           v.sku ||
                                           "Varian"
-                                      ).toUpperCase();
+                                      );
 
                             const extraPrice = Number(v.harga_tambahan || 0);
                             const variantImgUrl = normalizeMediaUrl(
@@ -244,44 +244,75 @@ export default function VariantSelector({
                                     disabled={isSoldOut}
                                     onClick={() => handleVariantClick(v)}
                                     className={cn(
-                                        "group relative overflow-hidden flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                                        "group relative flex flex-col items-center p-1.5 rounded-xl border text-center transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer select-none",
                                         isSelected
-                                            ? "border-primary bg-red-50/40 text-primary ring-2 ring-primary/20 shadow-xs"
+                                            ? "border-slate-900 bg-slate-50/80 ring-2 ring-slate-900/10 shadow-sm"
                                             : isSoldOut
-                                              ? "border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed opacity-60"
-                                              : "border-slate-200 hover:border-slate-300 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs",
+                                              ? "border-slate-200 bg-slate-50/60 opacity-50 cursor-not-allowed"
+                                              : "border-slate-200/90 hover:border-slate-400 bg-white hover:bg-slate-50/50 shadow-2xs",
                                     )}
                                     aria-label={`${label} ${isSoldOut ? "(Stok Habis)" : ""}`}
                                 >
-                                    {/* Thumbnail Swatch */}
-                                    {variantImgUrl ? (
-                                        <img
-                                            src={variantImgUrl}
-                                            alt=""
-                                            aria-hidden="true"
-                                            className={cn(
-                                                "w-4 h-4 rounded-full object-cover shrink-0 border border-slate-200",
-                                                isSoldOut &&
-                                                    "grayscale opacity-50",
-                                            )}
-                                        />
-                                    ) : v.warna_hex ? (
-                                        <span
-                                            aria-hidden="true"
-                                            className={cn(
-                                                "w-3.5 h-3.5 rounded-full shrink-0 border border-black/15 shadow-2xs",
-                                                isSoldOut && "opacity-40",
-                                            )}
-                                            style={{
-                                                backgroundColor: v.warna_hex,
-                                            }}
-                                        />
-                                    ) : null}
+                                    {/* Thumbnail Preview Area */}
+                                    <div className="w-full aspect-square rounded-lg overflow-hidden bg-slate-100 relative mb-1.5 flex items-center justify-center border border-slate-100">
+                                        {variantImgUrl ? (
+                                            <img
+                                                src={variantImgUrl}
+                                                alt={label}
+                                                loading="lazy"
+                                                className={cn(
+                                                    "w-full h-full object-cover transition-transform duration-200 group-hover:scale-105",
+                                                    isSoldOut && "grayscale opacity-50",
+                                                )}
+                                                onError={(e) => {
+                                                    (e.currentTarget as HTMLElement).style.display = "none";
+                                                }}
+                                            />
+                                        ) : v.warna_hex ? (
+                                            <span
+                                                aria-hidden="true"
+                                                className="w-8 h-8 rounded-full border border-black/10 shadow-inner"
+                                                style={{ backgroundColor: v.warna_hex }}
+                                            />
+                                        ) : (
+                                            <span className="text-[10px] font-bold text-slate-400 font-mono">
+                                                CRSL
+                                            </span>
+                                        )}
 
+                                        {/* Selected Badge Checkmark */}
+                                        {isSelected && (
+                                            <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-slate-900 text-white flex items-center justify-center shadow-xs">
+                                                <svg
+                                                    className="w-2.5 h-2.5 stroke-[3]"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                >
+                                                    <polyline points="20 6 9 17 4 12" />
+                                                </svg>
+                                            </div>
+                                        )}
+
+                                        {/* Diagonal Strikethrough for Sold Out */}
+                                        {isSoldOut && (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-white/40">
+                                                <span className="text-[9px] font-black text-rose-700 bg-rose-50/90 px-1 py-0.5 rounded border border-rose-200">
+                                                    Habis
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Label Warna */}
                                     <span
                                         className={cn(
-                                            isSoldOut &&
-                                                "line-through text-slate-400",
+                                            "text-[10px] sm:text-[11px] font-extrabold uppercase leading-tight line-clamp-2 px-1",
+                                            isSelected
+                                                ? "text-slate-900 font-black"
+                                                : isSoldOut
+                                                  ? "text-slate-400 line-through"
+                                                  : "text-slate-700",
                                         )}
                                     >
                                         {label}
@@ -289,28 +320,9 @@ export default function VariantSelector({
 
                                     {/* Tambahan Harga */}
                                     {extraPrice > 0 && !isSoldOut && (
-                                        <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.5 rounded-md font-mono">
+                                        <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 rounded mt-0.5 font-mono">
                                             +{formatRupiah(extraPrice)}
                                         </span>
-                                    )}
-
-                                    {/* Garis Coret Diagonal untuk Varian Habis */}
-                                    {isSoldOut && (
-                                        <svg
-                                            className="absolute inset-0 w-full h-full pointer-events-none text-slate-300"
-                                            preserveAspectRatio="none"
-                                            viewBox="0 0 100 100"
-                                            aria-hidden="true"
-                                        >
-                                            <line
-                                                x1="0"
-                                                y1="100"
-                                                x2="100"
-                                                y2="0"
-                                                stroke="currentColor"
-                                                strokeWidth="1.5"
-                                            />
-                                        </svg>
                                     )}
                                 </button>
                             );
@@ -323,12 +335,12 @@ export default function VariantSelector({
             {hasMultipleSizes && onSelectSize && (
                 <div className="space-y-2.5">
                     <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-slate-900 tracking-tight">
-                            Pilih Ukuran
+                        <span className="font-extrabold text-slate-900 tracking-tight uppercase">
+                            Ukuran
                             {selectedSize && (
-                                <span className="font-normal text-slate-500 ml-1.5">
+                                <span className="font-normal text-slate-500 ml-1.5 normal-case">
                                     :{" "}
-                                    <strong className="font-bold text-slate-800">
+                                    <strong className="font-bold text-slate-800 uppercase">
                                         {selectedSize}
                                     </strong>
                                 </span>
@@ -353,13 +365,13 @@ export default function VariantSelector({
                                     aria-checked={isSizeSelected}
                                     onClick={() => onSelectSize(size)}
                                     className={cn(
-                                        "min-w-11 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                                        "min-w-12 h-10 px-4 rounded-xl text-xs font-black border transition-all cursor-pointer shadow-2xs flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary uppercase tracking-wider",
                                         isSizeSelected
-                                            ? "border-primary bg-primary text-white shadow-sm scale-[1.02]"
-                                            : "border-slate-200 bg-white hover:border-slate-300 text-slate-700 hover:bg-slate-50",
+                                            ? "border-slate-900 bg-slate-900 text-white shadow-sm"
+                                            : "border-slate-200 bg-white hover:border-slate-400 text-slate-800 hover:bg-slate-50",
                                     )}
                                 >
-                                    {size.toUpperCase()}
+                                    {size}
                                 </button>
                             );
                         })}

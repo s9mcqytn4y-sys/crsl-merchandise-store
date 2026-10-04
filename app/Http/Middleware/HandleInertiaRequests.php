@@ -129,6 +129,35 @@ class HandleInertiaRequests extends Middleware
                     return null;
                 }
             },
+            'vouchers' => function () {
+                try {
+                    return \Illuminate\Support\Facades\Cache::remember('vouchers_publik_shared', 120, function () {
+                        return \App\Models\Voucher::where('aktif', true)
+                            ->where('kuota', '>', 0)
+                            ->where(function ($q) {
+                                $q->whereNull('berlaku_sampai')
+                                  ->orWhere('berlaku_sampai', '>=', now());
+                            })
+                            ->orderBy('created_at', 'desc')
+                            ->get()
+                            ->map(fn ($v) => [
+                                'id'               => $v->id,
+                                'kode'             => $v->kode,
+                                'judul'            => $v->judul ?? $v->kode,
+                                'deskripsi'        => $v->deskripsi,
+                                'nilai'            => (float) $v->nilai,
+                                'tipe'             => $v->tipe,
+                                'min_belanja'      => (float) ($v->min_belanja ?? 0),
+                                'minimal_belanja'  => (float) ($v->min_belanja ?? 0),
+                                'maksimal_diskon'  => $v->maksimal_diskon ? (float) $v->maksimal_diskon : null,
+                                'berlaku_hingga'   => $v->berlaku_sampai ? $v->berlaku_sampai->toIso8601String() : null,
+                            ])
+                            ->all();
+                    });
+                } catch (\Throwable $e) {
+                    return [];
+                }
+            },
         ];
     }
 }

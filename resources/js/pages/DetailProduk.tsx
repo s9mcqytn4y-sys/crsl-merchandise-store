@@ -8,7 +8,6 @@ import VariantSelector, {
     VariantItem,
 } from "../Components/PDP/VariantSelector";
 import ProductInfo from "../Components/PDP/ProductInfo";
-import ProductTrustSection from "../Components/PDP/ProductTrustSection";
 import ProductActionButtons from "../Components/PDP/ProductActionButtons";
 import MobileStickyCta from "../Components/PDP/MobileStickyCta";
 import DeliveryEstimator from "../Components/PDP/DeliveryEstimator";
@@ -481,10 +480,7 @@ export default function DetailProduk({
                             }}
                         />
 
-                        {/* 4. Trust Badges Section */}
-                        <ProductTrustSection />
-
-                        {/* 5. Biteship Delivery Cost Estimator */}
+                        {/* 4. Biteship Delivery Cost Estimator */}
                         <DeliveryEstimator
                             productWeight={activeProduct.beratGram}
                             productPrice={currentPrice}

@@ -623,7 +623,7 @@ export default function DetailBundle({
                                             <div
                                                 role="radiogroup"
                                                 aria-label={`Pilihan variasi untuk ${item.nama}`}
-                                                className="flex flex-wrap gap-2 pt-1"
+                                                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pt-1"
                                             >
                                                 {item.varian?.map((v) => {
                                                     const isSelected =
@@ -632,6 +632,7 @@ export default function DetailBundle({
                                                         typeof v.stok ===
                                                             "number" &&
                                                         v.stok <= 0;
+                                                    const variantImg = v.gambar_varian ? normalizeMediaUrl(v.gambar_varian) : null;
 
                                                     return (
                                                         <button
@@ -651,12 +652,12 @@ export default function DetailBundle({
                                                                 )
                                                             }
                                                             className={cn(
-                                                                "px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                                                                "p-2 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center text-center border relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer select-none",
                                                                 isOutOfStock
-                                                                    ? "opacity-40 bg-slate-100 text-slate-400 border-slate-200 line-through cursor-not-allowed"
+                                                                    ? "opacity-40 bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
                                                                     : isSelected
-                                                                      ? "bg-slate-900 text-white border-slate-900"
-                                                                      : "bg-white text-slate-700 border-slate-200 hover:border-slate-300 cursor-pointer",
+                                                                      ? "bg-slate-900 text-white border-slate-900 shadow-xs"
+                                                                      : "bg-white text-slate-800 border-slate-200 hover:border-slate-400 shadow-2xs hover:bg-slate-50/60",
                                                             )}
                                                             title={
                                                                 isOutOfStock
@@ -664,35 +665,52 @@ export default function DetailBundle({
                                                                     : v.nama
                                                             }
                                                         >
-                                                            <span
-                                                                className={cn(
-                                                                    "w-2.5 h-2.5 rounded-full border border-black/10 shrink-0",
-                                                                    isOutOfStock &&
-                                                                        "grayscale",
-                                                                )}
-                                                                style={{
-                                                                    backgroundColor:
-                                                                        v.hex,
-                                                                }}
-                                                            />
-                                                            <span>
+                                                            {/* Thumbnail / Swatch Dot */}
+                                                            {variantImg ? (
+                                                                <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-100 mb-1 border border-slate-200">
+                                                                    <img
+                                                                        src={variantImg}
+                                                                        alt={v.nama}
+                                                                        className="w-full h-full object-cover"
+                                                                        onError={(e) => {
+                                                                            (e.currentTarget as HTMLElement).style.display = "none";
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                            ) : (
+                                                                <span
+                                                                    className={cn(
+                                                                        "w-4 h-4 rounded-full border border-black/15 shrink-0 mb-1 shadow-2xs",
+                                                                        isOutOfStock && "grayscale",
+                                                                    )}
+                                                                    style={{
+                                                                        backgroundColor: v.hex || "#e2e8f0",
+                                                                    }}
+                                                                />
+                                                            )}
+
+                                                            <span className={cn(
+                                                                "text-[11px] font-extrabold line-clamp-1 leading-tight uppercase",
+                                                                isOutOfStock && "line-through",
+                                                            )}>
                                                                 {v.nama}
                                                             </span>
-                                                            {isOutOfStock && (
-                                                                <span className="text-[10px] uppercase font-bold text-slate-500 ml-0.5">
-                                                                    (Habis)
+
+                                                            {isOutOfStock ? (
+                                                                <span className="text-[9px] uppercase font-bold text-rose-500 mt-0.5">
+                                                                    Habis
                                                                 </span>
-                                                            )}
-                                                            {!isOutOfStock &&
-                                                                typeof v.stok ===
-                                                                    "number" &&
+                                                            ) : (
+                                                                typeof v.stok === "number" &&
                                                                 v.stok <= 5 && (
-                                                                    <span className="text-[10px] text-amber-600 font-bold ml-0.5 font-mono">
-                                                                        (
-                                                                        {v.stok}
-                                                                        )
+                                                                    <span className={cn(
+                                                                        "text-[9px] font-bold mt-0.5 font-mono",
+                                                                        isSelected ? "text-amber-300" : "text-amber-600"
+                                                                    )}>
+                                                                        Sisa {v.stok}
                                                                     </span>
-                                                                )}
+                                                                )
+                                                            )}
                                                         </button>
                                                     );
                                                 })}

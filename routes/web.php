@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AkunController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BerandaController;
@@ -96,3 +97,18 @@ Route::post('/lupa-password/minta-otp', [AuthController::class, 'mintaOtpLupaPas
 Route::post('/lupa-password/reset', [AuthController::class, 'resetPassword'])->name('lupa-password.reset');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::post('/profil/hapus-akun', [AuthController::class, 'hapusAkun'])->name('profil.hapus-akun');
+
+// ==========================================
+// PORTAL ADMIN & CMS (Inertia React)
+// ==========================================
+Route::middleware(['auth', 'peran:admin,owner'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/pesanan', [AdminController::class, 'pesanan'])->name('pesanan');
+    Route::post('/pesanan/{nomorPesanan}/resi', [AdminController::class, 'updateResi'])->name('pesanan.resi')->where('nomorPesanan', '.*');
+    Route::post('/pesanan/{nomorPesanan}/status', [AdminController::class, 'updateStatusPesanan'])->name('pesanan.status')->where('nomorPesanan', '.*');
+    Route::get('/produk', [AdminController::class, 'produk'])->name('produk');
+    Route::post('/produk/varian/{varianId}/stok', [AdminController::class, 'updateStokVarian'])->name('produk.stok');
+    Route::get('/voucher', [AdminController::class, 'voucher'])->name('voucher');
+    Route::post('/voucher', [AdminController::class, 'simpanVoucher'])->name('voucher.simpan');
+    Route::post('/voucher/{voucherId}/toggle', [AdminController::class, 'toggleVoucher'])->name('voucher.toggle');
+});
