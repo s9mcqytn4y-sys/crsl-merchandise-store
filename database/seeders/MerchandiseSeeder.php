@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\GambarProduk;
 use App\Models\Kategori;
 use App\Models\Produk;
+use App\Models\ProdukBundleItem;
 use App\Models\ProdukSpesifikasi;
 use App\Models\ProdukVarian;
 use App\Models\TierLoyalitas;
@@ -333,6 +334,11 @@ class MerchandiseSeeder extends Seeder
                 'berat_gram' => 650,
                 'gambar_utama' => '/assets/gambar/bundle-miflo-cover.webp',
                 'tipe_produk' => 'bundle',
+                'freebies' => [
+                    'Exclusive Sticker Pack BTS 2026',
+                    'Character Enamel Pin Special Edition',
+                    'CRSL Authenticity Certificate Card',
+                ],
                 'aktif' => true,
                 'is_best_seller' => true,
             ],
@@ -348,6 +354,11 @@ class MerchandiseSeeder extends Seeder
                 'berat_gram' => 850,
                 'gambar_utama' => '/assets/gambar/bundle-haru-cover.webp',
                 'tipe_produk' => 'bundle',
+                'freebies' => [
+                    'Exclusive Hologram Sticker BTS 2026',
+                    'Keyring Tartan Haru Special Edition',
+                    'CRSL Authenticity Certificate Card',
+                ],
                 'aktif' => true,
                 'is_best_seller' => true,
             ],
@@ -431,15 +442,85 @@ class MerchandiseSeeder extends Seeder
             ['id' => 15, 'produk_id' => 7, 'url' => '/assets/gambar/drinke-tumblr.webp', 'alt_teks' => 'CRSL Drinke Tumblr Series 5 Karakter', 'urutan' => 1],
             ['id' => 16, 'produk_id' => 7, 'url' => '/assets/gambar/banner-tumbler.webp', 'alt_teks' => 'CRSL Drinke Tumblr Series Retensi Dingin 12 Jam', 'urutan' => 2],
             ['id' => 17, 'produk_id' => 7, 'url' => '/assets/gambar/banner-bts.webp', 'alt_teks' => 'CRSL Drinke Tumblr Series Detail Silicone Straw', 'urutan' => 3],
+
+            // Produk 3516: Bundle Miflo BTS
+            ['id' => 18, 'produk_id' => 3516, 'url' => '/assets/gambar/bundle-miflo-cover.webp', 'alt_teks' => 'Cover Bundle Miflo BTS', 'urutan' => 1],
+            ['id' => 19, 'produk_id' => 3516, 'url' => '/assets/gambar/bundle-miflo-freebies.webp', 'alt_teks' => 'Freebies Bundle Miflo BTS', 'urutan' => 2],
+
+            // Produk 2188: Bundle Haru BTS
+            ['id' => 20, 'produk_id' => 2188, 'url' => '/assets/gambar/bundle-haru-cover.webp', 'alt_teks' => 'Cover Bundle Haru BTS', 'urutan' => 1],
+            ['id' => 21, 'produk_id' => 2188, 'url' => '/assets/gambar/bundle-haru-freebies.webp', 'alt_teks' => 'Freebies Bundle Haru BTS', 'urutan' => 2],
         ];
 
         foreach ($gambarList as $img) {
             GambarProduk::updateOrCreate(['id' => $img['id']], $img);
         }
 
+        // 9. Seed Item Komponen Bundle (Dinamis dari Database)
+        $bundleItemsList = [
+            // Bundle 3516 (Miflo BTS)
+            [
+                'id' => 101,
+                'produk_id' => 3516,
+                'nama_item' => 'CRSL Miflo Mini Backpack | Tas Gendong Canvas Wanita',
+                'harga' => 299000,
+                'gambar' => '/assets/gambar/bundle-miflo-cover.webp',
+                'urutan' => 1,
+                'varian' => [
+                    ['id' => 1011, 'nama' => 'Pink Pastel', 'hex' => '#ec4899', 'sku' => 'CRSL-BND-MFL-PNK', 'stok' => 14],
+                    ['id' => 1012, 'nama' => 'Black Charcoal', 'hex' => '#1e293b', 'sku' => 'CRSL-BND-MFL-BLK', 'stok' => 8],
+                    ['id' => 1013, 'nama' => 'Sage Green', 'hex' => '#15803d', 'sku' => 'CRSL-BND-MFL-SGE', 'stok' => 0],
+                ],
+            ],
+            [
+                'id' => 102,
+                'produk_id' => 3516,
+                'nama_item' => 'CRSL Ropy Colorful Keychain | Aksesoris Gantungan Kunci',
+                'harga' => 44100,
+                'gambar' => '/assets/gambar/cassie-wallet.webp',
+                'urutan' => 2,
+                'varian' => [
+                    ['id' => 1021, 'nama' => 'Chilo Pink', 'hex' => '#ec4899', 'sku' => 'CRSL-BND-RPY-CHL', 'stok' => 25],
+                    ['id' => 1022, 'nama' => 'Odin Green', 'hex' => '#15803d', 'sku' => 'CRSL-BND-RPY-ODN', 'stok' => 19],
+                    ['id' => 1023, 'nama' => 'Choco Brown', 'hex' => '#78350f', 'sku' => 'CRSL-BND-RPY-CHC', 'stok' => 0],
+                ],
+            ],
+
+            // Bundle 2188 (Haru BTS)
+            [
+                'id' => 201,
+                'produk_id' => 2188,
+                'nama_item' => 'CRSL Haru Tartan Plaid Backpack | Tas Sekolah Premium',
+                'harga' => 345000,
+                'gambar' => '/assets/gambar/bundle-haru-cover.webp',
+                'urutan' => 1,
+                'varian' => [
+                    ['id' => 2011, 'nama' => 'Brown Plaid', 'hex' => '#78350f', 'sku' => 'CRSL-BND-HRU-BRN', 'stok' => 12],
+                    ['id' => 2012, 'nama' => 'Blue Plaid', 'hex' => '#3b82f6', 'sku' => 'CRSL-BND-HRU-BLU', 'stok' => 0],
+                    ['id' => 2013, 'nama' => 'Grey Tartan', 'hex' => '#64748b', 'sku' => 'CRSL-BND-HRU-GRY', 'stok' => 5],
+                ],
+            ],
+            [
+                'id' => 202,
+                'produk_id' => 2188,
+                'nama_item' => 'CRSL Character Pin Badge Set | 5 Karakter Enamel',
+                'harga' => 50000,
+                'gambar' => '/assets/gambar/banner-2.webp',
+                'urutan' => 2,
+                'varian' => [
+                    ['id' => 2021, 'nama' => 'Squad 5 Karakter', 'hex' => '#eab308', 'sku' => 'CRSL-BND-PIN-SQD', 'stok' => 30],
+                    ['id' => 2022, 'nama' => 'Duo Besties Edition', 'hex' => '#ec4899', 'sku' => 'CRSL-BND-PIN-DUO', 'stok' => 20],
+                ],
+            ],
+        ];
+
+        foreach ($bundleItemsList as $bi) {
+            ProdukBundleItem::updateOrCreate(['id' => $bi['id']], $bi);
+        }
+
         // Sinkronisasi PostgreSQL auto-increment sequence setelah seeding explicit ID
         if (\Illuminate\Support\Facades\DB::connection()->getDriverName() === 'pgsql') {
-            $tabelList = ['kategori', 'tier_loyalitas', 'voucher', 'produk', 'produk_varian', 'produk_spesifikasi', 'gambar_produk'];
+            $tabelList = ['kategori', 'tier_loyalitas', 'voucher', 'produk', 'produk_varian', 'produk_spesifikasi', 'gambar_produk', 'produk_bundle_item'];
             foreach ($tabelList as $tabel) {
                 \Illuminate\Support\Facades\DB::statement("SELECT setval(pg_get_serial_sequence('\"{$tabel}\"', 'id'), coalesce(max(id), 1)) FROM \"{$tabel}\"");
             }

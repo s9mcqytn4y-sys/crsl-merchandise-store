@@ -28,6 +28,7 @@ class Produk extends Model
         'terjual',
         'is_best_seller',
         'gambar_utama',
+        'freebies',
         'aktif',
     ];
 
@@ -39,6 +40,7 @@ class Produk extends Model
         'stok_total' => 'integer',
         'berat_gram' => 'integer',
         'terjual' => 'integer',
+        'freebies' => 'array',
     ];
 
     protected $appends = ['harga'];
@@ -66,5 +68,10 @@ class Produk extends Model
     public function gambar(): HasMany
     {
         return $this->hasMany(GambarProduk::class, 'produk_id')->orderBy('urutan');
+    }
+
+    public function bundleItems(): HasMany
+    {
+        return $this->hasMany(ProdukBundleItem::class, 'produk_id')->orderBy('urutan');
     }
 }
