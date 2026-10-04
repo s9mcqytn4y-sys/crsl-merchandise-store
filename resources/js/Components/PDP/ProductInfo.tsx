@@ -1,11 +1,13 @@
+import { useState } from "react";
 import { Link } from "@inertiajs/react";
-import { Star, TicketPercent, CheckCircle2, AlertCircle } from "lucide-react";
+import { TicketPercent, CheckCircle2, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { formatRupiah } from "../../Utils/formatters";
 import { cn } from "../../lib/utils";
 
 interface ProductInfoProps {
     nama: string;
     kategoriNama: string;
+    deskripsi?: string;
     hargaDasar: number;
     hargaDiskon?: number;
     stokTotal: number;
@@ -17,6 +19,7 @@ interface ProductInfoProps {
 export default function ProductInfo({
     nama,
     kategoriNama,
+    deskripsi,
     hargaDasar,
     hargaDiskon,
     stokTotal,
@@ -24,6 +27,7 @@ export default function ProductInfo({
     onOpenDiscounts,
     className,
 }: ProductInfoProps) {
+    const [isDescExpanded, setIsDescExpanded] = useState(false);
     const hasDiscount = !!hargaDiskon && hargaDiskon < hargaDasar;
     const persentaseDiskon = hasDiscount
         ? Math.round(((hargaDasar - (hargaDiskon || 0)) / hargaDasar) * 100)
@@ -77,24 +81,33 @@ export default function ProductInfo({
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-snug">
                     {nama}
                 </h1>
-
-                {/* Rating Social Proof */}
-                <div className="flex items-center gap-3 pt-1">
-                    <div className="flex items-center text-amber-400">
-                        {[...Array(5)].map((_, i) => (
-                            <Star
-                                key={i}
-                                className="w-4 h-4 fill-amber-400 stroke-amber-400"
-                            />
-                        ))}
-                    </div>
-                    <span className="text-sm font-semibold text-slate-800">4.9</span>
-                    <span className="text-xs text-slate-400">|</span>
-                    <span className="text-xs font-medium text-slate-500">
-                        120+ Terjual
-                    </span>
-                </div>
             </div>
+
+            {/* Ringkasan Deskripsi 2 Baris dengan Toggle */}
+            {deskripsi && (
+                <div className="text-xs text-slate-600 leading-relaxed space-y-1">
+                    <p
+                        className={cn(
+                            "whitespace-pre-line transition-all duration-200",
+                            !isDescExpanded && "line-clamp-2"
+                        )}
+                    >
+                        {deskripsi}
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => setIsDescExpanded(!isDescExpanded)}
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline cursor-pointer pt-0.5"
+                    >
+                        <span>{isDescExpanded ? "Tutup Deskripsi" : "Baca Selengkapnya"}</span>
+                        {isDescExpanded ? (
+                            <ChevronUp className="w-3.5 h-3.5" />
+                        ) : (
+                            <ChevronDown className="w-3.5 h-3.5" />
+                        )}
+                    </button>
+                </div>
+            )}
 
             {/* Pricing Section */}
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
@@ -120,21 +133,28 @@ export default function ProductInfo({
                     </p>
                 )}
 
-                {/* Voucher Banner CTA */}
+                {/* Voucher Banner CTA - Selaras dengan theme orange & referensi live Plugo */}
                 {onOpenDiscounts && (
                     <button
                         type="button"
                         onClick={onOpenDiscounts}
-                        className="w-full mt-2 pt-2.5 border-t border-slate-200/60 flex items-center justify-between text-left group"
+                        className="w-full mt-3 p-3 rounded-xl bg-amber-50/80 hover:bg-amber-100/90 border border-amber-300/80 flex items-center justify-between text-left group transition-all cursor-pointer shadow-2xs"
                     >
-                        <div className="flex items-center gap-2">
-                            <TicketPercent className="w-4 h-4 text-primary" />
-                            <span className="text-xs font-semibold text-slate-800 group-hover:text-primary transition-colors">
-                                Klaim voucher diskon hingga 25% & bebas ongkir
-                            </span>
+                        <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                            <div className="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                                <TicketPercent className="w-4 h-4 stroke-[2.2]" />
+                            </div>
+                            <div className="min-w-0">
+                                <div className="text-xs font-bold text-slate-900 group-hover:text-amber-900 transition-colors">
+                                    Voucher Promo & Diskon Tersedia
+                                </div>
+                                <div className="text-[11px] text-amber-800/80 font-medium">
+                                    Gunakan kupon belanja untuk harga lebih hemat!
+                                </div>
+                            </div>
                         </div>
-                        <span className="text-xs font-bold text-primary group-hover:underline">
-                            Lihat Promo →
+                        <span className="text-xs font-black text-amber-700 group-hover:text-amber-900 group-hover:translate-x-0.5 transition-all shrink-0">
+                            Klaim Promo →
                         </span>
                     </button>
                 )}

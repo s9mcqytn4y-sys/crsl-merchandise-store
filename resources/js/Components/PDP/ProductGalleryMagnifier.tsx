@@ -5,7 +5,7 @@ import React, {
     useCallback,
     useMemo,
 } from "react";
-import { ImageOff, ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
+import { ImageOff, ChevronLeft, ChevronRight, ZoomIn, X, Maximize2 } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 export interface GalleryImage {
@@ -52,10 +52,22 @@ export default function ProductGalleryMagnifier({
     className,
 }: ProductGalleryMagnifierProps) {
     const [isHovering, setIsHovering] = useState(false);
+    const [isLightboxOpen, setIsLightboxOpen] = useState(false);
     const [mainImgError, setMainImgError] = useState(false);
     const [brokenThumbnails, setBrokenThumbnails] = useState<
         Record<string, boolean>
     >({});
+
+    // Close lightbox on Escape key
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape" && isLightboxOpen) {
+                setIsLightboxOpen(false);
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isLightboxOpen]);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const zoomLayerRef = useRef<HTMLDivElement>(null);
@@ -327,6 +339,19 @@ export default function ProductGalleryMagnifier({
                             </span>
                         )}
 
+                        {/* Tombol Buka Lightbox Fullscreen */}
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsLightboxOpen(true);
+                            }}
+                            className="absolute top-3.5 right-3.5 p-2 rounded-xl bg-white/90 hover:bg-white text-slate-700 hover:text-primary backdrop-blur-md shadow-sm border border-slate-200/80 transition-all cursor-pointer z-10 opacity-80 hover:opacity-100"
+                            aria-label="Lihat foto resolusi penuh"
+                        >
+                            <Maximize2 className="w-4 h-4 stroke-[2.2]" />
+                        </button>
+
                         {/* Petunjuk Visual Zoom (Desktop) */}
                         <span
                             className={cn(
@@ -340,6 +365,73 @@ export default function ProductGalleryMagnifier({
                     </>
                 )}
             </div>
+
+            {/* 3. Fullscreen Lightbox Modal HD */}
+            {isLightboxOpen && (
+                <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={`Galeri foto penuh - ${productName}`}
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md animate-in fade-in duration-200 select-none p-4"
+                    onClick={() => setIsLightboxOpen(false)}
+                >
+                    {/* Header Controls */}
+                    <div className="absolute top-4 inset-x-4 flex items-center justify-between z-20 pointer-events-none">
+                        <span className="text-xs font-mono font-bold text-white/90 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 pointer-events-auto">
+                            {activeIndex + 1} / {displayImages.length}
+                        </span>
+
+                        <button
+                            type="button"
+                            onClick={() => setIsLightboxOpen(false)}
+                            className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer pointer-events-auto"
+                            aria-label="Tutup pratinjau foto"
+                        >
+                            <X className="w-6 h-6 stroke-2" />
+                        </button>
+                    </div>
+
+                    {/* Image Display */}
+                    <div
+                        className="relative max-w-4xl max-h-[85vh] w-full flex items-center justify-center p-2"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <img
+                            src={normalizedSelectedImage}
+                            alt={displayImages[activeIndex]?.alt_teks || productName}
+                            className="max-h-[80vh] max-w-full object-contain rounded-2xl shadow-2xl animate-in zoom-in-95 duration-200"
+                        />
+                    </div>
+
+                    {/* Navigation Arrows */}
+                    {displayImages.length > 1 && (
+                        <>
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePrevImage();
+                                }}
+                                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md border border-white/10 transition-colors cursor-pointer z-20"
+                                aria-label="Foto sebelumnya"
+                            >
+                                <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleNextImage();
+                                }}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md border border-white/10 transition-colors cursor-pointer z-20"
+                                aria-label="Foto selanjutnya"
+                            >
+                                <ChevronRight className="w-6 h-6 stroke-[2.5]" />
+                            </button>
+                        </>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

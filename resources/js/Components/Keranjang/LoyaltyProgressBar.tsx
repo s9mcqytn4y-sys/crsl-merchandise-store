@@ -1,12 +1,17 @@
 import { useMemo } from "react";
-import { Link } from "@inertiajs/react";
+import { Link, usePage } from "@inertiajs/react";
 import { Gift, ChevronRight, Crown, Sparkles } from "lucide-react";
 import { formatRupiah } from "../../Utils/formatters";
 import { useAuthStore } from "../../Stores/useAuthStore";
 
 export interface TierThreshold {
     name: string;
+    nama?: string;
     minSpend: number;
+    syarat_belanja?: number;
+    pengali_poin?: number;
+    warna_aksen?: string;
+    benefit?: string[];
 }
 
 export const OFFICIAL_TIERS: TierThreshold[] = [
@@ -18,14 +23,39 @@ export const OFFICIAL_TIERS: TierThreshold[] = [
 
 interface LoyaltyProgressBarProps {
     totalHarga: number;
+    tiers?: TierThreshold[];
     onCloseDrawer?: () => void;
 }
 
 export default function LoyaltyProgressBar({
     totalHarga = 0,
+    tiers,
     onCloseDrawer,
 }: LoyaltyProgressBarProps) {
     const authUser = useAuthStore((state) => state.user);
+    const pageProps = usePage().props as {
+        loyalitas?: {
+            tiers?: Array<{
+                name?: string;
+                nama?: string;
+                minSpend?: number;
+                syarat_belanja?: number;
+            }>;
+        };
+    };
+
+    const activeTiers: TierThreshold[] = useMemo(() => {
+        const raw = (tiers && tiers.length > 0)
+            ? tiers
+            : (pageProps.loyalitas?.tiers && pageProps.loyalitas.tiers.length > 0)
+                ? pageProps.loyalitas.tiers
+                : OFFICIAL_TIERS;
+
+        return raw.map((t) => ({
+            name: t.name || t.nama || "Freen Tier",
+            minSpend: Number(t.minSpend ?? t.syarat_belanja ?? 0),
+        }));
+    }, [tiers, pageProps.loyalitas?.tiers]);
 
     // Belanja akun yang sudah terselesaikan di database
     const existingSpend = Number(authUser?.total_belanja ?? 0);
@@ -35,16 +65,16 @@ export default function LoyaltyProgressBar({
     const progressData = useMemo(() => {
         // 1. Tentukan tier riil akun saat ini (berdasarkan existingSpend)
         let actualTierIndex = 0;
-        for (let i = OFFICIAL_TIERS.length - 1; i >= 0; i--) {
-            if (existingSpend >= OFFICIAL_TIERS[i].minSpend) {
+        for (let i = activeTiers.length - 1; i >= 0; i--) {
+            if (existingSpend >= activeTiers[i].minSpend) {
                 actualTierIndex = i;
                 break;
             }
         }
-        const currentTier = OFFICIAL_TIERS[actualTierIndex];
+        const currentTier = activeTiers[actualTierIndex] || activeTiers[0];
 
-        // 2. Jika akun sudah di tier tertinggi (Super Freen)
-        if (actualTierIndex === OFFICIAL_TIERS.length - 1) {
+        // 2. Jika akun sudah di tier tertinggi
+        if (actualTierIndex === activeTiers.length - 1) {
             return {
                 currentTier,
                 targetTier: null,
@@ -58,8 +88,8 @@ export default function LoyaltyProgressBar({
 
         // 3. Tentukan tier yang berhasil dibuka oleh keranjang aktif
         let projectedTierIndex = actualTierIndex;
-        for (let i = OFFICIAL_TIERS.length - 1; i > actualTierIndex; i--) {
-            if (projectedSpend >= OFFICIAL_TIERS[i].minSpend) {
+        for (let i = activeTiers.length - 1; i > actualTierIndex; i--) {
+            if (projectedSpend >= activeTiers[i].minSpend) {
                 projectedTierIndex = i;
                 break;
             }
@@ -67,7 +97,7 @@ export default function LoyaltyProgressBar({
 
         // Kasus: Pesanan saat ini melampaui ambang dan membuka tier baru
         if (projectedTierIndex > actualTierIndex) {
-            const unlockedTier = OFFICIAL_TIERS[projectedTierIndex];
+            const unlockedTier = activeTiers[projectedTierIndex];
             return {
                 currentTier,
                 targetTier: unlockedTier,
@@ -80,7 +110,7 @@ export default function LoyaltyProgressBar({
         }
 
         // Kasus: Pesanan saat ini belum cukup membuka tier berikutnya
-        const nextTargetTier = OFFICIAL_TIERS[actualTierIndex + 1];
+        const nextTargetTier = activeTiers[actualTierIndex + 1];
         const range = nextTargetTier.minSpend - currentTier.minSpend;
         const progressInRange = projectedSpend - currentTier.minSpend;
         const persentase = Math.min(
@@ -101,7 +131,7 @@ export default function LoyaltyProgressBar({
             willUnlockNewTier: false,
             unlockedTierName: null,
         };
-    }, [existingSpend, projectedSpend]);
+    }, [activeTiers, existingSpend, projectedSpend]);
 
     return (
         <div className="bg-slate-50/90 rounded-2xl p-3.5 border border-slate-200/80 space-y-2 select-none shadow-2xs">

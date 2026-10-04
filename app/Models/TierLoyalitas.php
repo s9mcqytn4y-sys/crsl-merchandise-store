@@ -16,6 +16,9 @@ class TierLoyalitas extends Model
         'nama',
         'slug',
         'syarat_belanja',
+        'pengali_poin',
+        'deskripsi',
+        'benefit',
         'durasi_bulan',
         'bonus_poin_masuk',
         'poin_per_ulasan',
@@ -25,6 +28,8 @@ class TierLoyalitas extends Model
 
     protected $casts = [
         'syarat_belanja' => 'float',
+        'pengali_poin' => 'float',
+        'benefit' => 'array',
         'durasi_bulan' => 'integer',
         'bonus_poin_masuk' => 'integer',
         'poin_per_ulasan' => 'integer',

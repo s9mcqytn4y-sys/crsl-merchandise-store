@@ -15,6 +15,8 @@ use App\Models\PesananPembayaran;
 use App\Models\PesananPengiriman;
 use App\Models\Produk;
 use App\Models\ProdukVarian;
+use App\Models\RiwayatPoin;
+use App\Models\TierLoyalitas;
 use App\Models\Voucher;
 use App\Models\VoucherTerpakai;
 use Exception;
@@ -188,6 +190,22 @@ class BuatPesananAction
             $total = (int) round(max(0, ($subtotal + $biayaOngkir + $biayaAsuransi) - $totalDiskon));
             $isDropship = !empty($dataInput['is_dropship']);
 
+            // Hitung Poin Didapat Berdasarkan Tier Loyalitas Pelanggan
+            $kelipatanBelanja = config('loyalitas.kelipatan_belanja', 10000);
+            $poinPerKelipatan = config('loyalitas.poin_per_kelipatan', 10);
+            $pengaliTier = 1.0;
+
+            if ($penggunaId && $loyalitas) {
+                $activeTier = TierLoyalitas::where('syarat_belanja', '<=', (float) $loyalitas->total_belanja)
+                    ->orderBy('syarat_belanja', 'desc')
+                    ->first();
+                if ($activeTier && $activeTier->pengali_poin) {
+                    $pengaliTier = (float) $activeTier->pengali_poin;
+                }
+            }
+
+            $poinDidapat = (int) round(floor($total / $kelipatanBelanja) * $poinPerKelipatan * $pengaliTier);
+
             $pesanan = Pesanan::create([
                 'pengguna_id' => $penggunaId,
                 'nomor_pesanan' => $nomorPesanan,
@@ -201,11 +219,23 @@ class BuatPesananAction
                 'catatan' => $dataInput['catatan'] ?? null,
                 'kode_voucher' => $voucherDipakai?->kode ?? null,
                 'poin_digunakan' => $poinDigunakan,
-                'poin_didapat' => (int)floor($total / 10000) * 10,
+                'poin_didapat' => $poinDidapat,
                 'is_dropship' => $isDropship,
                 'dropship_pengirim' => $isDropship ? ($dataInput['dropship_pengirim'] ?? null) : null,
                 'dropship_telepon' => $isDropship ? ($dataInput['dropship_telepon'] ?? null) : null,
             ]);
+
+            // Catat Buku Besar Penggunaan Poin Loyalitas
+            if ($penggunaId && $poinDigunakan > 0 && $loyalitas) {
+                RiwayatPoin::create([
+                    'pengguna_id' => $penggunaId,
+                    'pesanan_id' => $pesanan->id,
+                    'tipe' => RiwayatPoin::TIPE_DIGUNAKAN,
+                    'jumlah' => -$poinDigunakan,
+                    'saldo_akhir' => $loyalitas->poin,
+                    'keterangan' => "Penggunaan poin pada pesanan {$pesanan->nomor_pesanan}",
+                ]);
+            }
 
             if ($voucherDipakai && $penggunaId) {
                 VoucherTerpakai::create([
@@ -545,8 +575,21 @@ class BuatPesananAction
             }
 
             if (!empty($state['poin_digunakan']) && $penggunaId) {
-                PenggunaLoyalitas::where('pengguna_id', $penggunaId)
-                    ->increment('poin', $state['poin_digunakan']);
+                $loy = PenggunaLoyalitas::lockForUpdate()->firstOrCreate(
+                    ['pengguna_id' => $penggunaId],
+                    ['poin' => 0, 'total_belanja' => 0]
+                );
+                $loy->increment('poin', $state['poin_digunakan']);
+
+                RiwayatPoin::create([
+                    'pengguna_id' => $penggunaId,
+                    'pesanan_id' => $pesanan->id,
+                    'tipe' => RiwayatPoin::TIPE_DIKEMBALIKAN,
+                    'jumlah' => $state['poin_digunakan'],
+                    'saldo_akhir' => $loy->poin,
+                    'keterangan' => "Pengembalian poin kegagalan gateway pesanan {$pesanan->nomor_pesanan}",
+                ]);
+
                 Cache::forget("pengguna:akun:{$penggunaId}");
                 Cache::forget("pengguna:profil:{$penggunaId}");
             }

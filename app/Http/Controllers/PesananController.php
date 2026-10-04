@@ -10,6 +10,7 @@ use App\Domains\Pengiriman\Jobs\AlokasiPengirimanBiteshipJob;
 use App\Domains\Pengiriman\Services\BiteshipService;
 use App\Models\PenggunaLoyalitas;
 use App\Models\Pesanan;
+use App\Models\RiwayatPoin;
 use App\Models\Voucher;
 use App\Models\VoucherTerpakai;
 use Illuminate\Http\JsonResponse;
@@ -433,13 +434,29 @@ class PesananController extends Controller
                 $this->inventoriService->kembalikanStok($itemsArray);
 
                 if ($pesanan->pengguna_id && $pesanan->poin_digunakan > 0) {
-                    $loyalitas = PenggunaLoyalitas::firstOrCreate(
-                        ['pengguna_id' => $pesanan->pengguna_id],
-                        ['poin' => 0, 'total_belanja' => 0]
-                    );
-                    $loyalitas->increment('poin', $pesanan->poin_digunakan);
-                    Cache::forget("pengguna:akun:{$pesanan->pengguna_id}");
-                    Cache::forget("pengguna:profil:{$pesanan->pengguna_id}");
+                    $sudahDikembalikan = RiwayatPoin::where('pesanan_id', $pesanan->id)
+                        ->where('tipe', RiwayatPoin::TIPE_DIKEMBALIKAN)
+                        ->exists();
+
+                    if (! $sudahDikembalikan) {
+                        $loyalitas = PenggunaLoyalitas::lockForUpdate()->firstOrCreate(
+                            ['pengguna_id' => $pesanan->pengguna_id],
+                            ['poin' => 0, 'total_belanja' => 0]
+                        );
+                        $loyalitas->increment('poin', $pesanan->poin_digunakan);
+
+                        RiwayatPoin::create([
+                            'pengguna_id' => $pesanan->pengguna_id,
+                            'pesanan_id' => $pesanan->id,
+                            'tipe' => RiwayatPoin::TIPE_DIKEMBALIKAN,
+                            'jumlah' => $pesanan->poin_digunakan,
+                            'saldo_akhir' => $loyalitas->poin,
+                            'keterangan' => "Pengembalian poin pembatalan pesanan {$pesanan->nomor_pesanan}",
+                        ]);
+
+                        Cache::forget("pengguna:akun:{$pesanan->pengguna_id}");
+                        Cache::forget("pengguna:profil:{$pesanan->pengguna_id}");
+                    }
                 }
 
                 if ($pesanan->kode_voucher) {

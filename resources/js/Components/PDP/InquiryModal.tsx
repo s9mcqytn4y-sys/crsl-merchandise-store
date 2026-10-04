@@ -3,12 +3,12 @@ import {
     Send,
     CheckCircle2,
     AlertCircle,
-    MessageSquareShare,
 } from "lucide-react";
 import { useForm, usePage } from "@inertiajs/react";
 import { toast } from "sonner";
 import Modal from "../Common/Modal";
 import Button from "../Common/Button";
+import WhatsAppIcon from "../Common/WhatsAppIcon";
 
 interface InquiryModalProps {
     isOpen: boolean;
@@ -287,9 +287,9 @@ export default function InquiryModal({
                     <button
                         type="button"
                         onClick={handleChatWhatsApp}
-                        className="w-full py-2.5 px-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/90 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-2xs"
+                        className="w-full py-2.5 px-4 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300/80 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs group"
                     >
-                        <MessageSquareShare className="w-4 h-4 text-emerald-600" />
+                        <WhatsAppIcon className="w-4 h-4 text-amber-600 group-hover:scale-110 transition-transform" />
                         <span>Tanya Langsung via WhatsApp CS</span>
                     </button>
                 </div>

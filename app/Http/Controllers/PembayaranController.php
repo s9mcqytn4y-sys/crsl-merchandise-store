@@ -140,6 +140,7 @@ class PembayaranController extends Controller
                     'maksimal_diskon' => (float) ($v->maksimal_diskon ?? 0),
                     'discount'        => in_array($v->tipe, ['persen', 'persentase']) ? "{$v->nilai}%" : 'Rp ' . number_format($v->nilai, 0, ',', '.'),
                     'sudah_dipakai'   => $isUsed,
+                    'deskripsi'       => $v->deskripsi,
                 ];
             })
             ->all();

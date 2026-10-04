@@ -200,6 +200,9 @@ export default function Akun({
                             <KartuLoyalitas
                                 tier={loyalty?.tier || "Non-Member"}
                                 progressText={loyalty?.progress_text}
+                                poin={loyalty?.points}
+                                totalBelanja={loyalty?.total_spend}
+                                tiers={loyalty?.tiers}
                                 onLihatDetail={() =>
                                     setIsLoyaltyModalOpen(true)
                                 }

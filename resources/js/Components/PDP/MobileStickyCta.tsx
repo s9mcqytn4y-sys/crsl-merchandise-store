@@ -26,8 +26,9 @@ export default function MobileStickyCta({
     return (
         <aside
             aria-label="Aksi Cepat Pembelian Mobile"
+            style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
             className={cn(
-                "fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-lg px-4 py-3 md:hidden transition-transform duration-300",
+                "fixed bottom-0 inset-x-0 z-40 bg-white/98 backdrop-blur-md border-t border-slate-200/90 shadow-xl px-4 pt-3 md:hidden",
                 className
             )}
         >

@@ -12,15 +12,17 @@ import { formatRupiah } from "../Utils/formatters";
 import DiscountsModal from "../Components/PDP/DiscountsModal";
 import DeliveryEstimator from "../Components/PDP/DeliveryEstimator";
 import InquiryModal from "../Components/PDP/InquiryModal";
+import WhatsAppIcon from "../Components/Common/WhatsAppIcon";
 import {
     CheckCircle2,
     ShieldCheck,
     Gift,
     Sparkles,
     ChevronRight,
+    ChevronDown,
+    ChevronUp,
     ShoppingBag,
     Tag,
-    MessageCircle,
     AlertCircle,
     Zap,
     Minus,
@@ -111,6 +113,7 @@ export default function DetailBundle({
         useState<boolean>(false);
     const [isInquiryModalOpen, setIsInquiryModalOpen] =
         useState<boolean>(false);
+    const [isDescExpanded, setIsDescExpanded] = useState<boolean>(false);
 
     const itemsContainerRef = useRef<HTMLDivElement>(null);
 
@@ -464,9 +467,32 @@ export default function DetailBundle({
                                     )}
                                 </div>
 
-                                <p className="text-xs sm:text-sm text-slate-600 mt-3 leading-relaxed">
-                                    {bundle.deskripsi}
-                                </p>
+                                {bundle.deskripsi && (
+                                    <div className="mt-3 text-xs sm:text-sm text-slate-600 leading-relaxed space-y-1">
+                                        <p
+                                            className={cn(
+                                                "whitespace-pre-line transition-all duration-200",
+                                                !isDescExpanded && "line-clamp-2"
+                                            )}
+                                        >
+                                            {bundle.deskripsi}
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsDescExpanded(!isDescExpanded)}
+                                            className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline cursor-pointer pt-0.5"
+                                        >
+                                            <span>
+                                                {isDescExpanded ? "Tutup Deskripsi" : "Baca Selengkapnya"}
+                                            </span>
+                                            {isDescExpanded ? (
+                                                <ChevronUp className="w-3.5 h-3.5" />
+                                            ) : (
+                                                <ChevronDown className="w-3.5 h-3.5" />
+                                            )}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Diskon & Kupon WAI-ARIA Dialog Trigger */}
@@ -763,10 +789,10 @@ export default function DetailBundle({
                                         onClick={() =>
                                             setIsInquiryModalOpen(true)
                                         }
-                                        className="w-full min-h-11 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                        className="w-full min-h-11 border border-amber-300 bg-amber-50/70 hover:bg-amber-100 text-amber-900 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs hover:shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 group"
                                     >
-                                        <MessageCircle className="w-4 h-4 text-slate-500 stroke-[2.2]" />
-                                        <span>Tanya CS Seputar Bundle Ini</span>
+                                        <WhatsAppIcon className="w-4 h-4 text-amber-600 group-hover:scale-110 transition-transform" />
+                                        <span>Tanya CS Seputar Bundle Ini (WhatsApp)</span>
                                     </button>
                                 </div>
 

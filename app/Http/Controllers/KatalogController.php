@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Kategori;
 use App\Models\Produk;
+use App\Models\Voucher;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -148,9 +149,20 @@ class KatalogController extends Controller
             ->take(4)
             ->get();
 
+        $vouchers = Voucher::where('aktif', true)
+            ->where('tampil_publik', true)
+            ->where(function ($q) {
+                $q->whereNull('berlaku_sampai')
+                    ->orWhere('berlaku_sampai', '>=', now());
+            })
+            ->orderBy('min_belanja', 'asc')
+            ->take(5)
+            ->get();
+
         return Inertia::render('DetailProduk', [
             'produk' => $produk,
             'rekomendasi' => $rekomendasi,
+            'vouchers' => $vouchers,
             'keranjang' => session()->get('keranjang', []),
         ]);
     }

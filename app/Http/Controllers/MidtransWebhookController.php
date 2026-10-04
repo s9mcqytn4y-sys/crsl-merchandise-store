@@ -9,6 +9,7 @@ use App\Domains\Pembayaran\Services\MidtransService;
 use App\Mail\KonfirmasiPesananMail;
 use App\Models\PenggunaLoyalitas;
 use App\Models\Pesanan;
+use App\Models\RiwayatPoin;
 use App\Models\Voucher;
 use App\Models\VoucherTerpakai;
 use Illuminate\Http\JsonResponse;
@@ -137,18 +138,33 @@ class MidtransWebhookController extends Controller
                     $pesanan->pengiriman->save();
                 }
 
-                // Tambah Poin Loyalitas Pelanggan
+                // Tambah Poin Loyalitas Pelanggan (Idempoten via RiwayatPoin)
                 if ($pesanan->pengguna_id && $pesanan->poin_didapat > 0) {
-                    $loyalitas = PenggunaLoyalitas::firstOrCreate(
-                        ['pengguna_id' => $pesanan->pengguna_id],
-                        ['poin' => 0, 'total_belanja' => 0]
-                    );
-                    $loyalitas->poin += $pesanan->poin_didapat;
-                    $loyalitas->total_belanja += $pesanan->total;
-                    $loyalitas->save();
+                    $sudahDicatat = RiwayatPoin::where('pesanan_id', $pesanan->id)
+                        ->where('tipe', RiwayatPoin::TIPE_DIDAPAT)
+                        ->exists();
 
-                    Cache::forget("pengguna:akun:{$pesanan->pengguna_id}");
-                    Cache::forget("pengguna:profil:{$pesanan->pengguna_id}");
+                    if (! $sudahDicatat) {
+                        $loyalitas = PenggunaLoyalitas::lockForUpdate()->firstOrCreate(
+                            ['pengguna_id' => $pesanan->pengguna_id],
+                            ['poin' => 0, 'total_belanja' => 0]
+                        );
+                        $loyalitas->poin += $pesanan->poin_didapat;
+                        $loyalitas->total_belanja += $pesanan->total;
+                        $loyalitas->save();
+
+                        RiwayatPoin::create([
+                            'pengguna_id' => $pesanan->pengguna_id,
+                            'pesanan_id' => $pesanan->id,
+                            'tipe' => RiwayatPoin::TIPE_DIDAPAT,
+                            'jumlah' => $pesanan->poin_didapat,
+                            'saldo_akhir' => $loyalitas->poin,
+                            'keterangan' => "Poin reward transaksi {$pesanan->nomor_pesanan}",
+                        ]);
+
+                        Cache::forget("pengguna:akun:{$pesanan->pengguna_id}");
+                        Cache::forget("pengguna:profil:{$pesanan->pengguna_id}");
+                    }
                 }
 
                 $needsSendEmail = true;
@@ -200,15 +216,31 @@ class MidtransWebhookController extends Controller
 
                 $this->inventoriService->kembalikanStok($itemsArray);
 
-                // 2. Rollback Poin Loyalitas
+                // 2. Rollback Poin Loyalitas (Idempoten via RiwayatPoin)
                 if ($pesanan->pengguna_id && $pesanan->poin_digunakan > 0) {
-                    $loyalitas = PenggunaLoyalitas::firstOrCreate(
-                        ['pengguna_id' => $pesanan->pengguna_id],
-                        ['poin' => 0, 'total_belanja' => 0]
-                    );
-                    $loyalitas->increment('poin', $pesanan->poin_digunakan);
-                    Cache::forget("pengguna:akun:{$pesanan->pengguna_id}");
-                    Cache::forget("pengguna:profil:{$pesanan->pengguna_id}");
+                    $sudahDikembalikan = RiwayatPoin::where('pesanan_id', $pesanan->id)
+                        ->where('tipe', RiwayatPoin::TIPE_DIKEMBALIKAN)
+                        ->exists();
+
+                    if (! $sudahDikembalikan) {
+                        $loyalitas = PenggunaLoyalitas::lockForUpdate()->firstOrCreate(
+                            ['pengguna_id' => $pesanan->pengguna_id],
+                            ['poin' => 0, 'total_belanja' => 0]
+                        );
+                        $loyalitas->increment('poin', $pesanan->poin_digunakan);
+
+                        RiwayatPoin::create([
+                            'pengguna_id' => $pesanan->pengguna_id,
+                            'pesanan_id' => $pesanan->id,
+                            'tipe' => RiwayatPoin::TIPE_DIKEMBALIKAN,
+                            'jumlah' => $pesanan->poin_digunakan,
+                            'saldo_akhir' => $loyalitas->poin,
+                            'keterangan' => "Pengembalian poin transaksi {$pesanan->nomor_pesanan} ({$pesanan->status})",
+                        ]);
+
+                        Cache::forget("pengguna:akun:{$pesanan->pengguna_id}");
+                        Cache::forget("pengguna:profil:{$pesanan->pengguna_id}");
+                    }
                 }
 
                 // 3. Rollback Kuota Voucher

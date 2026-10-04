@@ -1,12 +1,15 @@
 import { useMemo } from "react";
+import { usePage } from "@inertiajs/react";
 import { Coins, ChevronRight, TrendingUp } from "lucide-react";
 import { useAuthStore } from "../../Stores/useAuthStore";
 
 export interface TierConfig {
     name: string;
+    nama?: string;
     minSpend: number;
-    badgeColor: string;
-    textColor: string;
+    syarat_belanja?: number;
+    badgeColor?: string;
+    textColor?: string;
 }
 
 export const LOYALTY_TIERS: TierConfig[] = [
@@ -41,6 +44,12 @@ interface KartuLoyalitasProps {
     totalBelanja?: number;
     tier?: string;
     progressText?: string;
+    tiers?: Array<{
+        name?: string;
+        nama?: string;
+        minSpend?: number;
+        syarat_belanja?: number;
+    }>;
     onLihatDetail?: () => void;
 }
 
@@ -55,9 +64,38 @@ export default function KartuLoyalitas({
     totalBelanja: propTotalBelanja,
     tier: propTier,
     progressText: propProgressText,
+    tiers: propTiers,
     onLihatDetail,
 }: KartuLoyalitasProps) {
     const authUser = useAuthStore((state) => state.user);
+    const pageProps = usePage().props as {
+        loyalitas?: {
+            tiers?: Array<{
+                name?: string;
+                nama?: string;
+                minSpend?: number;
+                syarat_belanja?: number;
+            }>;
+        };
+    };
+
+    const resolvedTiers: TierConfig[] = useMemo(() => {
+        const raw = (propTiers && propTiers.length > 0)
+            ? propTiers
+            : (pageProps.loyalitas?.tiers && pageProps.loyalitas.tiers.length > 0)
+                ? pageProps.loyalitas.tiers
+                : LOYALTY_TIERS;
+
+        return raw.map((t, idx) => {
+            const fallbackConfig = LOYALTY_TIERS[idx] || LOYALTY_TIERS[0];
+            return {
+                name: t.name || t.nama || fallbackConfig.name,
+                minSpend: Number(t.minSpend ?? t.syarat_belanja ?? fallbackConfig.minSpend),
+                badgeColor: fallbackConfig.badgeColor,
+                textColor: fallbackConfig.textColor,
+            };
+        });
+    }, [propTiers, pageProps.loyalitas?.tiers]);
 
     // Prioritaskan nilai dari props, fallback ke data user di useAuthStore
     const activePoin =
@@ -69,13 +107,13 @@ export default function KartuLoyalitas({
 
     // Kalkulasi Tier & Progress Belanja secara dinamis
     const tierData = useMemo(() => {
-        let currentTier = LOYALTY_TIERS[0];
-        let nextTier: TierConfig | null = LOYALTY_TIERS[1];
+        let currentTier = resolvedTiers[0] || LOYALTY_TIERS[0];
+        let nextTier: TierConfig | null = resolvedTiers[1] || null;
 
-        for (let i = LOYALTY_TIERS.length - 1; i >= 0; i--) {
-            if (activeSpend >= LOYALTY_TIERS[i].minSpend) {
-                currentTier = LOYALTY_TIERS[i];
-                nextTier = LOYALTY_TIERS[i + 1] || null;
+        for (let i = resolvedTiers.length - 1; i >= 0; i--) {
+            if (activeSpend >= resolvedTiers[i].minSpend) {
+                currentTier = resolvedTiers[i];
+                nextTier = resolvedTiers[i + 1] || null;
                 break;
             }
         }
@@ -101,7 +139,7 @@ export default function KartuLoyalitas({
             percentage,
             remainingSpend,
         };
-    }, [activeSpend, propTier]);
+    }, [activeSpend, propTier, resolvedTiers]);
 
     return (
         <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-4">

@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { router } from "@inertiajs/react";
-import { ShoppingBag, Zap, MessageCircle, Heart, Minus, Plus, Loader2 } from "lucide-react";
+import { ShoppingBag, Zap, Heart, Minus, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useKeranjangStore } from "../../Stores/useKeranjangStore";
+import WhatsAppIcon from "../Common/WhatsAppIcon";
 import { cn } from "../../lib/utils";
 
 interface ProductActionButtonsProps {
@@ -183,10 +184,10 @@ export default function ProductActionButtons({
                     <button
                         type="button"
                         onClick={onOpenInquiry}
-                        className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:text-primary hover:border-primary/40 hover:bg-slate-50 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-amber-300 bg-amber-50/70 hover:bg-amber-100 text-amber-900 text-xs font-bold transition-all shadow-2xs hover:shadow-xs active:scale-[0.99] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                     >
-                        <MessageCircle className="w-4 h-4 text-emerald-600" />
-                        <span>Tanya Admin CRSL</span>
+                        <WhatsAppIcon className="w-4 h-4 text-amber-600 shrink-0" />
+                        <span>Tanya Admin CRSL (WhatsApp)</span>
                     </button>
                 )}
 

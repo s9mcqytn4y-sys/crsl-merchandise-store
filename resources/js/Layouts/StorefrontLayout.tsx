@@ -83,6 +83,8 @@ export default function StorefrontLayout({ children }: StorefrontLayoutProps) {
         );
 
         const blacklistComponents = [
+            "DetailProduk",
+            "DetailBundle",
             "Checkout",
             "Pembayaran",
             "Faktur",

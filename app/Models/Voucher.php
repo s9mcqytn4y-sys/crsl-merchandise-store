@@ -15,15 +15,18 @@ class Voucher extends Model
     protected $fillable = [
         'kode',
         'judul',
+        'deskripsi',
         'tipe',
         'nilai',
         'min_belanja',
         'maksimal_diskon',
         'syarat_kurir',
+        'tier_minimal_id',
         'kuota',
         'berlaku_dari',
         'berlaku_sampai',
         'aktif',
+        'tampil_publik',
     ];
 
     protected $casts = [
@@ -32,6 +35,8 @@ class Voucher extends Model
         'maksimal_diskon' => 'float',
         'kuota' => 'integer',
         'aktif' => 'boolean',
+        'tampil_publik' => 'boolean',
+        'tier_minimal_id' => 'integer',
         'berlaku_dari' => 'datetime',
         'berlaku_sampai' => 'datetime',
     ];
@@ -41,6 +46,11 @@ class Voucher extends Model
     public function getMinimalBelanjaAttribute(): float
     {
         return (float) ($this->attributes['min_belanja'] ?? 0);
+    }
+
+    public function tierMinimal(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(TierLoyalitas::class, 'tier_minimal_id');
     }
 
     public function pemakaian(): HasMany

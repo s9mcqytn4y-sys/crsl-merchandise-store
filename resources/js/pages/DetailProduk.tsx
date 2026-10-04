@@ -9,16 +9,21 @@ import VariantSelector, {
 } from "../Components/PDP/VariantSelector";
 import ProductInfo from "../Components/PDP/ProductInfo";
 import ProductTrustSection from "../Components/PDP/ProductTrustSection";
-import ProductSpecsAndCare, { SpecItem } from "../Components/PDP/ProductSpecsAndCare";
 import ProductActionButtons from "../Components/PDP/ProductActionButtons";
 import MobileStickyCta from "../Components/PDP/MobileStickyCta";
 import DeliveryEstimator from "../Components/PDP/DeliveryEstimator";
-import DiscountsModal from "../Components/PDP/DiscountsModal";
+import DiscountsModal, { VoucherItem } from "../Components/PDP/DiscountsModal";
 import InquiryModal from "../Components/PDP/InquiryModal";
 import RecentViewed from "../Components/PDP/RecentViewed";
 import { toast } from "sonner";
 import { useKeranjangStore } from "../Stores/useKeranjangStore";
 import { cn } from "../lib/utils";
+
+export interface SpecItem {
+    id: number | string;
+    kunci: string;
+    nilai: string;
+}
 
 export interface NormalizedProduct {
     id: number | string;
@@ -42,6 +47,7 @@ export interface DetailProdukProps {
     product?: Record<string, any>;
     rekomendasi?: Array<Record<string, any>>;
     recommended?: Array<Record<string, any>>;
+    vouchers?: VoucherItem[];
     className?: string;
 }
 
@@ -139,6 +145,7 @@ export default function DetailProduk({
     product,
     rekomendasi = [],
     recommended = [],
+    vouchers = [],
     className,
 }: DetailProdukProps) {
     const activeProduct = useMemo(
@@ -425,6 +432,7 @@ export default function DetailProduk({
                         <ProductInfo
                             nama={activeProduct.nama}
                             kategoriNama={activeProduct.kategoriNama}
+                            deskripsi={activeProduct.deskripsi}
                             hargaDasar={activeProduct.hargaDasar}
                             hargaDiskon={activeProduct.hargaDiskon}
                             stokTotal={currentStock}
@@ -482,13 +490,6 @@ export default function DetailProduk({
                             productPrice={currentPrice}
                             productName={activeProduct.nama}
                         />
-
-                        {/* 6. Collapsible Specifications, Care, and Shipping Accordion */}
-                        <ProductSpecsAndCare
-                            deskripsi={activeProduct.deskripsi}
-                            spesifikasi={activeProduct.spesifikasi}
-                            beratGram={activeProduct.beratGram}
-                        />
                     </div>
                 </div>
 
@@ -529,6 +530,7 @@ export default function DetailProduk({
             <DiscountsModal
                 isOpen={isDiscountsModalOpen}
                 onClose={() => setIsDiscountsModalOpen(false)}
+                vouchers={vouchers}
                 cartTotal={globalCartTotal > 0 ? globalCartTotal : currentPrice * quantity}
                 onApplyVoucher={(code) => {
                     toast.success(`Voucher ${code} berhasil dipasang ke pesanan!`);
